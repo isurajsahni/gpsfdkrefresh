@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+let baseURL = import.meta.env.VITE_API_URL || 'https://gpsfdkrefresh.onrender.com/api';
+if (!baseURL.endsWith('/api')) {
+  baseURL += '/api';
+}
+
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://gpsfdkrefresh.onrender.com/api',
+  baseURL,
 });
 
 API.interceptors.request.use((config) => {

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -13,6 +14,23 @@ exports.register = async (req, res) => {
     if (userExists) return res.status(400).json({ message: 'User already exists' });
     
     const user = await User.create({ name, email, password, phone });
+
+    // Send notification email to admin
+    try {
+      await sendEmail({
+        email: 'isurajsahni7@gmail.com',
+        subject: 'New User Registration - GPSFDK',
+        html: `
+          <h3>New User Registered</h3>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+        `
+      });
+    } catch (err) {
+      console.error('Email notification failed', err);
+    }
+
     res.status(201).json({
       _id: user._id,
       name: user.name,

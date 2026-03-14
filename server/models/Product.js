@@ -32,14 +32,13 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function () {
   if (this.isModified('name')) {
     this.slug = slugify(this.name, { lower: true, strict: true });
   }
   if (this.variations.length > 0 && !this.basePrice) {
     this.basePrice = Math.min(...this.variations.map(v => v.price));
   }
-  next();
 });
 
 productSchema.index({ category: 1 });

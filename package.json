@@ -1,0 +1,14 @@
+{
+  "name": "the-borgo-ecommerce",
+  "version": "1.0.0",
+  "description": "Luxury MERN Ecommerce",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix client\" \"npm run dev --prefix server\"",
+    "start": "concurrently \"npm start --prefix client\" \"npm start --prefix server\"",
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "seed": "npm run seed --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

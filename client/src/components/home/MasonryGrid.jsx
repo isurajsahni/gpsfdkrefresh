@@ -9,8 +9,8 @@ const MasonryGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await API.get('/products', { params: { masonry: true, limit: 8 } });
-        setProducts(data.products?.length > 0 ? data.products : []);
+        const { data } = await API.get('/products', { params: { masonry: true, limit: 3 } });
+        setProducts(data.products || []);
       } catch (err) {
         // silent fail
       }
@@ -35,38 +35,78 @@ const MasonryGrid = () => {
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 
-        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
-          {products.map((product, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[600px]">
+          {/* Left Large Card */}
+          {products[0] && (
             <motion.div
-              key={product._id || i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.08 }}
-              className="break-inside-avoid"
+              className="h-[400px] md:h-full rounded-3xl overflow-hidden relative group"
             >
-              <Link to={`/product/${product.slug}`} className="group block relative rounded-2xl overflow-hidden">
-                <div className={`${heights[i % heights.length]} w-full`}>
-                  <img
-                    src={product.images?.[0]?.url || `https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600`}
-                    alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                </div>
-                {/* Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                  <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
-                  <p className="text-white/60 text-sm mt-1">{product.category?.name}</p>
-                  <div className="mt-3">
-                    <span className="inline-block bg-accent text-white text-sm font-semibold py-2 px-5 rounded-full hover:bg-accent-dark transition-colors">
-                      Buy Now
+              <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
+                <img
+                  src={products[0].images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                  alt={products[0].name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 p-8 flex flex-col justify-between">
+                  <div>
+                    <span className="inline-block bg-white text-accent text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 shadow-sm">
+                      {products[0].subCategory || products[0].category?.name || 'Featured'}
                     </span>
+                    <h3 className="text-white font-heading text-3xl md:text-5xl font-bold line-clamp-2 leading-tight">
+                      {products[0].name}
+                    </h3>
+                    <p className="text-white/80 mt-3 line-clamp-2 max-w-sm">
+                      {products[0].description || 'Discover the future where cutting-edge design meets premium quality.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center text-white font-semibold text-lg hover:text-accent transition-colors">
+                    Shop Now <span className="text-accent ml-2 text-xl font-bold">↗</span>
                   </div>
                 </div>
               </Link>
             </motion.div>
-          ))}
+          )}
+
+          {/* Right Stacked Cards */}
+          <div className="flex flex-col gap-4 h-[600px] md:h-full">
+            {products.slice(1, 3).map((product, i) => (
+              <motion.div
+                key={product._id}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="flex-1 rounded-3xl overflow-hidden relative group min-h-[250px]"
+              >
+                <Link to={`/product/${product.slug}`} className="block w-full h-full">
+                  <img
+                    src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 p-6 flex flex-col justify-between">
+                    <div>
+                      <span className="inline-block bg-white text-accent text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-2 shadow-sm">
+                        {product.subCategory || product.category?.name || 'Featured'}
+                      </span>
+                      <h3 className="text-white font-heading text-2xl md:text-3xl font-bold line-clamp-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-white/80 mt-2 line-clamp-2 max-w-md text-sm">
+                        {product.description || 'Enjoy amazing journeys packed with world-class features.'}
+                      </p>
+                    </div>
+                    <div className="flex items-center text-white font-semibold text-sm hover:text-accent transition-colors">
+                      Shop Now <span className="text-accent ml-2 font-bold text-lg">↗</span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

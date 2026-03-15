@@ -11,7 +11,12 @@ exports.getProducts = async (req, res) => {
     if (categorySlug) {
       const Category = require('../models/Category');
       const cat = await Category.findOne({ slug: categorySlug });
-      if (cat) query.category = cat._id;
+      if (cat) {
+        query.category = cat._id;
+      } else {
+        // If category slug is requested but doesn't exist, return no products
+        return res.json({ products: [], total: 0, pages: 0, page: 1 });
+      }
     }
 
     if (featured === 'true') query.featured = true;

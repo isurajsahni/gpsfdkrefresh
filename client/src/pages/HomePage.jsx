@@ -1,4 +1,5 @@
 import HeroVideo from '../components/home/HeroVideo';
+import FeatureMasonrySection from '../components/home/FeatureMasonrySection';
 import ProductSlider from '../components/home/ProductSlider';
 import MasonryGrid from '../components/home/MasonryGrid';
 import WatchBuySection from '../components/home/WatchBuySection';
@@ -10,6 +11,7 @@ const HomePage = () => {
   return (
     <>
       <HeroVideo />
+      <FeatureMasonrySection />
       <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
       <MasonryGrid />
       <ProductSlider title="Wall Canvas" categorySlug="wall-canvas" />

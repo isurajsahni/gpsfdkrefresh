@@ -111,21 +111,36 @@ exports.importProducts = async (req, res) => {
     fs.createReadStream(req.file.path)
       .pipe(csv())
       .on('data', (data) => results.push(data))
+      .on('error', (err) => {
+        console.error('CSV Parsing Error:', err);
+        res.status(500).json({ message: 'CSV Parsing Error: ' + err.message });
+      })
       .on('end', async () => {
+        console.log('CSV Parsing Complete. Processing', results.length, 'rows');
         try {
           const importedProducts = [];
-          for (const row of results) {
-            // Find or create category based on name/slug in CSV
-            // Map common fields
+          for (const [index, row] of results.entries()) {
+            console.log(`Processing row ${index + 1}:`, row);
+            
+            // Basic validation
+            if (!row.name) {
+              console.warn(`Row ${index + 1} skipped: Missing name`);
+              continue;
+            }
+
             let categoryId;
             if (row.category) {
               const cat = await Category.findOne({ 
                 $or: [
-                  { name: new RegExp(`^${row.category}$`, 'i') },
-                  { slug: row.category.toLowerCase() }
+                  { name: new RegExp(`^${row.category.trim()}$`, 'i') },
+                  { slug: row.category.trim().toLowerCase() }
                 ]
               });
-              if (cat) categoryId = cat._id;
+              if (cat) {
+                categoryId = cat._id;
+              } else {
+                console.warn(`Row ${index + 1}: Category "${row.category}" not found. Trying "General".`);
+              }
             }
 
             if (!categoryId) {

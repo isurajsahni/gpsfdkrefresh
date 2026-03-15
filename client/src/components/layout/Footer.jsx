@@ -36,10 +36,9 @@ const Footer = () => {
   };
 
   const socials = [
-    { icon: FaInstagram, href: '#', label: 'Instagram', color: 'hover:text-pink-400' },
-    { icon: FaFacebookF, href: '#', label: 'Facebook', color: 'hover:text-blue-400' },
-    { icon: FaYoutube, href: '#', label: 'YouTube', color: 'hover:text-red-400' },
-    { icon: FaWhatsapp, href: '#', label: 'WhatsApp', color: 'hover:text-green-400' },
+    { icon: FaInstagram, href: 'https://www.instagram.com/canvas.gps/', label: 'Instagram', color: 'hover:text-pink-400' },
+    { icon: FaFacebookF, href: 'https://www.facebook.com/gpsfdk/', label: 'Facebook', color: 'hover:text-blue-400' },
+    { icon: FaWhatsapp, href: 'https://wa.me/916280310103', label: 'WhatsApp', color: 'hover:text-green-400' },
   ];
 
   return (
@@ -115,9 +114,15 @@ const Footer = () => {
         <div className="mt-14 pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-sm">
             <div className="flex flex-wrap items-center justify-center gap-6">
-              <span className="flex items-center gap-2"><FaMapMarkerAlt className="text-accent" /> India</span>
-              <span className="flex items-center gap-2"><FaPhoneAlt className="text-accent" /> +91 98765 43210</span>
-              <span className="flex items-center gap-2"><FaEnvelope className="text-accent" /> contact@gpsfdk.com</span>
+              <a href="https://maps.app.goo.gl/Mqxj746PUvPpNvkt6" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-accent transition-colors">
+                <FaMapMarkerAlt className="text-accent" /> Location
+              </a>
+              <a href="tel:+916280310103" className="flex items-center gap-2 hover:text-accent transition-colors">
+                <FaPhoneAlt className="text-accent" /> +91 62803-10103
+              </a>
+              <a href="mailto:customer@gpsfdk.com" className="flex items-center gap-2 hover:text-accent transition-colors">
+                <FaEnvelope className="text-accent" /> customer@gpsfdk.com
+              </a>
             </div>
             <p>© {new Date().getFullYear()} GPSFDK. All rights reserved.</p>
           </div>

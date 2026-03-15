@@ -9,12 +9,12 @@ const MasonryGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await API.get('/products', { 
-          params: { 
+        const { data } = await API.get('/products', {
+          params: {
             featured: true,
             limit: 3,
             sort: '-createdAt'
-          } 
+          }
         });
         setProducts(data.products || []);
       } catch (err) {
@@ -33,7 +33,7 @@ const MasonryGrid = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <h2 className="text-4xl md:text-6xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
           <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
         </motion.div>
 
@@ -54,7 +54,7 @@ const MasonryGrid = () => {
                 />
                 {/* Dark Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-500 group-hover:bg-black/60" />
-                
+
                 <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end">
                   <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                     <span className="inline-block bg-white text-[#E3543A] text-[10px] md:text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4 shadow-lg">
@@ -95,7 +95,7 @@ const MasonryGrid = () => {
                     className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-500 group-hover:bg-black/60" />
-                  
+
                   <div className="absolute inset-0 p-6 flex flex-col justify-end">
                     <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                       <span className="inline-block bg-white text-[#E3543A] text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">

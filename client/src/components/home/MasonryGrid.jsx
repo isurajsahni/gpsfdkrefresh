@@ -9,7 +9,7 @@ const MasonryGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await API.get('/products', { params: { masonry: true, limit: 7 } });
+        const { data } = await API.get('/products', { params: { masonry: true, limit: 3 } });
         setProducts(data.products || []);
       } catch (err) {
         // silent fail
@@ -19,69 +19,80 @@ const MasonryGrid = () => {
   }, []);
 
   return (
-    <section className="section-padding section-spacing bg-cream-dark">
-      <div className="max-w-7xl mx-auto">
+    <section className="section-padding bg-cream-dark overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
-          <h2 className="text-3xl md:text-4xl font-heading font-semibold text-primary uppercase tracking-wide">Curated Collection</h2>
-          <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm">Explore our handpicked selection of premium art & decor pieces</p>
-          <div className="w-20 h-[2px] bg-[#E3543A] mt-4 mx-auto" />
+          <h2 className="text-3xl md:text-5xl font-heading font-semibold text-primary uppercase tracking-tight">Curated Collection</h2>
+          <div className="w-16 h-[3px] bg-[#E3543A] mt-4 mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
-          {products.map((product, i) => {
-            // Define span and height classes for a premium masonry look
-            const layoutClasses = [
-              'lg:col-span-2 lg:row-span-2 min-h-[500px] md:h-full', // Item 0
-              'lg:col-span-1 min-h-[300px]',                         // Item 1
-              'lg:col-span-1 min-h-[300px]',                         // Item 2
-              'lg:col-span-1 min-h-[300px]',                         // Item 3
-              'lg:col-span-1 min-h-[300px]',                         // Item 4
-              'lg:col-span-1 lg:row-span-2 min-h-[500px]',           // Item 5
-              'lg:col-span-2 min-h-[300px]',                         // Item 6
-            ];
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[calc(100vh-250px)] min-h-[500px] max-h-[800px]">
+          {/* Main Large Card (Top Left) */}
+          {products[0] && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              className="lg:col-span-8 h-[400px] lg:h-full rounded-[2.5rem] overflow-hidden relative group shadow-2xl"
+            >
+              <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
+                <img
+                  src={products[0].images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800'}
+                  alt={products[0].name}
+                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent p-8 md:p-12 flex flex-col justify-end">
+                  <span className="inline-block bg-white text-[#E3543A] text-[10px] md:text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest mb-4 w-fit shadow-lg">
+                    {products[0].subCategory || products[0].category?.name || 'EXCLUSIVE'}
+                  </span>
+                  <h3 className="text-white font-heading text-4xl md:text-7xl font-bold leading-none mb-4 group-hover:translate-x-2 transition-transform duration-500">
+                    {products[0].name}
+                  </h3>
+                  <div className="flex items-center text-white font-bold text-lg md:text-xl group-hover:underline decoration-[#E3543A] underline-offset-8 transition-all">
+                    Explore Collection <span className="text-[#E3543A] ml-3 text-3xl no-underline">↗</span>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
+          )}
 
-            return (
+          {/* Vertical Stack (Right Side) */}
+          <div className="lg:col-span-4 flex flex-col gap-6 h-full">
+            {products.slice(1, 3).map((product, i) => (
               <motion.div
                 key={product._id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.05 }}
-                className={`rounded-[2rem] overflow-hidden relative group shadow-xl bg-white ${layoutClasses[i % layoutClasses.length]}`}
+                transition={{ delay: i * 0.1 }}
+                className="flex-1 rounded-[2.5rem] overflow-hidden relative group shadow-xl"
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
                     src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 p-8 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-500">
-                    <div className="transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                      <span className="inline-block bg-white text-[#E3543A] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.1em] mb-4">
-                        {product.subCategory || product.category?.name || 'HOUSE NAMEPLATES'}
-                      </span>
-                      <h3 className="text-white font-heading text-3xl font-bold line-clamp-2 leading-tight">
-                        {product.name}
-                      </h3>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent p-8 flex flex-col justify-end">
+                    <span className="inline-block bg-white text-[#E3543A] text-[9px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider mb-3 w-fit">
+                      {product.subCategory || product.category?.name || 'FEATURED'}
+                    </span>
+                    <h3 className="text-white font-heading text-2xl md:text-3xl font-bold mb-2">
+                      {product.name}
+                    </h3>
+                    <div className="flex items-center text-white font-bold text-sm">
+                      Shop Now <span className="text-[#E3543A] ml-2 text-xl">↗</span>
                     </div>
-                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center text-white font-bold text-base group-hover:underline decoration-[#E3543A] underline-offset-8">
-                      Shop Now <span className="text-[#E3543A] ml-2 text-2xl no-underline">↗</span>
-                    </div>
-                  </div>
-                  
-                  {/* Subtle static title for mobile */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent md:hidden pointer-events-none">
-                    <h3 className="text-white font-heading text-xl font-bold">{product.name}</h3>
                   </div>
                 </Link>
               </motion.div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       </div>
     </section>

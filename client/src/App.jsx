@@ -21,6 +21,13 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import UserDashboard from './pages/UserDashboard';
 import SearchPage from './pages/SearchPage';
+import AboutUs from './pages/info/AboutUs';
+import Contact from './pages/info/Contact';
+import FAQ from './pages/info/FAQ';
+import ShippingPolicy from './pages/support/ShippingPolicy';
+import ReturnsRefunds from './pages/support/ReturnsRefunds';
+import PrivacyPolicy from './pages/support/PrivacyPolicy';
+import TermsConditions from './pages/support/TermsConditions';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -53,6 +60,15 @@ function App() {
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                
+                {/* Info & Policy */}
+                <Route path="/about" element={<><AboutUs /><Footer /></>} />
+                <Route path="/contact" element={<><Contact /><Footer /></>} />
+                <Route path="/faq" element={<><FAQ /><Footer /></>} />
+                <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
+                <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />
+                <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
+                <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
 
               {/* Protected */}
               <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /><Footer /></ProtectedRoute>} />

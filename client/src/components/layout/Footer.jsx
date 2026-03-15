@@ -23,15 +23,15 @@ const Footer = () => {
       { name: 'House Nameplates', path: '/category/house-nameplates' },
     ],
     'Company': [
-      { name: 'About Us', path: '/#about' },
-      { name: 'Contact', path: '/#contact' },
-      { name: 'FAQ', path: '/#faq' },
+      { name: 'About Us', path: '/about' },
+      { name: 'Contact', path: '/contact' },
+      { name: 'FAQ', path: '/faq' },
     ],
     'Support': [
-      { name: 'Shipping Policy', path: '/#faq' },
-      { name: 'Returns & Refunds', path: '/#faq' },
-      { name: 'Privacy Policy', path: '/#' },
-      { name: 'Terms & Conditions', path: '/#' },
+      { name: 'Shipping Policy', path: '/shipping-policy' },
+      { name: 'Returns & Refunds', path: '/returns-refunds' },
+      { name: 'Privacy Policy', path: '/privacy-policy' },
+      { name: 'Terms & Conditions', path: '/terms-conditions' },
     ],
   };
 

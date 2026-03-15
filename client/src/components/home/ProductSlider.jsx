@@ -43,7 +43,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
   };
 
   return (
-    <section className="section-padding section-spacing bg-primary">
+    <section className="section-padding section-spacing bg-white">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -86,7 +86,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
                 transition={{ delay: i * 0.1 }}
               >
                 <Link to={`/product/${product.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-gray-100">
                     <img
                       src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                       alt={product.name}

@@ -17,7 +17,7 @@
 
   body {
     font-family: 'DM Sans', sans-serif;
-    background-color: #FFF7E7;
+    background-color: #FFFFFF;
     color: #1a1a1a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -31,7 +31,7 @@
     width: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #FFF7E7;
+    background: #FFFFFF;
   }
   ::-webkit-scrollbar-thumb {
     background: #0B5D3B;

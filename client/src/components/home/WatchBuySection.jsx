@@ -23,7 +23,7 @@ const testimonials = [
 
 const WatchBuySection = () => {
   return (
-    <section className="section-padding section-spacing bg-secondary">
+    <section className="section-padding section-spacing bg-white border-t border-gray-100">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -32,8 +32,8 @@ const WatchBuySection = () => {
           className="text-center mb-12"
         >
           <span className="text-accent font-body text-sm tracking-[0.3em] uppercase">Testimonials</span>
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mt-3">Watch & Buy</h2>
-          <p className="text-white/50 mt-3 max-w-lg mx-auto">Real stories from our happy customers</p>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-primary mt-3">Watch & Buy</h2>
+          <p className="text-gray-500 mt-3 max-w-lg mx-auto">Real stories from our happy customers</p>
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 

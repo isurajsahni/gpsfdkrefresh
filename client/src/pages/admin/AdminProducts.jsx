@@ -11,7 +11,7 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({
-    name: '', description: '', category: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
+    name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
     images: [],
   });
@@ -44,7 +44,7 @@ const AdminProducts = () => {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: '', description: '', category: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [] });
+      setForm({ name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [] });
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
@@ -56,6 +56,7 @@ const AdminProducts = () => {
       name: product.name,
       description: product.description,
       category: product.category?._id || product.category,
+      subCategory: product.subCategory || '',
       customizable: product.customizable,
       customizationLabel: product.customizationLabel || 'Custom Text',
       featured: product.featured,
@@ -126,7 +127,11 @@ const AdminProducts = () => {
                     {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                   </select>
                 </div>
-                <div className="flex items-center gap-6 pt-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Subcategory (Optional)</label>
+                  <input type="text" value={form.subCategory} onChange={(e) => setForm({ ...form, subCategory: e.target.value })} placeholder="e.g. Modern, Antique, etc." className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
+                </div>
+                <div className="md:col-span-2 flex items-center gap-6 pt-2 border-t border-gray-100">
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.customizable} onChange={(e) => setForm({ ...form, customizable: e.target.checked })} className="accent-accent" /> Customizable</label>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="accent-accent" /> Featured</label>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isMasonry} onChange={(e) => setForm({ ...form, isMasonry: e.target.checked })} className="accent-accent" /> Masonry</label>
@@ -172,6 +177,7 @@ const AdminProducts = () => {
                 <tr>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Product</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Category</th>
+                  <th className="text-left px-6 py-4 font-semibold text-gray-600">Subcategory</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Price</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Variations</th>
                   <th className="text-right px-6 py-4 font-semibold text-gray-600">Actions</th>
@@ -187,6 +193,7 @@ const AdminProducts = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-gray-500">{product.category?.name}</td>
+                    <td className="px-6 py-4 text-gray-400 text-sm">{product.subCategory || '-'}</td>
                     <td className="px-6 py-4 font-semibold text-accent">₹{product.basePrice?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-gray-500">{product.variations?.length || 0}</td>
                     <td className="px-6 py-4 text-right">

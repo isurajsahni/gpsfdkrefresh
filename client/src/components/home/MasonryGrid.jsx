@@ -25,16 +25,16 @@ const MasonryGrid = () => {
   }, []);
 
   return (
-    <section className="section-padding bg-white overflow-hidden">
+    <section className="py-20 md:py-28 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-10"
+          className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-5xl font-heading font-bold text-primary uppercase tracking-tight">Curated Collection</h2>
-          <div className="w-16 h-[3px] bg-[#E3543A] mt-4 mx-auto" />
+          <h2 className="text-4xl md:text-6xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
+          <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

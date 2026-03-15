@@ -30,19 +30,19 @@ const MasonryGrid = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary">Curated Collection</h2>
-          <p className="text-gray-500 mt-3 max-w-xl mx-auto">Explore our handpicked selection of premium art & decor pieces</p>
-          <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
+          <h2 className="text-3xl md:text-4xl font-heading font-semibold text-primary uppercase tracking-wide">Curated Collection</h2>
+          <p className="text-gray-500 mt-3 max-w-xl mx-auto text-sm">Explore our handpicked selection of premium art & decor pieces</p>
+          <div className="w-20 h-[2px] bg-[#E3543A] mt-4 mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-auto md:h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-auto lg:h-[800px]">
           {/* Left Large Card */}
           {products[0] && (
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="h-[400px] md:h-full rounded-3xl overflow-hidden relative group"
+              className="h-[500px] lg:h-full rounded-[2rem] overflow-hidden relative group"
             >
               <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
                 <img
@@ -50,20 +50,20 @@ const MasonryGrid = () => {
                   alt={products[0].name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 p-8 flex flex-col justify-between">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-black/80 p-8 flex flex-col justify-between">
                   <div>
-                    <span className="inline-block bg-white text-accent text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 shadow-sm">
-                      {products[0].subCategory || products[0].category?.name || 'Featured'}
+                    <span className="inline-block bg-white text-[#E3543A] text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.15em] mb-4 shadow-sm">
+                      {products[0].subCategory || products[0].category?.name || 'HOUSE NAMEPLATES'}
                     </span>
-                    <h3 className="text-white font-heading text-3xl md:text-5xl font-bold line-clamp-2 leading-tight">
-                      {products[0].name}
+                    <h3 className="text-white font-heading text-4xl md:text-6xl font-bold line-clamp-2 leading-tight tracking-wide">
+                      {products[0].name || 'DEMO 8'}
                     </h3>
-                    <p className="text-white/80 mt-3 line-clamp-2 max-w-sm">
-                      {products[0].description || 'Discover the future where cutting-edge design meets premium quality.'}
+                    <p className="text-white/90 mt-4 line-clamp-3 max-w-sm text-sm sm:text-base leading-relaxed">
+                      {products[0].description || 'Elevate Your Space With Art & Identity Discover luxury wall canvases & custom house nameplates that transform your home into a...'}
                     </p>
                   </div>
-                  <div className="flex items-center text-white font-semibold text-lg hover:text-accent transition-colors">
-                    Shop Now <span className="text-accent ml-2 text-xl font-bold">↗</span>
+                  <div className="flex items-center text-white font-bold text-sm sm:text-base transition-colors group-hover:underline underline-offset-4 decoration-[#E3543A]">
+                    Shop Now <span className="text-[#E3543A] ml-2 text-xl font-black no-underline">↗</span>
                   </div>
                 </div>
               </Link>
@@ -71,7 +71,7 @@ const MasonryGrid = () => {
           )}
 
           {/* Right Stacked Cards */}
-          <div className="flex flex-col gap-4 h-[600px] md:h-full">
+          <div className="flex flex-col gap-4 h-[600px] lg:h-full">
             {products.slice(1, 3).map((product, i) => (
               <motion.div
                 key={product._id}
@@ -79,7 +79,7 @@ const MasonryGrid = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="flex-1 rounded-3xl overflow-hidden relative group min-h-[250px]"
+                className="flex-1 rounded-[2rem] overflow-hidden relative group min-h-[300px]"
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
@@ -87,20 +87,20 @@ const MasonryGrid = () => {
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 p-6 flex flex-col justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/20 to-black/90 p-8 flex flex-col justify-between">
                     <div>
-                      <span className="inline-block bg-white text-accent text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-2 shadow-sm">
-                        {product.subCategory || product.category?.name || 'Featured'}
+                      <span className="inline-block bg-white text-[#E3543A] text-[9px] sm:text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.15em] mb-3 shadow-sm">
+                        {product.subCategory || product.category?.name || 'HOUSE NAMEPLATES'}
                       </span>
-                      <h3 className="text-white font-heading text-2xl md:text-3xl font-bold line-clamp-1">
-                        {product.name}
+                      <h3 className="text-white font-heading text-3xl md:text-4xl font-bold line-clamp-1 tracking-wide">
+                        {product.name || `DEMO ${7 - i}`}
                       </h3>
-                      <p className="text-white/80 mt-2 line-clamp-2 max-w-md text-sm">
-                        {product.description || 'Enjoy amazing journeys packed with world-class features.'}
+                      <p className="text-white/90 mt-3 line-clamp-2 max-w-md text-xs sm:text-sm leading-relaxed">
+                        {product.description || 'Elevate Your Space With Art & Identity Discover luxury wall canvases & custom house nameplates that transform your home into a...'}
                       </p>
                     </div>
-                    <div className="flex items-center text-white font-semibold text-sm hover:text-accent transition-colors">
-                      Shop Now <span className="text-accent ml-2 font-bold text-lg">↗</span>
+                    <div className="flex items-center text-white font-bold text-sm transition-colors group-hover:underline underline-offset-4 decoration-[#E3543A]">
+                      Shop Now <span className="text-[#E3543A] ml-2 font-black text-lg no-underline">↗</span>
                     </div>
                   </div>
                 </Link>

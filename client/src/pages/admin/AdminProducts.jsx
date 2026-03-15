@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -97,6 +97,27 @@ const AdminProducts = () => {
     }
   };
 
+  const handleCSVUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('csv', file);
+
+    const toastId = toast.loading('Importing products...');
+    try {
+      await API.post('/products/import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success('Bulk import successful', { id: toastId });
+      fetchProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Import failed', { id: toastId });
+    }
+    // Clear input
+    e.target.value = '';
+  };
+
   const addVariation = () => {
     setForm({ ...form, variations: [...form.variations, { material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }] });
   };
@@ -115,9 +136,15 @@ const AdminProducts = () => {
     <div>
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-heading font-bold text-secondary">Products</h1>
-        <button onClick={() => { setShowForm(true); setEditing(null); }} className="btn-primary text-sm flex items-center gap-2">
-          <HiOutlinePlus className="w-4 h-4" /> Add Product
-        </button>
+        <div className="flex gap-4">
+          <label className="btn-secondary text-sm flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+            <HiOutlineUpload className="w-4 h-4" /> Import CSV
+            <input type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />
+          </label>
+          <button onClick={() => { setShowForm(true); setEditing(null); }} className="btn-primary text-sm flex items-center gap-2">
+            <HiOutlinePlus className="w-4 h-4" /> Add Product
+          </button>
+        </div>
       </div>
 
       {/* Product Form Modal */}

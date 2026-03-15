@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -65,6 +65,24 @@ const AdminProducts = () => {
       images: product.images || [],
     });
     setEditing(product._id);
+    setShowForm(true);
+  };
+
+  const handleDuplicate = (product) => {
+    // Populate form with product data, but append "(Copy)" to name and reset images.
+    setForm({
+      name: `${product.name} (Copy)`,
+      description: product.description,
+      category: product.category?._id || product.category,
+      subCategory: product.subCategory || '',
+      customizable: product.customizable,
+      customizationLabel: product.customizationLabel || 'Custom Text',
+      featured: product.featured,
+      isMasonry: product.isMasonry,
+      variations: product.variations?.length > 0 ? product.variations.map(v => ({...v, _id: undefined})) : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
+      images: [], // Usually we don't duplicate the actual image files directly to avoid linking issues, user will upload new ones or we'd need to copy URLs
+    });
+    setEditing(null); // It's a new product, not an edit
     setShowForm(true);
   };
 
@@ -196,9 +214,10 @@ const AdminProducts = () => {
                     <td className="px-6 py-4 text-gray-400 text-sm">{product.subCategory || '-'}</td>
                     <td className="px-6 py-4 font-semibold text-accent">₹{product.basePrice?.toLocaleString()}</td>
                     <td className="px-6 py-4 text-gray-500">{product.variations?.length || 0}</td>
-                    <td className="px-6 py-4 text-right">
-                      <button onClick={() => handleEdit(product)} className="text-blue-500 hover:text-blue-700 p-1"><HiOutlinePencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(product._id)} className="text-red-400 hover:text-red-600 p-1 ml-2"><HiOutlineTrash className="w-4 h-4" /></button>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <button onClick={() => handleDuplicate(product)} title="Duplicate" className="text-gray-400 hover:text-gray-600 p-1 mr-2"><HiOutlineDocumentDuplicate className="w-4 h-4" /></button>
+                      <button onClick={() => handleEdit(product)} title="Edit" className="text-blue-500 hover:text-blue-700 p-1"><HiOutlinePencil className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(product._id)} title="Delete" className="text-red-400 hover:text-red-600 p-1 ml-2"><HiOutlineTrash className="w-4 h-4" /></button>
                     </td>
                   </tr>
                 ))}

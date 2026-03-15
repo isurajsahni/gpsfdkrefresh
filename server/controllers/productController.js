@@ -3,10 +3,17 @@ const Product = require('../models/Product');
 // GET /api/products
 exports.getProducts = async (req, res) => {
   try {
-    const { category, featured, search, sort, page = 1, limit = 20, masonry } = req.query;
+    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry } = req.query;
     const query = { isActive: true };
     
     if (category) query.category = category;
+    
+    if (categorySlug) {
+      const Category = require('../models/Category');
+      const cat = await Category.findOne({ slug: categorySlug });
+      if (cat) query.category = cat._id;
+    }
+
     if (featured === 'true') query.featured = true;
     if (masonry === 'true') query.isMasonry = true;
     if (search) query.name = { $regex: search, $options: 'i' };

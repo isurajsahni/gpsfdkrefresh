@@ -20,14 +20,12 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
       try {
         const params = { limit: 12 };
         if (featured) params.featured = true;
+        if (categorySlug) params.categorySlug = categorySlug;
         const { data } = await API.get('/products', { params });
-        // Filter by category slug if provided
-        const filtered = categorySlug
-          ? data.products.filter(p => p.category?.slug === categorySlug)
-          : data.products;
-        setProducts(filtered.length > 0 ? filtered : data.products);
+        setProducts(data.products);
       } catch (err) {
         // Use empty array on error
+        setProducts([]);
       }
     };
     fetchProducts();
@@ -62,21 +60,25 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           )}
         </motion.div>
 
-        <Swiper
-          modules={[Navigation, Autoplay]}
-          spaceBetween={24}
-          slidesPerView={1.2}
-          navigation
-          autoplay={{ delay: 4000, disableOnInteraction: false }}
-          breakpoints={{
-            480: { slidesPerView: 1.5 },
-            640: { slidesPerView: 2 },
-            768: { slidesPerView: 2.5 },
-            1024: { slidesPerView: 3 },
-            1280: { slidesPerView: 4 },
-          }}
-          className="product-slider"
-        >
+        <div className="relative pb-16">
+          <Swiper
+            modules={[Navigation, Autoplay]}
+            spaceBetween={24}
+            slidesPerView={1.2}
+            navigation={{
+              nextEl: `.swiper-button-next-${categorySlug || 'default'}`,
+              prevEl: `.swiper-button-prev-${categorySlug || 'default'}`,
+            }}
+            autoplay={{ delay: 4000, disableOnInteraction: false }}
+            breakpoints={{
+              480: { slidesPerView: 1.5 },
+              640: { slidesPerView: 2 },
+              768: { slidesPerView: 2.5 },
+              1024: { slidesPerView: 3 },
+              1280: { slidesPerView: 4 },
+            }}
+            className="product-slider relative"
+          >
           {products.map((product, i) => (
             <SwiperSlide key={product._id || i}>
               <motion.div
@@ -114,23 +116,29 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
               </motion.div>
             </SwiperSlide>
           ))}
-        </Swiper>
+          </Swiper>
+          
+          {/* Custom Navigation Buttons to the bottom right */}
+          <div className="absolute right-0 bottom-0 flex gap-3 pb-2 z-10">
+            <button className={`swiper-button-prev-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </button>
+            <button className={`swiper-button-next-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <style>{`
+        /* Hide default swiper nav since we use custom */
         .product-slider .swiper-button-next,
         .product-slider .swiper-button-prev {
-          color: #0B5D3B;
-          background: white;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .product-slider .swiper-button-next::after,
-        .product-slider .swiper-button-prev::after {
-          font-size: 18px;
-          font-weight: bold;
+          display: none !important;
         }
       `}</style>
     </section>

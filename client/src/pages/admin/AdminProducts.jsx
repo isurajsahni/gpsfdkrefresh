@@ -128,6 +128,11 @@ const AdminProducts = () => {
     setForm({ ...form, variations: updated });
   };
 
+  const duplicateVariation = (index) => {
+    const v = form.variations[index];
+    setForm({ ...form, variations: [...form.variations, { ...v, _id: undefined }] });
+  };
+
   const removeVariation = (index) => {
     setForm({ ...form, variations: form.variations.filter((_, i) => i !== index) });
   };
@@ -201,6 +206,7 @@ const AdminProducts = () => {
                     {form.variations.length > 1 && (
                       <button type="button" onClick={() => removeVariation(i)} className="text-red-400 hover:text-red-600 text-sm">Remove</button>
                     )}
+                    <button type="button" onClick={() => duplicateVariation(i)} className="text-accent hover:text-accent-dark text-sm border border-accent/20 px-2 py-0.5 rounded-md">Duplicate</button>
                   </div>
                 ))}
               </div>

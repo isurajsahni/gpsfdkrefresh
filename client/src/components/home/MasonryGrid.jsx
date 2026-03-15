@@ -9,7 +9,7 @@ const MasonryGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await API.get('/products', { params: { masonry: true, limit: 6 } });
+        const { data } = await API.get('/products', { params: { masonry: true, limit: 7 } });
         setProducts(data.products || []);
       } catch (err) {
         // silent fail
@@ -17,9 +17,6 @@ const MasonryGrid = () => {
     };
     fetchProducts();
   }, []);
-
-  // Predefined masonry heights for visual variety
-  const heights = ['h-72', 'h-96', 'h-80', 'h-[28rem]', 'h-72', 'h-96', 'h-80', 'h-[22rem]'];
 
   return (
     <section className="section-padding section-spacing bg-cream-dark">
@@ -35,50 +32,51 @@ const MasonryGrid = () => {
           <div className="w-20 h-[2px] bg-[#E3543A] mt-4 mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           {products.map((product, i) => {
-            // Define different heights for a more natural masonry look
-            const heightClasses = [
-              'h-[500px] md:row-span-2', // Large tall
-              'h-[240px]',               // Small
-              'h-[240px]',               // Small
-              'h-[240px]',               // Small
-              'h-[500px] md:row-span-2', // Large tall
-              'h-[240px]'                // Small
+            // Define span and height classes for a premium masonry look
+            const layoutClasses = [
+              'lg:col-span-2 lg:row-span-2 min-h-[500px] md:h-full', // Item 0
+              'lg:col-span-1 min-h-[300px]',                         // Item 1
+              'lg:col-span-1 min-h-[300px]',                         // Item 2
+              'lg:col-span-1 min-h-[300px]',                         // Item 3
+              'lg:col-span-1 min-h-[300px]',                         // Item 4
+              'lg:col-span-1 lg:row-span-2 min-h-[500px]',           // Item 5
+              'lg:col-span-2 min-h-[300px]',                         // Item 6
             ];
 
             return (
               <motion.div
                 key={product._id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`rounded-[2rem] overflow-hidden relative group shadow-lg ${heightClasses[i % heightClasses.length]}`}
+                transition={{ delay: i * 0.05 }}
+                className={`rounded-[2rem] overflow-hidden relative group shadow-xl bg-white ${layoutClasses[i % layoutClasses.length]}`}
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
                     src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 p-6 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                      <span className="inline-block bg-white text-[#E3543A] text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3">
-                        {product.subCategory || product.category?.name || 'FEATURED'}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90 p-8 flex flex-col justify-between opacity-0 group-hover:opacity-100 transition-all duration-500">
+                    <div className="transform -translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                      <span className="inline-block bg-white text-[#E3543A] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.1em] mb-4">
+                        {product.subCategory || product.category?.name || 'HOUSE NAMEPLATES'}
                       </span>
-                      <h3 className="text-white font-heading text-2xl font-bold line-clamp-2 leading-tight">
+                      <h3 className="text-white font-heading text-3xl font-bold line-clamp-2 leading-tight">
                         {product.name}
                       </h3>
                     </div>
-                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 flex items-center text-white font-bold text-sm">
-                      Shop Now <span className="text-[#E3543A] ml-2 text-lg">↗</span>
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 flex items-center text-white font-bold text-base group-hover:underline decoration-[#E3543A] underline-offset-8">
+                      Shop Now <span className="text-[#E3543A] ml-2 text-2xl no-underline">↗</span>
                     </div>
                   </div>
                   
-                  {/* Subtle static info for mobile or non-hover */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent md:hidden">
-                    <h3 className="text-white font-heading text-lg font-bold">{product.name}</h3>
+                  {/* Subtle static title for mobile */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent md:hidden pointer-events-none">
+                    <h3 className="text-white font-heading text-xl font-bold">{product.name}</h3>
                   </div>
                 </Link>
               </motion.div>

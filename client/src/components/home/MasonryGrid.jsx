@@ -22,7 +22,7 @@ const MasonryGrid = () => {
   const heights = ['h-72', 'h-96', 'h-80', 'h-[28rem]', 'h-72', 'h-96', 'h-80', 'h-[22rem]'];
 
   return (
-    <section className="section-padding section-spacing bg-slate-50">
+    <section className="section-padding section-spacing bg-cream-dark">
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

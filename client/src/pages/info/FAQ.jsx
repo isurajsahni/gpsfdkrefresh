@@ -21,7 +21,7 @@ const FAQ = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-primary">
+    <div className="min-h-screen bg-primary text-secondary">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -29,8 +29,8 @@ const FAQ = () => {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 text-primary">Frequently Asked Questions</h1>
-          <p className="text-xl text-primary/70">
+          <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 text-secondary">Frequently Asked Questions</h1>
+          <p className="text-xl text-secondary/70">
             Find answers to common questions about our products and services.
           </p>
         </motion.div>
@@ -42,10 +42,10 @@ const FAQ = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="bg-primary/5 rounded-2xl p-6"
+              className="bg-secondary/5 rounded-2xl p-6"
             >
-              <h3 className="text-xl font-heading font-bold text-primary mb-3">{faq.question}</h3>
-              <p className="text-primary/70 leading-relaxed">{faq.answer}</p>
+              <h3 className="text-xl font-heading font-bold text-secondary mb-3">{faq.question}</h3>
+              <p className="text-secondary/70 leading-relaxed">{faq.answer}</p>
             </motion.div>
           ))}
         </div>

@@ -4,6 +4,24 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const slugify = require('slugify');
 
+/**
+ * Generates a unique slug for a product
+ * @param {string} name - Product name
+ * @returns {Promise<string>} - Unique slug
+ */
+const generateUniqueSlug = async (name) => {
+  let baseSlug = slugify(name, { lower: true, strict: true });
+  let slug = baseSlug;
+  let count = 1;
+  
+  // Check if slug exists in DB
+  while (await Product.findOne({ slug })) {
+    slug = `${baseSlug}-${count++}`;
+  }
+  
+  return slug;
+};
+
 // GET /api/products
 exports.getProducts = async (req, res) => {
   try {
@@ -184,26 +202,59 @@ exports.importProducts = async (req, res) => {
               await category.save();
             }
 
+            // Check if product with this name already exists
+            let product = await Product.findOne({ name: new RegExp(`^${name}$`, 'i') });
+
             // Upload Images to Cloudinary if they are URLs
             const finalImages = [];
-            for (const url of pData.imageUrls) {
-              try {
-                const result = await cloudinary.uploader.upload(url, {
-                  folder: 'gpsfdk/imported',
-                  transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
-                });
-                finalImages.push({ url: result.secure_url, public_id: result.public_id });
-              } catch (imgErr) {
-                console.error(`Failed to upload image from URL: ${url}`, imgErr.message);
+            if (pData.imageUrls.length > 0) {
+              for (const url of pData.imageUrls) {
+                try {
+                  const result = await cloudinary.uploader.upload(url, {
+                    folder: 'gpsfdk/imported',
+                    transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
+                  });
+                  finalImages.push({ url: result.secure_url, public_id: result.public_id });
+                } catch (imgErr) {
+                  console.error(`Failed to upload image from URL: ${url}`, imgErr.message);
+                }
               }
             }
 
-            const product = new Product({
-              ...pData,
-              category: category._id,
-              images: finalImages
-            });
-            await product.save();
+            if (product) {
+              // Update existing product: merge variations and images
+              console.log(`Updating existing product: ${name}`);
+              
+              // Only add new variations (simple check by size/material)
+              for (const newVar of pData.variations) {
+                const exists = product.variations.find(v => v.size === newVar.size && v.material === newVar.material);
+                if (!exists) {
+                  product.variations.push(newVar);
+                } else {
+                  // Update price/stock if it exists
+                  exists.price = newVar.price;
+                  exists.stock = newVar.stock;
+                }
+              }
+              
+              if (finalImages.length > 0) {
+                product.images = [...product.images, ...finalImages];
+              }
+              
+              await product.save();
+            } else {
+              // Create new product with unique slug
+              console.log(`Creating new product: ${name}`);
+              const uniqueSlug = await generateUniqueSlug(name);
+              
+              product = new Product({
+                ...pData,
+                slug: uniqueSlug,
+                category: category._id,
+                images: finalImages
+              });
+              await product.save();
+            }
             importedCount++;
           }
 

@@ -32,13 +32,24 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
-productSchema.pre('save', function () {
-  if (this.isModified('name')) {
-    this.slug = slugify(this.name, { lower: true, strict: true });
+productSchema.pre('save', async function (next) {
+  if (this.isModified('name') || !this.slug) {
+    let baseSlug = slugify(this.name, { lower: true, strict: true });
+    let slug = baseSlug;
+    let count = 1;
+    
+    // Check if slug exists in DB (excluding current product)
+    while (await mongoose.model('Product').findOne({ slug, _id: { $ne: this._id } })) {
+      slug = `${baseSlug}-${count++}`;
+    }
+    this.slug = slug;
   }
-  if (this.variations.length > 0 && !this.basePrice) {
+  
+  if (this.variations && this.variations.length > 0) {
     this.basePrice = Math.min(...this.variations.map(v => v.price));
   }
+  
+  next();
 });
 
 productSchema.index({ category: 1 });

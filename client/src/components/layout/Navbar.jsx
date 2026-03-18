@@ -5,6 +5,7 @@ import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiChevr
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
+import logo from '../../assets/vite.webp';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -28,13 +29,15 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-secondary/95 backdrop-blur-lg shadow-2xl' : 'bg-secondary'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-2xl' : 'bg-cream'}`}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
           <div className="flex items-center justify-between h-16 md:h-20">
+
+            <div className="flex items-center gap-12">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2 group">
-              <span className="text-2xl md:text-3xl font-heading font-bold text-white tracking-wider group-hover:text-accent transition-colors duration-300">
-                GPSFDK
+              <span className="">
+                <img src={logo} alt="Logo" className="h-20 w-auto" />
               </span>
             </Link>
 
@@ -44,7 +47,7 @@ const Navbar = () => {
                 <div key={cat.slug} className="relative group">
                   <Link
                     to={`/category/${cat.slug}`}
-                    className="flex items-center gap-1 text-white/90 hover:text-accent font-medium text-sm tracking-wide uppercase transition-colors duration-300"
+                    className="flex items-center gap-1 text-secondary hover:text-accent font-semibold text-md tracking-wide transition-colors duration-300"
                   >
                     {cat.name}
                     {cat.subcats.length > 0 && <HiChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />}
@@ -67,13 +70,13 @@ const Navbar = () => {
                 </div>
               ))}
             </div>
-
+</div>
             {/* Right Actions */}
             <div className="flex items-center gap-3">
               {/* Search */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-white hover:text-accent transition-colors duration-300"
+                className="p-2 text-secondary hover:text-accent transition-colors duration-300"
               >
                 <HiOutlineSearch className="w-6 h-6" />
               </button>
@@ -81,14 +84,14 @@ const Navbar = () => {
               {/* Cart */}
               <button
                 onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-white hover:text-accent transition-colors duration-300"
+                className="relative p-2 text-secondary hover:text-accent transition-colors duration-300"
               >
                 <HiOutlineShoppingBag className="w-6 h-6" />
                 {cartCount > 0 && (
                   <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-accent text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"
+                    className="absolute -top-1 -right-1 bg-accent text-secondary text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"
                   >
                     {cartCount}
                   </motion.span>
@@ -101,7 +104,7 @@ const Navbar = () => {
                   <>
                     <button
                       onClick={() => setUserMenu(!userMenu)}
-                      className="flex items-center gap-2 p-2 text-white hover:text-accent transition-colors duration-300"
+                      className="flex items-center gap-2 p-2 text-secondary hover:text-accent transition-colors duration-300"
                     >
                       <HiOutlineUser className="w-6 h-6" />
                       <span className="hidden lg:block text-sm font-medium">{user.name}</span>
@@ -133,7 +136,7 @@ const Navbar = () => {
                     </AnimatePresence>
                   </>
                 ) : (
-                  <Link to="/login" className="p-2 text-white hover:text-accent transition-colors duration-300">
+                  <Link to="/login" className="p-2 text-secondary hover:text-accent transition-colors duration-300">
                     <HiOutlineUser className="w-6 h-6" />
                   </Link>
                 )}
@@ -142,7 +145,7 @@ const Navbar = () => {
               {/* Mobile Toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2 text-white hover:text-accent transition-colors"
+                className="md:hidden p-2 text-secondary hover:text-accent transition-colors"
               >
                 {mobileOpen ? <HiOutlineX className="w-6 h-6" /> : <HiOutlineMenu className="w-6 h-6" />}
               </button>

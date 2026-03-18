@@ -176,6 +176,20 @@ exports.deleteProduct = async (req, res, next) => {
   }
 };
 
+// POST /api/products/bulk-delete (admin)
+exports.bulkDeleteProducts = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'No product IDs provided' });
+    }
+    const result = await Product.deleteMany({ _id: { $in: ids } });
+    res.json({ message: `${result.deletedCount} product(s) deleted`, deletedCount: result.deletedCount });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // POST /api/products/import (admin)
 exports.importProducts = async (req, res, next) => {
   try {

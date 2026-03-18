@@ -11,6 +11,7 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [imageFiles, setImageFiles] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [form, setForm] = useState({
     name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
@@ -129,9 +130,36 @@ const AdminProducts = () => {
     try {
       await API.delete(`/products/${id}`);
       toast.success('Product deleted');
+      setSelectedIds(prev => prev.filter(sid => sid !== id));
       fetchProducts();
     } catch (err) {
       toast.error('Delete failed');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Delete ${selectedIds.length} product(s)?`)) return;
+    const toastId = toast.loading(`Deleting ${selectedIds.length} product(s)...`);
+    try {
+      const { data } = await API.post('/products/bulk-delete', { ids: selectedIds });
+      toast.success(`${data.deletedCount} product(s) deleted`, { id: toastId });
+      setSelectedIds([]);
+      fetchProducts();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Bulk delete failed', { id: toastId });
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(products.map(p => p._id));
     }
   };
 
@@ -190,6 +218,11 @@ const AdminProducts = () => {
           <button onClick={() => { setShowForm(true); setEditing(null); }} className="btn-primary text-sm flex items-center gap-2">
             <HiOutlinePlus className="w-4 h-4" /> Add Product
           </button>
+          {selectedIds.length > 0 && (
+            <button onClick={handleBulkDelete} className="bg-red-500 hover:bg-red-600 text-white text-sm flex items-center gap-2 px-4 py-2 rounded-xl transition-colors">
+              <HiOutlineTrash className="w-4 h-4" /> Delete Selected ({selectedIds.length})
+            </button>
+          )}
         </div>
       </div>
 
@@ -299,6 +332,7 @@ const AdminProducts = () => {
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-4"><input type="checkbox" checked={products.length > 0 && selectedIds.length === products.length} onChange={toggleSelectAll} className="accent-accent w-4 h-4 cursor-pointer" /></th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Product</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Category</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Subcategory</th>
@@ -309,7 +343,8 @@ const AdminProducts = () => {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {products.map(product => (
-                  <tr key={product._id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={product._id} className={`hover:bg-gray-50 transition-colors ${selectedIds.includes(product._id) ? 'bg-accent/5' : ''}`}>
+                    <td className="px-4 py-4"><input type="checkbox" checked={selectedIds.includes(product._id)} onChange={() => toggleSelect(product._id)} className="accent-accent w-4 h-4 cursor-pointer" /></td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <img src={product.images?.[0]?.url || 'https://via.placeholder.com/50'} alt="" className="w-10 h-10 rounded-lg object-cover" />

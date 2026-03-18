@@ -60,12 +60,36 @@ const ProductPage = () => {
 
   const findVariation = (updates) => {
     const criteria = { ...selectedVariation, ...updates };
-    return product.variations.find(v =>
-      (!v.material || v.material === criteria.material) &&
-      (!v.frame || v.frame === criteria.frame) &&
-      v.size === criteria.size &&
-      (!v.color || v.color === criteria.color)
-    ) || product.variations.find(v => v.size === criteria.size) || selectedVariation;
+    
+    // Score each variation by how many attributes match the desired criteria
+    let bestMatch = null;
+    let bestScore = -1;
+    
+    for (const v of product.variations) {
+      let score = 0;
+      // The updated attribute(s) MUST match
+      let requiredMatch = true;
+      for (const key of Object.keys(updates)) {
+        if (v[key] !== undefined && v[key] !== '' && updates[key] !== undefined && updates[key] !== '') {
+          if (v[key] !== updates[key]) { requiredMatch = false; break; }
+          score += 10; // High weight for the attribute the user just changed
+        }
+      }
+      if (!requiredMatch) continue;
+      
+      // Score optional attributes
+      if (v.size && v.size === criteria.size) score += 3;
+      if (v.material && v.material === criteria.material) score += 2;
+      if (v.frame && v.frame === criteria.frame) score += 2;
+      if (v.color && v.color === criteria.color) score += 2;
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = v;
+      }
+    }
+    
+    return bestMatch || selectedVariation;
   };
 
   const handleAddToCart = () => {

@@ -172,10 +172,14 @@ const AdminProducts = () => {
 
     const toastId = toast.loading('Importing products...');
     try {
-      await API.post('/products/import', formData, {
+      const { data } = await API.post('/products/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      toast.success('Bulk import successful', { id: toastId });
+      if (data.count > 0) {
+        toast.success(`Imported ${data.count} product(s) successfully${data.errors ? ` (${data.errors} failed)` : ''}`, { id: toastId });
+      } else {
+        toast.error(data.message || 'No products were imported. Check your CSV headers.', { id: toastId });
+      }
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Import failed', { id: toastId });

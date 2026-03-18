@@ -260,30 +260,61 @@ exports.importProducts = async (req, res, next) => {
         try {
           const productsMap = new Map();
 
-          for (const [index, row] of results.entries()) {
-            // Map WooCommerce or Standard fields
-            const name = (row.name || row.Name || row['Post Title'])?.trim();
-            if (!name) continue;
+          // Helper: normalize a row so keys are trimmed & lowercased
+          const normalizeRow = (row) => {
+            const normalized = {};
+            for (const key of Object.keys(row)) {
+              normalized[key.trim().toLowerCase()] = row[key];
+            }
+            return normalized;
+          };
 
-            const description = row.description || row.Description || row['Post Content'] || '';
-            const categoryName = row.category || row.Categories || 'General';
-            const sku = row.sku || row.SKU || '';
-            const type = row.type || row.Type || 'simple'; // 'simple' or 'variable' or 'variation'
+          // Helper: parse a number that may contain commas (e.g. "4,500")
+          const parseNum = (val, fallback = 0) => {
+            if (val === undefined || val === null || val === '') return fallback;
+            const cleaned = String(val).replace(/,/g, '').trim();
+            const num = Number(cleaned);
+            return isNaN(num) ? fallback : num;
+          };
+
+          // Helper: get a value from the normalized row, trying multiple key variants
+          const getField = (r, ...keys) => {
+            for (const k of keys) {
+              const val = r[k.toLowerCase().trim()];
+              if (val !== undefined && val !== null && String(val).trim() !== '') return String(val).trim();
+            }
+            return '';
+          };
+
+          for (const [index, rawRow] of results.entries()) {
+            const row = normalizeRow(rawRow);
+
+            // Map WooCommerce or Standard fields
+            const name = getField(row, 'name', 'post title');
+            if (!name) {
+              console.log(`Row ${index + 1}: Skipped – no product name found. Keys:`, Object.keys(rawRow).join(', '));
+              continue;
+            }
+
+            const description = getField(row, 'description', 'post content');
+            const categoryName = getField(row, 'category', 'categories') || 'General';
+            const sku = getField(row, 'sku');
+            const type = getField(row, 'type') || 'simple';
             
             // Images (WooCommerce images are often comma-separated URLs)
-            const imageUrlsStr = row.images || row.Images || '';
-            const imageUrls = imageUrlsStr.split(',').map(u => u.trim()).filter(u => u.startsWith('http'));
+            const imageUrlsStr = getField(row, 'images');
+            const imageUrls = imageUrlsStr ? imageUrlsStr.split(',').map(u => u.trim()).filter(u => u.startsWith('http')) : [];
 
             // Variation Data
             const variation = {
               sku: sku,
-              price: Number(row.price || row['Regular price'] || 0),
-              comparePrice: Number(row.comparePrice || row['Sale price'] || 0),
-              stock: Number(row.stock || row.Stock || 100),
-              size: row.size || row['Attribute 1 value(s)'] || row['Attribute 1 value'] || 'Standard',
-              material: row.material || row['Attribute 2 value(s)'] || '',
-              frame: row.frame || row['Attribute 3 value(s)'] || '',
-              color: row.color || row['Attribute 4 value(s)'] || ''
+              price: parseNum(row['regular price'] || row['price'], 0),
+              comparePrice: parseNum(row['sale price'] || row['compareprice'], 0),
+              stock: parseNum(row['stock'], 100),
+              size: getField(row, 'size', 'attribute 1 value(s)', 'attribute 1 value') || 'Standard',
+              material: getField(row, 'material', 'attribute 2 value(s)', 'attribute 2 value'),
+              frame: getField(row, 'frame', 'attribute 3 value(s)', 'attribute 3 value'),
+              color: getField(row, 'color', 'attribute 4 value(s)', 'attribute 4 value')
             };
 
             if (!productsMap.has(name)) {
@@ -292,9 +323,9 @@ exports.importProducts = async (req, res, next) => {
                 description,
                 categoryName,
                 imageUrls,
-                featured: row.featured === 'true' || row.featured === '1' || row.IsFeatured === '1',
-                isMasonry: row.isMasonry === 'true' || row.isMasonry === '1',
-                customizable: row.customizable === 'true' || row.customizable === '1',
+                featured: ['true', '1'].includes((row['featured'] || row['isfeatured'] || '').toLowerCase()),
+                isMasonry: ['true', '1'].includes((row['ismasonry'] || '').toLowerCase()),
+                customizable: ['true', '1'].includes((row['customizable'] || '').toLowerCase()),
                 variations: [variation]
               });
             } else if (type.toLowerCase().includes('variation')) {
@@ -304,86 +335,99 @@ exports.importProducts = async (req, res, next) => {
           }
 
           let importedCount = 0;
+          let errorCount = 0;
           const Category = require('../models/Category');
 
           for (const [name, pData] of productsMap.entries()) {
-            // Find or Create Category
-            let category = await Category.findOne({ 
-              $or: [{ name: new RegExp(`^${pData.categoryName.trim()}$`, 'i') }, { slug: pData.categoryName.trim().toLowerCase() }]
-            });
-            
-            if (!category) {
-              category = new Category({ name: pData.categoryName });
-              await category.save();
-            }
-
-            // Check if product with this name already exists
-            let product = await Product.findOne({ name: new RegExp(`^${name}$`, 'i') });
-
-            // Upload Images to Cloudinary if they are URLs
-            const finalImages = [];
-            if (pData.imageUrls.length > 0) {
-              for (const url of pData.imageUrls) {
-                try {
-                  const result = await cloudinary.uploader.upload(url, {
-                    folder: 'gpsfdk/imported',
-                    transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
-                  });
-                  finalImages.push({ url: result.secure_url, public_id: result.public_id });
-                } catch (imgErr) {
-                  console.error(`Failed to upload image from URL: ${url}`, imgErr.message);
-                }
-              }
-            }
-
-            if (product) {
-              // Update existing product: merge variations and images
-              console.log(`Updating existing product: ${name}`);
-              
-              // Only add new variations (simple check by size/material)
-              for (const newVar of pData.variations) {
-                const exists = product.variations.find(v => v.size === newVar.size && v.material === newVar.material);
-                if (!exists) {
-                  product.variations.push(newVar);
-                } else {
-                  // Update price/stock if it exists
-                  exists.price = newVar.price;
-                  exists.stock = newVar.stock;
-                }
-              }
-              
-              if (finalImages.length > 0) {
-                product.images = [...product.images, ...finalImages];
-              }
-              
-              await product.save();
-            } else {
-              // Create new product with unique slug
-              console.log(`Creating new product: ${name}`);
-              const uniqueSlug = await generateUniqueSlug(name);
-              
-              product = new Product({
-                name: pData.name,
-                description: pData.description,
-                slug: uniqueSlug,
-                category: category._id,
-                variations: pData.variations,
-                featured: pData.featured,
-                isMasonry: pData.isMasonry,
-                customizable: pData.customizable,
-                images: finalImages
+            try {
+              // Find or Create Category
+              let category = await Category.findOne({ 
+                $or: [{ name: new RegExp(`^${pData.categoryName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }, { slug: pData.categoryName.trim().toLowerCase() }]
               });
-              await product.save();
+              
+              if (!category) {
+                category = new Category({ name: pData.categoryName });
+                await category.save();
+              }
+
+              // Check if product with this name already exists
+              let product = await Product.findOne({ name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+
+              // Upload Images to Cloudinary if they are URLs
+              const finalImages = [];
+              if (pData.imageUrls.length > 0) {
+                for (const url of pData.imageUrls) {
+                  try {
+                    const result = await cloudinary.uploader.upload(url, {
+                      folder: 'gpsfdk/imported',
+                      transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
+                    });
+                    finalImages.push({ url: result.secure_url, public_id: result.public_id });
+                  } catch (imgErr) {
+                    console.error(`Failed to upload image from URL: ${url}`, imgErr.message);
+                  }
+                }
+              }
+
+              if (product) {
+                // Update existing product: merge variations and images
+                console.log(`Updating existing product: ${name}`);
+                
+                // Only add new variations (simple check by size/material)
+                for (const newVar of pData.variations) {
+                  const exists = product.variations.find(v => v.size === newVar.size && v.material === newVar.material);
+                  if (!exists) {
+                    product.variations.push(newVar);
+                  } else {
+                    // Update price/stock if it exists
+                    exists.price = newVar.price;
+                    exists.stock = newVar.stock;
+                    if (newVar.comparePrice) exists.comparePrice = newVar.comparePrice;
+                  }
+                }
+                
+                if (finalImages.length > 0) {
+                  product.images = [...product.images, ...finalImages];
+                }
+                
+                await product.save();
+              } else {
+                // Create new product with unique slug
+                console.log(`Creating new product: ${name}`);
+                const uniqueSlug = await generateUniqueSlug(name);
+                
+                product = new Product({
+                  name: pData.name,
+                  description: pData.description,
+                  slug: uniqueSlug,
+                  category: category._id,
+                  variations: pData.variations,
+                  featured: pData.featured,
+                  isMasonry: pData.isMasonry,
+                  customizable: pData.customizable,
+                  images: finalImages
+                });
+                await product.save();
+              }
+              importedCount++;
+            } catch (productError) {
+              console.error(`Failed to import product "${name}":`, productError.message);
+              errorCount++;
             }
-            importedCount++;
           }
 
           // Clean up uploaded file
-          fs.unlinkSync(req.file.path);
+          try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
 
-          res.status(201).json({ 
-            message: `Successfully imported ${productsMap.size} products with their variations`,
-            count: productsMap.size 
+          const message = importedCount > 0
+            ? `Successfully imported ${importedCount} product(s) with their variations`
+            : 'No products were imported. Please check your CSV column headers (expected: Name, Regular price, Categories, etc.)';
+
+          res.status(importedCount > 0 ? 201 : 200).json({ 
+            message,
+            count: importedCount,
+            skippedRows: results.length - [...productsMap.values()].reduce((sum, p) => sum + p.variations.length, 0),
+            errors: errorCount
           });
         } catch (innerError) {
           console.error('Import Error:', innerError);

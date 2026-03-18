@@ -133,47 +133,43 @@ const ProductPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Images */}
+          {/* Images — thumbnails left, main image right */}
           <motion.div 
             initial={{ opacity: 0, x: -30 }} 
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-4"
+            className="flex flex-row gap-3"
           >
-            <div className="aspect-square relative rounded-3xl overflow-hidden bg-white shadow-lg border border-gray-100 group">
-              <motion.img
-                key={selectedImage}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
-                alt={product.name}
-                className="w-full h-full object-cover cursor-zoom-in"
-              />
-              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-secondary uppercase tracking-widest border border-white/50">
-                Premium
-              </div>
-            </div>
-            
+            {/* Vertical Thumbnails */}
             {product.images?.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              <div className="flex flex-col gap-2 overflow-y-auto max-h-[520px] scrollbar-hide">
                 {product.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all duration-300 relative ${
+                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 relative ${
                       selectedImage === i 
-                        ? 'border-accent shadow-md scale-105' 
-                        : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                        ? 'border-accent shadow-md ring-2 ring-accent/30' 
+                        : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-accent/50'
                     }`}
                   >
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
-                    {selectedImage === i && (
-                      <div className="absolute inset-0 bg-accent/10 pointer-events-none" />
-                    )}
                   </button>
                 ))}
               </div>
             )}
+
+            {/* Main Image */}
+            <div className="flex-1 aspect-square relative rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100">
+              <motion.img
+                key={selectedImage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
           </motion.div>
 
           {/* Details */}
@@ -213,7 +209,7 @@ const ProductPage = () => {
                       <button
                         key={m}
                         onClick={() => setSelectedVariation(findVariation({ material: m }))}
-                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all ${selectedVariation.material === m ? 'border-accent bg-accent text-white' : 'border-gray-200 hover:border-accent'}`}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${selectedVariation.material === m ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
                       >
                         {m}
                       </button>
@@ -230,7 +226,7 @@ const ProductPage = () => {
                       <button
                         key={f}
                         onClick={() => setSelectedVariation(findVariation({ frame: f }))}
-                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all ${selectedVariation.frame === f ? 'border-accent bg-accent text-white' : 'border-gray-200 hover:border-accent'}`}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${selectedVariation.frame === f ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
                       >
                         {f}
                       </button>
@@ -247,7 +243,7 @@ const ProductPage = () => {
                       <button
                         key={c}
                         onClick={() => setSelectedVariation(findVariation({ color: c }))}
-                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all ${selectedVariation.color === c ? 'border-accent bg-accent text-white' : 'border-gray-200 hover:border-accent'}`}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${selectedVariation.color === c ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
                       >
                         {c}
                       </button>
@@ -264,7 +260,7 @@ const ProductPage = () => {
                       <button
                         key={s}
                         onClick={() => setSelectedVariation(findVariation({ size: s }))}
-                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all ${selectedVariation.size === s ? 'border-accent bg-accent text-white' : 'border-gray-200 hover:border-accent'}`}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${selectedVariation.size === s ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
                       >
                         {s}
                       </button>
@@ -289,15 +285,16 @@ const ProductPage = () => {
             </div>
 
             {/* Quantity + Add to Cart */}
-            <div className="mt-8 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center border-2 border-gray-200 rounded-full overflow-hidden">
-                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 hover:bg-cream-dark transition-colors">
-                    <HiMinus className="w-5 h-5" />
+            <div className="mt-8 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold text-secondary">Qty</span>
+                <div className="inline-flex items-center border border-gray-200 rounded-full overflow-hidden">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-3 py-1.5 hover:bg-cream-dark transition-colors">
+                    <HiMinus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="px-6 py-3 font-semibold text-lg min-w-[60px] text-center">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 hover:bg-cream-dark transition-colors">
-                    <HiPlus className="w-5 h-5" />
+                  <span className="px-4 py-1.5 font-semibold text-sm min-w-[36px] text-center">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="px-3 py-1.5 hover:bg-cream-dark transition-colors">
+                    <HiPlus className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>

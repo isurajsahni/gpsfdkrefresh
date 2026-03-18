@@ -67,6 +67,26 @@ const UserDashboard = () => {
                         {order.status}
                       </span>
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>
+                      {(order.status === 'pending' || order.status === 'processing') && (
+                        <button 
+                          onClick={async () => {
+                            if(window.confirm('Are you sure you want to cancel this order?')) {
+                              try {
+                                await API.put(`/orders/${order._id}/cancel`);
+                                toast.success('Order cancelled successfully');
+                                // Refresh orders list (could optimize by updating local state instead)
+                                const { data } = await API.get('/orders');
+                                setOrders(data);
+                              } catch(err) {
+                                toast.error(err.response?.data?.message || 'Cancellation failed');
+                              }
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors ml-2"
+                        >
+                          Cancel Order
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">

@@ -121,3 +121,37 @@ exports.getOrderStats = async (req, res, next) => {
     next(error);
   }
 };
+
+// PUT /api/orders/:id/cancel
+exports.cancelOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    
+    // Check authorization: must be admin or order owner
+    if (req.user.role !== 'admin' && order.user?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to cancel this order' });
+    }
+
+    if (order.status !== 'pending' && order.status !== 'processing') {
+      return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
+    }
+
+    order.status = 'cancelled';
+    await order.save();
+    res.json({ message: 'Order cancelled successfully', order });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/orders/:id (admin)
+exports.deleteOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json({ message: 'Order deleted completely' });
+  } catch (error) {
+    next(error);
+  }
+};

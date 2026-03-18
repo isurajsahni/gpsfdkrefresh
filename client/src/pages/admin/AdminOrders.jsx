@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineChevronDown, HiOutlineChevronUp, HiOutlinePhone, HiOutlineMail, HiOutlineLocationMarker } from 'react-icons/hi';
+import { HiOutlineChevronDown, HiOutlineChevronUp, HiOutlinePhone, HiOutlineMail, HiOutlineLocationMarker, HiOutlineTrash } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -41,6 +41,19 @@ const AdminOrders = () => {
 
   const toggleExpand = (id) => {
     setExpandedId(prev => prev === id ? null : id);
+  };
+
+  const deleteOrder = async (id, e) => {
+    e.stopPropagation();
+    if (window.confirm('Are you sure you want to permanently delete this order?')) {
+      try {
+        await API.delete(`/orders/${id}`);
+        toast.success('Order deleted');
+        fetchOrders();
+      } catch (err) {
+        toast.error('Delete failed');
+      }
+    }
   };
 
   // Get customer display name & contact
@@ -123,6 +136,16 @@ const AdminOrders = () => {
                         ))}
                       </select>
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>
+                      
+                      {/* Delete Button */}
+                      <button 
+                        onClick={(e) => deleteOrder(order._id, e)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Order"
+                      >
+                        <HiOutlineTrash className="w-5 h-5" />
+                      </button>
+
                       {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-gray-400" /> : <HiOutlineChevronDown className="w-5 h-5 text-gray-400" />}
                     </div>
                   </div>

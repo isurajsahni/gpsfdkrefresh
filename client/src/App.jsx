@@ -70,8 +70,8 @@ function App() {
                 <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
                 <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
 
-              {/* Checkout — accessible to everyone (guest + logged-in) */}
-              <Route path="/checkout" element={<><CheckoutPage /><Footer /></>} />
+              {/* Protected */}
+              <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /><Footer /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
 
               {/* Admin */}

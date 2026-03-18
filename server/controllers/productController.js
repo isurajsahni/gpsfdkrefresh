@@ -3,6 +3,7 @@ const Category = require('../models/Category');
 const csv = require('csv-parser');
 const fs = require('fs');
 const slugify = require('slugify');
+const { cloudinary } = require('../middleware/upload');
 
 /**
  * Generates a unique slug for a product
@@ -157,6 +158,22 @@ exports.updateProduct = async (req, res, next) => {
 
     product.images = [...keptImages, ...newImages];
 
+    // Find images that were removed and delete them from Cloudinary
+    if (product.images.length >= 0) { // To run safely
+      const keptPublicIds = keptImages.map(img => img.public_id).filter(Boolean);
+      const removedImages = product._doc.images || []; // Access original images from previous state
+
+      for (const img of removedImages) {
+        if (img.public_id && !keptPublicIds.includes(img.public_id)) {
+          try {
+            await cloudinary.uploader.destroy(img.public_id);
+          } catch (err) {
+            console.error(`Failed to delete image ${img.public_id} from Cloudinary:`, err);
+          }
+        }
+      }
+    }
+
     await product.save();
     res.json(product);
   } catch (error) {
@@ -169,6 +186,20 @@ exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
+    
+    // Delete images from Cloudinary
+    if (product.images && product.images.length > 0) {
+      for (const img of product.images) {
+        if (img.public_id) {
+          try {
+            await cloudinary.uploader.destroy(img.public_id);
+          } catch (err) {
+            console.error(`Failed to delete image ${img.public_id} from Cloudinary:`, err);
+          }
+        }
+      }
+    }
+
     await product.deleteOne();
     res.json({ message: 'Product removed' });
   } catch (error) {
@@ -183,6 +214,25 @@ exports.bulkDeleteProducts = async (req, res, next) => {
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return res.status(400).json({ message: 'No product IDs provided' });
     }
+
+    // Find all products to get their image public_ids
+    const products = await Product.find({ _id: { $in: ids } });
+    
+    // Delete all associated images from Cloudinary
+    for (const product of products) {
+      if (product.images && product.images.length > 0) {
+        for (const img of product.images) {
+          if (img.public_id) {
+            try {
+              await cloudinary.uploader.destroy(img.public_id);
+            } catch (err) {
+              console.error(`Failed to delete image ${img.public_id} from Cloudinary:`, err);
+            }
+          }
+        }
+      }
+    }
+
     const result = await Product.deleteMany({ _id: { $in: ids } });
     res.json({ message: `${result.deletedCount} product(s) deleted`, deletedCount: result.deletedCount });
   } catch (error) {
@@ -209,7 +259,6 @@ exports.importProducts = async (req, res, next) => {
         console.log('CSV Parsing Complete. Processing', results.length, 'rows');
         try {
           const productsMap = new Map();
-          const { cloudinary } = require('../middleware/upload');
 
           for (const [index, row] of results.entries()) {
             // Map WooCommerce or Standard fields

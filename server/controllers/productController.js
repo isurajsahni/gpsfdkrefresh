@@ -77,13 +77,34 @@ exports.getProductBySlug = async (req, res, next) => {
 // POST /api/products (admin)
 exports.createProduct = async (req, res, next) => {
   try {
-    const product = new Product(req.body);
-    if (typeof req.body.variations === 'string') {
-      product.variations = JSON.parse(req.body.variations);
+    // Parse variations from FormData string
+    let variations = req.body.variations;
+    if (typeof variations === 'string') {
+      variations = JSON.parse(variations);
     }
+
+    // Parse boolean fields (FormData sends them as strings)
+    const parseBool = (val) => val === 'true' || val === true;
+
+    const productData = {
+      name: req.body.name,
+      description: req.body.description || '',
+      category: req.body.category,
+      subCategory: req.body.subCategory || '',
+      customizable: parseBool(req.body.customizable),
+      customizationLabel: req.body.customizationLabel || 'Custom Text',
+      featured: parseBool(req.body.featured),
+      isMasonry: parseBool(req.body.isMasonry),
+      variations: variations || [],
+      images: [],
+    };
+
+    // Use uploaded files for images
     if (req.files && req.files.length > 0) {
-      product.images = req.files.map(f => ({ url: f.path, public_id: f.filename }));
+      productData.images = req.files.map(f => ({ url: f.path, public_id: f.filename }));
     }
+
+    const product = new Product(productData);
     await product.save();
     res.status(201).json(product);
   } catch (error) {
@@ -96,15 +117,46 @@ exports.updateProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    
-    Object.assign(product, req.body);
+
+    // Parse boolean fields (FormData sends them as strings)
+    const parseBool = (val) => val === 'true' || val === true;
+
+    // Update scalar fields explicitly
+    if (req.body.name !== undefined) product.name = req.body.name;
+    if (req.body.description !== undefined) product.description = req.body.description;
+    if (req.body.category !== undefined) product.category = req.body.category;
+    if (req.body.subCategory !== undefined) product.subCategory = req.body.subCategory;
+    if (req.body.customizable !== undefined) product.customizable = parseBool(req.body.customizable);
+    if (req.body.customizationLabel !== undefined) product.customizationLabel = req.body.customizationLabel;
+    if (req.body.featured !== undefined) product.featured = parseBool(req.body.featured);
+    if (req.body.isMasonry !== undefined) product.isMasonry = parseBool(req.body.isMasonry);
+
+    // Parse variations
     if (typeof req.body.variations === 'string') {
       product.variations = JSON.parse(req.body.variations);
+    } else if (Array.isArray(req.body.variations)) {
+      product.variations = req.body.variations;
     }
-    if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(f => ({ url: f.path, public_id: f.filename }));
-      product.images = [...product.images, ...newImages];
+
+    // Handle images: start with existing images the frontend says to keep
+    let keptImages = [];
+    if (req.body.existingImages) {
+      try {
+        keptImages = typeof req.body.existingImages === 'string'
+          ? JSON.parse(req.body.existingImages)
+          : req.body.existingImages;
+      } catch (e) {
+        keptImages = [];
+      }
     }
+
+    // Append newly uploaded files
+    const newImages = (req.files && req.files.length > 0)
+      ? req.files.map(f => ({ url: f.path, public_id: f.filename }))
+      : [];
+
+    product.images = [...keptImages, ...newImages];
+
     await product.save();
     res.json(product);
   } catch (error) {
@@ -248,9 +300,14 @@ exports.importProducts = async (req, res, next) => {
               const uniqueSlug = await generateUniqueSlug(name);
               
               product = new Product({
-                ...pData,
+                name: pData.name,
+                description: pData.description,
                 slug: uniqueSlug,
                 category: category._id,
+                variations: pData.variations,
+                featured: pData.featured,
+                isMasonry: pData.isMasonry,
+                customizable: pData.customizable,
                 images: finalImages
               });
               await product.save();

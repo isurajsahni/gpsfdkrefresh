@@ -36,16 +36,23 @@ const AdminProducts = () => {
     e.preventDefault();
     try {
       const formData = new FormData();
-      Object.keys(form).forEach(key => {
-        if (key === 'variations') {
-          formData.append(key, JSON.stringify(form[key]));
-        } else if (key === 'images') {
-          formData.append(key, JSON.stringify(form[key]));
-        } else {
-          formData.append(key, form[key]);
-        }
-      });
+      // Append scalar fields
+      formData.append('name', form.name);
+      formData.append('description', form.description);
+      formData.append('category', form.category);
+      formData.append('subCategory', form.subCategory);
+      formData.append('customizable', form.customizable);
+      formData.append('customizationLabel', form.customizationLabel);
+      formData.append('featured', form.featured);
+      formData.append('isMasonry', form.isMasonry);
+      formData.append('variations', JSON.stringify(form.variations));
 
+      // Send existing images (URLs the user kept) under a separate key
+      if (form.images && form.images.length > 0) {
+        formData.append('existingImages', JSON.stringify(form.images));
+      }
+
+      // Send new image files
       imageFiles.forEach(file => {
         formData.append('images', file);
       });

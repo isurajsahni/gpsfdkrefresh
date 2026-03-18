@@ -52,6 +52,9 @@ const ProductPage = () => {
     );
   }
 
+  // Determine if this is a nameplate product (show custom text only for nameplates)
+  const isNameplate = product.category?.name?.toLowerCase().includes('nameplate');
+
   // Get unique variation options
   const materials = [...new Set(product.variations.filter(v => v.material).map(v => v.material))];
   const frames = [...new Set(product.variations.filter(v => v.frame).map(v => v.frame))];
@@ -93,11 +96,11 @@ const ProductPage = () => {
   };
 
   const handleAddToCart = () => {
-    if (product.customizable && !customText.trim()) {
+    if (isNameplate && !customText.trim()) {
       toast.error('Please enter custom text');
       return;
     }
-    addToCart(product, selectedVariation, quantity, customText);
+    addToCart(product, selectedVariation, quantity, isNameplate ? customText : '');
     setIsCartOpen(true);
   };
 
@@ -169,12 +172,12 @@ const ProductPage = () => {
               <span className="text-gray-500 text-sm">({product.numReviews || 0} reviews)</span>
             </div>
 
-            {/* Price */}
+            {/* Price — shown here briefly under name, updates on variation change */}
             <div className="mt-6">
-              <span className="text-4xl font-bold text-accent">₹{selectedVariation.price?.toLocaleString()}</span>
+              <span className="text-4xl font-bold text-accent">₹{(selectedVariation.price * quantity)?.toLocaleString()}</span>
               {selectedVariation.comparePrice > 0 && (
                 <>
-                  <span className="text-xl text-gray-400 line-through ml-3">₹{selectedVariation.comparePrice.toLocaleString()}</span>
+                  <span className="text-xl text-gray-400 line-through ml-3">₹{(selectedVariation.comparePrice * quantity).toLocaleString()}</span>
                   <span className="ml-3 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
                     {Math.round((1 - selectedVariation.price / selectedVariation.comparePrice) * 100)}% OFF
                   </span>
@@ -254,8 +257,8 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {/* Custom Text */}
-              {product.customizable && (
+              {/* Custom Text — only for Nameplate products */}
+              {isNameplate && (
                 <div>
                   <label className="block text-sm font-semibold text-secondary mb-2">{product.customizationLabel || 'Custom Text'}</label>
                   <input
@@ -270,18 +273,20 @@ const ProductPage = () => {
             </div>
 
             {/* Quantity + Add to Cart */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center border-2 border-gray-200 rounded-full overflow-hidden">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 hover:bg-cream-dark transition-colors">
-                  <HiMinus className="w-5 h-5" />
-                </button>
-                <span className="px-6 py-3 font-semibold text-lg min-w-[60px] text-center">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 hover:bg-cream-dark transition-colors">
-                  <HiPlus className="w-5 h-5" />
-                </button>
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center border-2 border-gray-200 rounded-full overflow-hidden">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 hover:bg-cream-dark transition-colors">
+                    <HiMinus className="w-5 h-5" />
+                  </button>
+                  <span className="px-6 py-3 font-semibold text-lg min-w-[60px] text-center">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 hover:bg-cream-dark transition-colors">
+                    <HiPlus className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <button onClick={handleAddToCart} className="btn-primary flex-1 flex items-center justify-center gap-3 text-lg">
-                <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart — ₹{(selectedVariation.price * quantity).toLocaleString()}
+              <button onClick={handleAddToCart} className="btn-primary w-full flex items-center justify-center gap-3 text-lg">
+                <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
               </button>
             </div>
           </motion.div>

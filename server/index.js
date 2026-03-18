@@ -31,7 +31,11 @@ app.use('/api/payments', require('./routes/payments'));
 app.get('/', (req, res) => res.send('GPSFDK Ecommerce API is running 🚀'));
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'OK', timestamp: new Date().toISOString() }));
+app.get('/api/health', (req, res) => res.json({ 
+  status: 'OK', 
+  version: '1.2.0-csv-fix',
+  timestamp: new Date().toISOString() 
+}));
 
 // Error handler
 app.use((err, req, res, next) => {

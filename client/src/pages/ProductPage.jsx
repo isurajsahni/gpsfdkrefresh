@@ -91,23 +91,42 @@ const ProductPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Images */}
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
-            <div className="aspect-square rounded-2xl overflow-hidden bg-cream-dark mb-4">
-              <img
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }} 
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-4"
+          >
+            <div className="aspect-square relative rounded-3xl overflow-hidden bg-white shadow-lg border border-gray-100 group">
+              <motion.img
+                key={selectedImage}
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
                 src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-zoom-in"
               />
+              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-secondary uppercase tracking-widest border border-white/50">
+                Premium
+              </div>
             </div>
+            
             {product.images?.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto">
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                 {product.images.map((img, i) => (
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${selectedImage === i ? 'border-accent' : 'border-transparent'}`}
+                    className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all duration-300 relative ${
+                      selectedImage === i 
+                        ? 'border-accent shadow-md scale-105' 
+                        : 'border-transparent opacity-60 hover:opacity-100 hover:scale-105'
+                    }`}
                   >
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    {selectedImage === i && (
+                      <div className="absolute inset-0 bg-accent/10 pointer-events-none" />
+                    )}
                   </button>
                 ))}
               </div>

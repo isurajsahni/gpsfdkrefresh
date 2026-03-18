@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import API from '../../utils/api';
+import logo from '../../assets/vite.webp';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -74,7 +75,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="text-3xl font-heading font-bold tracking-wider hover:text-accent transition-colors">
-              GPSFDK
+              <img src={logo} alt="Logo" className="h-20 w-auto" />
             </Link>
             <p className="mt-4 text-white/60 leading-relaxed max-w-sm">
               Premium wall canvases & custom house nameplates. Luxury made accessible — crafted with passion, delivered with care.

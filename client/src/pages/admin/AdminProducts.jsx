@@ -10,6 +10,7 @@ const AdminProducts = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
   const [form, setForm] = useState({
     name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
@@ -34,16 +35,35 @@ const AdminProducts = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...form };
+      const formData = new FormData();
+      Object.keys(form).forEach(key => {
+        if (key === 'variations') {
+          formData.append(key, JSON.stringify(form[key]));
+        } else if (key === 'images') {
+          formData.append(key, JSON.stringify(form[key]));
+        } else {
+          formData.append(key, form[key]);
+        }
+      });
+
+      imageFiles.forEach(file => {
+        formData.append('images', file);
+      });
+
       if (editing) {
-        await API.put(`/products/${editing}`, payload);
+        await API.put(`/products/${editing}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Product updated');
       } else {
-        await API.post('/products', payload);
+        await API.post('/products', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         toast.success('Product created');
       }
       setShowForm(false);
       setEditing(null);
+      setImageFiles([]);
       setForm({ name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [] });
       fetchProducts();
     } catch (err) {
@@ -65,7 +85,17 @@ const AdminProducts = () => {
       images: product.images || [],
     });
     setEditing(product._id);
+    setImageFiles([]);
     setShowForm(true);
+  };
+
+  const handleRemoveExistingImage = (index) => {
+    const updatedImages = form.images.filter((_, i) => i !== index);
+    setForm({ ...form, images: updatedImages });
+  };
+
+  const handleRemoveNewImage = (index) => {
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
   const handleDuplicate = (product) => {
@@ -83,6 +113,7 @@ const AdminProducts = () => {
       images: [], // Usually we don't duplicate the actual image files directly to avoid linking issues, user will upload new ones or we'd need to copy URLs
     });
     setEditing(null); // It's a new product, not an edit
+    setImageFiles([]);
     setShowForm(true);
   };
 
@@ -185,6 +216,38 @@ const AdminProducts = () => {
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.customizable} onChange={(e) => setForm({ ...form, customizable: e.target.checked })} className="accent-accent" /> Customizable</label>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} className="accent-accent" /> Featured</label>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.isMasonry} onChange={(e) => setForm({ ...form, isMasonry: e.target.checked })} className="accent-accent" /> Masonry</label>
+                </div>
+              </div>
+
+              {/* Images */}
+              <div className="border-t border-gray-100 pt-4">
+                <label className="block text-sm font-semibold mb-2">Product Images</label>
+                <div className="grid grid-cols-4 md:grid-cols-6 gap-4 mb-4">
+                  {/* Existing Images */}
+                  {form.images.map((img, i) => (
+                    <div key={`existing-${i}`} className="relative aspect-square rounded-xl overflow-hidden border">
+                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => handleRemoveExistingImage(i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                        <HiOutlineX className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {/* New Images */}
+                  {imageFiles.map((file, i) => (
+                    <div key={`new-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-accent/30 bg-accent/5">
+                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => handleRemoveNewImage(i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                        <HiOutlineX className="w-3 h-3" />
+                      </button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-accent text-[10px] text-white text-center py-0.5">NEW</div>
+                    </div>
+                  ))}
+                  {/* Upload Placeholder */}
+                  <label className="flex flex-col items-center justify-center aspect-square rounded-xl border-2 border-dashed border-gray-200 hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
+                    <HiOutlinePlus className="w-6 h-6 text-gray-400" />
+                    <span className="text-[10px] font-semibold text-gray-500 mt-1">Upload</span>
+                    <input type="file" multiple accept="image/*" onChange={(e) => setImageFiles([...imageFiles, ...Array.from(e.target.files)])} className="hidden" />
+                  </label>
                 </div>
               </div>
 

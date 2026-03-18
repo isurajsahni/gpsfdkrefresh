@@ -19,7 +19,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-primary">
+    <footer className="bg-primary border-t border-secondary/10">
       {/* Upper section — logo, tagline, nav, socials */}
       <div className="max-w-5xl mx-auto px-4 pt-14 pb-10 text-center">
         {/* Logo */}

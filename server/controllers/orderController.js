@@ -1,6 +1,6 @@
 const Order = require('../models/Order');
 
-// POST /api/orders
+// POST /api/orders (logged-in users)
 exports.createOrder = async (req, res, next) => {
   try {
     const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice } = req.body;
@@ -16,7 +16,33 @@ exports.createOrder = async (req, res, next) => {
       shippingPrice,
       taxPrice,
       totalPrice,
-      isPaid: paymentMethod === 'cod' ? false : false,
+      isPaid: false,
+    });
+    res.status(201).json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/orders/guest (guest checkout — no login required)
+exports.createGuestOrder = async (req, res, next) => {
+  try {
+    const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice, guestEmail, guestPhone } = req.body;
+    if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
+    if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
+    
+    const order = await Order.create({
+      guestEmail: guestEmail || '',
+      guestPhone: guestPhone || shippingAddress?.phone || '',
+      items,
+      shippingAddress,
+      billingAddress,
+      paymentMethod,
+      itemsPrice,
+      shippingPrice,
+      taxPrice,
+      totalPrice,
+      isPaid: false,
     });
     res.status(201).json(order);
   } catch (error) {

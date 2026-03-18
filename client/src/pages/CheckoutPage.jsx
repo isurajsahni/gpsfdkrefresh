@@ -12,10 +12,14 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
   const [address, setAddress] = useState({
     fullName: user?.name || '', phone: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
   const [paymentMethod, setPaymentMethod] = useState('cod');
+
+  const isGuest = !user;
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -39,12 +43,19 @@ const CheckoutPage = () => {
         totalPrice: cartTotal,
       };
 
-      const { data: order } = await API.post('/orders', orderData);
+      // For guests, add email/phone and use the guest endpoint
+      if (isGuest) {
+        orderData.guestEmail = guestEmail;
+        orderData.guestPhone = guestPhone || address.phone;
+      }
+
+      const endpoint = isGuest ? '/orders/guest' : '/orders';
+      const { data: order } = await API.post(endpoint, orderData);
 
       if (paymentMethod === 'cod') {
         clearCart();
         toast.success('Order placed successfully!');
-        navigate('/dashboard');
+        navigate(isGuest ? '/' : '/dashboard');
       } else if (paymentMethod === 'razorpay') {
         try {
           const { data: razorpayOrder } = await API.post('/payments/razorpay', { amount: cartTotal });
@@ -59,9 +70,9 @@ const CheckoutPage = () => {
               await API.post('/payments/razorpay/verify', { ...response, orderId: order._id });
               clearCart();
               toast.success('Payment successful!');
-              navigate('/dashboard');
+              navigate(isGuest ? '/' : '/dashboard');
             },
-            prefill: { name: user?.name, email: user?.email, contact: address.phone },
+            prefill: { name: address.fullName, email: isGuest ? guestEmail : user?.email, contact: address.phone },
             theme: { color: '#0B5D3B' }
           };
           const rzp = new window.Razorpay(options);
@@ -116,6 +127,38 @@ const CheckoutPage = () => {
           {step === 1 && (
             <div>
               <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Shipping Address</h2>
+
+              {/* Guest contact info */}
+              {isGuest && (
+                <div className="mb-6 p-4 bg-accent/5 border border-accent/20 rounded-xl">
+                  <p className="text-sm text-secondary font-semibold mb-3">Contact Information</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-secondary mb-1">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        placeholder="your@email.com"
+                        className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-secondary mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        required
+                        value={guestPhone}
+                        onChange={(e) => setGuestPhone(e.target.value)}
+                        placeholder="+91 XXXXX XXXXX"
+                        className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {[
                   { label: 'Full Name', key: 'fullName', type: 'text', span: false },
@@ -138,7 +181,18 @@ const CheckoutPage = () => {
                   </div>
                 ))}
               </div>
-              <button onClick={() => setStep(2)} className="btn-primary mt-6">Continue to Payment →</button>
+              <button
+                onClick={() => {
+                  if (isGuest && !guestEmail && !guestPhone) {
+                    toast.error('Please enter your email or phone number');
+                    return;
+                  }
+                  setStep(2);
+                }}
+                className="btn-primary mt-6"
+              >
+                Continue to Payment →
+              </button>
             </div>
           )}
 

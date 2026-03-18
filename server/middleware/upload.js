@@ -36,10 +36,11 @@ const csvDiskStorage = multer.diskStorage({
 const csvUpload = multer({ 
   storage: csvDiskStorage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+    const allowedMimeTypes = ['text/csv', 'application/vnd.ms-excel', 'application/csv', 'text/x-csv', 'application/x-csv', 'text/comma-separated-values', 'text/x-comma-separated-values'];
+    if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
       cb(null, true);
     } else {
-      cb(new Error('Only CSV files are allowed'), false);
+      cb(new Error(`File type ${file.mimetype} not supported. Please upload a CSV file.`), false);
     }
   }
 });

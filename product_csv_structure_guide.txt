@@ -1,0 +1,47 @@
+PRODUCT CSV IMPORT GUIDE (WOOCOMMERCE COMPATIBLE)
+
+Our system supports both standard WooCommerce exports and custom CSV formats. The importer automatically groups variations and handles image URLs.
+
+--- REQUIRED & CORE COLUMNS ---
+
+Name / Post Title:
+The product name. Used to group multiple rows (variations) into one product.
+
+Description / Post Content:
+The detailed product description.
+
+Categories:
+The category name (e.g., Wall Canvas). The system will auto-create missing categories.
+
+Regular price:
+The price for the specific row/variation.
+
+Type:
+Use 'variable' or 'simple' for the main product row, and 'variation' for subsequent rows of the same product.
+
+Images:
+A list of web URLs separated by commas. The system will automatically download these and upload them to your Cloudinary storage.
+
+--- VARIATION COLUMNS (ATTRIBUTES) ---
+
+The system maps these common fields to product options:
+
+1. size      (Mapped from: Attribute 1 value)
+2. material  (Mapped from: Attribute 2 value)
+3. frame     (Mapped from: Attribute 3 value)
+4. color     (Mapped from: Attribute 4 value)
+
+--- OPTIONAL COLUMNS ---
+
+SKU: Unique product identifier.
+Sale price: Discounted price.
+Stock: Number of items available (defaults to 100).
+featured: Set to '1' or 'true' to highlight.
+isMasonry: Set to '1' or 'true' for masonry layouts.
+customizable: Set to '1' or 'true' to allow custom text input.
+
+--- SAMPLE CSV STRUCTURE ---
+
+Name,Description,Categories,Regular price,Images,Type,Attribute 1 value
+"Modern Art","Beautiful gold art","Wall Canvas",4500,"https://example.com/img1.jpg","variable","12x18 inch"
+"Modern Art",,"Wall Canvas",5500,,"variation","24x36 inch"

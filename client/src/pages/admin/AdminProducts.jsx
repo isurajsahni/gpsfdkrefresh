@@ -173,6 +173,9 @@ const AdminProducts = () => {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-heading font-bold text-secondary">Products</h1>
         <div className="flex gap-4">
+          <a href="/demo_products.csv" download className="text-secondary text-sm flex items-center gap-2 border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+            Download Demo CSV
+          </a>
           <label className="btn-secondary text-sm flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
             <HiOutlineUpload className="w-4 h-4" /> Import CSV
             <input type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />

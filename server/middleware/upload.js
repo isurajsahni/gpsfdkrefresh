@@ -19,4 +19,29 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
-module.exports = { cloudinary, upload };
+// Local storage for CSV import
+const csvDiskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const fs = require('fs');
+    if (!fs.existsSync('uploads')) {
+      fs.mkdirSync('uploads');
+    }
+    cb(null, 'uploads');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const csvUpload = multer({ 
+  storage: csvDiskStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'), false);
+    }
+  }
+});
+
+module.exports = { cloudinary, upload, csvUpload };

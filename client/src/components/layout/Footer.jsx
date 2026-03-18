@@ -1,132 +1,95 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp, FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
-import API from '../../utils/api';
+import { FaInstagram, FaWhatsapp, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import logo from '../../assets/vite.webp';
 
 const Footer = () => {
-  const [email, setEmail] = useState('');
-  const [subscribed, setSubscribed] = useState(false);
-
-  const handleSubscribe = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubscribed(true);
-      setEmail('');
-      setTimeout(() => setSubscribed(false), 3000);
-    }
-  };
-
-  const footerLinks = {
-    'Shop': [
-      { name: 'Wall Canvas', path: '/category/wall-canvas' },
-      { name: 'House Nameplates', path: '/category/house-nameplates' },
-    ],
-    'Company': [
-      { name: 'About Us', path: '/about' },
-      { name: 'Contact', path: '/contact' },
-      { name: 'FAQ', path: '/faq' },
-    ],
-    'Support': [
-      { name: 'Shipping Policy', path: '/shipping-policy' },
-      { name: 'Returns & Refunds', path: '/returns-refunds' },
-      { name: 'Privacy Policy', path: '/privacy-policy' },
-      { name: 'Terms & Conditions', path: '/terms-conditions' },
-    ],
-  };
+  const navLinks = [
+    { name: 'Contact us', path: '/contact' },
+    { name: 'About us', path: '/about' },
+    { name: 'Shipping & Delivery Policy', path: '/shipping-policy' },
+    { name: 'CEO', path: '/about' },
+    { name: 'FAQs', path: '/faq' },
+    { name: 'Terms & Conditions', path: '/terms-conditions' },
+    { name: 'Privacy Policy', path: '/privacy-policy' },
+  ];
 
   const socials = [
-    { icon: FaInstagram, href: 'https://www.instagram.com/canvas.gps/', label: 'Instagram', color: 'hover:text-pink-400' },
-    { icon: FaFacebookF, href: 'https://www.facebook.com/gpsfdk/', label: 'Facebook', color: 'hover:text-blue-400' },
-    { icon: FaWhatsapp, href: 'https://wa.me/916280310103', label: 'WhatsApp', color: 'hover:text-green-400' },
+    { icon: FaInstagram, href: 'https://www.instagram.com/canvas.gps/', label: 'Instagram' },
+    { icon: FaWhatsapp, href: 'https://wa.me/916280310103', label: 'WhatsApp' },
   ];
 
   return (
-    <footer className="bg-secondary text-white">
-      {/* Newsletter Bar */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-heading font-semibold">Stay in the loop</h3>
-              <p className="text-white/60 mt-1">Get exclusive offers & new arrivals straight to your inbox.</p>
-            </div>
-            <form onSubmit={handleSubscribe} className="flex w-full md:w-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="flex-1 md:w-72 px-5 py-3 bg-white/10 border border-white/20 rounded-l-full text-white placeholder:text-white/40 focus:outline-none focus:border-accent transition-colors"
-                required
-              />
-              <button type="submit" className="bg-accent hover:bg-accent-dark px-6 py-3 rounded-r-full font-semibold transition-colors duration-300 whitespace-nowrap">
-                {subscribed ? '✓ Subscribed!' : 'Subscribe'}
-              </button>
-            </form>
-          </div>
+    <footer className="bg-primary">
+      {/* Upper section — logo, tagline, nav, socials */}
+      <div className="max-w-5xl mx-auto px-4 pt-14 pb-10 text-center">
+        {/* Logo */}
+        <Link to="/" className="inline-block">
+          <img src={logo} alt="GPSFDK Logo" className="h-20 w-auto mx-auto" />
+        </Link>
+
+        {/* Tagline */}
+        <p className="mt-4 text-secondary font-heading font-semibold text-base tracking-wide">
+          Business Group & School Of Learning.
+        </p>
+
+        {/* Nav Links */}
+        <nav className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.path}
+              className="text-secondary/80 text-sm hover:text-accent transition-colors duration-200"
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Social Icons */}
+        <div className="mt-6 flex items-center justify-center gap-4">
+          {socials.map((social) => (
+            <a
+              key={social.label}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+              className="text-secondary/50 hover:text-accent transition-colors duration-200"
+            >
+              <social.icon className="w-5 h-5" />
+            </a>
+          ))}
         </div>
       </div>
 
-      {/* Main Footer */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
-          {/* Brand */}
-          <div className="lg:col-span-2">
-            <Link to="/" className="text-3xl font-heading font-bold tracking-wider hover:text-accent transition-colors">
-              <img src={logo} alt="Logo" className="h-20 w-auto" />
-            </Link>
-            <p className="mt-4 text-white/60 leading-relaxed max-w-sm">
-              Premium wall canvases & custom house nameplates. Luxury made accessible — crafted with passion, delivered with care.
-            </p>
-            <div className="flex items-center gap-4 mt-6">
-              {socials.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  aria-label={social.label}
-                  className={`w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/70 ${social.color} transition-all duration-300 hover:scale-110`}
-                >
-                  <social.icon className="w-4 h-4" />
-                </a>
-              ))}
-            </div>
-          </div>
+      {/* Divider */}
+      <div className="border-t border-secondary/10" />
 
-          {/* Links */}
-          {Object.entries(footerLinks).map(([title, links]) => (
-            <div key={title}>
-              <h4 className="font-heading text-lg font-semibold mb-4 text-accent">{title}</h4>
-              <ul className="space-y-3">
-                {links.map((link) => (
-                  <li key={link.name}>
-                    <Link to={link.path} className="text-white/60 hover:text-white hover:translate-x-1 transition-all duration-300 inline-block">
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      {/* Bottom bar — email, copyright, phone */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm">
+          {/* Email */}
+          <a
+            href="mailto:customer@gpsfdk.com"
+            className="flex items-center gap-2 text-secondary/70 hover:text-accent transition-colors"
+          >
+            <FaEnvelope className="w-4 h-4" />
+            customer@gpsfdk.com
+          </a>
 
-        {/* Contact Bar */}
-        <div className="mt-14 pt-8 border-t border-white/10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-white/50 text-sm">
-            <div className="flex flex-wrap items-center justify-center gap-6">
-              <a href="https://maps.app.goo.gl/Mqxj746PUvPpNvkt6" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-accent transition-colors">
-                <FaMapMarkerAlt className="text-accent" /> Location
-              </a>
-              <a href="tel:+916280310103" className="flex items-center gap-2 hover:text-accent transition-colors">
-                <FaPhoneAlt className="text-accent" /> +91 62803-10103
-              </a>
-              <a href="mailto:customer@gpsfdk.com" className="flex items-center gap-2 hover:text-accent transition-colors">
-                <FaEnvelope className="text-accent" /> customer@gpsfdk.com
-              </a>
-            </div>
-            <p>© {new Date().getFullYear()} GPSFDK. All rights reserved.</p>
-          </div>
+          {/* Copyright */}
+          <p className="text-secondary/50 text-center">
+            © {new Date().getFullYear()} Business Group & School of Learning.<br className="sm:hidden" /> All rights reserved
+          </p>
+
+          {/* Phone */}
+          <a
+            href="tel:+916280310103"
+            className="flex items-center gap-2 text-secondary/70 hover:text-accent transition-colors"
+          >
+            <FaPhoneAlt className="w-4 h-4" />
+            +91 62803-10103
+          </a>
         </div>
       </div>
     </footer>

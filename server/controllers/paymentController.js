@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 
 // Razorpay create order
-exports.createRazorpayOrder = async (req, res) => {
+exports.createRazorpayOrder = async (req, res, next) => {
   try {
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -18,12 +18,12 @@ exports.createRazorpayOrder = async (req, res) => {
     const order = await instance.orders.create(options);
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // Razorpay verify
-exports.verifyRazorpay = async (req, res) => {
+exports.verifyRazorpay = async (req, res, next) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
@@ -46,12 +46,12 @@ exports.verifyRazorpay = async (req, res) => {
       res.status(400).json({ message: 'Invalid signature', success: false });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // Stripe create checkout session
-exports.createStripeSession = async (req, res) => {
+exports.createStripeSession = async (req, res, next) => {
   try {
     const stripeInstance = stripe(process.env.STRIPE_SECRET_KEY);
     const { items, orderId } = req.body;
@@ -73,12 +73,12 @@ exports.createStripeSession = async (req, res) => {
     });
     res.json({ id: session.id, url: session.url });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // Stripe webhook
-exports.stripeWebhook = async (req, res) => {
+exports.stripeWebhook = async (req, res, next) => {
   try {
     const stripeInstance = stripe(process.env.STRIPE_SECRET_KEY);
     const sig = req.headers['stripe-signature'];
@@ -97,6 +97,6 @@ exports.stripeWebhook = async (req, res) => {
     }
     res.json({ received: true });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    next(error);
   }
 };

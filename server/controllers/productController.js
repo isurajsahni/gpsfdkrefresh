@@ -23,7 +23,7 @@ const generateUniqueSlug = async (name) => {
 };
 
 // GET /api/products
-exports.getProducts = async (req, res) => {
+exports.getProducts = async (req, res, next) => {
   try {
     const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry } = req.query;
     const query = { isActive: true };
@@ -59,23 +59,23 @@ exports.getProducts = async (req, res) => {
     
     res.json({ products, total, pages: Math.ceil(total / limit), page: parseInt(page) });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // GET /api/products/:slug
-exports.getProductBySlug = async (req, res) => {
+exports.getProductBySlug = async (req, res, next) => {
   try {
     const product = await Product.findOne({ slug: req.params.slug }).populate('category', 'name slug');
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // POST /api/products (admin)
-exports.createProduct = async (req, res) => {
+exports.createProduct = async (req, res, next) => {
   try {
     const product = new Product(req.body);
     if (typeof req.body.variations === 'string') {
@@ -87,12 +87,12 @@ exports.createProduct = async (req, res) => {
     await product.save();
     res.status(201).json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // PUT /api/products/:id (admin)
-exports.updateProduct = async (req, res) => {
+exports.updateProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
@@ -108,24 +108,24 @@ exports.updateProduct = async (req, res) => {
     await product.save();
     res.json(product);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // DELETE /api/products/:id (admin)
-exports.deleteProduct = async (req, res) => {
+exports.deleteProduct = async (req, res, next) => {
   try {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
     await product.deleteOne();
     res.json({ message: 'Product removed' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // POST /api/products/import (admin)
-exports.importProducts = async (req, res) => {
+exports.importProducts = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No CSV file uploaded' });
@@ -137,7 +137,7 @@ exports.importProducts = async (req, res) => {
       .on('data', (data) => results.push(data))
       .on('error', (err) => {
         console.error('CSV Parsing Error:', err);
-        res.status(500).json({ message: 'CSV Parsing Error: ' + err.message });
+        next(err);
       })
       .on('end', async () => {
         console.log('CSV Parsing Complete. Processing', results.length, 'rows');
@@ -188,7 +188,7 @@ exports.importProducts = async (req, res) => {
             }
           }
 
-          const importedCount = 0;
+          let importedCount = 0;
           const Category = require('../models/Category');
 
           for (const [name, pData] of productsMap.entries()) {
@@ -267,10 +267,10 @@ exports.importProducts = async (req, res) => {
           });
         } catch (innerError) {
           console.error('Import Error:', innerError);
-          res.status(500).json({ message: 'Error processing CSV rows: ' + innerError.message });
+          next(innerError);
         }
       });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };

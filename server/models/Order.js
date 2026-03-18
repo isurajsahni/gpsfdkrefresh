@@ -62,11 +62,10 @@ const orderSchema = new mongoose.Schema({
   notes: { type: String, default: '' },
 }, { timestamps: true });
 
-orderSchema.pre('save', function(next) {
+orderSchema.pre('save', function() {
   if (!this.orderNumber) {
     this.orderNumber = 'GPS-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
   }
-  next();
 });
 
 module.exports = mongoose.model('Order', orderSchema);

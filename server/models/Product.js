@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 
-productSchema.pre('save', async function (next) {
+productSchema.pre('save', async function () {
   if (this.isModified('name') || !this.slug) {
     let baseSlug = slugify(this.name, { lower: true, strict: true });
     let slug = baseSlug;
@@ -48,8 +48,6 @@ productSchema.pre('save', async function (next) {
   if (this.variations && this.variations.length > 0) {
     this.basePrice = Math.min(...this.variations.map(v => v.price));
   }
-  
-  next();
 });
 
 productSchema.index({ category: 1 });

@@ -55,11 +55,27 @@ const ProductPage = () => {
   // Determine if this is a nameplate product (show custom text only for nameplates)
   const isNameplate = product.category?.name?.toLowerCase().includes('nameplate');
 
-  // Get unique variation options
+  // Cascading variation options: Material → Frame → Size → Color
+  // Materials: always show all available
   const materials = [...new Set(product.variations.filter(v => v.material).map(v => v.material))];
-  const frames = [...new Set(product.variations.filter(v => v.frame).map(v => v.frame))];
-  const sizes = [...new Set(product.variations.map(v => v.size))];
-  const colors = [...new Set(product.variations.filter(v => v.color).map(v => v.color))];
+
+  // Frames: filtered by the currently selected material
+  const materialFiltered = selectedVariation.material
+    ? product.variations.filter(v => v.material === selectedVariation.material)
+    : product.variations;
+  const frames = [...new Set(materialFiltered.filter(v => v.frame).map(v => v.frame))];
+
+  // Sizes: filtered by selected material AND frame
+  const frameFiltered = selectedVariation.frame
+    ? materialFiltered.filter(v => v.frame === selectedVariation.frame)
+    : materialFiltered;
+  const sizes = [...new Set(frameFiltered.map(v => v.size))];
+
+  // Colors: filtered by selected material, frame, AND size
+  const sizeFiltered = selectedVariation.size
+    ? frameFiltered.filter(v => v.size === selectedVariation.size)
+    : frameFiltered;
+  const colors = [...new Set(sizeFiltered.filter(v => v.color).map(v => v.color))];
 
   const findVariation = (updates) => {
     const criteria = { ...selectedVariation, ...updates };

@@ -102,7 +102,13 @@ exports.createProduct = async (req, res, next) => {
 
     // Use uploaded files for images
     if (req.files && req.files.length > 0) {
-      productData.images = req.files.map(f => ({ url: f.path, public_id: f.filename }));
+      productData.images = req.files.map(f => {
+        // multer-storage-cloudinary v4: secure_url is on f.path, public_id is on f.filename
+        const url = f.secure_url || f.path || f.url;
+        const public_id = f.public_id || f.filename;
+        console.log('Uploaded image:', { url, public_id, originalPath: f.path });
+        return { url, public_id };
+      });
     }
 
     const product = new Product(productData);
@@ -153,7 +159,12 @@ exports.updateProduct = async (req, res, next) => {
 
     // Append newly uploaded files
     const newImages = (req.files && req.files.length > 0)
-      ? req.files.map(f => ({ url: f.path, public_id: f.filename }))
+      ? req.files.map(f => {
+          const url = f.secure_url || f.path || f.url;
+          const public_id = f.public_id || f.filename;
+          console.log('Uploaded image (update):', { url, public_id, originalPath: f.path });
+          return { url, public_id };
+        })
       : [];
 
     product.images = [...keptImages, ...newImages];

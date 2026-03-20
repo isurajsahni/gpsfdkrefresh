@@ -10,10 +10,15 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'gpsfdk',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4'],
-    transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+  params: async (req, file) => {
+    // Determine format from file mimetype
+    const ext = file.mimetype.split('/')[1] || 'jpg';
+    return {
+      folder: 'gpsfdk',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4'],
+      format: ext === 'jpeg' ? 'jpg' : ext,
+      transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+    };
   },
 });
 

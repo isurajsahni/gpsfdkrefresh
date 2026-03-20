@@ -26,7 +26,7 @@ const MasonryGrid = () => {
 
   return (
     <section className="py-20 md:py-28 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -37,30 +37,31 @@ const MasonryGrid = () => {
           <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Main Large Card (Spans 2 columns, 2 rows in visual weight) */}
+        {/* Masonry Layout: Left 50% (1 big card) | Right 50% (2 stacked cards) */}
+        <div className="flex flex-col md:flex-row gap-6" style={{ height: 'auto' }}>
+          {/* Left Column — 50% width, single large card */}
           {products[0] && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="md:col-span-2 md:row-span-2 h-[600px] md:h-[600px] max-h-[600px] rounded-[2rem] overflow-hidden relative group shadow-2xl bg-gray-100"
+              className="w-full md:w-1/2 h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden relative group shadow-2xl bg-gray-100 flex-shrink-0"
             >
               <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
                 <img
                   src={products[0].images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800'}
                   alt={products[0].name}
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
                 {/* Dark Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-500 group-hover:bg-black/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-500 group-hover:from-black/70 group-hover:via-black/30" />
 
                 <div className="absolute inset-0 p-8 md:p-12 flex flex-col justify-end">
                   <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                     <span className="inline-block bg-white text-[#E3543A] text-[10px] md:text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest mb-4 shadow-lg">
                       {products[0].subCategory || products[0].category?.name || 'FEATURED'}
                     </span>
-                    <h3 className="text-white font-heading text-4xl md:text-6xl font-bold leading-tight mb-2">
+                    <h3 className="text-white font-heading text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-2">
                       {products[0].name}
                     </h3>
                     <p className="text-[#E3543A] font-bold text-2xl md:text-3xl mb-6">
@@ -77,8 +78,8 @@ const MasonryGrid = () => {
             </motion.div>
           )}
 
-          {/* Right Side Cards (Vertical Stack) */}
-          <div className="md:col-span-1 flex flex-col gap-6">
+          {/* Right Column — 50% width, 2 stacked cards with equal height */}
+          <div className="w-full md:w-1/2 flex flex-col gap-6 md:h-[600px]">
             {products.slice(1, 3).map((product, i) => (
               <motion.div
                 key={product._id}
@@ -86,15 +87,15 @@ const MasonryGrid = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="h-[290px] max-h-[290px] rounded-[2rem] overflow-hidden relative group shadow-xl bg-gray-100"
+                className="flex-1 min-h-0 h-[280px] md:h-auto rounded-[2rem] overflow-hidden relative group shadow-xl bg-gray-100"
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
                     src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-500 group-hover:bg-black/60" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-500 group-hover:from-black/70 group-hover:via-black/20" />
 
                   <div className="absolute inset-0 p-6 flex flex-col justify-end">
                     <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">

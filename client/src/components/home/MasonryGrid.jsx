@@ -45,7 +45,7 @@ const MasonryGrid = () => {
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="w-full md:w-1/2 h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden relative group shadow-2xl bg-gray-100 flex-shrink-0"
+              className="w-full md:w-[60%] h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden relative group shadow-2xl bg-gray-100 flex-shrink-0"
             >
               <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
                 <img

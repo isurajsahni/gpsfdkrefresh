@@ -16,8 +16,7 @@ const storage = new CloudinaryStorage({
     return {
       folder: 'gpsfdk',
       allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4'],
-      format: ext === 'jpeg' ? 'jpg' : ext,
-      transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }],
+      format: ext === 'jpeg' ? 'jpg' : ext
     };
   },
 });

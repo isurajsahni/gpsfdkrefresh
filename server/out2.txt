@@ -1,0 +1,11 @@
+[dotenv@17.3.1] injecting env (13) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+--- REQ.FILES ---
+undefined
+request failed SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at parseJSONFromBytes (node:internal/deps/undici/undici:5852:19)
+    at successSteps (node:internal/deps/undici/undici:5833:27)
+    at fullyReadBody (node:internal/deps/undici/undici:4725:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async consumeBody (node:internal/deps/undici/undici:5842:7)
+    at async Server.<anonymous> (D:\The Borgo\server\test_multer.js:44:17)

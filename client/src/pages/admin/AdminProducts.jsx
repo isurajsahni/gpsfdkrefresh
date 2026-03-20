@@ -59,14 +59,10 @@ const AdminProducts = () => {
       });
 
       if (editing) {
-        await API.put(`/products/${editing}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await API.put(`/products/${editing}`, formData);
         toast.success('Product updated');
       } else {
-        await API.post('/products', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await API.post('/products', formData);
         toast.success('Product created');
       }
       setShowForm(false);
@@ -172,9 +168,7 @@ const AdminProducts = () => {
 
     const toastId = toast.loading('Importing products...');
     try {
-      const { data } = await API.post('/products/import', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const { data } = await API.post('/products/import', formData);
       if (data.count > 0) {
         toast.success(`Imported ${data.count} product(s) successfully${data.errors ? ` (${data.errors} failed)` : ''}`, { id: toastId });
       } else {

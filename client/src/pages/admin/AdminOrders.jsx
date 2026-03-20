@@ -101,7 +101,7 @@ const AdminOrders = () => {
                   className="p-5 cursor-pointer hover:bg-gray-50/50 transition-colors"
                   onClick={() => toggleExpand(order._id)}
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <h3 className="font-heading font-semibold text-secondary">{order.orderNumber}</h3>
@@ -124,7 +124,7 @@ const AdminOrders = () => {
                         <span>{new Date(order.createdAt).toLocaleString('en-IN')}</span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
                       <select
                         value={order.status}
                         onClick={(e) => e.stopPropagation()}

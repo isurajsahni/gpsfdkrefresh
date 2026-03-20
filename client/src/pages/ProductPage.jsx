@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiStar } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
@@ -176,13 +176,7 @@ const ProductPage = () => {
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
             <h1 className="text-3xl md:text-4xl font-heading font-bold text-secondary">{product.name}</h1>
 
-            {/* Rating */}
-            <div className="flex items-center gap-2 mt-3">
-              {[...Array(5)].map((_, i) => (
-                <HiStar key={i} className={`w-5 h-5 ${i < (product.rating || 4) ? 'text-yellow-400' : 'text-gray-300'}`} />
-              ))}
-              <span className="text-gray-500 text-sm">({product.numReviews || 0} reviews)</span>
-            </div>
+
 
             {/* Price — shown here briefly under name, updates on variation change */}
             <div className="mt-6">

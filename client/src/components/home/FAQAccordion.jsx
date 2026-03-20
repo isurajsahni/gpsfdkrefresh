@@ -15,7 +15,7 @@ const FAQAccordion = () => {
   const [open, setOpen] = useState(null);
 
   return (
-    <section id="faq" className="section-padding section-spacing bg-primary">
+    <section id="faq" className="section-padding section-spacing bg-secondary">
       <div className="max-w-3xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -24,7 +24,7 @@ const FAQAccordion = () => {
           className="text-center mb-12"
         >
           <span className="text-accent font-body text-sm tracking-[0.3em] uppercase">Support</span>
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary mt-3">Frequently Asked Questions</h2>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mt-3">Frequently Asked Questions</h2>
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 

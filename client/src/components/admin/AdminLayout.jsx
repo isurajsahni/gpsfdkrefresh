@@ -54,7 +54,7 @@ const AdminLayout = () => {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 lg:p-10 min-h-[calc(100vh-5rem)]">
+        <main className="flex-1 p-4 sm:p-6 lg:p-10 min-h-[calc(100vh-5rem)] overflow-x-hidden">
           <Outlet />
         </main>
       </div>

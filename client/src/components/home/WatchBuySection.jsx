@@ -1,23 +1,30 @@
 import { motion } from 'framer-motion';
+import { HiOutlineShoppingCart } from 'react-icons/hi';
 
-const testimonials = [
+const watchBuyItems = [
   {
     name: 'Bindal Niwas',
+    price: 2499,
     video: 'https://cdn.pixabay.com/video/2021/04/04/69889-534571753_large.mp4',
     poster: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
-    quote: 'When we bought our own house, we wanted a nameplate that was unique. GPS delivered beyond expectations — and it still looks superb after 18 months!',
   },
   {
     name: 'Harsh Bansal',
+    price: 3199,
     video: 'https://cdn.pixabay.com/video/2020/07/30/45497-445918220_large.mp4',
     poster: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600',
-    quote: 'They made an even better version of what I had seen in Chandigarh! Ready in just one day. Truly unique, durable, and premium.',
   },
   {
     name: 'Dhawan House',
+    price: 2899,
     video: 'https://cdn.pixabay.com/video/2024/01/09/195392-901356498_large.mp4',
     poster: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600',
-    quote: 'Installed five years ago and it still looks extremely premium. I confidently recommend GPS to everyone — give your home the identity it deserves!',
+  },
+  {
+    name: 'Modern Villa',
+    price: 3499,
+    video: 'https://cdn.pixabay.com/video/2021/04/04/69889-534571753_large.mp4',
+    poster: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
   },
 ];
 
@@ -37,17 +44,18 @@ const WatchBuySection = () => {
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((item, i) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {watchBuyItems.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="group"
+              transition={{ delay: i * 0.1 }}
+              className="group flex flex-col"
             >
-              <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-secondary-dark">
+              {/* Video Container — reduced height */}
+              <div className="relative rounded-t-2xl overflow-hidden bg-secondary-dark" style={{ height: 'clamp(200px, 45vw, 350px)' }}>
                 <video
                   autoPlay
                   muted
@@ -58,14 +66,16 @@ const WatchBuySection = () => {
                 >
                   <source src={item.video} type="video/mp4" />
                 </video>
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/20 flex flex-col justify-end p-6">
-                  <h3 className="text-white font-heading text-xl font-semibold">{item.name}</h3>
-                  <p className="text-white/60 text-sm mt-2 line-clamp-3">{item.quote}</p>
-                  <button className="mt-4 bg-accent hover:bg-accent-dark text-white py-2.5 px-6 rounded-full text-sm font-semibold w-fit transition-all duration-300 hover:scale-105">
-                    Shop Similar
-                  </button>
-                </div>
+              </div>
+
+              {/* Content Below Video */}
+              <div className="bg-[#1a3a2e] rounded-b-2xl px-4 py-4 flex flex-col gap-2">
+                <h3 className="text-white font-heading text-base md:text-lg font-semibold truncate">{item.name}</h3>
+                <p className="text-accent font-bold text-lg md:text-xl">₹{item.price.toLocaleString()}</p>
+                <button className="mt-1 w-full bg-accent hover:bg-accent-dark text-white py-2.5 px-4 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2">
+                  <HiOutlineShoppingCart className="w-4 h-4" />
+                  Add to Cart
+                </button>
               </div>
             </motion.div>
           ))}

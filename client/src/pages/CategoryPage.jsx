@@ -58,11 +58,11 @@ const CategoryPage = () => {
             
             <motion.div 
                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-               className="max-w-5xl w-full border border-accent/40 rounded-2xl p-6 md:p-8 text-left bg-black/10 backdrop-blur-sm"
+               className="max-w-5xl w-full border border-accent/40 rounded-2xl p-[16px] md:p-8 text-left bg-black/10 backdrop-blur-sm"
             >
                 <h3 className="text-accent text-xs font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
                 <div className="flex flex-wrap gap-x-3 gap-y-4">
-                    <Link to={`/category/wall-canvas`} className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                    <Link to={`/category/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                         All Products
                     </Link>
                     {[
@@ -74,7 +74,7 @@ const CategoryPage = () => {
                         const subSlug = generateSlug(sub);
                         const isActive = subcategorySlug === subSlug;
                         return (
-                            <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                            <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                                 {sub}
                             </Link>
                         );
@@ -105,7 +105,7 @@ const CategoryPage = () => {
       )}
 
       {/* Controls */}
-      <div className="max-w-[1200px] mx-auto section-padding py-6 flex items-center justify-between">
+      <div className="max-w-[1200px] mx-auto px-[10px] py-6 flex items-center justify-between">
         <p className="text-gray-500">{products.length} products</p>
         <div className="flex items-center gap-3">
           <HiOutlineAdjustments className="w-5 h-5 text-secondary" />
@@ -123,7 +123,7 @@ const CategoryPage = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="max-w-[1200px] mx-auto section-padding pb-20">
+      <div className="max-w-[1200px] mx-auto px-[10px] pb-20">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />

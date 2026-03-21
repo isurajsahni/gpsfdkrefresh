@@ -58,7 +58,7 @@ const Navbar = () => {
                         {cat.subcats.map((sub) => (
                           <Link
                             key={sub}
-                            to={`/category/${cat.slug}`}
+                            to={`/category/${cat.slug}?subcategory=${encodeURIComponent(sub)}`}
                             className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors"
                           >
                             {sub}

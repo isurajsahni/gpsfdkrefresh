@@ -44,7 +44,7 @@ const WatchBuySection = () => {
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {watchBuyItems.map((item, i) => (
             <motion.div
               key={i}

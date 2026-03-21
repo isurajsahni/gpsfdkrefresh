@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart, HiOutlineAdjustments } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
@@ -8,6 +8,8 @@ import API from '../utils/api';
 
 const CategoryPage = () => {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+  const subcategory = searchParams.get('subcategory');
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState(null);
   const [sort, setSort] = useState('');
@@ -24,7 +26,11 @@ const CategoryPage = () => {
         const params = { limit: 50 };
         if (sort) params.sort = sort;
         const { data } = await API.get('/products', { params });
-        const filtered = data.products.filter(p => p.category?.slug === slug);
+        const filtered = data.products.filter(p => {
+          if (p.category?.slug !== slug) return false;
+          if (subcategory && p.subCategory !== subcategory) return false;
+          return true;
+        });
         setProducts(filtered);
       } catch (err) {
         console.error(err);
@@ -32,7 +38,7 @@ const CategoryPage = () => {
       setLoading(false);
     };
     fetchData();
-  }, [slug, sort]);
+  }, [slug, sort, subcategory]);
 
   return (
     <div className="min-h-screen bg-primary pt-24">
@@ -41,9 +47,17 @@ const CategoryPage = () => {
         <div className="max-w-7xl mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <nav className="text-white/50 text-sm mb-4">
-              <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span> <span className="text-white">{category?.name || slug}</span>
+              <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
+              {subcategory ? (
+                <>
+                  <Link to={`/category/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
+                  <span className="mx-2">/</span> <span className="text-white">{subcategory}</span>
+                </>
+              ) : (
+                <span className="text-white">{category?.name || slug}</span>
+              )}
             </nav>
-            <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{category?.name || slug}</h1>
+            <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{subcategory || category?.name || slug}</h1>
             <p className="text-white/60 mt-3 max-w-xl">{category?.description}</p>
           </motion.div>
         </div>

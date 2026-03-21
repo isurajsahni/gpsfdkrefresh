@@ -55,15 +55,18 @@ const Navbar = () => {
                   {cat.subcats.length > 0 && (
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                       <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-3 min-w-[220px]">
-                        {cat.subcats.map((sub) => (
-                          <Link
-                            key={sub}
-                            to={`/category/${cat.slug}?subcategory=${encodeURIComponent(sub)}`}
-                            className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors"
-                          >
-                            {sub}
-                          </Link>
-                        ))}
+                        {cat.subcats.map((sub) => {
+                          const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                          return (
+                            <Link
+                              key={sub}
+                              to={`/category/${cat.slug}/${subSlug}`}
+                              className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors"
+                            >
+                              {sub}
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   )}

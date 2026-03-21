@@ -84,7 +84,7 @@ const CategoryPage = () => {
         </div>
       ) : (
         <div className="bg-secondary section-padding py-16">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-[1200px] mx-auto">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <nav className="text-white/50 text-sm mb-4">
                 <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
@@ -105,7 +105,7 @@ const CategoryPage = () => {
       )}
 
       {/* Controls */}
-      <div className="max-w-7xl mx-auto section-padding py-6 flex items-center justify-between">
+      <div className="max-w-[1200px] mx-auto section-padding py-6 flex items-center justify-between">
         <p className="text-gray-500">{products.length} products</p>
         <div className="flex items-center gap-3">
           <HiOutlineAdjustments className="w-5 h-5 text-secondary" />
@@ -123,7 +123,7 @@ const CategoryPage = () => {
       </div>
 
       {/* Product Grid */}
-      <div className="max-w-7xl mx-auto section-padding pb-20">
+      <div className="max-w-[1200px] mx-auto section-padding pb-20">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
@@ -144,18 +144,18 @@ const CategoryPage = () => {
               >
                 <Link to={`/product/${product.slug}`} className="group block h-full">
                   {slug === 'wall-canvas' ? (
-                     <div className="bg-white/40 backdrop-blur-xl rounded-2xl p-4 md:p-5 h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                     <div className="bg-[#fff7e7] rounded-2xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                         <div className="relative aspect-[4/5] w-full rounded-xl overflow-hidden mb-5 shadow-sm">
                            <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                         </div>
                         <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
-                           <h3 className="font-heading text-[18px] md:text-[20px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
+                           <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
                            <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
                                ₹{product.basePrice.toLocaleString('en-IN')} 
                                {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString('en-IN')}`}
                            </p>
                         </div>
-                        <div className="w-full bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
+                        <div className="w-full font-body bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
                            Full details
                         </div>
                      </div>

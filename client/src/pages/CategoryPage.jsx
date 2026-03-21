@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart, HiOutlineAdjustments } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
@@ -7,15 +7,19 @@ import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 
 const CategoryPage = () => {
-  const { slug } = useParams();
-  const [searchParams] = useSearchParams();
-  const subcategory = searchParams.get('subcategory');
+  const { slug, subcategorySlug } = useParams();
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState(null);
   const [sort, setSort] = useState('');
   const [loading, setLoading] = useState(true);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
+
+  const generateSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') : '';
+  
+  const displaySubcategory = subcategorySlug 
+    ? (products.length > 0 && products[0].subCategory ? products[0].subCategory : subcategorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+    : null;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +32,7 @@ const CategoryPage = () => {
         const { data } = await API.get('/products', { params });
         const filtered = data.products.filter(p => {
           if (p.category?.slug !== slug) return false;
-          if (subcategory && p.subCategory !== subcategory) return false;
+          if (subcategorySlug && generateSlug(p.subCategory) !== subcategorySlug) return false;
           return true;
         });
         setProducts(filtered);
@@ -38,40 +42,77 @@ const CategoryPage = () => {
       setLoading(false);
     };
     fetchData();
-  }, [slug, sort, subcategory]);
+  }, [slug, sort, subcategorySlug]);
 
   return (
-    <div className="min-h-screen bg-primary pt-24">
+    <div className={`min-h-screen ${slug === 'wall-canvas' ? 'bg-[#0a0f0d]' : 'bg-primary'} pt-24 pb-12`}>
       {/* Header */}
-      <div className="bg-secondary section-padding py-16">
-        <div className="max-w-7xl mx-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <nav className="text-white/50 text-sm mb-4">
-              <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
-              {subcategory ? (
-                <>
-                  <Link to={`/category/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
-                  <span className="mx-2">/</span> <span className="text-white">{subcategory}</span>
-                </>
-              ) : (
-                <span className="text-white">{category?.name || slug}</span>
-              )}
-            </nav>
-            <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{subcategory || category?.name || slug}</h1>
-            <p className="text-white/60 mt-3 max-w-xl">{category?.description}</p>
-          </motion.div>
+      {slug === 'wall-canvas' ? (
+        <div className="bg-[#0f1715] section-padding py-12 md:py-20 text-center text-white relative flex flex-col items-center border-b border-white/5">
+            <motion.h1 
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                className="text-4xl md:text-6xl font-heading font-normal mb-10 tracking-[0.05em] text-[#f5ebd6]"
+            >
+                Canvas for your soul
+            </motion.h1>
+            
+            <motion.div 
+               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+               className="max-w-5xl w-full border border-[#d8b082]/40 rounded-2xl p-6 md:p-8 text-left bg-[#141a18]/40 backdrop-blur-sm"
+            >
+                <h3 className="text-[#d8b082] text-xs font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
+                <div className="flex flex-wrap gap-x-3 gap-y-4">
+                    <Link to={`/category/wall-canvas`} className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-[#222927] text-white/80 hover:bg-[#2c3532]'}`}>
+                        All Products
+                    </Link>
+                    {[
+                        'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse', 
+                        'The Celestial Frontier', 'The Ethereal Gaze', 'The Gaze of Power', 
+                        'The Modern Legend', 'The Gilded Bloom', 'The Velocity Suite', 
+                        'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'Ink & Interval'
+                    ].map(sub => {
+                        const subSlug = generateSlug(sub);
+                        const isActive = subcategorySlug === subSlug;
+                        return (
+                            <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-[#222927] text-white/80 hover:bg-[#2c3532]'}`}>
+                                {sub}
+                            </Link>
+                        );
+                    })}
+                </div>
+            </motion.div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-secondary section-padding py-16">
+          <div className="max-w-7xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <nav className="text-white/50 text-sm mb-4">
+                <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
+                {subcategorySlug ? (
+                  <>
+                    <Link to={`/category/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
+                    <span className="mx-2">/</span> <span className="text-white">{displaySubcategory}</span>
+                  </>
+                ) : (
+                  <span className="text-white">{category?.name || slug}</span>
+                )}
+              </nav>
+              <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{displaySubcategory || category?.name || slug}</h1>
+              <p className="text-white/60 mt-3 max-w-xl">{category?.description}</p>
+            </motion.div>
+          </div>
+        </div>
+      )}
 
       {/* Controls */}
       <div className="max-w-7xl mx-auto section-padding py-6 flex items-center justify-between">
-        <p className="text-gray-500">{products.length} products</p>
+        <p className={`${slug === 'wall-canvas' ? 'text-white/70' : 'text-gray-500'}`}>{products.length} products</p>
         <div className="flex items-center gap-3">
-          <HiOutlineAdjustments className="w-5 h-5 text-secondary" />
+          <HiOutlineAdjustments className={`w-5 h-5 ${slug === 'wall-canvas' ? 'text-white/50' : 'text-secondary'}`} />
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent"
+            className={`border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent ${slug === 'wall-canvas' ? 'bg-[#141a18] border-white/10 text-white/80' : 'bg-white border-gray-200'}`}
           >
             <option value="">Sort: Latest</option>
             <option value="price_asc">Price: Low to High</option>
@@ -101,38 +142,58 @@ const CategoryPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Link to={`/product/${product.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                    <img
-                      src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (product.variations?.length > 0) {
-                            addToCart(product, product.variations[0]);
-                            setIsCartOpen(true);
-                          }
-                        }}
-                        className="bg-accent hover:bg-accent-dark text-white py-2 px-4 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all"
-                      >
-                        <HiOutlineShoppingCart className="w-4 h-4" /> Quick Add
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <h3 className="font-heading text-lg font-semibold text-secondary group-hover:text-accent transition-colors">{product.name}</h3>
-                    <p className="text-accent font-bold mt-1">
-                      ₹{product.basePrice?.toLocaleString()}
-                      {product.variations?.[0]?.comparePrice > 0 && (
-                        <span className="text-gray-400 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
-                      )}
-                    </p>
-                  </div>
+                <Link to={`/product/${product.slug}`} className="group block h-full">
+                  {slug === 'wall-canvas' ? (
+                     <div className="bg-[#121a17] rounded-md overflow-hidden shadow-2xl h-full flex flex-col border border-white/5 transition-transform duration-300 hover:-translate-y-1">
+                        <div className="relative aspect-[16/11] bg-[#1a231f] w-full">
+                           <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'} alt={product.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" loading="lazy" />
+                        </div>
+                        <div className="p-4 flex flex-col flex-grow items-center justify-center text-center">
+                           <h3 className="font-heading text-[17px] font-semibold text-white mb-2">{product.name}</h3>
+                           <p className="text-[#00c96d] font-semibold text-[15px] tracking-wide mb-2">
+                               ₹{product.basePrice.toLocaleString()} 
+                               {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString()}`}
+                           </p>
+                        </div>
+                        <div className="w-full bg-accent text-white font-semibold py-3.5 text-center transition-colors hover:bg-accent-dark">
+                           Full details
+                        </div>
+                     </div>
+                  ) : (
+                    <>
+                      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                        <img
+                          src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (product.variations?.length > 0) {
+                                addToCart(product, product.variations[0]);
+                                setIsCartOpen(true);
+                              }
+                            }}
+                            className="bg-accent hover:bg-accent-dark text-white py-2 px-4 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all"
+                          >
+                            <HiOutlineShoppingCart className="w-4 h-4" /> Quick Add
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <h3 className="font-heading text-lg font-semibold text-secondary group-hover:text-accent transition-colors">{product.name}</h3>
+                        <p className="text-accent font-bold mt-1">
+                          ₹{product.basePrice?.toLocaleString()}
+                          {product.variations?.[0]?.comparePrice > 0 && (
+                            <span className="text-gray-400 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
+                          )}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </Link>
               </motion.div>
             ))}

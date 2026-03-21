@@ -144,18 +144,18 @@ const CategoryPage = () => {
               >
                 <Link to={`/product/${product.slug}`} className="group block h-full">
                   {slug === 'wall-canvas' ? (
-                     <div className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col border border-gray-100 transition-transform duration-300 hover:-translate-y-1">
-                        <div className="relative aspect-[16/11] bg-cream-dark w-full">
+                     <div className="bg-white/70 backdrop-blur-lg rounded-[20px] overflow-hidden shadow-xl h-full flex flex-col border border-white/40 transition-transform duration-300 hover:-translate-y-2">
+                        <div className="relative aspect-[4/5] bg-cream-dark w-full">
                            <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
                         </div>
-                        <div className="p-4 flex flex-col flex-grow items-center justify-center text-center">
-                           <h3 className="font-heading text-lg font-semibold text-secondary mb-1">{product.name}</h3>
-                           <p className="text-accent font-bold text-[15px] mb-2">
-                               ₹{product.basePrice.toLocaleString()} 
-                               {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString()}`}
+                        <div className="py-6 px-5 flex flex-col flex-grow items-center justify-center text-center">
+                           <h3 className="font-heading text-[17px] md:text-[19px] font-bold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
+                           <p className="text-accent font-bold text-[16px] mb-2 tracking-wide">
+                               ₹{product.basePrice.toLocaleString('en-IN')} 
+                               {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString('en-IN')}`}
                            </p>
                         </div>
-                        <div className="w-full bg-accent text-white font-semibold py-3.5 text-center transition-colors hover:bg-accent-dark mt-auto">
+                        <div className="w-full bg-accent text-white font-semibold py-4 text-center transition-colors hover:bg-accent-dark mt-auto text-sm md:text-base tracking-wide uppercase">
                            Full details
                         </div>
                      </div>

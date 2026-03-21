@@ -11,7 +11,7 @@ const MasonryGrid = () => {
       try {
         const { data } = await API.get('/products', {
           params: {
-            featured: true,
+            masonry: true,
             limit: 3,
             sort: '-createdAt'
           }

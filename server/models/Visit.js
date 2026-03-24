@@ -9,7 +9,16 @@ const visitSchema = new mongoose.Schema({
   count: {
     type: Number,
     default: 0
-  }
+  },
+  visitors: {
+    type: Number,
+    default: 0
+  },
+  countries: [{
+    name: { type: String },
+    code: { type: String },
+    count: { type: Number, default: 0 }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Visit', visitSchema);

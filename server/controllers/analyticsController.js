@@ -72,19 +72,16 @@ exports.getDailyBreakdown = async (req, res, next) => {
 
     const daily = days.map(date => {
       const views = visitMap[date] || 0;
-      // Approximate unique visitors as ~55-70% of views
-      const visitors = Math.round(views * (0.55 + Math.random() * 0.15));
       return {
         date,
         views,
-        visitors,
+        visitors: 0,
         label: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       };
     });
 
     // Calculate totals and percentage growth
     const totalViews = daily.reduce((s, d) => s + d.views, 0);
-    const totalVisitors = daily.reduce((s, d) => s + d.visitors, 0);
 
     // Get previous 7 days for growth comparison
     const prevDays = [];
@@ -95,21 +92,17 @@ exports.getDailyBreakdown = async (req, res, next) => {
     }
     const prevVisits = await Visit.find({ date: { $in: prevDays } });
     const prevTotalViews = prevVisits.reduce((s, v) => s + v.count, 0);
-    const prevTotalVisitors = Math.round(prevTotalViews * 0.6);
 
     const viewsGrowth = prevTotalViews > 0
       ? Math.round(((totalViews - prevTotalViews) / prevTotalViews) * 100)
       : (totalViews > 0 ? 100 : 0);
-    const visitorsGrowth = prevTotalVisitors > 0
-      ? Math.round(((totalVisitors - prevTotalVisitors) / prevTotalVisitors) * 100)
-      : (totalVisitors > 0 ? 100 : 0);
 
     res.status(200).json({
       success: true,
       daily,
       summary: {
         views: { total: totalViews, growth: viewsGrowth },
-        visitors: { total: totalVisitors, growth: visitorsGrowth },
+        visitors: { total: 0, growth: 0 },
         likes: { total: 0, growth: 0 },
         comments: { total: 0, growth: 0 },
       }
@@ -120,67 +113,14 @@ exports.getDailyBreakdown = async (req, res, next) => {
 };
 
 // Get full dashboard data (most viewed, referrers, locations)
+// Returns empty data — plug in real queries when available
 exports.getDashboardData = async (req, res, next) => {
   try {
-    // These are mock/placeholder data — replace with real queries when available
-    const mostViewed = {
-      postsAndPages: [
-        { title: 'Home', views: 243 },
-        { title: 'The Royal Bubble', views: 27 },
-        { title: 'Regal Slay', views: 24 },
-        { title: 'Good Boy Gone Bad', views: 22 },
-        { title: 'Alleyway Signal', views: 21 },
-        { title: 'The Fiscal X-Ray', views: 21 },
-        { title: 'The Wolf of Wall Street', views: 20 },
-        { title: 'Skyline Solitude', views: 20 },
-        { title: 'The Double Pour', views: 20 },
-        { title: 'Dusk Over Stone', views: 20 },
-      ],
-      archive: [
-        { title: 'March 2026', views: 438 },
-        { title: 'February 2026', views: 312 },
-        { title: 'January 2026', views: 189 },
-      ]
-    };
-
-    const referrers = [
-      { source: 'Facebook', views: 1685 },
-      { source: 'Instagram', views: 181 },
-      { source: 'Google Search', views: 4 },
-      { source: 'com.google.android.googlequicksearchbox', views: 1 },
-      { source: 'umatrcs.online', views: 1 },
-      { source: 'threads.com', views: 1 },
-    ];
-
-    const locations = {
-      countries: [
-        { name: 'United States', code: 'US', views: 1212 },
-        { name: 'India', code: 'IN', views: 1032 },
-        { name: 'United Kingdom', code: 'GB', views: 156 },
-        { name: 'Canada', code: 'CA', views: 98 },
-        { name: 'Australia', code: 'AU', views: 67 },
-      ],
-      regions: [
-        { name: 'California', views: 412 },
-        { name: 'Maharashtra', views: 356 },
-        { name: 'Texas', views: 198 },
-        { name: 'London', views: 156 },
-        { name: 'Ontario', views: 98 },
-      ],
-      cities: [
-        { name: 'Los Angeles', views: 234 },
-        { name: 'Mumbai', views: 198 },
-        { name: 'Houston', views: 156 },
-        { name: 'London', views: 132 },
-        { name: 'Toronto', views: 87 },
-      ]
-    };
-
     res.status(200).json({
       success: true,
-      mostViewed,
-      referrers,
-      locations
+      mostViewed: { postsAndPages: [], archive: [] },
+      referrers: [],
+      locations: { countries: [], regions: [], cities: [] }
     });
   } catch (error) {
     next(error);

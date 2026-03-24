@@ -38,6 +38,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminLeads from './pages/admin/AdminLeads';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 
 function App() {
   useEffect(() => {
@@ -99,6 +100,7 @@ function App() {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="leads" element={<AdminLeads />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
             </Routes>
           </CartProvider>

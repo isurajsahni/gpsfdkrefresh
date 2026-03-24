@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu } from 'react-icons/hi';
+import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
@@ -10,6 +10,7 @@ const navItems = [
   { path: '/admin/orders', icon: HiOutlineClipboardList, label: 'Orders' },
   { path: '/admin/users', icon: HiOutlineUsers, label: 'Users' },
   { path: '/admin/leads', icon: HiOutlineMail, label: 'Leads' },
+  { path: '/admin/analytics', icon: HiOutlineChartPie, label: 'Analytics' },
 ];
 
 const AdminLayout = () => {

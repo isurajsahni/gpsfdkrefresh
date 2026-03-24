@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
+const welcomeEmail = require('../utils/welcomeEmailTemplate');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -15,21 +16,24 @@ exports.register = async (req, res, next) => {
     
     const user = await User.create({ name, email, password, phone });
 
-    // Send notification email to admin
-    try {
-      await sendEmail({
-        email: 'isurajsahni7@gmail.com',
-        subject: 'New User Registration - GPSFDK',
-        html: `
-          <h3>New User Registered</h3>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-        `
-      });
-    } catch (err) {
-      console.error('Email notification failed', err);
-    }
+    // Send welcome email to the new user (non-blocking)
+    sendEmail({
+      email: email,
+      subject: 'Welcome to GPSFDK! 🎨',
+      html: welcomeEmail(name || 'there'),
+    }).catch(err => console.error('Welcome email failed:', err.message));
+
+    // Send notification email to admin (non-blocking)
+    sendEmail({
+      email: 'isurajsahni7@gmail.com',
+      subject: 'New User Registration - GPSFDK',
+      html: `
+        <h3>New User Registered</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+      `
+    }).catch(err => console.error('Admin notification failed:', err.message));
 
     res.status(201).json({
       _id: user._id,

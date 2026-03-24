@@ -1,24 +1,27 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlineCube, HiOutlineClipboardList, HiOutlineUsers, HiOutlineCurrencyRupee } from 'react-icons/hi';
+import { HiOutlineCube, HiOutlineClipboardList, HiOutlineUsers, HiOutlineCurrencyRupee, HiOutlineEye } from 'react-icons/hi';
 import API from '../../utils/api';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pendingOrders: 0, deliveredOrders: 0 });
   const [products, setProducts] = useState(0);
   const [users, setUsers] = useState(0);
+  const [siteStats, setSiteStats] = useState({ today: 0, past7Days: 0, total: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [orderStats, productData, userData] = await Promise.all([
+        const [orderStats, productData, userData, analyticsData] = await Promise.all([
           API.get('/orders/stats'),
           API.get('/products?limit=1'),
           API.get('/auth/users'),
+          API.get('/analytics/stats').catch(() => ({ data: { stats: { today: 0, past7Days: 0, total: 0 } } }))
         ]);
         setStats(orderStats.data);
         setProducts(productData.data.total || 0);
         setUsers(userData.data?.length || 0);
+        setSiteStats(analyticsData.data?.stats || { today: 0, past7Days: 0, total: 0 });
       } catch (err) {
         console.error(err);
       }
@@ -58,7 +61,31 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        {/* Site Statistics Card */}
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+              <HiOutlineEye className="w-5 h-5 text-indigo-600" />
+            </div>
+            <h3 className="font-heading font-semibold text-secondary">Site Visitors</h3>
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+              <span className="text-sm text-gray-500">Today</span>
+              <span className="font-bold text-secondary text-lg">{siteStats.today.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-gray-50 pb-3">
+              <span className="text-sm text-gray-500">Past 7 Days</span>
+              <span className="font-bold text-secondary text-lg">{siteStats.past7Days.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">All Time</span>
+              <span className="font-bold text-secondary text-lg">{siteStats.total.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
           <h3 className="font-heading font-semibold text-secondary mb-4">Order Status</h3>
           <div className="space-y-3">

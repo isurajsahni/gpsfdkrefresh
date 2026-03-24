@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
@@ -10,6 +11,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
 import CartDrawer from './components/layout/CartDrawer';
 import SearchOverlay from './components/layout/SearchOverlay';
+import API from './utils/api';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -38,6 +40,20 @@ import AdminCategories from './pages/admin/AdminCategories';
 import AdminLeads from './pages/admin/AdminLeads';
 
 function App() {
+  useEffect(() => {
+    const trackVisit = async () => {
+      if (!sessionStorage.getItem('hasVisited')) {
+        try {
+          await API.post('/analytics/visit');
+          sessionStorage.setItem('hasVisited', 'true');
+        } catch (error) {
+          console.error('Failed to track visit:', error);
+        }
+      }
+    };
+    trackVisit();
+  }, []);
+
   return (
     <HelmetProvider>
       <Router>

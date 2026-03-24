@@ -1,4 +1,57 @@
 const Order = require('../models/Order');
+const sendEmail = require('../utils/sendEmail');
+const emailTemplates = require('../utils/orderEmailTemplates');
+
+// Helper: get customer email and name from order
+const getCustomerInfo = async (order) => {
+  let email = order.guestEmail;
+  let name = order.shippingAddress?.fullName || 'Customer';
+  
+  if (order.user) {
+    const User = require('../models/User');
+    const user = await User.findById(order.user);
+    if (user) {
+      email = email || user.email;
+      name = user.name || name;
+    }
+  }
+  return { email, name };
+};
+
+// Helper: send order status email (non-blocking)
+const sendOrderEmail = async (order, status) => {
+  try {
+    const { email, name } = await getCustomerInfo(order);
+    if (!email) return;
+
+    const templateMap = {
+      pending: emailTemplates.orderPlaced,
+      processing: emailTemplates.orderProcessing,
+      shipped: emailTemplates.orderShipped,
+      delivered: emailTemplates.orderDelivered,
+      cancelled: emailTemplates.orderCancelled,
+    };
+
+    const subjectMap = {
+      pending: `Order Confirmed - ${order.orderNumber}`,
+      processing: `Order Being Prepared - ${order.orderNumber}`,
+      shipped: `Order Shipped - ${order.orderNumber}`,
+      delivered: `Order Delivered - ${order.orderNumber}`,
+      cancelled: `Order Cancelled - ${order.orderNumber}`,
+    };
+
+    const template = templateMap[status];
+    if (!template) return;
+
+    await sendEmail({
+      email,
+      subject: subjectMap[status],
+      html: template(order, name),
+    });
+  } catch (err) {
+    console.error('Failed to send order email:', err.message);
+  }
+};
 
 // POST /api/orders (logged-in users)
 exports.createOrder = async (req, res, next) => {
@@ -18,6 +71,10 @@ exports.createOrder = async (req, res, next) => {
       totalPrice,
       isPaid: false,
     });
+
+    // Send order placed email (non-blocking)
+    sendOrderEmail(order, 'pending');
+
     res.status(201).json(order);
   } catch (error) {
     next(error);
@@ -44,6 +101,10 @@ exports.createGuestOrder = async (req, res, next) => {
       totalPrice,
       isPaid: false,
     });
+
+    // Send order placed email (non-blocking)
+    sendOrderEmail(order, 'pending');
+
     res.status(201).json(order);
   } catch (error) {
     next(error);
@@ -84,6 +145,8 @@ exports.updateOrderStatus = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    const previousStatus = order.status;
     
     if (req.body.status) order.status = req.body.status;
     if (req.body.trackingNumber) order.trackingNumber = req.body.trackingNumber;
@@ -94,6 +157,12 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
     
     await order.save();
+
+    // Send email if status changed
+    if (req.body.status && req.body.status !== previousStatus) {
+      sendOrderEmail(order, req.body.status);
+    }
+
     res.json(order);
   } catch (error) {
     next(error);
@@ -139,6 +208,10 @@ exports.cancelOrder = async (req, res, next) => {
 
     order.status = 'cancelled';
     await order.save();
+
+    // Send cancellation email
+    sendOrderEmail(order, 'cancelled');
+
     res.json({ message: 'Order cancelled successfully', order });
   } catch (error) {
     next(error);

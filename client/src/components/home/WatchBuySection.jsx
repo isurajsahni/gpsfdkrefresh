@@ -1,30 +1,30 @@
 import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
+import housenameplate1 from '../../assets/videos/housenameplate1.mp4';
+import jokercanvas from '../../assets/videos/jokercanvas.mp4';
+import pinklotus from '../../assets/videos/pinklotus.mp4';
+import wolfofwallstreet from '../../assets/videos/wolfofwallstreetcanvas.mp4';
 
 const watchBuyItems = [
   {
-    name: 'Bindal Niwas',
+    name: 'House Nameplate',
     price: 2499,
-    video: 'https://cdn.pixabay.com/video/2021/04/04/69889-534571753_large.mp4',
-    poster: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
+    video: housenameplate1,
   },
   {
-    name: 'Harsh Bansal',
+    name: 'Joker Canvas',
     price: 3199,
-    video: 'https://cdn.pixabay.com/video/2020/07/30/45497-445918220_large.mp4',
-    poster: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600',
+    video: jokercanvas,
   },
   {
-    name: 'Dhawan House',
+    name: 'Pink Lotus',
     price: 2899,
-    video: 'https://cdn.pixabay.com/video/2024/01/09/195392-901356498_large.mp4',
-    poster: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?w=600',
+    video: pinklotus,
   },
   {
-    name: 'Modern Villa',
+    name: 'Wolf of Wall Street Canvas',
     price: 3499,
-    video: 'https://cdn.pixabay.com/video/2021/04/04/69889-534571753_large.mp4',
-    poster: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600',
+    video: wolfofwallstreet,
   },
 ];
 
@@ -38,7 +38,6 @@ const WatchBuySection = () => {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <span className="text-accent font-body text-sm tracking-[0.3em] uppercase">Testimonials</span>
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mt-3">Watch & Buy</h2>
           <p className="text-white/50 mt-3 max-w-lg mx-auto">Real stories from our happy customers</p>
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
@@ -61,7 +60,6 @@ const WatchBuySection = () => {
                   muted
                   loop
                   playsInline
-                  poster={item.poster}
                   className="w-full h-full object-cover"
                 >
                   <source src={item.video} type="video/mp4" />

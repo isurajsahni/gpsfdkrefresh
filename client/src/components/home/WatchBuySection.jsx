@@ -54,7 +54,7 @@ const WatchBuySection = () => {
               className="group flex flex-col"
             >
               {/* Video Container — reduced height */}
-              <div className="relative rounded-t-2xl overflow-hidden bg-secondary-dark" style={{ height: 'clamp(200px, 45vw, 350px)' }}>
+              <div className="relative rounded-t-2xl overflow-hidden bg-secondary-dark" style={{ height: '100%' }}>
                 <video
                   autoPlay
                   muted

@@ -41,6 +41,8 @@ app.get('/api/health', (req, res) => res.json({
 // TEMPORARY: Email diagnostic endpoint (remove after debugging)
 app.get('/api/test-email', async (req, res) => {
   const nodemailer = require('nodemailer');
+  const dns = require('dns');
+  dns.setDefaultResultOrder('ipv4first');
   const report = { env: {}, smtp: null, send: null };
 
   report.env = {
@@ -60,7 +62,6 @@ app.get('/api/test-email', async (req, res) => {
     port: parseInt(process.env.EMAIL_PORT) || 465,
     secure: true,
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    dnsOptions: { family: 4 },
     connectionTimeout: 15000,
   });
 

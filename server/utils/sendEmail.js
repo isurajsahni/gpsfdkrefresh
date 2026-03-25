@@ -1,4 +1,9 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
+
+// Force IPv4 resolution — fixes ENETUNREACH on Render/cloud hosts
+// where smtp.hostinger.com resolves to IPv6 but IPv6 is not reachable
+dns.setDefaultResultOrder('ipv4first');
 
 let transporter = null;
 
@@ -20,9 +25,6 @@ const getTransporter = () => {
     },
     tls: {
       rejectUnauthorized: false
-    },
-    dnsOptions: {
-      family: 4, // Force IPv4 — fixes ENETUNREACH on Render/cloud hosts
     },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
@@ -48,7 +50,6 @@ const sendEmail = async (options) => {
     return info;
   } catch (err) {
     console.error(`❌ Email failed to ${options.email}:`, err.message);
-    // Reset transporter on failure so it reconnects next time
     transporter = null;
     throw err;
   }

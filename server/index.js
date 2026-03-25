@@ -38,6 +38,54 @@ app.get('/api/health', (req, res) => res.json({
   timestamp: new Date().toISOString() 
 }));
 
+// TEMPORARY: Email diagnostic endpoint (remove after debugging)
+app.get('/api/test-email', async (req, res) => {
+  const nodemailer = require('nodemailer');
+  const report = { env: {}, smtp: null, send: null };
+
+  report.env = {
+    EMAIL_HOST: process.env.EMAIL_HOST || 'NOT SET',
+    EMAIL_PORT: process.env.EMAIL_PORT || 'NOT SET',
+    EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+    EMAIL_PASS: process.env.EMAIL_PASS ? `SET (${process.env.EMAIL_PASS.length} chars)` : 'NOT SET / EMPTY',
+  };
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    report.smtp = 'SKIPPED - credentials missing';
+    return res.json(report);
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
+    port: parseInt(process.env.EMAIL_PORT) || 465,
+    secure: true,
+    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    connectionTimeout: 15000,
+  });
+
+  try {
+    await transporter.verify();
+    report.smtp = 'OK - connected and authenticated';
+  } catch (e) {
+    report.smtp = `FAILED: ${e.message} (code: ${e.code})`;
+    return res.json(report);
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"GPSFDK" <${process.env.EMAIL_USER}>`,
+      to: 'isurajsahni7@gmail.com',
+      subject: 'GPSFDK Deploy Test - ' + new Date().toLocaleTimeString(),
+      html: '<h2>Email from deployed server works!</h2><p>Sent at: ' + new Date().toISOString() + '</p>',
+    });
+    report.send = { status: 'OK', messageId: info.messageId, response: info.response };
+  } catch (e) {
+    report.send = { status: 'FAILED', error: e.message };
+  }
+
+  res.json(report);
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);

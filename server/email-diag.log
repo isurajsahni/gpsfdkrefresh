@@ -1,0 +1,19 @@
+=== ENV CHECK ===
+EMAIL_HOST: smtp.hostinger.com
+EMAIL_PORT: 465
+EMAIL_USER: customer@gpsfdk.com
+EMAIL_PASS: SET (21 chars)
+
+=== SMTP VERIFY ===
+SMTP: OK
+
+=== DIRECT SEND ===
+SENT OK - ID: <6553f81e-6a3e-8fb4-36c8-2bf935e77b92@gpsfdk.com>
+Response: 250 2.0.0 Ok: queued as 4fgwKQ3DhKz45cZ
+
+=== PRODUCTION sendEmail() ===
+Template length: 4232
+sendEmail returned: <b8c2b803-5709-cf32-abd9-38cc658ac926@gpsfdk.com>
+Response: 250 2.0.0 Ok: queued as 4fgwKS1HXjz405d
+
+=== DONE ===

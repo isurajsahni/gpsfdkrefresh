@@ -21,6 +21,9 @@ const getTransporter = () => {
     tls: {
       rejectUnauthorized: false
     },
+    dnsOptions: {
+      family: 4, // Force IPv4 — fixes ENETUNREACH on Render/cloud hosts
+    },
     connectionTimeout: 10000,
     greetingTimeout: 10000,
   });

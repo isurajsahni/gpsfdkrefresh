@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, default: '' },
   addresses: [addressSchema],
   avatar: { type: String, default: '' },
+  resetPasswordOtp: String,
+  resetPasswordExpire: Date,
 }, { timestamps: true });
 
 // Mongoose 7+ async hooks do NOT receive next() — just use async/await

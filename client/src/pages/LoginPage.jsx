@@ -55,6 +55,11 @@ const LoginPage = () => {
                 className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
                 placeholder="••••••••"
               />
+              <div className="flex justify-end mt-2">
+                <Link to="/forgot-password" className="text-sm text-secondary hover:text-accent font-medium transition-colors">
+                  Forgot Password?
+                </Link>
+              </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full text-lg disabled:opacity-50">
               {loading ? 'Signing in...' : 'Sign In'}

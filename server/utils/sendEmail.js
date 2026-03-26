@@ -1,58 +1,35 @@
-const nodemailer = require('nodemailer');
-const dns = require('dns');
-
-// Force IPv4 resolution — fixes ENETUNREACH on Render/cloud hosts
-// where smtp.hostinger.com resolves to IPv6 but IPv6 is not reachable
-dns.setDefaultResultOrder('ipv4first');
-
-let transporter = null;
-
-const getTransporter = () => {
-  if (transporter) return transporter;
-
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email credentials not found in env, emails will be skipped.');
-    return null;
-  }
-
-  transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
-    port: parseInt(process.env.EMAIL_PORT) || 465,
-    secure: parseInt(process.env.EMAIL_PORT) === 587 ? false : true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-  });
-
-  return transporter;
-};
+const { Resend } = require('resend');
 
 const sendEmail = async (options) => {
-  const t = getTransporter();
-  if (!t) return;
+  if (!process.env.EMAIL_PASS) {
+    console.warn('Resend API key missing in EMAIL_PASS, skipping email.');
+    return; // Silent fail gracefully in dev if no key
+  }
 
-  const senderEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-  const mailOptions = {
-    from: `"GPSFDK" <${senderEmail}>`,
-    to: options.email,
-    subject: options.subject,
-    html: options.html,
-  };
+  const resend = new Resend(process.env.EMAIL_PASS);
+  
+  // Use the verified domain from EMAIL_FROM, fallback to testing address
+  const senderEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
   try {
-    const info = await t.sendMail(mailOptions);
-    console.log(`✅ Email sent to ${options.email}: ${info.messageId}`);
-    return info;
-  } catch (err) {
-    console.error(`❌ Email failed to ${options.email}:`, err.message);
-    transporter = null;
-    throw err;
+    const data = await resend.emails.send({
+      from: `"GPSFDK" <${senderEmail}>`,
+      to: options.email,
+      subject: options.subject,
+      html: options.html,
+    });
+    
+    // Resend API returns an error property if something failed logically (like unverified domain)
+    if (data.error) {
+      console.error(`❌ Resend API Error for ${options.email}:`, data.error.message);
+      throw new Error(data.error.message);
+    }
+
+    console.log(`✅ Email sent to ${options.email}. ID: ${data.data?.id}`);
+    return data;
+  } catch (error) {
+    console.error(`❌ Email failed to ${options.email}:`, error.message);
+    throw error;
   }
 };
 

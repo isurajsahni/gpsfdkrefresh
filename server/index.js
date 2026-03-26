@@ -40,50 +40,37 @@ app.get('/api/health', (req, res) => res.json({
 
 // TEMPORARY: Email diagnostic endpoint (remove after debugging)
 app.get('/api/test-email', async (req, res) => {
-  const nodemailer = require('nodemailer');
-  const dns = require('dns');
-  dns.setDefaultResultOrder('ipv4first');
-  const report = { env: {}, smtp: null, send: null };
+  const { Resend } = require('resend');
+  const report = { env: {}, resend: null };
 
   report.env = {
-    EMAIL_HOST: process.env.EMAIL_HOST || 'NOT SET',
-    EMAIL_PORT: process.env.EMAIL_PORT || 'NOT SET',
-    EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+    EMAIL_FROM: process.env.EMAIL_FROM || 'NOT SET',
     EMAIL_PASS: process.env.EMAIL_PASS ? `SET (${process.env.EMAIL_PASS.length} chars)` : 'NOT SET / EMPTY',
   };
 
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    report.smtp = 'SKIPPED - credentials missing';
+  if (!process.env.EMAIL_PASS) {
+    report.resend = 'SKIPPED - API key missing';
     return res.json(report);
   }
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.hostinger.com',
-    port: parseInt(process.env.EMAIL_PORT) || 465,
-    secure: true,
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    connectionTimeout: 15000,
-  });
+  const resend = new Resend(process.env.EMAIL_PASS);
+  const senderEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
   try {
-    await transporter.verify();
-    report.smtp = 'OK - connected and authenticated';
-  } catch (e) {
-    report.smtp = `FAILED: ${e.message} (code: ${e.code})`;
-    return res.json(report);
-  }
-
-  try {
-    const senderEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
-    const info = await transporter.sendMail({
+    const data = await resend.emails.send({
       from: `"GPSFDK" <${senderEmail}>`,
       to: 'isurajsahni7@gmail.com',
-      subject: 'GPSFDK Deploy Test - ' + new Date().toLocaleTimeString(),
-      html: '<h2>Email from deployed server works!</h2><p>Sent at: ' + new Date().toISOString() + '</p>',
+      subject: 'GPSFDK Deploy Test - HTTPS API',
+      html: '<h2>Email from deployed server works via Resend HTTPS API!</h2>',
     });
-    report.send = { status: 'OK', messageId: info.messageId, response: info.response };
+    
+    if (data.error) {
+      report.resend = { status: 'FAILED', error: data.error };
+    } else {
+      report.resend = { status: 'OK', id: data.data?.id };
+    }
   } catch (e) {
-    report.send = { status: 'FAILED', error: e.message };
+    report.resend = { status: 'CRASHED', error: e.message };
   }
 
   res.json(report);

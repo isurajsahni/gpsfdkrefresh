@@ -361,7 +361,7 @@ const CheckoutPage = () => {
                 <div className="flex justify-between text-sm mt-1"><span>Shipping</span><span className="text-green-600">FREE</span></div>
                 <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">₹{cartTotal.toLocaleString()}</span></div>
               </div>
-              <div className="flex gap-3 sm:gap-4">
+              <div className="flex gap-3 flex-wrap-reverse items-center sm:gap-4">
                 <button onClick={() => setStep(2)} className="btn-outline">← Back</button>
                 <button onClick={handlePlaceOrder} disabled={loading} className="btn-primary flex-1 text-base sm:text-lg disabled:opacity-50">
                   {loading ? 'Processing...' : `Place Order — ₹${cartTotal.toLocaleString()}`}

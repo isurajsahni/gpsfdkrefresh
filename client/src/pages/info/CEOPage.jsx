@@ -1,4 +1,7 @@
 import { motion } from 'framer-motion';
+import { FaFacebook, FaInstagram } from 'react-icons/fa';
+
+import fimpyGargImage from '../../assets/image/fimpygarg.webp';
 
 const CEOPage = () => {
   return (
@@ -18,7 +21,7 @@ const CEOPage = () => {
             className="w-full md:w-1/3 flex flex-col items-center"
           >
             <div className="w-64 h-64 bg-secondary/10 rounded-full border-4 border-accent shadow-xl overflow-hidden mb-6 flex items-center justify-center">
-               <span className="text-6xl text-accent font-heading">FG</span>
+               <img src={fimpyGargImage} alt="Fimpy Garg" className="w-full h-full object-cover" />
             </div>
             <h2 className="text-3xl font-heading font-bold text-secondary">Fimpy Garg</h2>
             <p className="text-accent font-semibold text-lg mt-1">CEO & Founder</p>
@@ -62,6 +65,17 @@ const CEOPage = () => {
                 <div className="flex items-start gap-4">
                   <span className="font-bold text-accent w-24 shrink-0">Office:</span>
                   <span>GPS, Circular Road, Near More Store, Faridkot, Punjab 151203</span>
+                </div>
+                <div className="flex items-center gap-4 mt-6 pt-4 border-t border-secondary/10">
+                  <span className="font-bold text-accent w-24">Socials:</span>
+                  <div className="flex gap-4 text-2xl">
+                    <a href="https://www.facebook.com/darsh.garg.39" target="_blank" rel="noreferrer" className="text-secondary hover:text-accent transition-colors">
+                      <FaFacebook />
+                    </a>
+                    <a href="https://www.instagram.com/fimpygarg" target="_blank" rel="noreferrer" className="text-secondary hover:text-accent transition-colors">
+                      <FaInstagram />
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>

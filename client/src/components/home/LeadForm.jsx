@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { HiPaperAirplane } from 'react-icons/hi';
 import API from '../../utils/api';
-import WebflowButton from '../ui/WebflowButton';
 
 const LeadForm = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' });
@@ -88,12 +87,12 @@ const LeadForm = () => {
               />
               
               <div className="mt-8 flex flex-col gap-4">
-                <WebflowButton
-                  type="submit" disabled={loading} fullWidth
-                  className="font-heading uppercase tracking-widest text-lg"
+                <button
+                  type="submit" disabled={loading}
+                  className="w-full bg-accent text-white font-heading font-bold py-3.5 rounded-2xl shadow-xl hover:bg-accent-dark hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all duration-300 disabled:opacity-50 uppercase tracking-widest text-lg"
                 >
                   {loading ? 'Sending...' : 'Send Message'}
-                </WebflowButton>
+                </button>
                 
                 {status === 'success' && (
                   <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-secondary font-semibold text-center italic">

@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import WebflowButton from '../ui/WebflowButton';
 
 const HeroVideo = () => {
   return (
@@ -56,9 +55,9 @@ const HeroVideo = () => {
           transition={{ delay: 0.9, duration: 0.8 }}
           className="mt-10 flex flex-col sm:flex-row gap-4"
         >
-          <WebflowButton to="/category/wall-canvas" className="text-lg">
+          <Link to="/category/wall-canvas" className="btn-primary text-lg px-10 py-4">
             Shop Now
-          </WebflowButton>
+          </Link>
           <Link to="/category/house-nameplates" className="btn-outline border-white text-white hover:bg-white hover:text-secondary text-lg px-10 py-4">
             Custom Nameplates
           </Link>

@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
-import WebflowButton from '../ui/WebflowButton';
 import housenameplate1 from '../../assets/videos/housenameplate1.mp4';
 import jokercanvas from '../../assets/videos/jokercanvas.mp4';
 import pinklotus from '../../assets/videos/pinklotus.mp4';
@@ -71,9 +70,10 @@ const WatchBuySection = () => {
               <div className="bg-[#1a3a2e] rounded-b-2xl px-4 py-4 flex flex-col gap-2">
                 <h3 className="text-white font-heading text-base md:text-lg font-semibold truncate">{item.name}</h3>
                 <p className="text-accent font-bold text-lg md:text-xl">₹{item.price.toLocaleString()}</p>
-                <WebflowButton fullWidth className="mt-1 text-sm bg-accent hover:bg-accent-dark">
+                <button className="mt-1 w-full bg-accent hover:bg-accent-dark text-white py-2.5 px-4 rounded-full text-sm font-semibold transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2">
+                  <HiOutlineShoppingCart className="w-4 h-4" />
                   Add to Cart
-                </WebflowButton>
+                </button>
               </div>
             </motion.div>
           ))}

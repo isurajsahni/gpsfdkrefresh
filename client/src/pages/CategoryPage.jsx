@@ -45,7 +45,7 @@ const CategoryPage = () => {
   }, [slug, sort, subcategorySlug]);
 
   return (
-    <div className="min-h-screen bg-primary pt-[120px] pb-12">
+    <div className="min-h-screen bg-primary pt-[80px] pb-12">
       {/* Header */}
       {slug === 'wall-canvas' ? (
         <div className="bg-secondary section-padding py-12 md:py-20 text-center text-white relative flex flex-col items-center">
@@ -60,9 +60,9 @@ const CategoryPage = () => {
                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                className="max-w-5xl w-full border border-accent/40 rounded-2xl p-[16px] md:p-8 text-left bg-black/10 backdrop-blur-sm"
             >
-                <h3 className="text-accent text-xs font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
+                <h3 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
                 <div className="flex flex-wrap gap-x-3 gap-y-4">
-                    <Link to={`/category/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                    <Link to={`/category/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                         All Products
                     </Link>
                     {[
@@ -74,7 +74,7 @@ const CategoryPage = () => {
                         const subSlug = generateSlug(sub);
                         const isActive = subcategorySlug === subSlug;
                         return (
-                            <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                            <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                                 {sub}
                             </Link>
                         );
@@ -144,7 +144,7 @@ const CategoryPage = () => {
               >
                 <Link to={`/product/${product.slug}`} className="group block h-full">
                   {slug === 'wall-canvas' ? (
-                     <div className="bg-[#fff7e7] rounded-2xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                     <div className="bg-[#fff7e7] rounded-2xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                         <div className="relative aspect-[4/5] w-full rounded-xl overflow-hidden mb-5 shadow-sm">
                            <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                         </div>
@@ -155,7 +155,7 @@ const CategoryPage = () => {
                                {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString('en-IN')}`}
                            </p>
                         </div>
-                        <div className="w-full font-body bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
+                        <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
                            Full details
                         </div>
                      </div>

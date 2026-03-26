@@ -37,8 +37,9 @@ const sendEmail = async (options) => {
   const t = getTransporter();
   if (!t) return;
 
+  const senderEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
   const mailOptions = {
-    from: `"GPSFDK" <${process.env.EMAIL_USER}>`,
+    from: `"GPSFDK" <${senderEmail}>`,
     to: options.email,
     subject: options.subject,
     html: options.html,

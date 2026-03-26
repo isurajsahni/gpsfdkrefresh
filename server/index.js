@@ -74,8 +74,9 @@ app.get('/api/test-email', async (req, res) => {
   }
 
   try {
+    const senderEmail = process.env.EMAIL_FROM || process.env.EMAIL_USER;
     const info = await transporter.sendMail({
-      from: `"GPSFDK" <${process.env.EMAIL_USER}>`,
+      from: `"GPSFDK" <${senderEmail}>`,
       to: 'isurajsahni7@gmail.com',
       subject: 'GPSFDK Deploy Test - ' + new Date().toLocaleTimeString(),
       html: '<h2>Email from deployed server works!</h2><p>Sent at: ' + new Date().toISOString() + '</p>',

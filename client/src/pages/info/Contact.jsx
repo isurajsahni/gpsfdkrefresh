@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import WebflowButton from '../../components/ui/WebflowButton';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -64,12 +65,12 @@ const Contact = () => {
                 required
               ></textarea>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl transition-colors duration-300"
+            <WebflowButton
+              type="submit" fullWidth
+              className="py-3"
             >
               Send Message
-            </button>
+            </WebflowButton>
             {status && (
               <p className="text-center text-green-600 font-medium mt-4">{status}</p>
             )}

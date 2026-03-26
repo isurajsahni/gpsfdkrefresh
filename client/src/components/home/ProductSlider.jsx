@@ -7,6 +7,7 @@ import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import API from '../../utils/api';
+import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
@@ -103,12 +104,12 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
                           <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
                         )}
                       </p>
-                      <button
+                      <WebflowButton
                         onClick={(e) => handleQuickAdd(e, product)}
-                        className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
+                        className="mt-3 text-sm"
                       >
-                        <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
-                      </button>
+                        Add To Cart
+                      </WebflowButton>
                     </div>
                   </div>
                 </Link>

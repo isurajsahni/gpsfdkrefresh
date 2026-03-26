@@ -1,29 +1,22 @@
-const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
 dotenv.config();
+const { Resend } = require('resend');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT),
-  secure: true,
-  auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-});
+const senderEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+console.log('API Key:', process.env.EMAIL_PASS ? `SET (${process.env.EMAIL_PASS.length} chars)` : 'MISSING');
+console.log('Sender:', senderEmail);
 
 (async () => {
+  const resend = new Resend(process.env.EMAIL_PASS);
   try {
-    console.log(`Connecting to ${process.env.EMAIL_HOST}:${process.env.EMAIL_PORT} as ${process.env.EMAIL_USER}...`);
-    await transporter.verify();
-    console.log('✅ SMTP Authenticated!');
-    
-    console.log('Sending test email to isurajsahni7@gmail.com...');
-    const result = await transporter.sendMail({
-      from: `"GPSFDK" <${process.env.EMAIL_USER}>`, // NOTE: if user isn't 'resend', this will be their verified domain email
+    const data = await resend.emails.send({
+      from: `GPSFDK <${senderEmail}>`,
       to: 'isurajsahni7@gmail.com',
-      subject: 'Resend Test',
-      html: '<h1>It works!</h1>'
+      subject: 'GPSFDK Local Test - ' + new Date().toLocaleTimeString(),
+      html: '<h2>Resend HTTPS API works locally!</h2><p>Sent at: ' + new Date().toISOString() + '</p>',
     });
-    console.log('✅ Sent! Message ID:', result.messageId);
+    console.log('Result:', JSON.stringify(data, null, 2));
   } catch (err) {
-    console.error('❌ FAILED: ', err.message);
+    console.error('Error:', err.message);
   }
 })();

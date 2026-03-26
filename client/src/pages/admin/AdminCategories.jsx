@@ -51,8 +51,8 @@ const AdminCategories = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-heading font-bold text-secondary">Categories</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+        <h1 className="text-xl sm:text-2xl font-heading font-bold text-secondary">Categories</h1>
         <button onClick={() => { setShowForm(true); setEditing(null); setForm({ name: '', description: '' }); }} className="btn-primary text-sm flex items-center gap-2">
           <HiOutlinePlus className="w-4 h-4" /> Add Category
         </button>

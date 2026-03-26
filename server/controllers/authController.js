@@ -40,7 +40,9 @@ exports.register = async (req, res, next) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
+      addresses: user.addresses || [],
       token: generateToken(user._id),
     });
   } catch (error) {
@@ -58,7 +60,9 @@ exports.login = async (req, res, next) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
         role: user.role,
+        addresses: user.addresses || [],
         token: generateToken(user._id),
       });
     } else {
@@ -94,7 +98,9 @@ exports.updateProfile = async (req, res, next) => {
       _id: updated._id,
       name: updated.name,
       email: updated.email,
+      phone: updated.phone,
       role: updated.role,
+      addresses: updated.addresses || [],
       token: generateToken(updated._id),
     });
   } catch (error) {
@@ -202,6 +208,40 @@ exports.resetPassword = async (req, res, next) => {
     await user.save();
 
     res.json({ message: 'Password reset successfully. You can now log in.' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/addresses — save a new address to user profile
+exports.addAddress = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const newAddress = req.body;
+    // If this is the first address, mark it as default
+    if (user.addresses.length === 0) newAddress.isDefault = true;
+    
+    user.addresses.push(newAddress);
+    await user.save();
+
+    res.status(201).json(user.addresses);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/auth/addresses/:id — remove a saved address
+exports.deleteAddress = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.id);
+    await user.save();
+
+    res.json(user.addresses);
   } catch (error) {
     next(error);
   }

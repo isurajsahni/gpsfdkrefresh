@@ -75,6 +75,13 @@ exports.createOrder = async (req, res, next) => {
     // Send order placed email (non-blocking)
     sendOrderEmail(order, 'pending');
 
+    // Notify Admin
+    sendEmail({
+      email: 'suraj.gnimt@gmail.com',
+      subject: `New Order Placed - ${order.orderNumber}`,
+      html: `<h3>New Order Received</h3><p>Order ID: ${order.orderNumber}</p><p>Total: ₹${order.totalPrice}</p>`
+    }).catch(err => console.error('Admin order notification failed:', err.message));
+
     res.status(201).json(order);
   } catch (error) {
     next(error);
@@ -104,6 +111,13 @@ exports.createGuestOrder = async (req, res, next) => {
 
     // Send order placed email (non-blocking)
     sendOrderEmail(order, 'pending');
+
+    // Notify Admin
+    sendEmail({
+      email: 'suraj.gnimt@gmail.com',
+      subject: `New Guest Order Placed - ${order.orderNumber}`,
+      html: `<h3>New Guest Order Received</h3><p>Order ID: ${order.orderNumber}</p><p>Total: ₹${order.totalPrice}</p>`
+    }).catch(err => console.error('Admin order notification failed:', err.message));
 
     res.status(201).json(order);
   } catch (error) {

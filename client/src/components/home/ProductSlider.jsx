@@ -7,6 +7,7 @@ import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import API from '../../utils/api';
+import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
@@ -54,9 +55,9 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
             <div className="w-20 h-1 bg-accent mt-3 rounded-full" />
           </div>
           {categorySlug && (
-            <Link to={`/category/${categorySlug}`} className="text-accent font-semibold hover:underline underline-offset-4 transition-all">
-              View All →
-            </Link>
+            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5">
+              View All
+            </WebflowButton>
           )}
         </motion.div>
 

@@ -26,7 +26,7 @@ exports.register = async (req, res, next) => {
 
     // Send notification email to admin (non-blocking)
     sendEmail({
-      email: 'isurajsahni7@gmail.com',
+      email: 'suraj.gnimt@gmail.com',
       subject: 'New User Registration - GPSFDK',
       html: `
         <h3>New User Registered</h3>

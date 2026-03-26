@@ -97,7 +97,7 @@ const welcomeEmail = (userName) => `
     <!-- Footer -->
     <div style="background: #f0f0f0; padding: 25px 40px; text-align: center; font-size: 12px; color: #888;">
       <p style="margin: 0;">&copy; ${new Date().getFullYear()} GPSFDK. All rights reserved.</p>
-      <p style="margin: 6px 0 0;">customer@gpsfdk.com</p>
+      <p style="margin: 6px 0 0;">customer@narsevafoundation.com</p>
     </div>
   </div>
 </body>

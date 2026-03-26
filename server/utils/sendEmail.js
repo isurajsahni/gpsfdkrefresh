@@ -13,7 +13,7 @@ const sendEmail = async (options) => {
 
   try {
     const data = await resend.emails.send({
-      from: `"GPSFDK" <${senderEmail}>`,
+      from: `"Narseva Foundation" <${senderEmail}>`,
       to: options.email,
       subject: options.subject,
       html: options.html,

@@ -43,7 +43,7 @@ const emailWrapper = (content, previewText = '') => `
     </div>
     <div class="footer">
       <p>&copy; ${new Date().getFullYear()} GPSFDK. All rights reserved.</p>
-      <p>If you have any questions, reply to this email or contact us at customer@gpsfdk.com</p>
+      <p>If you have any questions, reply to this email or contact us at customer@narsevafoundation.com</p>
     </div>
   </div>
 </body>

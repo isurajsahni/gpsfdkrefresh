@@ -180,7 +180,7 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-primary pt-24 pb-20">
+    <div className="min-h-screen bg-primary pt-[120px] pb-20">
       <div className="max-w-4xl mx-auto section-padding">
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl sm:text-3xl font-heading font-bold text-secondary mb-8">
           Checkout

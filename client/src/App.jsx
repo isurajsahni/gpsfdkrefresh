@@ -29,7 +29,8 @@ import Contact from './pages/info/Contact';
 import FAQ from './pages/info/FAQ';
 import ShippingPolicy from './pages/support/ShippingPolicy';
 import ReturnsRefunds from './pages/support/ReturnsRefunds';
-import PrivacyPolicy from './pages/support/PrivacyPolicy';
+import PrivacyPolicy from './pages/info/PrivacyPolicy';
+import CEOPage from './pages/info/CEOPage';
 import TermsConditions from './pages/support/TermsConditions';
 
 // Admin Pages
@@ -83,6 +84,7 @@ function App() {
                 
                 {/* Info & Policy */}
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />
+                <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
                 <Route path="/contact" element={<><Contact /><Footer /></>} />
                 <Route path="/faq" element={<><FAQ /><Footer /></>} />
                 <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />

@@ -29,51 +29,82 @@ const Contact = () => {
           </p>
         </motion.div>
 
-        <div className="max-w-3xl mx-auto bg-secondary/5 p-8 rounded-2xl">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Information */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="flex flex-col justify-center space-y-10"
+          >
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-secondary mb-2">Name</label>
-              <input
-                type="text"
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent"
-                required
-              />
+              <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Email</h3>
+              <a href="mailto:customer@gpsfdk.com" className="text-secondary/80 text-lg hover:text-accent transition-colors">customer@gpsfdk.com</a>
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-secondary mb-2">Email</label>
-              <input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent"
-                required
-              />
+              <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Phone Number</h3>
+              <a href="tel:+916280310103" className="text-secondary/80 text-lg hover:text-accent transition-colors">+91 62803-10103</a>
             </div>
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-secondary mb-2">Message</label>
-              <textarea
-                id="message"
-                rows="5"
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent resize-none"
-                required
-              ></textarea>
+              <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Address</h3>
+              <p className="text-secondary/80 text-lg leading-relaxed">
+                GPS, Circular Road, Near More Store,<br />
+                Faridkot, Punjab 151203
+              </p>
             </div>
-            <button
-              type="submit"
-              className="w-full bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl transition-colors duration-300"
-            >
-              Send Message
-            </button>
-            {status && (
-              <p className="text-center text-green-600 font-medium mt-4">{status}</p>
-            )}
-          </form>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="bg-secondary/5 p-8 rounded-2xl w-full"
+          >
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-secondary mb-2">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent transition-colors"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-secondary mb-2">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent transition-colors"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="message" className="block text-sm font-medium text-secondary mb-2">Message</label>
+                <textarea
+                  id="message"
+                  rows="5"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-secondary/20 rounded-xl focus:outline-none focus:border-accent resize-none transition-colors"
+                  required
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-accent hover:bg-accent-dark text-white font-semibold py-4 rounded-xl transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
+              >
+                Send Message
+              </button>
+              {status && (
+                <p className="text-center text-green-600 font-medium mt-4">{status}</p>
+              )}
+            </form>
+          </motion.div>
         </div>
       </div>
     </div>

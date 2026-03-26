@@ -7,7 +7,7 @@ const Footer = () => {
     { name: 'Contact us', path: '/contact' },
     { name: 'About us', path: '/about' },
     { name: 'Shipping & Delivery Policy', path: '/shipping-policy' },
-    { name: 'CEO', path: '/about' },
+    { name: 'CEO', path: '/ceo' },
     { name: 'FAQs', path: '/faq' },
     { name: 'Terms & Conditions', path: '/terms-conditions' },
     { name: 'Privacy Policy', path: '/privacy-policy' },

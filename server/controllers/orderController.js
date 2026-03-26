@@ -72,14 +72,34 @@ exports.createOrder = async (req, res, next) => {
       isPaid: false,
     });
 
+    // Populate products to get slug for the email
+    await order.populate('items.product', 'slug');
+
     // Send order placed email (non-blocking)
     sendOrderEmail(order, 'pending');
+
+    const productListHtml = order.items.map(item => `
+      <div style="margin-bottom: 10px;">
+        <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
+        <span style="display: inline-block; vertical-align: middle;">
+          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
+          Qty: ${item.quantity} | Price: ₹${item.price}
+        </span>
+      </div>
+    `).join('');
 
     // Notify Admin
     sendEmail({
       email: 'suraj.gnimt@gmail.com',
       subject: `New Order Placed - ${order.orderNumber}`,
-      html: `<h3>New Order Received</h3><p>Order ID: ${order.orderNumber}</p><p>Total: ₹${order.totalPrice}</p>`
+      html: `
+        <h3>New Order Received</h3>
+        <p><strong>Order ID:</strong> ${order.orderNumber}</p>
+        <p><strong>Total:</strong> ₹${order.totalPrice}</p>
+        <hr/>
+        <h4>Items Ordered:</h4>
+        ${productListHtml}
+      `
     }).catch(err => console.error('Admin order notification failed:', err.message));
 
     res.status(201).json(order);
@@ -109,14 +129,34 @@ exports.createGuestOrder = async (req, res, next) => {
       isPaid: false,
     });
 
+    // Populate products to get slug for the email
+    await order.populate('items.product', 'slug');
+
     // Send order placed email (non-blocking)
     sendOrderEmail(order, 'pending');
+
+    const productListHtml = order.items.map(item => `
+      <div style="margin-bottom: 10px;">
+        <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
+        <span style="display: inline-block; vertical-align: middle;">
+          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
+          Qty: ${item.quantity} | Price: ₹${item.price}
+        </span>
+      </div>
+    `).join('');
 
     // Notify Admin
     sendEmail({
       email: 'suraj.gnimt@gmail.com',
       subject: `New Guest Order Placed - ${order.orderNumber}`,
-      html: `<h3>New Guest Order Received</h3><p>Order ID: ${order.orderNumber}</p><p>Total: ₹${order.totalPrice}</p>`
+      html: `
+        <h3>New Guest Order Received</h3>
+        <p><strong>Order ID:</strong> ${order.orderNumber}</p>
+        <p><strong>Total:</strong> ₹${order.totalPrice}</p>
+        <hr/>
+        <h4>Items Ordered:</h4>
+        ${productListHtml}
+      `
     }).catch(err => console.error('Admin order notification failed:', err.message));
 
     res.status(201).json(order);
@@ -130,9 +170,9 @@ exports.getOrders = async (req, res, next) => {
   try {
     let orders;
     if (req.user.role === 'admin') {
-      orders = await Order.find({}).populate('user', 'name email').sort('-createdAt');
+      orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt');
     } else {
-      orders = await Order.find({ user: req.user._id }).sort('-createdAt');
+      orders = await Order.find({ user: req.user._id }).populate('items.product', 'slug').sort('-createdAt');
     }
     res.json(orders);
   } catch (error) {

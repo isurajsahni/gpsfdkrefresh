@@ -45,7 +45,7 @@ const CategoryPage = () => {
   }, [slug, sort, subcategorySlug]);
 
   return (
-    <div className="min-h-screen bg-primary pt-24 pb-12">
+    <div className="min-h-screen bg-primary pt-[120px] pb-12">
       {/* Header */}
       {slug === 'wall-canvas' ? (
         <div className="bg-secondary section-padding py-12 md:py-20 text-center text-white relative flex flex-col items-center">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
@@ -92,11 +93,11 @@ const UserDashboard = () => {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {order.items?.map((item, j) => (
-                      <div key={j} className="flex items-center gap-2 bg-cream-dark rounded-lg px-3 py-2 text-sm">
+                      <Link key={j} to={`/product/${item.product?.slug || item.product}`} className="flex items-center gap-2 bg-cream-dark rounded-lg px-3 py-2 text-sm hover:bg-cream transition-colors">
                         <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover" />
-                        <span className="font-medium">{item.name}</span>
+                        <span className="font-medium hover:text-accent transition-colors">{item.name}</span>
                         <span className="text-gray-400">×{item.quantity}</span>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                   {order.trackingNumber && (

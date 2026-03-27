@@ -32,7 +32,7 @@ const MasonryGrid = () => {
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
           <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
-        </motion.div>
+        </div>
 
         {/* Masonry Layout: Left 50% (1 big card) | Right 50% (2 stacked cards) */}
         <div className="flex flex-col md:flex-row gap-6" style={{ height: 'auto' }}>

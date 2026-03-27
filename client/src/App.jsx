@@ -61,13 +61,12 @@ function App() {
 
     // Lenis Smooth Scroll Setup
     const lenis = new Lenis({
-      duration: 1.5,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth "animated" easing
+      lerp: 0.08, // Standard smooth scrolling multiplier (fixes framer motion jitter)
+      wheelMultiplier: 1,
       direction: 'vertical',
       gestureDirection: 'vertical',
       smooth: true,
       smoothTouch: false,
-      touchMultiplier: 2,
     });
 
     function raf(time) {

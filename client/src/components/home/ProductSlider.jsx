@@ -82,10 +82,10 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
             {products.map((product, i) => (
               <SwiperSlide key={product._id || i}>
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: i * 0.05, duration: 0.6 }}
                 >
                   <Link to={`/product/${product.slug}`} className="group block">
                     <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
@@ -119,7 +119,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           </Swiper>
 
           {/* Custom Navigation Buttons to the bottom right */}
-          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 mt-10">
+          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 pt-8">
             <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
               View All
             </WebflowButton>

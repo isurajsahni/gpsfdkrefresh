@@ -76,7 +76,7 @@ const SearchOverlay = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products, categories..."
-                className="w-full bg-transparent border-b-2 border-secondary/20 text-3xl md:text-5xl font-heading font-bold text-secondary placeholder-secondary/30 pb-4 focus:outline-none focus:border-accent transition-colors"
+                className="w-full bg-transparent border-b-2 border-secondary/20 text-xl font-heading font-bold text-secondary placeholder-secondary/30 pb-4 focus:outline-none focus:border-accent transition-colors"
               />
               <button
                 type="submit"
@@ -109,7 +109,7 @@ const SearchOverlay = () => {
                       </div>
                     </Link>
                   ))}
-                  <button 
+                  <button
                     onClick={handleSearch}
                     className="w-full py-4 text-center text-sm font-bold text-accent hover:text-secondary hover:underline transition-all mt-6 block"
                   >

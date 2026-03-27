@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -44,6 +44,42 @@ import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 
+function ScrollManager() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin')) {
+      document.documentElement.classList.remove('lenis');
+      return;
+    }
+
+    const lenis = new Lenis({
+      lerp: 0.08,
+      wheelMultiplier: 1,
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      smoothTouch: false,
+    });
+
+    let animationFrameId;
+    function raf(time) {
+      if (!location.pathname.startsWith('/admin')) {
+        lenis.raf(time);
+      }
+      animationFrameId = requestAnimationFrame(raf);
+    }
+    animationFrameId = requestAnimationFrame(raf);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      lenis.destroy();
+    };
+  }, [location.pathname]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
     // Analytics tracking
@@ -58,31 +94,12 @@ function App() {
       }
     };
     trackVisit();
-
-    // Lenis Smooth Scroll Setup
-    const lenis = new Lenis({
-      lerp: 0.08, // Standard smooth scrolling multiplier (fixes framer motion jitter)
-      wheelMultiplier: 1,
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smooth: true,
-      smoothTouch: false,
-    });
-
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
-    requestAnimationFrame(raf);
-
-    return () => {
-      lenis.destroy();
-    };
   }, []);
 
   return (
     <HelmetProvider>
       <Router>
+        <ScrollManager />
         <AuthProvider>
           <UIProvider>
             <CartProvider>

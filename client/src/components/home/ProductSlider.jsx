@@ -119,7 +119,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           </Swiper>
 
           {/* Custom Navigation Buttons to the bottom right */}
-          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10">
+          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 mt-10">
             <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
               View All
             </WebflowButton>

@@ -4,7 +4,7 @@ import WebflowButton from '../ui/WebflowButton';
 
 const HeroVideo = () => {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center pt-30 md:pt-0">
+    <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center py-32">
       {/* Background Image (formerly video) */}
       <img
         className="absolute inset-0 w-full h-full object-cover"

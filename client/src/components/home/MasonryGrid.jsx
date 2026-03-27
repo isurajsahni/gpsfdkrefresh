@@ -27,10 +27,7 @@ const MasonryGrid = () => {
   return (
     <section className="py-20 md:py-28 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        <div
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
@@ -41,10 +38,7 @@ const MasonryGrid = () => {
         <div className="flex flex-col md:flex-row gap-6" style={{ height: 'auto' }}>
           {/* Left Column — 50% width, single large card */}
           {products[0] && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
+            <div
               className="w-full md:w-[60%] h-[400px] md:h-[600px] rounded-[2rem] overflow-hidden relative group shadow-2xl bg-gray-100 flex-shrink-0"
             >
               <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
@@ -75,18 +69,14 @@ const MasonryGrid = () => {
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           )}
 
           {/* Right Column — 50% width, 2 stacked cards with equal height */}
           <div className="w-full md:w-1/2 flex flex-col gap-6 md:h-[600px]">
             {products.slice(1, 3).map((product, i) => (
-              <motion.div
+              <div
                 key={product._id}
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
                 className="flex-1 min-h-0 h-[280px] md:h-auto rounded-[2rem] overflow-hidden relative group shadow-xl bg-gray-100"
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
@@ -116,7 +106,7 @@ const MasonryGrid = () => {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>

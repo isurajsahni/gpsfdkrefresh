@@ -81,14 +81,8 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           >
             {products.map((product, i) => (
               <SwiperSlide key={product._id || i}>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ delay: i * 0.05, duration: 0.6 }}
-                >
-                  <Link to={`/product/${product.slug}`} className="group block">
-                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                <Link to={`/product/${product.slug}`} className="group block">
+                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
                       <img
                         src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                         alt={product.name}
@@ -111,9 +105,8 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
                           <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
                         </button>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
+                  </div>
+                </Link>
               </SwiperSlide>
             ))}
           </Swiper>

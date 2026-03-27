@@ -10,9 +10,9 @@ const HomePage = () => {
   return (
     <>
       <HeroVideo />
-      <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
-      <MasonryGrid />
       <ProductSlider title="Wall Canvas" categorySlug="wall-canvas" />
+      <MasonryGrid />
+      <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
       <WatchBuySection />
       <FeaturesSection />
       <LeadForm />

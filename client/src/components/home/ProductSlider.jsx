@@ -83,28 +83,28 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
               <SwiperSlide key={product._id || i}>
                 <Link to={`/product/${product.slug}`} className="group block">
                   <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                      <img
-                        src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                        <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
-                        <p className="text-accent font-bold text-lg mt-1">
-                          ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
-                          {product.variations?.[0]?.comparePrice > 0 && (
-                            <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
-                          )}
-                        </p>
-                        <button
-                          onClick={(e) => handleQuickAdd(e, product)}
-                          className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
-                        >
-                          <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
-                        </button>
-                      </div>
+                    <img
+                      src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                      alt={product.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+                      <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
+                      <p className="text-accent font-bold text-lg mt-1">
+                        ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
+                        {product.variations?.[0]?.comparePrice > 0 && (
+                          <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
+                        )}
+                      </p>
+                      <button
+                        onClick={(e) => handleQuickAdd(e, product)}
+                        className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
+                      >
+                        <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
+                      </button>
+                    </div>
                   </div>
                 </Link>
               </SwiperSlide>
@@ -112,7 +112,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           </Swiper>
 
           {/* Custom Navigation Buttons to the bottom right */}
-          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 pt-8">
+          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 mt-8">
             <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
               View All
             </WebflowButton>

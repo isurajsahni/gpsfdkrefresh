@@ -6,7 +6,7 @@ const {
   deleteCoupon,
   validateCoupon
 } = require('../controllers/couponController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/auth');
 
 router.route('/')
   .post(protect, admin, createCoupon)

@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const Coupon = require('../models/Coupon');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
 
@@ -54,23 +55,38 @@ const sendOrderEmail = async (order, status) => {
 };
 
 // POST /api/orders (logged-in users)
-exports.createOrder = async (req, res, next) => {
-  try {
-    const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice } = req.body;
-    if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
-    
-    const order = await Order.create({
-      user: req.user._id,
-      items,
-      shippingAddress,
-      billingAddress,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-      isPaid: false,
-    });
+  exports.createOrder = async (req, res, next) => {
+    try {
+      const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, discountPrice, couponCode, totalPrice } = req.body;
+      if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
+      
+      const order = await Order.create({
+        user: req.user._id,
+        items,
+        shippingAddress,
+        billingAddress,
+        paymentMethod,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        discountPrice: discountPrice || 0,
+        couponCode: couponCode || null,
+        totalPrice,
+        isPaid: false,
+      });
+
+      if (couponCode) {
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+        if (coupon) {
+          const userUsage = coupon.usageHistory.find(u => u.userId.toString() === req.user._id.toString());
+          if (userUsage) {
+            userUsage.useCount += 1;
+          } else {
+            coupon.usageHistory.push({ userId: req.user._id, useCount: 1 });
+          }
+          await coupon.save();
+        }
+      }
 
     // Populate products to get slug for the email
     await order.populate('items.product', 'slug');
@@ -109,25 +125,37 @@ exports.createOrder = async (req, res, next) => {
 };
 
 // POST /api/orders/guest (guest checkout — no login required)
-exports.createGuestOrder = async (req, res, next) => {
-  try {
-    const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, totalPrice, guestEmail, guestPhone } = req.body;
-    if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
-    if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
-    
-    const order = await Order.create({
-      guestEmail: guestEmail || '',
-      guestPhone: guestPhone || shippingAddress?.phone || '',
-      items,
-      shippingAddress,
-      billingAddress,
-      paymentMethod,
-      itemsPrice,
-      shippingPrice,
-      taxPrice,
-      totalPrice,
-      isPaid: false,
-    });
+  exports.createGuestOrder = async (req, res, next) => {
+    try {
+      const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, discountPrice, couponCode, totalPrice, guestEmail, guestPhone } = req.body;
+      if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
+      if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
+      
+      const order = await Order.create({
+        guestEmail: guestEmail || '',
+        guestPhone: guestPhone || shippingAddress?.phone || '',
+        items,
+        shippingAddress,
+        billingAddress,
+        paymentMethod,
+        itemsPrice,
+        shippingPrice,
+        taxPrice,
+        discountPrice: discountPrice || 0,
+        couponCode: couponCode || null,
+        totalPrice,
+        isPaid: false,
+      });
+
+      if (couponCode) {
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+        if (coupon && guestEmail) {
+          // Track guest by placeholder ID or just skip tracking count for guests if we don't have user IDs.
+          // Since usageHistory expects ObjectId, we can skip tracking per-guest useCount, 
+          // but we can enforce total uniqueness limit by checking guest emails in a different field if required.
+          // For now, we omit guest tracking in the strict ObjectId array.
+        }
+      }
 
     // Populate products to get slug for the email
     await order.populate('items.product', 'slug');

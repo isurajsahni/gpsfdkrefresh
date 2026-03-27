@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
+import ProductSlider from '../components/home/ProductSlider';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -299,6 +300,17 @@ const ProductPage = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Related Products */}
+      {product.category && (
+        <div className="mt-10">
+          <ProductSlider 
+            title="Related Products" 
+            categorySlug={product.category.slug} 
+            featured={false} 
+          />
+        </div>
+      )}
     </div>
   );
 };

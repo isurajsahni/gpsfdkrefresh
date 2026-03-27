@@ -51,6 +51,8 @@ const orderSchema = new mongoose.Schema({
   itemsPrice: { type: Number, required: true },
   shippingPrice: { type: Number, default: 0 },
   taxPrice: { type: Number, default: 0 },
+  discountPrice: { type: Number, default: 0 },
+  couponCode: { type: String, default: null },
   totalPrice: { type: Number, required: true },
   isPaid: { type: Boolean, default: false },
   paidAt: Date,

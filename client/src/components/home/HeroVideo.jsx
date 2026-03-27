@@ -4,24 +4,19 @@ import WebflowButton from '../ui/WebflowButton';
 
 const HeroVideo = () => {
   return (
-    <section className="relative h-screen w-full overflow-hidden pt-30">
-      {/* Video Background */}
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
+    <section className="relative min-h-screen w-full overflow-hidden flex flex-col items-center justify-center pt-30 md:pt-0">
+      {/* Background Image (formerly video) */}
+      <img
         className="absolute inset-0 w-full h-full object-cover"
-        poster="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920"
-      >
-        <source src="#" type="video/mp4" />
-      </video>
+        src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920"
+        alt="Premium Home Decor"
+      />
 
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-full text-center px-4">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full text-center px-4">
         <motion.span
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -64,22 +59,23 @@ const HeroVideo = () => {
           </Link>
         </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-8"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-1.5"
-          >
-            <div className="w-1.5 h-3 bg-white/60 rounded-full" />
-          </motion.div>
-        </motion.div>
       </div>
+
+      {/* Scroll indicator - Moved outside relative container to align to screen bottom */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        className="absolute bottom-8 z-20 left-1/2 -translate-x-1/2"
+      >
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-1.5"
+        >
+          <div className="w-1.5 h-3 bg-white/60 rounded-full" />
+        </motion.div>
+      </motion.div>
     </section>
   );
 };

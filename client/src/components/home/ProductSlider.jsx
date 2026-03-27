@@ -119,25 +119,27 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           </Swiper>
 
           {/* Custom Navigation Buttons to the bottom right */}
-          <div className="absolute right-0 bottom-0 flex gap-3 pb-2 z-10">
-            <button className={`swiper-button-prev-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-              </svg>
-            </button>
-            <button className={`swiper-button-next-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
+          <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10">
+            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
+              View All
+            </WebflowButton>
+
+            <div className="flex gap-3 pb-2 ml-auto">
+              <button className={`swiper-button-prev-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+              <button className={`swiper-button-next-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div className='flex justify-end'>
-        <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden">
-          View All
-        </WebflowButton>
-      </div>
+
       <style>{`
         /* Hide default swiper nav since we use custom */
         .product-slider .swiper-button-next,

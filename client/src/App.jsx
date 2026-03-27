@@ -32,6 +32,7 @@ import ReturnsRefunds from './pages/support/ReturnsRefunds';
 import PrivacyPolicy from './pages/info/PrivacyPolicy';
 import CEOPage from './pages/info/CEOPage';
 import TermsConditions from './pages/support/TermsConditions';
+import Lenis from '@studio-freight/lenis';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -45,6 +46,7 @@ import AdminAnalytics from './pages/admin/AdminAnalytics';
 
 function App() {
   useEffect(() => {
+    // Analytics tracking
     const trackVisit = async () => {
       if (!sessionStorage.getItem('hasVisited')) {
         try {
@@ -56,6 +58,27 @@ function App() {
       }
     };
     trackVisit();
+
+    // Lenis Smooth Scroll Setup
+    const lenis = new Lenis({
+      duration: 1.5,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Smooth "animated" easing
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      smoothTouch: false,
+      touchMultiplier: 2,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
   }, []);
 
   return (

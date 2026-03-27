@@ -55,7 +55,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
             <div className="w-20 h-1 bg-accent mt-3 rounded-full" />
           </div>
           {categorySlug && (
-            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5">
+            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">
               View All
             </WebflowButton>
           )}
@@ -79,45 +79,45 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
             }}
             className="product-slider relative"
           >
-          {products.map((product, i) => (
-            <SwiperSlide key={product._id || i}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link to={`/product/${product.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                    <img
-                      src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                      <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
-                      <p className="text-accent font-bold text-lg mt-1">
-                        ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
-                        {product.variations?.[0]?.comparePrice > 0 && (
-                          <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
-                        )}
-                      </p>
-                      <button
-                        onClick={(e) => handleQuickAdd(e, product)}
-                        className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
-                      >
-                        <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
-                      </button>
+            {products.map((product, i) => (
+              <SwiperSlide key={product._id || i}>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link to={`/product/${product.slug}`} className="group block">
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                      <img
+                        src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+                        <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
+                        <p className="text-accent font-bold text-lg mt-1">
+                          ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
+                          {product.variations?.[0]?.comparePrice > 0 && (
+                            <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
+                          )}
+                        </p>
+                        <button
+                          onClick={(e) => handleQuickAdd(e, product)}
+                          className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
+                        >
+                          <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
-            </SwiperSlide>
-          ))}
+                  </Link>
+                </motion.div>
+              </SwiperSlide>
+            ))}
           </Swiper>
-          
+
           {/* Custom Navigation Buttons to the bottom right */}
           <div className="absolute right-0 bottom-0 flex gap-3 pb-2 z-10">
             <button className={`swiper-button-prev-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
@@ -133,7 +133,11 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
           </div>
         </div>
       </div>
-
+      <div className='flex justify-end'>
+        <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden">
+          View All
+        </WebflowButton>
+      </div>
       <style>{`
         /* Hide default swiper nav since we use custom */
         .product-slider .swiper-button-next,

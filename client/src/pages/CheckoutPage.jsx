@@ -13,6 +13,11 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+
   // Address state
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
@@ -104,6 +109,24 @@ const CheckoutPage = () => {
     setStep(2);
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setLoading(true);
+    setCouponError('');
+    try {
+      const { data } = await API.post('/coupons/validate', { code: couponCode, orderTotal: cartTotal });
+      setAppliedCoupon(data);
+      setCouponCode('');
+      toast.success('Coupon applied!');
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'Invalid coupon');
+      setAppliedCoupon(null);
+    }
+    setLoading(false);
+  };
+
+  const finalTotal = appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal;
+
   const handlePlaceOrder = async () => {
     setLoading(true);
     const shippingAddress = getSelectedAddress();
@@ -124,7 +147,9 @@ const CheckoutPage = () => {
         itemsPrice: cartTotal,
         shippingPrice: 0,
         taxPrice: 0,
-        totalPrice: cartTotal,
+        discountPrice: appliedCoupon ? appliedCoupon.calculatedDiscount : 0,
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        totalPrice: finalTotal,
       };
 
       const { data: order } = await API.post('/orders', orderData);
@@ -135,7 +160,7 @@ const CheckoutPage = () => {
         navigate('/dashboard');
       } else if (paymentMethod === 'razorpay') {
         try {
-          const { data: razorpayOrder } = await API.post('/payments/razorpay', { amount: cartTotal });
+          const { data: razorpayOrder } = await API.post('/payments/razorpay', { amount: finalTotal });
           const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: razorpayOrder.amount,
@@ -356,10 +381,39 @@ const CheckoutPage = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Coupon Section */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-secondary mb-2">Have a coupon code?</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="Enter code"
+                    className="flex-1 px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent uppercase"
+                    disabled={appliedCoupon}
+                  />
+                  {!appliedCoupon ? (
+                    <button onClick={handleApplyCoupon} disabled={!couponCode || loading} className="btn-secondary whitespace-nowrap px-6">Apply</button>
+                  ) : (
+                    <button onClick={() => setAppliedCoupon(null)} className="btn-outline whitespace-nowrap text-red-500 hover:text-red-700 border-red-200 hover:border-red-300">Remove</button>
+                  )}
+                </div>
+                {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
+                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon '{appliedCoupon.code}' applied! (-₹{Math.round(appliedCoupon.calculatedDiscount).toLocaleString()})</p>}
+              </div>
+
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span>₹{cartTotal.toLocaleString()}</span></div>
                 <div className="flex justify-between text-sm mt-1"><span>Shipping</span><span className="text-green-600">FREE</span></div>
-                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">₹{cartTotal.toLocaleString()}</span></div>
+                {appliedCoupon && (
+                  <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
+                    <span>Discount ({appliedCoupon.code})</span>
+                    <span>-₹{Math.round(appliedCoupon.calculatedDiscount).toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">₹{Math.round(finalTotal).toLocaleString()}</span></div>
               </div>
               <div className="flex gap-3 items-center sm:gap-4">
                 <button onClick={() => setStep(2)} className="btn-outline">Back</button>

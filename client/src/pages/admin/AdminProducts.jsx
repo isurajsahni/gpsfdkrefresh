@@ -249,7 +249,17 @@ const AdminProducts = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Subcategory (Optional)</label>
-                  <input type="text" value={form.subCategory} onChange={(e) => setForm({ ...form, subCategory: e.target.value })} placeholder="e.g. Modern, Antique, etc." className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
+                  <select value={form.subCategory} onChange={(e) => setForm({ ...form, subCategory: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent">
+                    <option value="">None</option>
+                    {[
+                      'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse',
+                      'The Celestial Frontier', 'The Ethereal Gaze', 'The Gaze of Power',
+                      'The Modern Legend', 'The Gilded Bloom', 'The Velocity Suite',
+                      'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'Ink & Interval'
+                    ].map(sub => (
+                      <option key={sub} value={sub}>{sub}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="md:col-span-2 flex items-center gap-6 pt-2 border-t border-gray-100">
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.customizable} onChange={(e) => setForm({ ...form, customizable: e.target.checked })} className="accent-accent" /> Customizable</label>

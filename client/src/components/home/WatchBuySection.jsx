@@ -51,7 +51,7 @@ const WatchBuySection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="group flex flex-col"
+              className={`group flex flex-col ${i >= 2 ? 'hidden sm:flex' : ''}`}
             >
               {/* Video Container — reduced height */}
               <div className="relative rounded-t-2xl overflow-hidden bg-secondary-dark" style={{ height: '100%' }}>

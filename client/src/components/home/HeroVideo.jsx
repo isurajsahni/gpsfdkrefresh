@@ -4,7 +4,7 @@ import WebflowButton from '../ui/WebflowButton';
 
 const HeroVideo = () => {
   return (
-    <section className="relative h-screen w-full overflow-hidden">
+    <section className="relative h-screen w-full overflow-hidden pt-30">
       {/* Video Background */}
       <video
         autoPlay
@@ -14,7 +14,7 @@ const HeroVideo = () => {
         className="absolute inset-0 w-full h-full object-cover"
         poster="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920"
       >
-        <source src="https://cdn.pixabay.com/video/2024/03/22/205043-925316498_large.mp4" type="video/mp4" />
+        <source src="#" type="video/mp4" />
       </video>
 
       {/* Dark Overlay */}
@@ -54,7 +54,7 @@ const HeroVideo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.9, duration: 0.8 }}
-          className="mt-10 flex flex-col sm:flex-row gap-4"
+          className="mt-10 items-center flex flex-col sm:flex-row gap-4"
         >
           <WebflowButton to="/category/wall-canvas" className="text-lg">
             Shop Now

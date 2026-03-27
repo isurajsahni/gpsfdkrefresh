@@ -27,6 +27,7 @@ app.use('/api/orders', require('./routes/orders'));
 app.use('/api/leads', require('./routes/leads'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/coupons', require('./routes/coupons'));
 
 // Root route
 app.get('/', (req, res) => res.send('GPSFDK Ecommerce API is running 🚀'));

@@ -10,6 +10,7 @@ import logo from '../../assets/vite.webp';
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSubcats, setMobileSubcats] = useState(null);
   const [userMenu, setUserMenu] = useState(false);
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -68,14 +69,14 @@ const Navbar = () => {
                   </Link>
                   {cat.subcats.length > 0 && (
                     <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                      <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-3 min-w-[220px]">
+                      <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 px-2 min-w-[450px] grid grid-cols-2 gap-x-2">
                         {cat.subcats.map((sub) => {
                           const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
                           return (
                             <Link
                               key={sub}
                               to={`/category/${cat.slug}/${subSlug}`}
-                              className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors"
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-cream hover:text-secondary rounded-lg transition-colors"
                             >
                               {sub}
                             </Link>
@@ -181,33 +182,53 @@ const Navbar = () => {
             transition={{ type: 'tween', duration: 0.3 }}
             className="fixed inset-0 z-40 bg-secondary pt-20"
           >
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 h-full overflow-y-auto pb-32">
               {categories.map((cat) => (
-                <div key={cat.slug}>
-                  <Link
-                    to={`/category/${cat.slug}`}
-                    onClick={() => setMobileOpen(false)}
-                    className="block text-xl text-white font-heading py-3 border-b border-white/10"
-                  >
-                    {cat.name}
-                  </Link>
-                  {cat.subcats.length > 0 && (
-                    <div className="pl-4 py-3 flex flex-col gap-3 border-b border-white/10">
-                      {cat.subcats.map(sub => {
-                        const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-                        return (
-                          <Link
-                            key={sub}
-                            to={`/category/${cat.slug}/${subSlug}`}
-                            onClick={() => setMobileOpen(false)}
-                            className="text-white/70 text-base font-medium hover:text-white transition-colors"
-                          >
-                            {sub}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+                <div key={cat.slug} className="border-b border-white/10 pb-2">
+                  <div className="flex items-center justify-between py-3">
+                    <Link
+                      to={`/category/${cat.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      className="text-xl text-white font-heading"
+                    >
+                      {cat.name}
+                    </Link>
+                    {cat.subcats.length > 0 && (
+                      <button 
+                        onClick={() => setMobileSubcats(mobileSubcats === cat.slug ? null : cat.slug)}
+                        className="p-2 text-white/50 hover:text-white"
+                      >
+                        <HiChevronDown className={`w-6 h-6 transition-transform ${mobileSubcats === cat.slug ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                  
+                  <AnimatePresence>
+                    {cat.subcats.length > 0 && mobileSubcats === cat.slug && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pl-4 py-2 flex flex-col gap-4 mb-4">
+                          {cat.subcats.map(sub => {
+                            const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                            return (
+                              <Link
+                                key={sub}
+                                to={`/category/${cat.slug}/${subSlug}`}
+                                onClick={() => setMobileOpen(false)}
+                                className="text-white/70 text-base font-medium hover:text-white transition-colors"
+                              >
+                                {sub}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               ))}
               <button

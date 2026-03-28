@@ -46,9 +46,8 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
     <section className="section-padding section-spacing bg-primary">
       <div className="max-w-7xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          initial={{ opacity: 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between mb-10"
         >
           <div>
@@ -88,7 +87,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
                       src={optimizeImage(product.images?.[0]?.url, 600) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
+                      fetchpriority="high"
                     />
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">

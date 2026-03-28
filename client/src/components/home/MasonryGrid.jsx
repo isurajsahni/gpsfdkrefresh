@@ -47,6 +47,7 @@ const MasonryGrid = () => {
                   src={optimizeImage(products[0].images?.[0]?.url, 800) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800'}
                   alt={products[0].name}
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                  fetchpriority="high"
                 />
                 {/* Dark Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity duration-500 group-hover:from-black/70 group-hover:via-black/30" />
@@ -85,6 +86,7 @@ const MasonryGrid = () => {
                     src={optimizeImage(product.images?.[0]?.url, 600) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
                     className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    fetchpriority="high"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent transition-opacity duration-500 group-hover:from-black/70 group-hover:via-black/20" />
 

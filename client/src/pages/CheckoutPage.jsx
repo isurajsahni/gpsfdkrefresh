@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -154,7 +154,8 @@ const CheckoutPage = () => {
     setLoading(false);
   };
 
-  const finalTotal = appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal;
+  const shippingFee = cartTotal < 499 ? 50 : 0;
+  const finalTotal = (appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal) + shippingFee;
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -174,7 +175,7 @@ const CheckoutPage = () => {
         billingAddress: shippingAddress,
         paymentMethod,
         itemsPrice: cartTotal,
-        shippingPrice: 0,
+        shippingPrice: shippingFee,
         taxPrice: 0,
         discountPrice: appliedCoupon ? appliedCoupon.calculatedDiscount : 0,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
@@ -403,6 +404,25 @@ const CheckoutPage = () => {
           {step === 3 && (
             <div>
               <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Review Your Order</h2>
+              
+              {/* Shipping Banner */}
+              {shippingFee > 0 ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                  <div className="flex items-start sm:items-center gap-3">
+                    <span className="text-xl">🚚</span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                  </div>
+                  <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
+                    Add Items
+                  </Link>
+                </div>
+              ) : (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
+                  <span className="text-xl">✨</span>
+                  <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
+                </div>
+              )}
+
               <div className="space-y-3 mb-6">
                 {cartItems.map(item => (
                   <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100">
@@ -442,7 +462,14 @@ const CheckoutPage = () => {
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span>₹{cartTotal.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm mt-1"><span>Shipping</span><span className="text-green-600">FREE</span></div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span>Shipping</span>
+                  {shippingFee > 0 ? (
+                    <span className="text-secondary font-medium">+₹{shippingFee}</span>
+                  ) : (
+                    <span className="text-green-600 font-bold">FREE</span>
+                  )}
+                </div>
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
                     <span>Discount ({appliedCoupon.code})</span>

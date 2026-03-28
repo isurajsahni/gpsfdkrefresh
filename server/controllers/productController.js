@@ -56,7 +56,8 @@ exports.getProducts = async (req, res, next) => {
       .populate('category', 'name slug')
       .sort(sortObj)
       .skip((page - 1) * limit)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit))
+      .lean();
     
     res.json({ products, total, pages: Math.ceil(total / limit), page: parseInt(page) });
   } catch (error) {
@@ -67,7 +68,7 @@ exports.getProducts = async (req, res, next) => {
 // GET /api/products/:slug
 exports.getProductBySlug = async (req, res, next) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug }).populate('category', 'name slug');
+    const product = await Product.findOne({ slug: req.params.slug }).populate('category', 'name slug').lean();
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {

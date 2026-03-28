@@ -6,6 +6,7 @@ import { Navigation, Autoplay } from 'swiper/modules';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
+import { optimizeImage } from '../../utils/imageOptimizer';
 import API from '../../utils/api';
 import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
@@ -84,7 +85,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
                 <Link to={`/product/${product.slug}`} className="group block">
                   <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
                     <img
-                      src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                      src={optimizeImage(product.images?.[0]?.url, 600) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       loading="lazy"

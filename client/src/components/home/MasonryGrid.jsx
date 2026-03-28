@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import API from '../../utils/api';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const MasonryGrid = () => {
   const [products, setProducts] = useState([]);
@@ -43,7 +44,7 @@ const MasonryGrid = () => {
             >
               <Link to={`/product/${products[0].slug}`} className="block w-full h-full">
                 <img
-                  src={products[0].images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800'}
+                  src={optimizeImage(products[0].images?.[0]?.url, 800) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800'}
                   alt={products[0].name}
                   className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
@@ -81,7 +82,7 @@ const MasonryGrid = () => {
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
-                    src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                    src={optimizeImage(product.images?.[0]?.url, 600) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
                     className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                   />

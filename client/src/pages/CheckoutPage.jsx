@@ -154,8 +154,9 @@ const CheckoutPage = () => {
     setLoading(false);
   };
 
-  const shippingFee = cartTotal < 499 ? 50 : 0;
-  const finalTotal = (appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal) + shippingFee;
+  const discountedTotal = appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal;
+  const shippingFee = discountedTotal < 499 ? 50 : 0;
+  const finalTotal = discountedTotal + shippingFee;
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -410,7 +411,7 @@ const CheckoutPage = () => {
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                   <div className="flex items-start sm:items-center gap-3">
                     <span className="text-xl">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - discountedTotal}</strong> away from <strong>Free Shipping!</strong></span>
                   </div>
                   <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
                     Add Items

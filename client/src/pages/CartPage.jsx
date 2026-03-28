@@ -6,6 +6,9 @@ import { useCart } from '../context/CartContext';
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
 
+  const shippingFee = cartTotal > 0 && cartTotal < 499 ? 50 : 0;
+  const finalTotal = cartTotal + shippingFee;
+
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-primary pt-24 flex flex-col items-center justify-center">
@@ -81,10 +84,17 @@ const CartPage = () => {
               <h3 className="text-xl font-heading font-bold text-secondary mb-6">Order Summary</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">₹{cartTotal.toLocaleString()}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span className="text-green-600 font-semibold">FREE</span></div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Shipping</span>
+                  {shippingFee > 0 ? (
+                    <span className="font-semibold text-secondary">+₹{shippingFee}</span>
+                  ) : (
+                    <span className="text-green-600 font-semibold">FREE</span>
+                  )}
+                </div>
                 <div className="border-t pt-3 mt-3 flex justify-between text-lg">
                   <span className="font-heading font-bold text-secondary">Total</span>
-                  <span className="font-bold text-accent">₹{cartTotal.toLocaleString()}</span>
+                  <span className="font-bold text-accent">₹{finalTotal.toLocaleString()}</span>
                 </div>
               </div>
               <Link to="/checkout" className="btn-primary w-full text-center block mt-6 text-lg">

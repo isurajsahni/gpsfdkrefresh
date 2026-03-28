@@ -23,7 +23,21 @@ const Navbar = () => {
   }, []);
 
   const categories = [
-    { name: 'Wall Canvas', slug: 'wall-canvas', subcats: ['The Velocity Suite', 'Tethered Horizons', 'The Gaze of Power', 'Millionaire Art', 'Nostalgia Noir'] },
+    { name: 'Wall Canvas', slug: 'wall-canvas', subcats: [
+      'The Sassy Classic',
+      'Tethered Horizons',
+      'The Botanical Muse',
+      'The Celestial Frontier',
+      'The Ethereal Gaze',
+      'The Gaze of Power',
+      'The Modern Legend',
+      'The Gilded Bloom',
+      'The Velocity Suite',
+      'Millionaire Art',
+      'Nostalgia Noir',
+      'The After Hour Suite',
+      'Ink & Interval'
+    ] },
     { name: 'House Nameplates', slug: 'house-nameplates', subcats: [] },
   ];
 
@@ -177,6 +191,23 @@ const Navbar = () => {
                   >
                     {cat.name}
                   </Link>
+                  {cat.subcats.length > 0 && (
+                    <div className="pl-4 py-3 flex flex-col gap-3 border-b border-white/10">
+                      {cat.subcats.map(sub => {
+                        const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                        return (
+                          <Link
+                            key={sub}
+                            to={`/category/${cat.slug}/${subSlug}`}
+                            onClick={() => setMobileOpen(false)}
+                            className="text-white/70 text-base font-medium hover:text-white transition-colors"
+                          >
+                            {sub}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
               <button

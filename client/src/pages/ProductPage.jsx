@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
+import SEO from '../components/seo/SEO';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -121,8 +122,37 @@ const ProductPage = () => {
     setIsCartOpen(true);
   };
 
+  const productSchema = product ? {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.images?.map(img => img.url) || [],
+    "description": product.description,
+    "sku": product.sku || product._id,
+    "brand": {
+      "@type": "Brand",
+      "name": "GPSFDK"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://www.gpsfdk.com/product/${product.slug}`,
+      "priceCurrency": "INR",
+      "price": selectedVariation?.price || product.basePrice,
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": "https://schema.org/InStock",
+    }
+  } : null;
+
   return (
     <div className="min-h-screen bg-primary pt-24 pb-20">
+      {product && (
+        <SEO 
+          title={`${product.name} | Custom Designs by GPSFDK`}
+          description={product.description?.substring(0, 160)}
+          image={product.images?.[0]?.url}
+          schema={productSchema}
+        />
+      )}
       <div className="max-w-7xl mx-auto section-padding">
         {/* Breadcrumb */}
         <nav className="text-gray-400 text-sm mb-8">

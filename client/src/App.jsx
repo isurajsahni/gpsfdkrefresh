@@ -32,6 +32,7 @@ import ReturnsRefunds from './pages/support/ReturnsRefunds';
 import PrivacyPolicy from './pages/info/PrivacyPolicy';
 import CEOPage from './pages/info/CEOPage';
 import TermsConditions from './pages/support/TermsConditions';
+import LocationPage from './pages/LocationPage';
 import Lenis from '@studio-freight/lenis';
 
 // Admin Pages
@@ -121,6 +122,9 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                
+                {/* Location SEO Landing Pages */}
+                <Route path="/location/:city" element={<><LocationPage /><Footer /></>} />
                 
                 {/* Info & Policy */}
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />

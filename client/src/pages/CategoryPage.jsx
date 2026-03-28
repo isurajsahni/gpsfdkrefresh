@@ -5,6 +5,7 @@ import { HiOutlineShoppingCart, HiOutlineAdjustments } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
+import SEO from '../components/seo/SEO';
 
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
@@ -44,8 +45,42 @@ const CategoryPage = () => {
     fetchData();
   }, [slug, sort, subcategorySlug]);
 
+  // Generate dynamic SEO based on category
+  const dynamicTitle = displaySubcategory 
+    ? `${displaySubcategory} | Premium Custom Designs India`
+    : category?.name 
+      ? `${category.name} | Shop Custom Designs in India`
+      : 'Explore Premium Products | GPSFDK';
+      
+  const dynamicDescription = category?.description || "Browse our exclusive collection of premium wall canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://www.gpsfdk.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": category?.name || slug,
+        "item": `https://www.gpsfdk.com/category/${slug}`
+      },
+      ...(subcategorySlug ? [{
+        "@type": "ListItem",
+        "position": 3,
+        "name": displaySubcategory
+      }] : [])
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-primary pt-[80px] pb-12">
+      <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} />
       {/* Header */}
       {slug === 'wall-canvas' ? (
         <div className="bg-secondary section-padding py-12 md:py-20 text-center text-white relative flex flex-col items-center">

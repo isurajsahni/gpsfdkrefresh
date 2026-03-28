@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import faqImage from '../../assets/image/faq_demo.png';
+import SEO from '../../components/seo/SEO';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -25,12 +26,30 @@ const FAQ = () => {
     }
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  };
+
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
     <div className="min-h-screen bg-primary text-secondary overflow-hidden pt-[120px] pb-24">
+      <SEO 
+        title="Frequently Asked Questions | GPSFDK Support"
+        description="Find answers to common questions about our premium wall canvases, custom nameplates, shipping, and returns."
+        schema={faqSchema}
+      />
       <div className="max-w-6xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -4,7 +4,6 @@ import { HiOutlineCalendar, HiOutlineArrowLeft, HiOutlineArrowRight, HiOutlineAd
 import API from '../../utils/api';
 import ChartSection from '../../components/admin/analytics/ChartSection';
 import StatsCard from '../../components/admin/analytics/StatsCard';
-import MostViewed from '../../components/admin/analytics/MostViewed';
 import Referrers from '../../components/admin/analytics/Referrers';
 import LocationsSection from '../../components/admin/analytics/LocationsSection';
 import SkeletonLoader from '../../components/admin/analytics/SkeletonLoader';
@@ -101,7 +100,7 @@ const AdminAnalytics = () => {
         {loading ? (
           <SkeletonLoader type="cards" />
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 max-w-2xl">
             <StatsCard
               type="views"
               title="Views"
@@ -118,41 +117,16 @@ const AdminAnalytics = () => {
               isActive={activeMetric === 'visitors'}
               onClick={() => setActiveMetric('visitors')}
             />
-            <StatsCard
-              type="likes"
-              title="Likes"
-              total={summary.likes.total}
-              growth={summary.likes.growth}
-              isActive={activeMetric === 'likes'}
-              onClick={() => setActiveMetric('likes')}
-            />
-            <StatsCard
-              type="comments"
-              title="Comments"
-              total={summary.comments.total}
-              growth={summary.comments.growth}
-              isActive={activeMetric === 'comments'}
-              onClick={() => setActiveMetric('comments')}
-            />
           </div>
         )}
       </div>
 
-      {/* Most Viewed + Referrers */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Referrers */}
+      <div className="mt-8">
         {loading ? (
-          <>
-            <SkeletonLoader type="list" />
-            <SkeletonLoader type="list" />
-          </>
+          <SkeletonLoader type="list" />
         ) : (
-          <>
-            <MostViewed
-              postsAndPages={dashboardData.mostViewed.postsAndPages}
-              archive={dashboardData.mostViewed.archive}
-            />
-            <Referrers data={dashboardData.referrers} />
-          </>
+          <Referrers data={dashboardData.referrers} />
         )}
       </div>
 

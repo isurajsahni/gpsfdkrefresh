@@ -35,7 +35,6 @@ import TermsConditions from './pages/support/TermsConditions';
 import LocationPage from './pages/LocationPage';
 import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
-import Lenis from '@studio-freight/lenis';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -52,33 +51,8 @@ function ScrollManager() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname.startsWith('/admin')) {
-      document.documentElement.classList.remove('lenis');
-      return;
-    }
-
-    const lenis = new Lenis({
-      lerp: 0.08,
-      wheelMultiplier: 1,
-      direction: 'vertical',
-      gestureDirection: 'vertical',
-      smooth: true,
-      smoothTouch: false,
-    });
-
-    let animationFrameId;
-    function raf(time) {
-      if (!location.pathname.startsWith('/admin')) {
-        lenis.raf(time);
-      }
-      animationFrameId = requestAnimationFrame(raf);
-    }
-    animationFrameId = requestAnimationFrame(raf);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      lenis.destroy();
-    };
+    // Simple scroll to top on route change
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   return null;

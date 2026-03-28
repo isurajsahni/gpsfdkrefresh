@@ -151,3 +151,36 @@ html.lenis, html.lenis body {
   object-fit: cover;
   max-height: 500px;
 }
+
+/* Force Prose overrides for true heading sizes (Cinzel needs massive scale) and tight spacing */
+.prose h2 {
+  font-size: 2.25rem !important; /* 36px equivalent */
+  line-height: 2.5rem !important;
+  margin-top: 2.5rem !important;
+  margin-bottom: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #0B5D3B !important;
+}
+
+.prose h3 {
+  font-size: 1.5rem !important; /* 24px equivalent */
+  line-height: 2rem !important;
+  margin-top: 2rem !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 700 !important;
+  color: #0B5D3B !important;
+}
+
+.prose p {
+  margin-top: 0 !important;
+  margin-bottom: 1.25rem !important;
+  color: #374151 !important;
+}
+.prose ul, .prose ol {
+  margin-top: 0.5rem !important;
+  margin-bottom: 1.25rem !important;
+}
+.prose li {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+}

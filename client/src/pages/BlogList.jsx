@@ -50,7 +50,7 @@ const BlogList = () => {
 
       {/* Blog Grid matching the clean aesthetic */}
       <section className="max-w-7xl mx-auto px-6 py-16">
-        
+
         {/* Simple Page Title (reminiscent of the reference image header) */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-heading font-medium text-secondary">
@@ -58,7 +58,7 @@ const BlogList = () => {
           </h2>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-8">
           {blogs.map((blog, i) => (
             <motion.div
               key={blog.slug}
@@ -68,7 +68,7 @@ const BlogList = () => {
             >
               <Link to={`/blog/${blog.slug}`} className="group block h-full">
                 <div className="bg-[#fcfaf6] border border-gray-100/50 p-4 transition-all duration-300 h-full flex flex-col hover:shadow-xl hover:-translate-y-1">
-                  
+
                   {/* Padded Image Container */}
                   <div className="relative aspect-[4/3] overflow-hidden mb-5">
                     <img
@@ -78,21 +78,21 @@ const BlogList = () => {
                       loading="lazy"
                     />
                   </div>
-                  
+
                   {/* Meta Information */}
                   <div className="flex justify-between items-center text-[12px] md:text-sm text-gray-500 font-medium tracking-wide">
                     <span>{blog.author || 'Suraj'}</span>
                     <span className="uppercase">{new Date(blog.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
-                  
+
                   {/* Divider Line */}
                   <div className="w-full h-px bg-gray-300 my-3 group-hover:bg-accent/40 transition-colors"></div>
-                  
+
                   {/* Title */}
                   <h3 className="font-heading text-secondary text-lg md:text-xl font-medium leading-snug line-clamp-3">
                     {blog.title}
                   </h3>
-                  
+
                 </div>
               </Link>
             </motion.div>

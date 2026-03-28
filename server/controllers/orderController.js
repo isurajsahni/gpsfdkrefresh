@@ -54,6 +54,50 @@ const sendOrderEmail = async (order, status) => {
   }
 };
 
+// Helper: trigger all "New Order" notifications (User email + Admin alert)
+const triggerNewOrderNotifications = async (order) => {
+  try {
+    // Populate product slugs if they aren't there for the email links
+    if (!order.items[0]?.product?.slug) {
+      await order.populate('items.product', 'slug');
+    }
+
+    // Send customer confirmation
+    sendOrderEmail(order, 'pending');
+
+    const productListHtml = order.items.map(item => `
+      <div style="margin-bottom: 10px;">
+        <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
+        <span style="display: inline-block; vertical-align: middle;">
+          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
+          Qty: ${item.quantity} | Price: ₹${item.price}
+        </span>
+      </div>
+    `).join('');
+
+    // Send Admin Alert
+    sendEmail({
+      email: 'suraj.gnimt@gmail.com',
+      subject: `New ${order.user ? '' : 'Guest '}Order Placed - ${order.orderNumber}`,
+      html: `
+        <h3>New Order Received</h3>
+        <p><strong>Order ID:</strong> ${order.orderNumber}</p>
+        <p><strong>Customer:</strong> ${order.shippingAddress?.fullName || 'Guest'}</p>
+        <p><strong>Payment Method:</strong> ${order.paymentMethod.toUpperCase()}</p>
+        <p><strong>Total:</strong> ₹${order.totalPrice}</p>
+        <hr/>
+        <h4>Items Ordered:</h4>
+        ${productListHtml}
+      `
+    }).catch(err => console.error('Admin order notification failed:', err.message));
+  } catch (err) {
+    console.error('Failed to trigger order notifications:', err.message);
+  }
+};
+
+// Export trigger for paymentController
+exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
+
 // POST /api/orders (logged-in users)
   exports.createOrder = async (req, res, next) => {
     try {
@@ -72,6 +116,7 @@ const sendOrderEmail = async (order, status) => {
         discountPrice: discountPrice || 0,
         couponCode: couponCode || null,
         totalPrice,
+        status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
         isPaid: false,
       });
 
@@ -88,37 +133,12 @@ const sendOrderEmail = async (order, status) => {
         }
       }
 
-    // Populate products to get slug for the email
-    await order.populate('items.product', 'slug');
+      // Only notify if it's COD. Online payments wait for verification.
+      if (paymentMethod === 'cod') {
+        triggerNewOrderNotifications(order);
+      }
 
-    // Send order placed email (non-blocking)
-    sendOrderEmail(order, 'pending');
-
-    const productListHtml = order.items.map(item => `
-      <div style="margin-bottom: 10px;">
-        <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
-        <span style="display: inline-block; vertical-align: middle;">
-          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
-          Qty: ${item.quantity} | Price: ₹${item.price}
-        </span>
-      </div>
-    `).join('');
-
-    // Notify Admin
-    sendEmail({
-      email: 'suraj.gnimt@gmail.com',
-      subject: `New Order Placed - ${order.orderNumber}`,
-      html: `
-        <h3>New Order Received</h3>
-        <p><strong>Order ID:</strong> ${order.orderNumber}</p>
-        <p><strong>Total:</strong> ₹${order.totalPrice}</p>
-        <hr/>
-        <h4>Items Ordered:</h4>
-        ${productListHtml}
-      `
-    }).catch(err => console.error('Admin order notification failed:', err.message));
-
-    res.status(201).json(order);
+      res.status(201).json(order);
   } catch (error) {
     next(error);
   }
@@ -144,50 +164,23 @@ const sendOrderEmail = async (order, status) => {
         discountPrice: discountPrice || 0,
         couponCode: couponCode || null,
         totalPrice,
+        status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
         isPaid: false,
       });
 
       if (couponCode) {
         const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
         if (coupon && guestEmail) {
-          // Track guest by placeholder ID or just skip tracking count for guests if we don't have user IDs.
-          // Since usageHistory expects ObjectId, we can skip tracking per-guest useCount, 
-          // but we can enforce total uniqueness limit by checking guest emails in a different field if required.
-          // For now, we omit guest tracking in the strict ObjectId array.
+          // Guest logic
         }
       }
 
-    // Populate products to get slug for the email
-    await order.populate('items.product', 'slug');
+      // Only notify if it's COD. Online payments wait for verification.
+      if (paymentMethod === 'cod') {
+        triggerNewOrderNotifications(order);
+      }
 
-    // Send order placed email (non-blocking)
-    sendOrderEmail(order, 'pending');
-
-    const productListHtml = order.items.map(item => `
-      <div style="margin-bottom: 10px;">
-        <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
-        <span style="display: inline-block; vertical-align: middle;">
-          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
-          Qty: ${item.quantity} | Price: ₹${item.price}
-        </span>
-      </div>
-    `).join('');
-
-    // Notify Admin
-    sendEmail({
-      email: 'suraj.gnimt@gmail.com',
-      subject: `New Guest Order Placed - ${order.orderNumber}`,
-      html: `
-        <h3>New Guest Order Received</h3>
-        <p><strong>Order ID:</strong> ${order.orderNumber}</p>
-        <p><strong>Total:</strong> ₹${order.totalPrice}</p>
-        <hr/>
-        <h4>Items Ordered:</h4>
-        ${productListHtml}
-      `
-    }).catch(err => console.error('Admin order notification failed:', err.message));
-
-    res.status(201).json(order);
+      res.status(201).json(order);
   } catch (error) {
     next(error);
   }
@@ -200,7 +193,7 @@ exports.getOrders = async (req, res, next) => {
     if (req.user.role === 'admin') {
       orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt');
     } else {
-      orders = await Order.find({ user: req.user._id }).populate('items.product', 'slug').sort('-createdAt');
+      orders = await Order.find({ user: req.user._id, status: { $ne: 'payment_pending' } }).populate('items.product', 'slug').sort('-createdAt');
     }
     res.json(orders);
   } catch (error) {

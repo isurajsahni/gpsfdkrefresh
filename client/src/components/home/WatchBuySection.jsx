@@ -39,7 +39,6 @@ const WatchBuySection = () => {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mt-3">Watch & Buy</h2>
-          <p className="text-white/50 mt-3 max-w-lg mx-auto">Real stories from our happy customers</p>
           <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
         </motion.div>
 

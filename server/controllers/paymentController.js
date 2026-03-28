@@ -2,6 +2,7 @@ const Razorpay = require('razorpay');
 const stripe = require('stripe');
 const crypto = require('crypto');
 const Order = require('../models/Order');
+const orderController = require('./orderController');
 
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
@@ -34,12 +35,16 @@ exports.verifyRazorpay = async (req, res, next) => {
       if (order) {
         order.isPaid = true;
         order.paidAt = Date.now();
+        order.status = 'pending';
         order.paymentResult = {
           id: razorpay_payment_id,
           status: 'completed',
           update_time: new Date().toISOString(),
         };
         await order.save();
+        
+        // Trigger notifications now that it's paid
+        orderController.triggerNewOrderNotifications(order);
       }
       res.json({ message: 'Payment verified', success: true });
     } else {
@@ -91,8 +96,12 @@ exports.stripeWebhook = async (req, res, next) => {
       if (order) {
         order.isPaid = true;
         order.paidAt = Date.now();
+        order.status = 'pending';
         order.paymentResult = { id: session.payment_intent, status: 'completed', update_time: new Date().toISOString() };
         await order.save();
+
+        // Trigger notifications now that it's paid
+        orderController.triggerNewOrderNotifications(order);
       }
     }
     res.json({ received: true });

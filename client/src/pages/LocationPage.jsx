@@ -11,14 +11,23 @@ const LocationPage = () => {
   // Format city name for display (e.g. new-delhi -> New Delhi)
   const formatCity = (str) => {
     if (!str) return 'India';
-    return str.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    return str.replace(/-/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
+  
+  const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", 
+    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
+    "Uttarakhand", "West Bengal", "Delhi" // Adding Delhi as it is a major union territory/state equivalent
+  ];
   
   const cityName = formatCity(city);
   
   // Default values based on the generated SEO strategy
-  const title = `Premium Wall Canvas & Name Plates in ${cityName}`;
-  const description = `Buy premium wall canvas prints & custom house name plates in ${cityName}. Modern aesthetic designs, fast delivery & affordable pricing in ${cityName}.`;
+  const title = `Premium Wall Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
+  const description = `Looking for Custom Canvas Prints in ${cityName}? GPSFDK offers Gallery Wrapped Canvas, Aesthetic Wall Decor, and premium Photo to Canvas services across ${cityName}.`;
   
   const localBusinessSchema = {
     "@context": "https://schema.org",
@@ -58,7 +67,7 @@ const LocationPage = () => {
               Wall Canvas in <span className="text-accent">{cityName}</span>
             </h1>
             <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-10 font-body">
-              Elevate your home's aesthetic with our customized LED nameplates and premium canvas prints. Fast shipping and exceptional quality, delivered straight to you in {cityName}.
+              Transform your living space with our Top-Rated Gallery Wrapped Canvas and Custom Photo to Canvas Prints. Whether you need Aesthetic Wall Art or durable LED nameplates, we deliver museum-quality decor straight to {cityName}.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -96,6 +105,31 @@ const LocationPage = () => {
            <Link to="/contact" className="inline-block btn-primary relative z-10 px-8 py-4 text-lg">
              Contact Our Local Team
            </Link>
+        </div>
+      </section>
+
+      {/* Internal SEO Links for 29 States */}
+      <section className="py-20 max-w-7xl mx-auto px-6 border-t border-gray-200">
+        <h3 className="text-2xl font-heading font-bold text-secondary text-center mb-10">
+          Wall Canvas & Name Plates Delivered Across India
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+          {indianStates.map((state) => {
+            const stateSlug = state.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <Link 
+                key={state} 
+                to={`/location/${stateSlug}`}
+                className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                  cityName.toLowerCase() === state.toLowerCase() 
+                    ? 'bg-accent text-white shadow-lg' 
+                    : 'bg-white border border-gray-200 text-gray-600 hover:border-accent hover:text-accent shadow-sm'
+                }`}
+              >
+                {state}
+              </Link>
+            )
+          })}
         </div>
       </section>
 

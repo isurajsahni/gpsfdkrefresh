@@ -58,53 +58,57 @@ const BlogPost = () => {
         schema={articleSchema}
       />
 
-      {/* Hero Banner */}
-      <section className="relative pt-[120px] pb-16 bg-secondary overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20"
-          style={{ backgroundImage: `url(${blog.image})` }}
-        ></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-secondary/70 to-secondary"></div>
-
-        <div className="max-w-4xl mx-auto px-6 relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+      {/* Hero Banner Redesigned */}
+      <section className="bg-secondary pt-[120px] pb-16 lg:pb-24">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
             {/* Breadcrumb */}
-            <nav className="text-white/50 text-sm mb-6">
+            <nav className="text-white/50 text-sm mb-8 flex flex-wrap gap-2">
               <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="mx-2">/</span>
+              <span>/</span>
               <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <span className="mx-2">/</span>
-              <span className="text-white/80">{blog.title.length > 50 ? blog.title.slice(0, 50) + '...' : blog.title}</span>
+              <span>/</span>
+              <span className="text-white/80">{blog.title.length > 40 ? blog.title.slice(0, 40) + '...' : blog.title}</span>
             </nav>
 
-            <div className="flex items-center gap-3 mb-5">
-              <span className="bg-accent/20 text-accent text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">{blog.category}</span>
-              <span className="text-white/50 text-sm">{blog.readTime}</span>
-              <span className="text-white/50 text-sm">•</span>
-              <span className="text-white/50 text-sm">
-                {new Date(blog.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white leading-tight mb-8">
+              {blog.title}
+            </h1>
+            
+            <div className="flex items-center gap-2 mb-6 text-white text-sm">
+              <span className="font-semibold">{blog.author || 'Sean Edwards'}</span>
+              <span className="text-white/40">—</span>
+              <span className="text-white/80">
+                {new Date(blog.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
-              {blog.title}
-            </h1>
+            <p className="text-white/80 leading-relaxed max-w-lg mb-8 text-sm md:text-base">
+              {blog.excerpt}
+            </p>
+
+            <span className="inline-block bg-white/10 text-white border border-white/20 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full">
+              {blog.category}
+            </span>
           </motion.div>
+
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
+            <div className="w-full aspect-square bg-white rounded-sm shadow-2xl flex items-center justify-center p-2 relative">
+              <img
+                src={blog.image}
+                alt={blog.title}
+                className="w-full h-full object-cover rounded-sm border border-gray-100"
+              />
+            </div>
+          </motion.div>
+
         </div>
       </section>
 
       {/* Article Content */}
-      <article className="max-w-4xl mx-auto px-6 py-12 md:py-16">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-          {/* Feature Image */}
-          <div className="rounded-2xl overflow-hidden mb-12 shadow-xl">
-            <img
-              src={blog.image}
-              alt={blog.title}
-              className="w-full h-auto object-cover max-h-[500px]"
-            />
-          </div>
-
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-16">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           {/* Markdown Content */}
           <div className="prose prose-lg max-w-none
             prose-headings:font-heading prose-headings:text-secondary prose-headings:font-bold

@@ -48,6 +48,35 @@ const CheckoutPage = () => {
     fetchAddresses();
   }, []);
 
+  // Abandoned Cart Tracker (Debounced)
+  useEffect(() => {
+    if (!user?.email || cartItems.length === 0) return;
+    
+    // Extract best available contact info combining user profile and current address form
+    const contactPhone = getSelectedAddress()?.phone || address?.phone || user.phone;
+    const contactName = getSelectedAddress()?.fullName || address?.fullName || user.name;
+
+    const timer = setTimeout(() => {
+      API.post('/abandoned-carts', {
+        email: user.email,
+        phone: contactPhone,
+        name: contactName,
+        cartItems: cartItems.map(item => ({
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+          variation: item.variation,
+          customText: item.customText
+        })),
+        cartTotal
+      }).catch(err => console.log('Abandoned cart updated silently')); // Silent fail
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [cartItems, cartTotal, address, selectedAddressId, user]);
+
   const getSelectedAddress = () => {
     if (showNewForm) return address;
     return savedAddresses.find(a => a._id === selectedAddressId) || address;
@@ -153,6 +182,9 @@ const CheckoutPage = () => {
       };
 
       const { data: order } = await API.post('/orders', orderData);
+      
+      // Cleanup abandoned cart safely
+      API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
 
       if (paymentMethod === 'cod') {
         clearCart();
@@ -170,6 +202,10 @@ const CheckoutPage = () => {
             order_id: razorpayOrder.id,
             handler: async (response) => {
               await API.post('/payments/razorpay/verify', { ...response, orderId: order._id });
+              
+              // Also recover cart here after payment verification
+              API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+              
               clearCart();
               toast.success('Payment successful!');
               navigate('/dashboard');

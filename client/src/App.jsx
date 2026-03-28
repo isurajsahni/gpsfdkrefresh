@@ -44,6 +44,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminCoupons from './pages/admin/AdminCoupons';
+import AdminAbandonedCarts from './pages/admin/AdminAbandonedCarts';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 
@@ -154,6 +155,7 @@ function App() {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="coupons" element={<AdminCoupons />} />
+                <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
               </Route>

@@ -1,100 +1,134 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import WebflowButton from '../ui/WebflowButton';
 import poster1 from '../../assets/image/wallcanvas_poster_1.webp';
 import poster2 from '../../assets/image/housenameplate_poster.webp';
 import poster3 from '../../assets/image/wallcanvas_poster_2.webp';
 
-const CategoryCard = ({ number, title, description, image, isReverse, link }) => {
+const CategoryCard = ({ number, title, description, image, isReverse, link, bgColor, textColor = 'text-secondary', subTextColor = 'text-gray-600', isDark = false, zIndex }) => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"]
+  });
+
+  // Subtle scroll-linked animations for the card stacking
+  const scale = useTransform(scrollYProgress, [0.4, 0.7], [1, 0.95]);
+  const opacity = useTransform(scrollYProgress, [0.4, 0.7], [1, 0.9]);
+
   return (
-    <div className="sticky top-0 h-screen flex items-center justify-center py-20 bg-primary">
-      <div className={`max-w-7xl mx-auto px-6 w-full flex flex-col md:flex-row items-center gap-12 ${isReverse ? 'md:flex-row-reverse' : ''}`}>
-        
-        {/* Image side */}
-        <motion.div 
-          initial={{ opacity: 0, x: isReverse ? 50 : -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          viewport={{ once: true }}
-          className="w-full md:w-1/2"
-        >
-          <div className="relative aspect-[4/3] rounded-[2rem] overflow-hidden shadow-2xl group">
-            <img 
-              src={image} 
-              alt={title} 
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+    <div ref={containerRef} className="h-screen w-full sticky top-10 flex items-center justify-center pointer-events-none" style={{ zIndex }}>
+      <motion.div
+        style={{ scale, opacity }}
+        className={`w-full max-w-[1280px] h-[500px] md:h-[600px] mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl pointer-events-auto ${bgColor} flex flex-col md:flex-row`}
+      >
+
+        {/* Zigzag Layout Logic */}
+        <div className={`w-full h-full flex flex-col md:flex-row ${isReverse ? 'md:flex-row-reverse' : ''}`}>
+
+          {/* Image Side (50%) - Full Bleed inside the rounded box */}
+          <div className="w-full md:w-1/2 h-1/2 md:h-full relative overflow-hidden">
+            <img
+              src={image}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 hover:scale-110"
             />
-            <div className="absolute inset-0 bg-black/5 group-hover:bg-black/0 transition-colors duration-500" />
           </div>
-        </motion.div>
 
-        {/* Text side */}
-        <motion.div 
-          initial={{ opacity: 0, x: isReverse ? -50 : 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-          viewport={{ once: true }}
-          className="w-full md:w-1/2 space-y-6"
-        >
-          <span className="text-4xl md:text-6xl font-heading font-bold text-gray-200 block">
-            {number}
-          </span>
-          <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary leading-tight">
-            {title}
-          </h2>
-          <p className="text-gray-600 text-lg md:text-xl leading-relaxed max-w-lg">
-            {description}
-          </p>
-          <Link 
-            to={link} 
-            className="inline-flex items-center gap-2 bg-secondary text-white px-8 py-4 rounded-full font-bold hover:bg-accent transition-all duration-300 group shadow-lg"
-          >
-            Explore Collection
-            <span className="group-hover:translate-x-1 transition-transform">→</span>
-          </Link>
-        </motion.div>
+          {/* Content Side (50%) */}
+          <div className="w-full md:w-1/2 h-1/2 md:h-full p-8 md:p-16 flex flex-col justify-center gap-6">
+            <div className="space-y-4">
+              <span className={`text-4xl md:text-5xl font-heading font-bold ${isDark ? 'text-white/20' : 'text-gray-200'}`}>
+                {number}
+              </span>
+              <h3 className={`text-3xl md:text-5xl font-heading font-bold leading-tight ${textColor}`}>
+                {title}
+              </h3>
+              <p className={`text-base md:text-lg leading-relaxed max-w-md ${isDark ? 'text-white/70' : subTextColor}`}>
+                {description}
+              </p>
+            </div>
 
-      </div>
+            <div className="pt-4">
+              <WebflowButton to={link} dark={isDark}>
+                Learn More
+              </WebflowButton>
+            </div>
+          </div>
+
+        </div>
+      </motion.div>
     </div>
   );
 };
 
 const CategoryHighlights = () => {
-  const containerRef = useRef(null);
-  
   const highlights = [
     {
       number: "01",
       title: "Wall Canvas Art",
-      description: "Elevate your living space with our premium wall canvases. From modern abstract to timeless classics, find the perfect piece that defines your style.",
+      description: "Transform your walls into a gallery of expression. Our museum-grade canvases bring vibrant color and sophisticated texture to any interior environment.",
       image: poster1,
       isReverse: false,
-      link: "/category/wall-canvas"
+      link: "/category/wall-canvas",
+      bgColor: "bg-[#f8f5f0]", // Cream/Sand
+      textColor: "text-secondary",
+      subTextColor: "text-gray-600",
+      isDark: false
     },
     {
       number: "02",
       title: "House Nameplates",
-      description: "Make a lasting first impression. Our custom nameplates are handcrafted using durable materials and elegant typography to welcome you home in style.",
+      description: "Define your entrance with absolute distinction. Handcrafted with premium materials that withstand the elements while making a bold statement of identity.",
       image: poster2,
       isReverse: true,
-      link: "/category/house-nameplates"
+      link: "/category/house-nameplates",
+      bgColor: "bg-[#2d4a3e]", // Deep Forest Green
+      textColor: "text-white",
+      subTextColor: "text-white/80",
+      isDark: true
     },
     {
       number: "03",
-      title: "The Collector's Suite",
-      description: "Curated wall canvas sets designed to create a focal point in any room. Expertly printed and framed with high-grade gallery quality precision.",
+      title: "Premium Collection",
+      description: "Exclusively curated series for the discerning collector. Limited edition prints and oversized formats that redefine the boundaries of modern home decor.",
       image: poster3,
       isReverse: false,
-      link: "/category/wall-canvas"
+      link: "/category/wall-canvas",
+      bgColor: "bg-[#e5e5e5]", // Light Greyish
+      textColor: "text-secondary",
+      subTextColor: "text-gray-600",
+      isDark: false
     }
   ];
 
   return (
-    <section ref={containerRef} className="relative bg-primary overflow-hidden">
+    <section className="relative w-full py-24 bg-white">
+      {/* Section Header */}
+      <div className="max-w-[1280px] mx-auto px-6 mb-12 sm:mb-20 text-center">
+        <motion.span
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-gray-500 uppercase tracking-[0.2em] font-medium text-sm mb-4 block"
+        >
+          Our Collections
+        </motion.span>
+        <motion.h2
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-4xl md:text-5xl font-heading font-bold text-secondary leading-tight"
+        >
+          Expert Decor for Every <span className="text-accent">House</span>
+        </motion.h2>
+        <div className="w-20 h-1.5 bg-accent mx-auto mt-6 rounded-full" />
+      </div>
+
       {/* Scrollable stacking section */}
-      <div className="relative">
-        {highlights.map((item, idx) => (
-          <CategoryCard key={item.number} {...item} />
+      <div className="relative px-6">
+        {highlights.map((item, index) => (
+          <CategoryCard key={item.number} {...item} zIndex={(index + 1) * 10} />
         ))}
       </div>
     </section>

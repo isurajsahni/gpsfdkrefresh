@@ -29,6 +29,9 @@ export default {
         slideUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
         scaleIn: { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
       },
+      boxShadow: {
+        '2xl': '0 14px 44px 0 rgba(0, 0, 0, 0.1)',
+      },
     },
   },
   plugins: [require('@tailwindcss/typography')],

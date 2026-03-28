@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingCart, HiOutlineTrash, HiOutlineMail } from 'react-icons/hi';
-import API from '../../../utils/api';
+import API from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const AdminAbandonedCarts = () => {

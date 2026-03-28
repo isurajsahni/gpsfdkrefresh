@@ -82,6 +82,22 @@ const CartPage = () => {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-1">
             <div className="glass-card p-8 sticky top-28">
               <h3 className="text-xl font-heading font-bold text-secondary mb-6">Order Summary</h3>
+              
+              {/* Shipping Banner */}
+              {shippingFee > 0 ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col gap-3 shadow-sm">
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg">🚚</span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
+                  <span className="text-lg">✨</span>
+                  <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
+                </div>
+              )}
+
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">₹{cartTotal.toLocaleString()}</span></div>
                 <div className="flex justify-between">

@@ -6,6 +6,8 @@ In this ultimate guide, we walk you through everything you need to know about se
 
 ## Why Wall Canvas Art is the #1 Decor Trend in India
 
+![Modern Living Room Canvas Art](https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1400)
+
 Canvas wall art has overtaken traditional framed prints, posters, and even tapestries as the go-to decorative choice for modern Indian homes. Here's why:
 
 - **Premium Look Without the Premium Price:** A high-quality canvas print mimics the look of an original oil painting at a fraction of the cost.
@@ -22,6 +24,8 @@ For example:
 - On an **empty accent wall**: go big — a single 150cm+ canvas creates a striking focal point.
 
 ## Step 2: Choose Your Style
+
+![Various Canvas Styles on Wall](https://images.unsplash.com/photo-1544457070-4cd773b4d71e?q=80&w=1400)
 
 ### Modern & Abstract
 Clean lines, geometric shapes, and bold colour palettes. Perfect for contemporary apartments in cities like Delhi, Mumbai, and Bangalore.
@@ -60,6 +64,8 @@ Match your canvas with your room's existing palette:
 - **Cool-toned rooms** (blue, green, grey): Ocean scenes, forest greens, and minimalist blues.
 
 ## Pro Tips for Hanging Your Canvas
+
+![Hanging Canvas Alignment](https://images.unsplash.com/photo-1583847268964-b28e51515250?q=80&w=1400)
 
 1. **Eye Level:** The center of the canvas should be at eye level (approximately 145-150cm from the floor).
 2. **Lighting:** Position a picture light or track light above the canvas for a dramatic gallery effect.

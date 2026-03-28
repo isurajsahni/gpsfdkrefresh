@@ -77,7 +77,7 @@ const BlogPost = () => {
             </h1>
             
             <div className="flex items-center gap-2 mb-6 text-white text-sm">
-              <span className="font-semibold">{blog.author || 'Sean Edwards'}</span>
+              <span className="font-semibold">{blog.author || 'Suraj'}</span>
               <span className="text-white/40">—</span>
               <span className="text-white/80">
                 {new Date(blog.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -112,15 +112,17 @@ const BlogPost = () => {
           {/* Markdown Content */}
           <div className="prose prose-lg max-w-none
             prose-headings:font-heading prose-headings:text-secondary prose-headings:font-bold
-            prose-h2:text-2xl prose-h2:md:text-3xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-3
-            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-5
-            prose-li:text-gray-600
+            prose-h2:text-3xl prose-h2:md:text-4xl prose-h2:mt-8 prose-h2:mb-3
+            prose-h3:text-2xl prose-h3:md:text-3xl prose-h3:mt-6 prose-h3:mb-2
+            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
+            prose-li:text-gray-700 prose-li:mb-1
+            prose-ul:my-4
+            prose-ol:my-4
             prose-strong:text-secondary
-            prose-a:text-accent prose-a:font-semibold prose-a:no-underline hover:prose-a:underline
-            prose-table:rounded-xl prose-table:overflow-hidden
+            prose-a:text-accent prose-a:font-semibold hover:prose-a:underline
+            prose-table:rounded-xl prose-table:overflow-hidden prose-table:my-6
             prose-th:bg-secondary prose-th:text-white prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:text-sm prose-th:font-semibold
-            prose-td:px-4 prose-td:py-3 prose-td:text-sm prose-td:border-b prose-td:border-gray-100
+            prose-td:px-4 prose-td:py-3 prose-td:text-sm prose-td:border-b prose-td:border-gray-200
           ">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{blog.content}</ReactMarkdown>
           </div>
@@ -131,9 +133,13 @@ const BlogPost = () => {
               <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Related Topics</h4>
               <div className="flex flex-wrap gap-2">
                 {blog.keywords.map(keyword => (
-                  <span key={keyword} className="bg-secondary/5 text-secondary text-xs font-medium px-3 py-1.5 rounded-full">
+                  <Link 
+                    key={keyword} 
+                    to={`/category/wall-canvas`} 
+                    className="bg-secondary/5 hover:bg-secondary hover:text-white transition-colors text-secondary text-xs font-medium px-3 py-1.5 rounded-full"
+                  >
                     {keyword}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>

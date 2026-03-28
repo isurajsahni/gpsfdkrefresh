@@ -52,11 +52,11 @@ const LocationPage = () => {
       />
       
       {/* Hero Section tailored to the location */}
-      <section className="relative pt-[140px] pb-20 overflow-hidden bg-secondary">
+      <section className="relative min-h-[100dvh] pt-[140px] pb-20 overflow-hidden bg-secondary flex flex-col justify-center items-center">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600607688969-a5bfcd64bd15?q=80&w=2000')] bg-cover bg-center opacity-30 mix-blend-overlay"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/80 to-secondary z-10"></div>
         
-        <div className="max-w-6xl mx-auto px-6 relative z-20 text-center">
+        <div className="max-w-6xl w-full mx-auto px-6 relative z-20 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}

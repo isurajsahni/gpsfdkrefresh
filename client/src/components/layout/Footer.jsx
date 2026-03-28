@@ -4,6 +4,7 @@ import logo from '../../assets/vite.webp';
 
 const Footer = () => {
   const navLinks = [
+    { name: 'Blog', path: '/blog' },
     { name: 'Contact us', path: '/contact' },
     { name: 'About us', path: '/about' },
     { name: 'Shipping & Delivery Policy', path: '/shipping-policy' },

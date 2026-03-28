@@ -25,6 +25,7 @@ const Navbar = () => {
   const categories = [
     { name: 'Wall Canvas', slug: 'wall-canvas', subcats: ['The Velocity Suite', 'Tethered Horizons', 'The Gaze of Power', 'Millionaire Art', 'Nostalgia Noir'] },
     { name: 'House Nameplates', slug: 'house-nameplates', subcats: [] },
+    { name: 'Blog', slug: '../blog', subcats: [] },
   ];
 
   return (

@@ -88,3 +88,56 @@ html.lenis, html.lenis body {
     @apply bg-white/80 backdrop-blur-md border border-white/20 rounded-2xl shadow-lg;
   }
 }
+
+/* Blog prose fixes */
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.prose ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+.prose li {
+  margin-bottom: 0.35rem;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.prose thead th {
+  background-color: #0B5D3B;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.prose tbody td {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+.prose tbody tr:last-child td {
+  border-bottom: none;
+}
+.prose tbody tr:nth-child(even) {
+  background-color: rgba(11,93,59,0.03);
+}
+.prose a {
+  color: #F15A29;
+  font-weight: 600;
+  text-decoration: none;
+}
+.prose a:hover {
+  text-decoration: underline;
+}
+.prose h1 {
+  display: none; /* Hide H1 since we show it in the hero */
+}

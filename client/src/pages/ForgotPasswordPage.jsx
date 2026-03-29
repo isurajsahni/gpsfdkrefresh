@@ -3,20 +3,45 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import API from '../utils/api';
+import { validators, formatters, sanitize } from '../utils/validation';
 
 const ForgotPasswordPage = () => {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handleBlur = (field, value) => {
+    const error = validators[field] ? validators[field](value) : '';
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const handleChange = (field, value) => {
+    let formattedValue = value;
+    if (formatters[field]) formattedValue = formatters[field](value);
+    
+    if (field === 'email') setEmail(formattedValue);
+    if (field === 'otp') setOtp(formattedValue);
+    if (field === 'newPassword') setNewPassword(formattedValue);
+
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
   const handleSendOtp = async (e) => {
     e.preventDefault();
+    const emailError = validators.email(email);
+    if (emailError) {
+      setErrors({ email: emailError });
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await API.post('/auth/forgot-password', { email });
+      const cleanEmail = sanitize(email);
+      const res = await API.post('/auth/forgot-password', { email: cleanEmail });
       toast.success(res.data.message || 'OTP sent to your email');
       setStep(2);
     } catch (err) {
@@ -27,9 +52,15 @@ const ForgotPasswordPage = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
+    const otpError = validators.otp(otp);
+    if (otpError) {
+      setErrors({ otp: otpError });
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await API.post('/auth/verify-otp', { email, otp });
+      const res = await API.post('/auth/verify-otp', { email: sanitize(email), otp });
       toast.success(res.data.message || 'OTP verified');
       setStep(3);
     } catch (err) {
@@ -40,12 +71,19 @@ const ForgotPasswordPage = () => {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (newPassword.length < 6) {
-      return toast.error('Password must be at least 6 characters');
+    const passwordError = validators.password(newPassword);
+    if (passwordError) {
+      setErrors({ newPassword: passwordError });
+      return;
     }
+
     setLoading(true);
     try {
-      const res = await API.put('/auth/reset-password', { email, otp, newPassword });
+      const res = await API.put('/auth/reset-password', { 
+        email: sanitize(email), 
+        otp, 
+        newPassword 
+      });
       toast.success(res.data.message || 'Password reset successfully');
       navigate('/login');
     } catch (err) {
@@ -81,17 +119,25 @@ const ForgotPasswordPage = () => {
                   exit={{ opacity: 0, x: 20 }}
                   onSubmit={handleSendOtp}
                   className="space-y-5"
+                  noValidate
                 >
                   <div>
                     <label className="block text-sm font-semibold text-secondary mb-2">Email</label>
                     <input
-                      type="email" required value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                      type="email" 
+                      value={email}
+                      onChange={(e) => handleChange('email', e.target.value)}
+                      onBlur={(e) => handleBlur('email', e.target.value)}
+                      className={`w-full px-5 py-3.5 bg-primary border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`}
                       placeholder="your@email.com"
                     />
+                    {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
                   </div>
-                  <button type="submit" disabled={loading} className="btn-primary w-full text-lg disabled:opacity-50">
+                  <button 
+                    type="submit" 
+                    disabled={loading || errors.email} 
+                    className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {loading ? 'Sending...' : 'Send Recovery Code'}
                   </button>
                 </motion.form>
@@ -105,17 +151,25 @@ const ForgotPasswordPage = () => {
                   exit={{ opacity: 0, x: 20 }}
                   onSubmit={handleVerifyOtp}
                   className="space-y-5"
+                  noValidate
                 >
                   <div>
                     <label className="block text-sm font-semibold text-secondary mb-2">6-Digit OTP</label>
                     <input
-                      type="text" required value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all text-center tracking-widest text-lg font-bold"
+                      type="text" 
+                      value={otp}
+                      onChange={(e) => handleChange('otp', e.target.value)}
+                      onBlur={(e) => handleBlur('otp', e.target.value)}
+                      className={`w-full px-5 py-3.5 bg-primary border ${errors.otp ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all text-center tracking-widest text-lg font-bold`}
                       placeholder="••••••"
                     />
+                    {errors.otp && <p className="text-red-500 text-xs mt-1 font-medium text-center">{errors.otp}</p>}
                   </div>
-                  <button type="submit" disabled={loading || otp.length < 6} className="btn-primary w-full text-lg disabled:opacity-50">
+                  <button 
+                    type="submit" 
+                    disabled={loading || otp.length < 6 || errors.otp} 
+                    className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {loading ? 'Verifying...' : 'Verify Code'}
                   </button>
                 </motion.form>
@@ -129,17 +183,25 @@ const ForgotPasswordPage = () => {
                   exit={{ opacity: 0, x: 20 }}
                   onSubmit={handleResetPassword}
                   className="space-y-5"
+                  noValidate
                 >
                   <div>
                     <label className="block text-sm font-semibold text-secondary mb-2">New Password</label>
                     <input
-                      type="password" required value={newPassword} minLength={6}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all"
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => handleChange('newPassword', e.target.value)}
+                      onBlur={(e) => handleBlur('newPassword', e.target.value)}
+                      className={`w-full px-5 py-3.5 bg-primary border ${errors.newPassword ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`}
                       placeholder="••••••••"
                     />
+                    {errors.newPassword && <p className="text-red-500 text-xs mt-1 font-medium">{errors.newPassword}</p>}
                   </div>
-                  <button type="submit" disabled={loading} className="btn-primary w-full text-lg disabled:opacity-50">
+                  <button 
+                    type="submit" 
+                    disabled={loading || errors.newPassword} 
+                    className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {loading ? 'Updating...' : 'Set New Password'}
                   </button>
                 </motion.form>

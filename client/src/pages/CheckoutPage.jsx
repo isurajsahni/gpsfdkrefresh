@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
+import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -25,7 +26,41 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState({
     fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
+  const [addressErrors, setAddressErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('cod');
+
+  const handleAddressBlur = (field) => {
+    if (!validators[field]) return;
+    const error = validators[field](address[field]);
+    setAddressErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const handleAddressChange = async (field, value) => {
+    let formattedValue = value;
+    if (formatters[field]) formattedValue = formatters[field](value);
+
+    const newAddress = { ...address, [field]: formattedValue };
+    setAddress(newAddress);
+    
+    // Clear error
+    if (addressErrors[field]) setAddressErrors(prev => ({ ...prev, [field]: '' }));
+
+    // Pincode lookup logic
+    if (field === 'pincode' && formattedValue.length === 6) {
+      setLoading(true);
+      const data = await lookupPincode(formattedValue);
+      if (data) {
+        setAddress(prev => ({ 
+          ...prev, 
+          city: data.city, 
+          state: data.state 
+        }));
+        setAddressErrors(prev => ({ ...prev, city: '', state: '' }));
+        toast.success(`Location found: ${data.city}, ${data.state}`, { icon: '📍' });
+      }
+      setLoading(false);
+    }
+  };
 
   // Fetch saved addresses on mount
   useEffect(() => {
@@ -83,27 +118,31 @@ const CheckoutPage = () => {
   };
 
   const handleSaveNewAddress = async () => {
-    // Validate required fields
-    if (!address.fullName || !address.phone || !address.addressLine1 || !address.city || !address.state || !address.pincode) {
-      toast.error('Please fill all required fields');
+    // Validate all fields
+    const errors = validateAddress(address);
+    if (Object.keys(errors).length > 0) {
+      setAddressErrors(errors);
+      toast.error('Please fix the errors in the address form');
       return false;
     }
+
+    setLoading(true);
     try {
       const { data: updatedAddresses } = await API.post('/auth/addresses', address);
       setSavedAddresses(updatedAddresses);
-      // Select the newly added address (last one)
       const newAddr = updatedAddresses[updatedAddresses.length - 1];
       setSelectedAddressId(newAddr._id);
       setShowNewForm(false);
 
-      // Update user context with new addresses
       if (user) {
         updateUser({ ...user, addresses: updatedAddresses });
       }
       toast.success('Address saved!');
+      setLoading(false);
       return true;
     } catch (err) {
-      toast.error('Failed to save address');
+      toast.error(err.response?.data?.message || 'Failed to save address');
+      setLoading(false);
       return false;
     }
   };
@@ -131,10 +170,17 @@ const CheckoutPage = () => {
       const saved = await handleSaveNewAddress();
       if (!saved) return;
     }
-    if (!selectedAddressId && !showNewForm) {
-      toast.error('Please select an address');
+    
+    // Final check for selected address
+    const currentAddress = getSelectedAddress();
+    const finalErrors = validateAddress(currentAddress);
+    if (Object.keys(finalErrors).length > 0) {
+      toast.error('The selected address is incomplete or invalid. Please edit it.');
+      setShowNewForm(true);
+      setAddressErrors(finalErrors);
       return;
     }
+
     setStep(2);
   };
 
@@ -337,26 +383,101 @@ const CheckoutPage = () => {
                       </button>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        { label: 'Full Name *', key: 'fullName', type: 'text', span: false },
-                        { label: 'Phone *', key: 'phone', type: 'tel', span: false },
-                        { label: 'Address Line 1 *', key: 'addressLine1', type: 'text', span: true },
-                        { label: 'Address Line 2', key: 'addressLine2', type: 'text', span: true },
-                        { label: 'City *', key: 'city', type: 'text', span: false },
-                        { label: 'State *', key: 'state', type: 'text', span: false },
-                        { label: 'Pincode *', key: 'pincode', type: 'text', span: false },
-                        { label: 'Country', key: 'country', type: 'text', span: false },
-                      ].map(field => (
-                        <div key={field.key} className={field.span ? 'md:col-span-2' : ''}>
-                          <label className="block text-sm font-semibold text-secondary mb-1">{field.label}</label>
-                          <input
-                            type={field.type}
-                            value={address[field.key]}
-                            onChange={(e) => setAddress({ ...address, [field.key]: e.target.value })}
-                            className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
-                          />
-                        </div>
-                      ))}
+                      {/* Full Name */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-secondary mb-1">Full Name *</label>
+                        <input
+                          type="text"
+                          value={address.fullName}
+                          onChange={(e) => handleAddressChange('fullName', e.target.value)}
+                          onBlur={() => handleAddressBlur('fullName')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.fullName ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                          placeholder="Your complete name"
+                        />
+                        {addressErrors.fullName && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.fullName}</p>}
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label className="block text-sm font-semibold text-secondary mb-1">Phone *</label>
+                        <input
+                          type="tel"
+                          value={address.phone}
+                          onChange={(e) => handleAddressChange('phone', e.target.value)}
+                          onBlur={() => handleAddressBlur('phone')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                          placeholder="10-digit mobile number"
+                        />
+                        {addressErrors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.phone}</p>}
+                      </div>
+
+                      {/* Pincode */}
+                      <div>
+                        <label className="block text-sm font-semibold text-secondary mb-1">Pincode *</label>
+                        <input
+                          type="text"
+                          value={address.pincode}
+                          onChange={(e) => handleAddressChange('pincode', e.target.value)}
+                          onBlur={() => handleAddressBlur('pincode')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.pincode ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                          placeholder="6-digit PIN"
+                        />
+                        {addressErrors.pincode && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.pincode}</p>}
+                      </div>
+
+                      {/* Address Line 1 */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-secondary mb-1">Building/Street/Area *</label>
+                        <input
+                          type="text"
+                          value={address.addressLine1}
+                          onChange={(e) => handleAddressChange('addressLine1', e.target.value)}
+                          onBlur={() => handleAddressBlur('addressLine1')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.addressLine1 ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                          placeholder="Flat no, House name, Street"
+                        />
+                        {addressErrors.addressLine1 && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.addressLine1}</p>}
+                      </div>
+
+                      {/* Address Line 2 */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-secondary mb-1">Landmark (Optional)</label>
+                        <input
+                          type="text"
+                          value={address.addressLine2}
+                          onChange={(e) => handleAddressChange('addressLine2', e.target.value)}
+                          className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
+                          placeholder="E.g. Near Metro Station"
+                        />
+                      </div>
+
+                      {/* City */}
+                      <div>
+                        <label className="block text-sm font-semibold text-secondary mb-1">City *</label>
+                        <input
+                          type="text"
+                          value={address.city}
+                          onChange={(e) => handleAddressChange('city', e.target.value)}
+                          onBlur={() => handleAddressBlur('city')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.city ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                        />
+                        {addressErrors.city && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.city}</p>}
+                      </div>
+
+                      {/* State */}
+                      <div>
+                        <label className="block text-sm font-semibold text-secondary mb-1">State *</label>
+                        <select
+                          value={address.state}
+                          onChange={(e) => handleAddressChange('state', e.target.value)}
+                          onBlur={() => handleAddressBlur('state')}
+                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.state ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent appearance-none`}
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {addressErrors.state && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.state}</p>}
+                      </div>
                     </div>
                   </motion.div>
                 )}

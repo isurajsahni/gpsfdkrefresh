@@ -12,10 +12,17 @@ const validate = (req, res, next) => {
 
 // ─── Auth validations ───
 const registerValidation = [
-  body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 100 }).withMessage('Name too long'),
+  body('name')
+    .trim()
+    .notEmpty().withMessage('Name is required')
+    .isLength({ min: 2, max: 50 }).withMessage('Name must be 2-50 characters')
+    .matches(/^[a-zA-Z\s.'-]+$/).withMessage('Name contains invalid characters'),
   body('email').trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
-  body('phone').optional().trim(),
+  body('phone')
+    .trim()
+    .notEmpty().withMessage('Phone number is required')
+    .matches(/^[6-9]\d{9}$/).withMessage('Invalid Indian phone number'),
   validate,
 ];
 
@@ -47,18 +54,22 @@ const resetPasswordValidation = [
 const guestOrderValidation = [
   body('guestEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
-  body('shippingAddress.fullName').notEmpty().withMessage('Full name is required'),
-  body('shippingAddress.phone').notEmpty().withMessage('Phone is required'),
+  body('shippingAddress.fullName').trim().isLength({ min: 2, max: 50 }).withMessage('Invalid full name'),
+  body('shippingAddress.phone').matches(/^[6-9]\d{9}$/).withMessage('Invalid phone number'),
+  body('shippingAddress.addressLine1').trim().isLength({ min: 5 }).withMessage('Address too short'),
+  body('shippingAddress.city').trim().notEmpty().withMessage('City is required'),
+  body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
+  body('shippingAddress.pincode').matches(/^\d{6}$/).withMessage('Invalid pincode'),
   body('paymentMethod').isIn(['razorpay', 'stripe', 'cod']).withMessage('Invalid payment method'),
   validate,
 ];
 
 // ─── Lead validations ───
 const leadValidation = [
-  body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 200 }),
+  body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Invalid name'),
   body('email').trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('phone').optional().trim(),
-  body('message').optional().trim().isLength({ max: 2000 }).withMessage('Message too long'),
+  body('phone').optional().matches(/^[6-9]\d{9}$/).withMessage('Invalid phone number'),
+  body('message').trim().isLength({ min: 10, max: 2000 }).withMessage('Message must be 10-2000 characters'),
   validate,
 ];
 

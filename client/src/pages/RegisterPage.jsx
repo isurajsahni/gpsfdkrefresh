@@ -2,17 +2,48 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { validators, formatters } from '../utils/validation';
 import toast from 'react-hot-toast';
 
 const RegisterPage = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  const handleBlur = (field) => {
+    const error = validators[field](form[field]);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  const handleChange = (field, value) => {
+    let formattedValue = value;
+    if (formatters[field]) formattedValue = formatters[field](value);
+    
+    setForm(prev => ({ ...prev, [field]: formattedValue }));
+    // Clear error while typing if it exists
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
+    
+    // Final validation check
+    const newErrors = {
+      name: validators.fullName(form.name),
+      email: validators.email(form.email),
+      phone: validators.phone(form.phone),
+      password: validators.password(form.password),
+    };
+
+    const hasErrors = Object.values(newErrors).some(err => err !== '');
+    if (hasErrors) {
+      setErrors(newErrors);
+      toast.error('Please fix the errors in the form');
+      return;
+    }
+
     setLoading(true);
     try {
       await register(form.name, form.email, form.password, form.phone);
@@ -32,28 +63,60 @@ const RegisterPage = () => {
             <h1 className="text-3xl font-heading font-bold text-secondary">Create Account</h1>
             <p className="text-gray-500 mt-2">Join our luxury community</p>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Full Name</label>
-              <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="Your full name" />
+              <input 
+                type="text" 
+                value={form.name} 
+                onChange={(e) => handleChange('name', e.target.value)}
+                onBlur={() => handleBlur('name')}
+                className={`w-full px-5 py-3.5 bg-primary border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`} 
+                placeholder="Your full name" 
+              />
+              {errors.name && <p className="text-red-500 text-xs mt-1 font-medium">{errors.name}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Email</label>
-              <input type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="your@email.com" />
+              <input 
+                type="email" 
+                value={form.email} 
+                onChange={(e) => handleChange('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
+                className={`w-full px-5 py-3.5 bg-primary border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`} 
+                placeholder="your@email.com" 
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Phone</label>
-              <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="+91 XXXXX XXXXX" />
+              <input 
+                type="tel" 
+                value={form.phone} 
+                onChange={(e) => handleChange('phone', e.target.value)}
+                onBlur={() => handleBlur('phone')}
+                className={`w-full px-5 py-3.5 bg-primary border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`} 
+                placeholder="9876543210" 
+              />
+              {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Password</label>
-              <input type="password" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-5 py-3.5 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20" placeholder="Min 6 characters" />
+              <input 
+                type="password" 
+                value={form.password} 
+                onChange={(e) => handleChange('password', e.target.value)}
+                onBlur={() => handleBlur('password')}
+                className={`w-full px-5 py-3.5 bg-primary border ${errors.password ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`} 
+                placeholder="Min 8 characters" 
+              />
+              {errors.password && <p className="text-red-500 text-xs mt-1 font-medium">{errors.password}</p>}
             </div>
-            <button type="submit" disabled={loading} className="btn-primary w-full text-lg disabled:opacity-50">
+            <button 
+              type="submit" 
+              disabled={loading || Object.values(errors).some(e => e !== '')} 
+              className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? 'Creating Account...' : 'Create Account'}
             </button>
           </form>

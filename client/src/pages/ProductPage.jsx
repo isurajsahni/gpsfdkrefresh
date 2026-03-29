@@ -144,7 +144,7 @@ const ProductPage = () => {
   } : null;
 
   return (
-    <div className="min-h-screen bg-white pt-28 pb-20">
+    <div className="min-h-screen bg-white pt-28 pb-0">
       {product && (
         <SEO
           title={`${product.name} | Custom Designs by GPSFDK`}

@@ -21,7 +21,9 @@ exports.getCategoryBySlug = async (req, res, next) => {
 
 exports.createCategory = async (req, res, next) => {
   try {
-    const category = await Category.create(req.body);
+    // Whitelist allowed fields — prevent mass assignment
+    const { name, description, image, isActive } = req.body;
+    const category = await Category.create({ name, description, image, isActive });
     res.status(201).json(category);
   } catch (error) {
     next(error);
@@ -30,7 +32,13 @@ exports.createCategory = async (req, res, next) => {
 
 exports.updateCategory = async (req, res, next) => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Whitelist allowed fields — prevent mass assignment
+    const { name, description, image, isActive } = req.body;
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { name, description, image, isActive },
+      { new: true, runValidators: true }
+    );
     if (!category) return res.status(404).json({ message: 'Category not found' });
     res.json(category);
   } catch (error) {
@@ -40,7 +48,8 @@ exports.updateCategory = async (req, res, next) => {
 
 exports.deleteCategory = async (req, res, next) => {
   try {
-    await Category.findByIdAndDelete(req.params.id);
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) return res.status(404).json({ message: 'Category not found' });
     res.json({ message: 'Category removed' });
   } catch (error) {
     next(error);

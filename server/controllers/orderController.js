@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Coupon = require('../models/Coupon');
+const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
 
@@ -98,90 +99,176 @@ const triggerNewOrderNotifications = async (order) => {
 // Export trigger for paymentController
 exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
 
-// POST /api/orders (logged-in users)
-  exports.createOrder = async (req, res, next) => {
-    try {
-      const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, discountPrice, couponCode, totalPrice } = req.body;
-      if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
-      
-      const order = await Order.create({
-        user: req.user._id,
-        items,
-        shippingAddress,
-        billingAddress,
-        paymentMethod,
-        itemsPrice,
-        shippingPrice,
-        taxPrice,
-        discountPrice: discountPrice || 0,
-        couponCode: couponCode || null,
-        totalPrice,
-        status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
-        isPaid: false,
-      });
+// ─── SERVER-SIDE PRICE CALCULATION ───
+// Recalculate all prices from the database to prevent price manipulation
+const calculateOrderPrices = async (items, couponCode, userId) => {
+  let calculatedItemsPrice = 0;
+  const verifiedItems = [];
 
-      if (couponCode) {
-        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
-        if (coupon) {
-          const userUsage = coupon.usageHistory.find(u => u.userId.toString() === req.user._id.toString());
-          if (userUsage) {
-            userUsage.useCount += 1;
-          } else {
-            coupon.usageHistory.push({ userId: req.user._id, useCount: 1 });
-          }
-          await coupon.save();
+  for (const item of items) {
+    const product = await Product.findById(item.product);
+    if (!product) throw new Error(`Product not found: ${item.product}`);
+    if (!product.isActive) throw new Error(`Product is not available: ${product.name}`);
+
+    // Find matching variation by ID or by attributes
+    let variation;
+    if (item.variationId) {
+      variation = product.variations.id(item.variationId);
+    }
+    if (!variation && item.variation) {
+      variation = product.variations.find(v =>
+        v.size === item.variation?.size &&
+        (!item.variation?.material || v.material === item.variation?.material) &&
+        (!item.variation?.frame || v.frame === item.variation?.frame) &&
+        (!item.variation?.color || v.color === item.variation?.color)
+      );
+    }
+    if (!variation) throw new Error(`Invalid variation for ${product.name}`);
+
+    // Check stock
+    if (variation.stock < item.quantity) {
+      throw new Error(`Insufficient stock for ${product.name} (${variation.size})`);
+    }
+
+    const serverPrice = variation.price;
+    calculatedItemsPrice += serverPrice * item.quantity;
+
+    verifiedItems.push({
+      product: product._id,
+      name: product.name,
+      image: item.image,
+      variation: {
+        material: variation.material,
+        frame: variation.frame,
+        size: variation.size,
+        color: variation.color,
+      },
+      customText: item.customText || '',
+      price: serverPrice,
+      quantity: item.quantity,
+    });
+  }
+
+  // Shipping logic (free shipping over ₹999)
+  const shippingPrice = calculatedItemsPrice >= 999 ? 0 : 99;
+  const taxPrice = 0;
+  let discountPrice = 0;
+
+  // Validate coupon server-side
+  if (couponCode && userId) {
+    const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+    if (coupon && (!coupon.expiryDate || new Date() <= new Date(coupon.expiryDate))) {
+      if (calculatedItemsPrice >= coupon.minOrderValue) {
+        if (coupon.discountType === 'percentage') {
+          discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;
+        } else {
+          discountPrice = coupon.discountValue;
         }
       }
+    }
+  }
 
-      // Only notify if it's COD. Online payments wait for verification.
-      if (paymentMethod === 'cod') {
-        triggerNewOrderNotifications(order);
+  const totalPrice = calculatedItemsPrice + shippingPrice + taxPrice - discountPrice;
+
+  return {
+    verifiedItems,
+    itemsPrice: calculatedItemsPrice,
+    shippingPrice,
+    taxPrice,
+    discountPrice,
+    totalPrice: Math.max(totalPrice, 0),
+  };
+};
+
+// POST /api/orders (logged-in users)
+exports.createOrder = async (req, res, next) => {
+  try {
+    const { items, shippingAddress, billingAddress, paymentMethod, couponCode } = req.body;
+    if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
+
+    // Server-side price calculation — never trust client prices
+    const prices = await calculateOrderPrices(items, couponCode, req.user._id);
+
+    const order = await Order.create({
+      user: req.user._id,
+      items: prices.verifiedItems,
+      shippingAddress,
+      billingAddress,
+      paymentMethod,
+      itemsPrice: prices.itemsPrice,
+      shippingPrice: prices.shippingPrice,
+      taxPrice: prices.taxPrice,
+      discountPrice: prices.discountPrice,
+      couponCode: couponCode || null,
+      totalPrice: prices.totalPrice,
+      status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
+      isPaid: false,
+    });
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      if (coupon) {
+        const userUsage = coupon.usageHistory.find(u => u.userId.toString() === req.user._id.toString());
+        if (userUsage) {
+          userUsage.useCount += 1;
+        } else {
+          coupon.usageHistory.push({ userId: req.user._id, useCount: 1 });
+        }
+        await coupon.save();
       }
+    }
 
-      res.status(201).json(order);
+    // Only notify if it's COD. Online payments wait for verification.
+    if (paymentMethod === 'cod') {
+      triggerNewOrderNotifications(order);
+    }
+
+    res.status(201).json(order);
   } catch (error) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+      return res.status(400).json({ message: error.message });
+    }
     next(error);
   }
 };
 
 // POST /api/orders/guest (guest checkout — no login required)
-  exports.createGuestOrder = async (req, res, next) => {
-    try {
-      const { items, shippingAddress, billingAddress, paymentMethod, itemsPrice, shippingPrice, taxPrice, discountPrice, couponCode, totalPrice, guestEmail, guestPhone } = req.body;
-      if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
-      if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
-      
-      const order = await Order.create({
-        guestEmail: guestEmail || '',
-        guestPhone: guestPhone || shippingAddress?.phone || '',
-        items,
-        shippingAddress,
-        billingAddress,
-        paymentMethod,
-        itemsPrice,
-        shippingPrice,
-        taxPrice,
-        discountPrice: discountPrice || 0,
-        couponCode: couponCode || null,
-        totalPrice,
-        status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
-        isPaid: false,
-      });
+exports.createGuestOrder = async (req, res, next) => {
+  try {
+    const { items, shippingAddress, billingAddress, paymentMethod, couponCode, guestEmail, guestPhone } = req.body;
+    if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
+    if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
 
-      if (couponCode) {
-        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
-        if (coupon && guestEmail) {
-          // Guest logic
-        }
-      }
+    // Server-side price calculation — never trust client prices
+    const prices = await calculateOrderPrices(items, null, null);
 
-      // Only notify if it's COD. Online payments wait for verification.
-      if (paymentMethod === 'cod') {
-        triggerNewOrderNotifications(order);
-      }
+    const order = await Order.create({
+      guestEmail: guestEmail || '',
+      guestPhone: guestPhone || shippingAddress?.phone || '',
+      items: prices.verifiedItems,
+      shippingAddress,
+      billingAddress,
+      paymentMethod,
+      itemsPrice: prices.itemsPrice,
+      shippingPrice: prices.shippingPrice,
+      taxPrice: prices.taxPrice,
+      discountPrice: prices.discountPrice,
+      couponCode: couponCode || null,
+      totalPrice: prices.totalPrice,
+      status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
+      isPaid: false,
+    });
 
-      res.status(201).json(order);
+    // Only notify if it's COD. Online payments wait for verification.
+    if (paymentMethod === 'cod') {
+      triggerNewOrderNotifications(order);
+    }
+
+    res.status(201).json(order);
   } catch (error) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+      return res.status(400).json({ message: error.message });
+    }
     next(error);
   }
 };
@@ -206,7 +293,7 @@ exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email');
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (req.user.role !== 'admin' && order.user._id.toString() !== req.user._id.toString()) {
+    if (req.user.role !== 'admin' && order.user?._id?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     res.json(order);

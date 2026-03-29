@@ -8,20 +8,38 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Allowed image MIME types only (no mp4 or other executables)
+const allowedImageMimeTypes = [
+  'image/jpeg', 'image/png', 'image/webp', 'image/gif'
+];
+
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    // Determine format from file mimetype
+    // Validate MIME type server-side
+    if (!allowedImageMimeTypes.includes(file.mimetype)) {
+      throw new Error(`File type ${file.mimetype} not allowed. Only JPEG, PNG, WebP, and GIF are accepted.`);
+    }
     const ext = file.mimetype.split('/')[1] || 'jpg';
     return {
       folder: 'gpsfdk',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4'],
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
       format: ext === 'jpeg' ? 'jpg' : ext
     };
   },
 });
 
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max per file (reduced from 10MB)
+  fileFilter: (req, file, cb) => {
+    if (allowedImageMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not allowed`), false);
+    }
+  },
+});
 
 // Local storage for CSV import
 const csvDiskStorage = multer.diskStorage({
@@ -39,6 +57,7 @@ const csvDiskStorage = multer.diskStorage({
 
 const csvUpload = multer({ 
   storage: csvDiskStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max for CSV
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = ['text/csv', 'application/vnd.ms-excel', 'application/csv', 'text/x-csv', 'application/x-csv', 'text/comma-separated-values', 'text/x-comma-separated-values'];
     if (allowedMimeTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {

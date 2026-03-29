@@ -17,11 +17,15 @@ const seed = async () => {
     await Category.deleteMany({});
     await Product.deleteMany({});
 
-    // Create users
+    // Create users (use env vars or generate strong random passwords)
+    const crypto = require('crypto');
+    const adminPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
+    const demoPassword = process.env.DEMO_PASSWORD || crypto.randomBytes(16).toString('hex');
+
     const admin = await User.create({
       name: 'Admin',
-      email: 'admin@gpsfdk.com',
-      password: 'admin123',
+      email: process.env.ADMIN_EMAIL || 'admin@gpsfdk.com',
+      password: adminPassword,
       role: 'admin',
       phone: '+91 9876543210'
     });
@@ -29,7 +33,7 @@ const seed = async () => {
     await User.create({
       name: 'Demo User',
       email: 'user@gpsfdk.com',
-      password: 'user123',
+      password: demoPassword,
       role: 'user',
       phone: '+91 9876543211'
     });
@@ -155,8 +159,8 @@ const seed = async () => {
     console.log('House Nameplate products seeded');
 
     console.log('\n✅ Database seeded successfully!');
-    console.log('Admin: admin@gpsfdk.com / admin123');
-    console.log('User:  user@gpsfdk.com / user123');
+    console.log('Admin:', process.env.ADMIN_EMAIL || 'admin@gpsfdk.com', '/', process.env.ADMIN_PASSWORD ? '(from env)' : adminPassword);
+    console.log('User:  user@gpsfdk.com /', process.env.DEMO_PASSWORD ? '(from env)' : demoPassword);
     process.exit(0);
   } catch (error) {
     console.error('Seed error:', error);

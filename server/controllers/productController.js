@@ -44,19 +44,26 @@ exports.getProducts = async (req, res, next) => {
 
     if (featured === 'true') query.featured = true;
     if (masonry === 'true') query.isMasonry = true;
-    if (search) query.name = { $regex: search, $options: 'i' };
+    if (search) {
+      // Escape regex special characters to prevent ReDoS attacks
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.name = { $regex: escaped, $options: 'i' };
+    }
     
     let sortObj = { createdAt: -1 };
     if (sort === 'price_asc') sortObj = { basePrice: 1 };
     if (sort === 'price_desc') sortObj = { basePrice: -1 };
     if (sort === 'name') sortObj = { name: 1 };
+
+    // Cap limit to prevent abuse
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
     
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)
       .populate('category', 'name slug')
       .sort(sortObj)
-      .skip((page - 1) * limit)
-      .limit(parseInt(limit))
+      .skip((page - 1) * safeLimit)
+      .limit(safeLimit)
       .lean();
     
     res.json({ products, total, pages: Math.ceil(total / limit), page: parseInt(page) });

@@ -5,13 +5,19 @@ const welcomeEmail = require('../utils/welcomeEmailTemplate');
 const otpEmailTemplate = require('../utils/otpEmailTemplate');
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
 
 // POST /api/auth/register
 exports.register = async (req, res, next) => {
   try {
     const { name, email, password, phone } = req.body;
+
+    // Type safety — prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid input format' });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
     
@@ -54,8 +60,27 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    // Type safety — prevent NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid credentials format' });
+    }
+
     const user = await User.findOne({ email });
+
+    // Account lockout check
+    if (user && user.lockUntil && user.lockUntil > Date.now()) {
+      return res.status(423).json({ message: 'Account temporarily locked. Please try again later.' });
+    }
+
     if (user && (await user.matchPassword(password))) {
+      // Reset failed attempts on successful login
+      if (user.loginAttempts > 0) {
+        user.loginAttempts = 0;
+        user.lockUntil = undefined;
+        await user.save();
+      }
+
       res.json({
         _id: user._id,
         name: user.name,
@@ -66,6 +91,14 @@ exports.login = async (req, res, next) => {
         token: generateToken(user._id),
       });
     } else {
+      // Track failed login attempts
+      if (user) {
+        user.loginAttempts = (user.loginAttempts || 0) + 1;
+        if (user.loginAttempts >= 5) {
+          user.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // Lock for 15 minutes
+        }
+        await user.save();
+      }
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
@@ -89,9 +122,15 @@ exports.updateProfile = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    user.name = req.body.name || user.name;
-    user.phone = req.body.phone || user.phone;
-    if (req.body.password) user.password = req.body.password;
+    // Only allow safe fields to be updated (no role, no email change)
+    if (req.body.name) user.name = req.body.name.trim();
+    if (req.body.phone) user.phone = req.body.phone.trim();
+    if (req.body.password) {
+      if (req.body.password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters' });
+      }
+      user.password = req.body.password;
+    }
     
     const updated = await user.save();
     res.json({
@@ -143,9 +182,10 @@ exports.forgotPassword = async (req, res, next) => {
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Set OTP and expiration (10 minutes)
+    // Set OTP and expiration (10 minutes), reset attempt counter
     user.resetPasswordOtp = otp;
     user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    user.otpAttempts = 0;
     await user.save();
 
     // Send email
@@ -165,15 +205,33 @@ exports.forgotPassword = async (req, res, next) => {
 exports.verifyOtp = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
-    const user = await User.findOne({ 
-      email, 
-      resetPasswordOtp: otp,
-      resetPasswordExpire: { $gt: Date.now() } 
-    });
 
-    if (!user) {
+    const user = await User.findOne({ email, resetPasswordExpire: { $gt: Date.now() } });
+
+    if (!user || !user.resetPasswordOtp) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
+
+    // Track attempts — invalidate OTP after 5 wrong tries
+    if (!user.otpAttempts) user.otpAttempts = 0;
+    user.otpAttempts += 1;
+
+    if (user.otpAttempts > 5) {
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordExpire = undefined;
+      user.otpAttempts = 0;
+      await user.save();
+      return res.status(400).json({ message: 'Too many failed attempts. Please request a new code.' });
+    }
+
+    if (user.resetPasswordOtp !== otp) {
+      await user.save();
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // OTP matches — reset attempt counter
+    user.otpAttempts = 0;
+    await user.save();
 
     res.json({ message: 'OTP verified successfully', success: true });
   } catch (error) {
@@ -197,14 +255,15 @@ exports.resetPassword = async (req, res, next) => {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    if (newPassword.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
     }
 
     // Update password
     user.password = newPassword; // The pre-save hook will hash it
     user.resetPasswordOtp = undefined;
     user.resetPasswordExpire = undefined;
+    user.otpAttempts = 0;
     await user.save();
 
     res.json({ message: 'Password reset successfully. You can now log in.' });
@@ -219,7 +278,10 @@ exports.addAddress = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    const newAddress = req.body;
+    // Whitelist only allowed address fields — prevent mass assignment
+    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country } = req.body;
+    const newAddress = { fullName, phone, addressLine1, addressLine2, city, state, pincode, country };
+
     // If this is the first address, mark it as default
     if (user.addresses.length === 0) newAddress.isDefault = true;
     

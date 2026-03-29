@@ -16,13 +16,16 @@ const addressSchema = new mongoose.Schema({
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 6 },
+  password: { type: String, required: true, minlength: 8 },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   phone: { type: String, default: '' },
   addresses: [addressSchema],
   avatar: { type: String, default: '' },
   resetPasswordOtp: String,
   resetPasswordExpire: Date,
+  otpAttempts: { type: Number, default: 0 },
+  loginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Date },
 }, { timestamps: true });
 
 // Mongoose 7+ async hooks do NOT receive next() — just use async/await

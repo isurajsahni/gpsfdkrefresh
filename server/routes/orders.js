@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const { createOrder, createGuestOrder, getOrders, getOrderById, updateOrderStatus, getOrderStats, cancelOrder, deleteOrder } = require('../controllers/orderController');
 const { protect, admin } = require('../middleware/auth');
+const { guestOrderValidation, guestOrderLimiter } = require('../middleware/validators');
 
 router.post('/', protect, createOrder);
-router.post('/guest', createGuestOrder);
+router.post('/guest', guestOrderLimiter, guestOrderValidation, createGuestOrder);
 router.get('/', protect, getOrders);
 router.get('/stats', protect, admin, getOrderStats);
 router.get('/:id', protect, getOrderById);

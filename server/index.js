@@ -3,7 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const mongoSanitize = require('express-mongo-sanitize');
+
 const connectDB = require('./config/db');
 const { stripeWebhook } = require('./controllers/paymentController');
 
@@ -50,7 +50,24 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Security: Sanitize MongoDB queries (prevent NoSQL injection) ───
-app.use(mongoSanitize());
+// Inline sanitizer (express-mongo-sanitize is incompatible with Express 5)
+const sanitize = (obj) => {
+  if (obj && typeof obj === 'object') {
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key];
+      } else if (typeof obj[key] === 'object') {
+        sanitize(obj[key]);
+      }
+    }
+  }
+  return obj;
+};
+app.use((req, res, next) => {
+  if (req.body) sanitize(req.body);
+  if (req.query) sanitize(req.query);
+  next();
+});
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

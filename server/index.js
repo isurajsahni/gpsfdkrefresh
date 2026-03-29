@@ -11,8 +11,12 @@ dotenv.config();
 
 const app = express();
 
-// ─── Security: Helmet (sets secure HTTP headers) ───
-app.use(helmet());
+// ─── Security: Helmet (sets secure HTTP headers, API-friendly) ───
+app.use(helmet({
+  contentSecurityPolicy: false,            // Not needed for JSON APIs
+  crossOriginEmbedderPolicy: false,        // Allow cross-origin API calls
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Let Vercel frontend read responses
+}));
 
 // ─── Security: Global rate limiter (100 req / 15 min per IP) ───
 const globalLimiter = rateLimit({

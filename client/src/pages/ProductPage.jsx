@@ -39,7 +39,7 @@ const ProductPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-primary flex items-center justify-center pt-20">
+      <div className="min-h-screen bg-white flex items-center justify-center pt-20">
         <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -47,7 +47,7 @@ const ProductPage = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-primary flex flex-col items-center justify-center pt-20">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center pt-20">
         <h2 className="text-2xl font-heading text-secondary">Product not found</h2>
         <Link to="/" className="btn-primary mt-4">Back to Home</Link>
       </div>
@@ -81,11 +81,11 @@ const ProductPage = () => {
 
   const findVariation = (updates) => {
     const criteria = { ...selectedVariation, ...updates };
-    
+
     // Score each variation by how many attributes match the desired criteria
     let bestMatch = null;
     let bestScore = -1;
-    
+
     for (const v of product.variations) {
       let score = 0;
       // The updated attribute(s) MUST match
@@ -97,19 +97,19 @@ const ProductPage = () => {
         }
       }
       if (!requiredMatch) continue;
-      
+
       // Score optional attributes
       if (v.size && v.size === criteria.size) score += 3;
       if (v.material && v.material === criteria.material) score += 2;
       if (v.frame && v.frame === criteria.frame) score += 2;
       if (v.color && v.color === criteria.color) score += 2;
-      
+
       if (score > bestScore) {
         bestScore = score;
         bestMatch = v;
       }
     }
-    
+
     return bestMatch || selectedVariation;
   };
 
@@ -144,9 +144,9 @@ const ProductPage = () => {
   } : null;
 
   return (
-    <div className="min-h-screen bg-primary pt-24 pb-20">
+    <div className="min-h-screen bg-white pt-28 pb-20">
       {product && (
-        <SEO 
+        <SEO
           title={`${product.name} | Custom Designs by GPSFDK`}
           description={product.description?.substring(0, 160)}
           image={product.images?.[0]?.url}
@@ -165,8 +165,8 @@ const ProductPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Images — thumbnails left, main image right */}
-          <motion.div 
-            initial={{ opacity: 0, x: -30 }} 
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-row gap-3"
           >
@@ -177,11 +177,10 @@ const ProductPage = () => {
                   <button
                     key={i}
                     onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 relative ${
-                      selectedImage === i 
-                        ? 'border-accent shadow-md ring-2 ring-accent/30' 
-                        : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-accent/50'
-                    }`}
+                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 relative ${selectedImage === i
+                      ? 'border-accent shadow-md ring-2 ring-accent/30'
+                      : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-accent/50'
+                      }`}
                   >
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
                   </button>
@@ -334,10 +333,10 @@ const ProductPage = () => {
       {/* Related Products */}
       {product.category && (
         <div className="mt-10">
-          <ProductSlider 
-            title="Related Products" 
-            categorySlug={product.category.slug} 
-            featured={false} 
+          <ProductSlider
+            title="Related Products"
+            categorySlug={product.category.slug}
+            featured={false}
           />
         </div>
       )}

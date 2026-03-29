@@ -12,6 +12,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import CartDrawer from './components/layout/CartDrawer';
 import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
+import PageLoader from './components/common/PageLoader';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -77,6 +78,7 @@ function App() {
   return (
     <HelmetProvider>
       <Router>
+        <PageLoader />
         <ScrollManager />
         <AuthProvider>
           <UIProvider>

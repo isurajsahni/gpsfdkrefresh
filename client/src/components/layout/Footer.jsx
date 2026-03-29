@@ -39,7 +39,7 @@ const Footer = () => {
             <Link
               key={link.name}
               to={link.path}
-              className="text-secondary/80 text-base hover:text-accent transition-colors duration-200"
+              className="text-secondary/80 text-sm md:text-base hover:text-accent transition-colors duration-200 hover-underline"
             >
               {link.name}
             </Link>

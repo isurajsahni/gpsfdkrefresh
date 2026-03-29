@@ -78,7 +78,7 @@ const CategoryHighlights = () => {
       description: "Transform your walls into a gallery of expression. Our museum-grade canvases bring vibrant color and sophisticated texture to any interior environment.",
       image: poster1, 
       isReverse: false,
-      link: "/category/wall-canvas",
+      link: "/wall-canvas",
       bgColor: "bg-primary",
       isDark: false
     },
@@ -88,7 +88,7 @@ const CategoryHighlights = () => {
       description: "Define your entrance with absolute distinction. Handcrafted with premium materials that withstand the elements while making a bold statement of identity.",
       image: poster2, 
       isReverse: true,
-      link: "/category/house-nameplates",
+      link: "/house-nameplates",
       bgColor: "bg-primary",
       isDark: false
     },
@@ -98,7 +98,7 @@ const CategoryHighlights = () => {
       description: "Exclusively curated series for the discerning collector. Limited edition prints and oversized formats that redefine the boundaries of modern home decor.",
       image: poster3, 
       isReverse: false,
-      link: "/category/wall-canvas",
+      link: "/wall-canvas",
       bgColor: "bg-primary",
       isDark: false
     }

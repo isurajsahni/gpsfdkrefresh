@@ -40,7 +40,7 @@ const WatchBuySection = () => {
           </div>
           
           <div className="hidden md:block">
-            <WebflowButton to="/category/wall-canvas">
+            <WebflowButton to="/wall-canvas">
               View All Products
             </WebflowButton>
           </div>
@@ -85,7 +85,7 @@ const WatchBuySection = () => {
 
         {/* Mobile-only CTA */}
         <div className="mt-16 flex justify-center md:hidden">
-          <WebflowButton to="/category/wall-canvas" fullWidth>
+          <WebflowButton to="/wall-canvas" fullWidth>
             View All Products
           </WebflowButton>
         </div>

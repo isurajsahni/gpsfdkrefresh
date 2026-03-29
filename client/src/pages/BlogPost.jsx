@@ -135,7 +135,7 @@ const BlogPost = () => {
                 {blog.keywords.map(keyword => (
                   <Link 
                     key={keyword} 
-                    to={`/category/wall-canvas`} 
+                    to={`/wall-canvas`} 
                     className="bg-secondary/5 hover:bg-secondary hover:text-white transition-colors text-secondary text-xs font-medium px-3 py-1.5 rounded-full"
                   >
                     {keyword}

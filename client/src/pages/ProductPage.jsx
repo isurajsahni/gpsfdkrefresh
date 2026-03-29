@@ -158,7 +158,7 @@ const ProductPage = () => {
         <nav className="text-gray-400 text-sm mb-8">
           <Link to="/" className="hover:text-secondary">Home</Link>
           <span className="mx-2">/</span>
-          <Link to={`/category/${product.category?.slug}`} className="hover:text-secondary">{product.category?.name}</Link>
+          <Link to={`/${product.category?.slug}`} className="hover:text-secondary">{product.category?.name}</Link>
           <span className="mx-2">/</span>
           <span className="text-secondary">{product.name}</span>
         </nav>

@@ -94,8 +94,6 @@ function App() {
                 {/* Public */}
                 <Route path="/" element={<><HomePage /><Footer /></>} />
                 <Route path="/search" element={<><SearchPage /><Footer /></>} />
-                <Route path="/category/:slug" element={<><CategoryPage /><Footer /></>} />
-                <Route path="/category/:slug/:subcategorySlug" element={<><CategoryPage /><Footer /></>} />
                 <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
                 <Route path="/login" element={<LoginPage />} />
@@ -135,6 +133,10 @@ function App() {
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
+
+              {/* Category pages — MUST be last (catch-all pattern) */}
+              <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />
+              <Route path="/:slug/:subcategorySlug" element={<><CategoryPage /><Footer /></>} />
             </Routes>
           </CartProvider>
         </UIProvider>

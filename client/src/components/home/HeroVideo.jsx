@@ -51,10 +51,10 @@ const HeroVideo = () => {
           transition={{ delay: 0.9, duration: 0.8 }}
           className="mt-10 items-center flex flex-col sm:flex-row gap-4"
         >
-          <WebflowButton to="/category/wall-canvas" className="text-lg">
-            Shop Now
+          <WebflowButton to="/wall-canvas" className="text-lg">
+            Wall Canvas
           </WebflowButton>
-          <Link to="/category/house-nameplates" className="btn-outline border-white text-white hover:bg-white hover:text-secondary text-lg px-10 py-4">
+          <Link to="/house-nameplates" className="btn-outline border-white text-white hover:bg-white hover:text-secondary text-lg px-10 py-4">
             Custom Nameplates
           </Link>
         </motion.div>

@@ -61,7 +61,7 @@ const Navbar = () => {
               {categories.map((cat) => (
                 <div key={cat.slug} className="relative group">
                   <Link
-                    to={`/category/${cat.slug}`}
+                    to={`/${cat.slug}`}
                     className="flex items-center gap-1 text-secondary hover:text-accent font-semibold text-md tracking-wide transition-colors duration-300"
                   >
                     {cat.name}
@@ -75,7 +75,7 @@ const Navbar = () => {
                           return (
                             <Link
                               key={sub}
-                              to={`/category/${cat.slug}/${subSlug}`}
+                              to={`/${cat.slug}/${subSlug}`}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-cream hover:text-secondary rounded-lg transition-colors"
                             >
                               {sub}
@@ -187,7 +187,7 @@ const Navbar = () => {
                 <div key={cat.slug} className="border-b border-white/10 pb-2">
                   <div className="flex items-center justify-between py-3">
                     <Link
-                      to={`/category/${cat.slug}`}
+                      to={`/${cat.slug}`}
                       onClick={() => setMobileOpen(false)}
                       className="text-xl text-white font-heading"
                     >
@@ -217,7 +217,7 @@ const Navbar = () => {
                             return (
                               <Link
                                 key={sub}
-                                to={`/category/${cat.slug}/${subSlug}`}
+                                to={`/${cat.slug}/${subSlug}`}
                                 onClick={() => setMobileOpen(false)}
                                 className="text-white/70 text-base font-medium hover:text-white transition-colors"
                               >

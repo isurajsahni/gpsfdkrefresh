@@ -55,7 +55,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
             <div className="w-20 h-1 bg-accent mt-3 rounded-full" />
           </div>
           {categorySlug && (
-            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">
+            <WebflowButton to={`/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">
               View All
             </WebflowButton>
           )}
@@ -113,7 +113,7 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
 
           {/* Custom Navigation Buttons to the bottom right */}
           <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 mt-6">
-            <WebflowButton to={`/category/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
+            <WebflowButton to={`/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
               View All
             </WebflowButton>
 

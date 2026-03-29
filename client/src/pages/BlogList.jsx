@@ -115,7 +115,7 @@ const BlogList = () => {
             <p className="text-white/70 max-w-xl mx-auto mb-8 relative z-10">
               Explore our premium collection of custom wall canvas prints and house nameplates. Fast delivery across India.
             </p>
-            <Link to="/category/wall-canvas" className="btn-primary relative z-10 inline-block px-8 py-3.5 text-lg">
+            <Link to="/wall-canvas" className="btn-primary relative z-10 inline-block px-8 py-3.5 text-lg">
               Shop Wall Canvas
             </Link>
           </div>

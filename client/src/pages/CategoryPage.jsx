@@ -68,7 +68,7 @@ const CategoryPage = () => {
         "@type": "ListItem",
         "position": 2,
         "name": category?.name || slug,
-        "item": `https://www.gpsfdk.com/category/${slug}`
+        "item": `https://www.gpsfdk.com/${slug}`
       },
       ...(subcategorySlug ? [{
         "@type": "ListItem",
@@ -97,7 +97,7 @@ const CategoryPage = () => {
           >
             <h3 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
             <div className="flex flex-wrap gap-x-3 gap-y-4">
-              <Link to={`/category/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+              <Link to={`/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                 All Products
               </Link>
               {[
@@ -109,7 +109,7 @@ const CategoryPage = () => {
                 const subSlug = generateSlug(sub);
                 const isActive = subcategorySlug === subSlug;
                 return (
-                  <Link key={subSlug} to={`/category/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                     {sub}
                   </Link>
                 );
@@ -125,7 +125,7 @@ const CategoryPage = () => {
                 <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
                 {subcategorySlug ? (
                   <>
-                    <Link to={`/category/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
+                    <Link to={`/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
                     <span className="mx-2">/</span> <span className="text-white">{displaySubcategory}</span>
                   </>
                 ) : (

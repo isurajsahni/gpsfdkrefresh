@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { validators, sanitize } from '../utils/validation';
 import toast from 'react-hot-toast';
 
@@ -11,6 +12,7 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { cartItems } = useCart();
   const navigate = useNavigate();
 
   const handleBlur = (field, value) => {
@@ -35,7 +37,14 @@ const LoginPage = () => {
       const cleanEmail = sanitize(email);
       const data = await login(cleanEmail, password);
       toast.success(`Welcome back, ${data.name}!`);
-      navigate(data.role === 'admin' ? '/admin' : '/');
+      
+      if (data.role === 'admin') {
+        navigate('/admin');
+      } else if (cartItems.length > 0) {
+        navigate('/checkout');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
     }

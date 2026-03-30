@@ -23,7 +23,7 @@ const HeroVideo = () => {
           transition={{ delay: 0.3, duration: 0.8 }}
           className="text-accent font-body text-sm md:text-base tracking-[0.3em] uppercase mb-4"
         >
-          Premium Home Décor
+          Luxury Home Décor
         </motion.span>
 
         <motion.h1
@@ -32,8 +32,7 @@ const HeroVideo = () => {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white max-w-4xl leading-tight"
         >
-          Elevate Your Space <br />
-          <span className="text-accent">With Art & Identity</span>
+          <span className="text-accent">Right to luxury</span>
         </motion.h1>
 
         <motion.p
@@ -42,7 +41,7 @@ const HeroVideo = () => {
           transition={{ delay: 0.7, duration: 0.8 }}
           className="text-white/70 text-lg md:text-xl max-w-2xl mt-6 font-body"
         >
-          Discover luxury wall canvases & custom house nameplates that transform your home into a masterpiece.
+          A Canvas for your soul & A Nameplate for Aapki Pehchaan
         </motion.p>
 
         <motion.div

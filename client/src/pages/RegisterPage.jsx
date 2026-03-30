@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { validators, formatters } from '../utils/validation';
 import toast from 'react-hot-toast';
 
@@ -10,6 +11,7 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
+  const { cartItems } = useCart();
   const navigate = useNavigate();
 
   const handleBlur = (field) => {
@@ -48,7 +50,11 @@ const RegisterPage = () => {
     try {
       await register(form.name, form.email, form.password, form.phone);
       toast.success('Account created successfully!');
-      navigate('/');
+      if (cartItems.length > 0) {
+        navigate('/checkout');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     }

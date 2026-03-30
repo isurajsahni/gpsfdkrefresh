@@ -47,7 +47,12 @@ exports.getProducts = async (req, res, next) => {
     if (search) {
       // Escape regex special characters to prevent ReDoS attacks
       const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.name = { $regex: escaped, $options: 'i' };
+      const searchRegex = { $regex: escaped, $options: 'i' };
+      query.$or = [
+        { name: searchRegex },
+        { description: searchRegex },
+        { subCategory: searchRegex }
+      ];
     }
     
     let sortObj = { createdAt: -1 };

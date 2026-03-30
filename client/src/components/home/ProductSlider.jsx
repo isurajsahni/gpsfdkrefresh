@@ -63,9 +63,16 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
 
         <div className="relative pb-24">
           <Swiper
-            modules={[Navigation]}
+            modules={[Navigation, Autoplay]}
             spaceBetween={24}
             slidesPerView={1.2}
+            loop={true}
+            speed={800}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false,
+              pauseOnMouseEnter: true
+            }}
             navigation={{
               nextEl: `.swiper-button-next-${categorySlug || 'default'}`,
               prevEl: `.swiper-button-prev-${categorySlug || 'default'}`,

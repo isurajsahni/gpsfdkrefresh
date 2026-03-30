@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
 import { useUI } from '../../context/UIContext';
@@ -12,6 +12,7 @@ const SearchOverlay = () => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (isSearchOpen) {
@@ -23,6 +24,11 @@ const SearchOverlay = () => {
       setResults([]);
     }
   }, [isSearchOpen]);
+
+  // Close search when navigating away
+  useEffect(() => {
+    setIsSearchOpen(false);
+  }, [location.pathname, setIsSearchOpen]);
 
   useEffect(() => {
     const fetchResults = async () => {

@@ -11,11 +11,14 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [imageFiles, setImageFiles] = useState([]);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [form, setForm] = useState({
     name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
     images: [],
+    thumbnailImage: null,
+    removeThumbnail: false,
   });
 
   const fetchProducts = async () => {
@@ -58,6 +61,12 @@ const AdminProducts = () => {
         formData.append('images', file);
       });
 
+      if (thumbnailFile) {
+        formData.append('thumbnailImage', thumbnailFile);
+      } else if (form.removeThumbnail) {
+        formData.append('removeThumbnail', 'true');
+      }
+
       if (editing) {
         await API.put(`/products/${editing}`, formData);
         toast.success('Product updated');
@@ -68,7 +77,8 @@ const AdminProducts = () => {
       setShowForm(false);
       setEditing(null);
       setImageFiles([]);
-      setForm({ name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [] });
+      setThumbnailFile(null);
+      setForm({ name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [], thumbnailImage: null, removeThumbnail: false });
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
@@ -87,9 +97,12 @@ const AdminProducts = () => {
       isMasonry: product.isMasonry,
       variations: product.variations?.length > 0 ? product.variations : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
       images: product.images || [],
+      thumbnailImage: product.thumbnailImage || null,
+      removeThumbnail: false,
     });
     setEditing(product._id);
     setImageFiles([]);
+    setThumbnailFile(null);
     setShowForm(true);
   };
 
@@ -115,9 +128,12 @@ const AdminProducts = () => {
       isMasonry: product.isMasonry,
       variations: product.variations?.length > 0 ? product.variations.map(v => ({...v, _id: undefined})) : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
       images: [], // Usually we don't duplicate the actual image files directly to avoid linking issues, user will upload new ones or we'd need to copy URLs
+      thumbnailImage: null,
+      removeThumbnail: false,
     });
     setEditing(null); // It's a new product, not an edit
     setImageFiles([]);
+    setThumbnailFile(null);
     setShowForm(true);
   };
 
@@ -297,6 +313,34 @@ const AdminProducts = () => {
                     <span className="text-[10px] font-semibold text-gray-500 mt-1">Upload</span>
                     <input type="file" multiple accept="image/*" onChange={(e) => setImageFiles([...imageFiles, ...Array.from(e.target.files)])} className="hidden" />
                   </label>
+                </div>
+
+                <label className="block text-sm font-semibold mt-6 mb-2">Thumbnail Image (Listing Only)</label>
+                <div className="flex gap-4 mb-4">
+                  {form.thumbnailImage && !thumbnailFile && (
+                    <div className="relative w-32 aspect-square rounded-xl overflow-hidden border">
+                      <img src={form.thumbnailImage.url} alt="Thumbnail" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setForm({ ...form, thumbnailImage: null, removeThumbnail: true })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                        <HiOutlineX className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                  {thumbnailFile && (
+                    <div className="relative w-32 aspect-[4/5] rounded-xl overflow-hidden border border-accent/30 bg-accent/5">
+                      <img src={URL.createObjectURL(thumbnailFile)} alt="New Thumbnail" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setThumbnailFile(null)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
+                        <HiOutlineX className="w-3 h-3" />
+                      </button>
+                      <div className="absolute bottom-0 left-0 right-0 bg-accent text-[10px] text-white text-center py-0.5">NEW</div>
+                    </div>
+                  )}
+                  {!form.thumbnailImage && !thumbnailFile && (
+                    <label className="flex flex-col items-center justify-center w-32 aspect-[4/5] rounded-xl border-2 border-dashed border-gray-200 hover:border-accent hover:bg-accent/5 cursor-pointer transition-all">
+                      <HiOutlinePlus className="w-6 h-6 text-gray-400" />
+                      <span className="text-[10px] font-semibold text-gray-500 mt-1 text-center px-2">Upload Thumbnail</span>
+                      <input type="file" accept="image/*" onChange={(e) => setThumbnailFile(e.target.files[0])} className="hidden" />
+                    </label>
+                  )}
                 </div>
               </div>
 

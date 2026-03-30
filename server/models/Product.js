@@ -19,6 +19,7 @@ const productSchema = new mongoose.Schema({
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
   subCategory: { type: String, trim: true },
   images: [{ url: String, public_id: String, alt: String }],
+  thumbnailImage: { url: String, public_id: String },
   videos: [{ url: String, public_id: String }],
   variations: [variationSchema],
   basePrice: { type: Number, default: 0 },

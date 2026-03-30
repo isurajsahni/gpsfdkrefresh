@@ -119,15 +119,22 @@ exports.createProduct = async (req, res, next) => {
       images: [],
     };
 
-    // Use uploaded files for images
-    if (req.files && req.files.length > 0) {
-      productData.images = req.files.map(f => {
-        // multer-storage-cloudinary v4: secure_url is on f.path, public_id is on f.filename
+    // Use uploaded files for images (upload.fields format)
+    if (req.files && req.files.images && req.files.images.length > 0) {
+      productData.images = req.files.images.map(f => {
         const url = f.secure_url || f.path || f.url;
         const public_id = f.public_id || f.filename;
-        console.log('Uploaded image:', { url, public_id, originalPath: f.path });
         return { url, public_id };
       });
+    }
+
+    // Handle thumbnail image (listing-only)
+    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage.length > 0) {
+      const t = req.files.thumbnailImage[0];
+      productData.thumbnailImage = {
+        url: t.secure_url || t.path || t.url,
+        public_id: t.public_id || t.filename
+      };
     }
 
     const product = new Product(productData);
@@ -176,12 +183,11 @@ exports.updateProduct = async (req, res, next) => {
       }
     }
 
-    // Append newly uploaded files
-    const newImages = (req.files && req.files.length > 0)
-      ? req.files.map(f => {
+    // Append newly uploaded files (upload.fields format)
+    const newImages = (req.files && req.files.images && req.files.images.length > 0)
+      ? req.files.images.map(f => {
           const url = f.secure_url || f.path || f.url;
           const public_id = f.public_id || f.filename;
-          console.log('Uploaded image (update):', { url, public_id, originalPath: f.path });
           return { url, public_id };
         })
       : [];
@@ -189,9 +195,9 @@ exports.updateProduct = async (req, res, next) => {
     product.images = [...keptImages, ...newImages];
 
     // Find images that were removed and delete them from Cloudinary
-    if (product.images.length >= 0) { // To run safely
+    if (product.images.length >= 0) {
       const keptPublicIds = keptImages.map(img => img.public_id).filter(Boolean);
-      const removedImages = product._doc.images || []; // Access original images from previous state
+      const removedImages = product._doc.images || [];
 
       for (const img of removedImages) {
         if (img.public_id && !keptPublicIds.includes(img.public_id)) {
@@ -202,6 +208,33 @@ exports.updateProduct = async (req, res, next) => {
           }
         }
       }
+    }
+
+    // Handle thumbnail image
+    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage.length > 0) {
+      // Delete old thumbnail from Cloudinary if it exists
+      if (product.thumbnailImage && product.thumbnailImage.public_id) {
+        try {
+          await cloudinary.uploader.destroy(product.thumbnailImage.public_id);
+        } catch (err) {
+          console.error(`Failed to delete old thumbnail:`, err);
+        }
+      }
+      const t = req.files.thumbnailImage[0];
+      product.thumbnailImage = {
+        url: t.secure_url || t.path || t.url,
+        public_id: t.public_id || t.filename
+      };
+    } else if (req.body.removeThumbnail === 'true') {
+      // Admin explicitly removed the thumbnail
+      if (product.thumbnailImage && product.thumbnailImage.public_id) {
+        try {
+          await cloudinary.uploader.destroy(product.thumbnailImage.public_id);
+        } catch (err) {
+          console.error(`Failed to delete thumbnail:`, err);
+        }
+      }
+      product.thumbnailImage = undefined;
     }
 
     await product.save();
@@ -227,6 +260,15 @@ exports.deleteProduct = async (req, res, next) => {
             console.error(`Failed to delete image ${img.public_id} from Cloudinary:`, err);
           }
         }
+      }
+    }
+
+    // Delete thumbnail from Cloudinary
+    if (product.thumbnailImage && product.thumbnailImage.public_id) {
+      try {
+        await cloudinary.uploader.destroy(product.thumbnailImage.public_id);
+      } catch (err) {
+        console.error(`Failed to delete thumbnail from Cloudinary:`, err);
       }
     }
 

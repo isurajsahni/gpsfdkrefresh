@@ -184,3 +184,28 @@
   margin-top: 0.25rem !important;
   margin-bottom: 0.25rem !important;
 }
+
+/* Zigzag Listing Animations */
+.zigzag-row {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.zigzag-row.zigzag-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.zigzag-image-even {
+  transform: rotate(-2deg);
+}
+
+.zigzag-image-odd {
+  transform: rotate(2deg);
+}
+
+.group:hover .zigzag-image-even,
+.group:hover .zigzag-image-odd {
+  transform: scale(1.02) rotate(0deg);
+}

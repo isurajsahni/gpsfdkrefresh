@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
+import ProductZigzagPage from '../components/home/ProductZigzagPage';
 
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
@@ -77,6 +78,10 @@ const CategoryPage = () => {
       }] : [])
     ]
   };
+
+  if (slug === 'house-nameplates') {
+    return <ProductZigzagPage category={category} slug={slug} />;
+  }
 
   return (
     <div className="min-h-screen bg-white pt-[80px] pb-12">

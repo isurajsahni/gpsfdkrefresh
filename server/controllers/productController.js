@@ -48,10 +48,16 @@ exports.getProducts = async (req, res, next) => {
       // Escape regex special characters to prevent ReDoS attacks
       const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const searchRegex = { $regex: escaped, $options: 'i' };
+      
+      // Find categories that match the search term
+      const matchedCategories = await Category.find({ name: searchRegex }).select('_id');
+      const categoryIds = matchedCategories.map(c => c._id);
+
       query.$or = [
         { name: searchRegex },
         { description: searchRegex },
-        { subCategory: searchRegex }
+        { subCategory: searchRegex },
+        { category: { $in: categoryIds } }
       ];
     }
     

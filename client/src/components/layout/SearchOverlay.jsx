@@ -97,48 +97,51 @@ const SearchOverlay = () => {
                 <div className="flex justify-center py-10">
                   <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
                 </div>
-              ) : results.length > 0 ? (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                  <h3 className="text-gray-500 font-medium mb-6">Suggestions</h3>
-                  {results.map((product) => (
-                    <Link
-                      key={product._id}
-                      to={`/product/${product.slug}`}
-                      onClick={() => setIsSearchOpen(false)}
-                      className="flex items-center gap-6 p-4 rounded-2xl hover:bg-white transition-colors group"
-                    >
-                      <img src={product.images?.[0]?.url} alt={product.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl bg-cream-dark" />
-                      <div>
-                        <h4 className="font-heading font-bold text-lg md:text-xl text-secondary group-hover:text-accent transition-colors">{product.name}</h4>
-                        <p className="text-gray-500 text-sm mt-1">{product.category?.name}</p>
-                        <p className="font-bold text-accent mt-1">₹{product.basePrice?.toLocaleString()}</p>
-                      </div>
-                    </Link>
-                  ))}
-                  <button
-                    onClick={handleSearch}
-                    className="w-full py-4 text-center text-sm font-bold text-accent hover:text-secondary hover:underline transition-all mt-6 block"
-                  >
-                    View all results for "{query}" →
-                  </button>
-                </motion.div>
-              ) : query.length > 1 ? (
-                <p className="text-center text-gray-500 py-10">No products found for "{query}"</p>
               ) : (
-                <div className="text-center text-gray-500 py-10 space-y-4">
-                  <p>Popular Searches:</p>
-                  <div className="flex flex-wrap justify-center gap-3">
-                    {['Wall Canvas', 'Nameplate', 'Millionaire Art', 'Acrylic'].map(term => (
+                <>
+                  {results.length > 0 ? (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                      <h3 className="text-gray-500 font-medium mb-6">Suggestions</h3>
+                      {results.map((product) => (
+                        <Link
+                          key={product._id}
+                          to={`/product/${product.slug}`}
+                          className="flex items-center gap-6 p-4 rounded-2xl hover:bg-white transition-colors group"
+                        >
+                          <img src={product.images?.[0]?.url} alt={product.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl bg-cream-dark" />
+                          <div>
+                            <h4 className="font-heading font-bold text-lg md:text-xl text-secondary group-hover:text-accent transition-colors">{product.name}</h4>
+                            <p className="text-gray-500 text-sm mt-1">{product.category?.name}</p>
+                            <p className="font-bold text-accent mt-1">₹{product.basePrice?.toLocaleString()}</p>
+                          </div>
+                        </Link>
+                      ))}
                       <button
-                        key={term}
-                        onClick={() => setQuery(term)}
-                        className="px-4 py-2 bg-white rounded-full text-sm hover:bg-secondary hover:text-white transition-colors"
+                        onClick={handleSearch}
+                        className="w-full py-4 text-center text-sm font-bold text-accent hover:text-secondary hover:underline transition-all mt-6 block"
                       >
-                        {term}
+                        View all results for "{query}" →
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    </motion.div>
+                  ) : query.trim().length > 1 ? (
+                    <p className="text-center text-gray-500 py-10">No products found for "{query}"</p>
+                  ) : (
+                    <div className="text-center text-gray-500 py-10 space-y-4">
+                      <p>Popular Searches:</p>
+                      <div className="flex flex-wrap justify-center gap-3">
+                        {['Wall Canvas', 'Nameplate', 'Millionaire Art', 'Acrylic'].map(term => (
+                          <button
+                            key={term}
+                            onClick={() => setQuery(term)}
+                            className="px-4 py-2 bg-white rounded-full text-sm hover:bg-secondary hover:text-white transition-colors"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

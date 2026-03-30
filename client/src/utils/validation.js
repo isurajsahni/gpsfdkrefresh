@@ -47,7 +47,11 @@ export const validators = {
   },
 
   phone: (v) => {
-    const val = (v || '').replace(/\D/g, '');
+    let val = (v || '').replace(/\D/g, '');
+    // Handle +91 or 91 prefix for saved addresses
+    if (val.length === 12 && val.startsWith('91')) {
+      val = val.slice(2);
+    }
     if (!val) return 'Phone number is required';
     if (val.length !== 10) return 'Phone number must be 10 digits';
     if (!/^[6-9]/.test(val)) return 'Phone number must start with 6-9';

@@ -79,6 +79,7 @@ app.use('/api/payments', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/coupons', require('./routes/coupons'));
 app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));
+app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 
 // Root route
 app.get('/', (req, res) => res.send('GPSFDK Ecommerce API is running 🚀'));

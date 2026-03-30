@@ -237,7 +237,7 @@ const CheckoutPage = () => {
       if (paymentMethod === 'cod') {
         clearCart();
         toast.success('Order placed successfully!');
-        navigate('/dashboard');
+        navigate('/thank-you');
       } else if (paymentMethod === 'razorpay') {
         try {
           const { data: razorpayOrder } = await API.post('/payments/razorpay', { amount: finalTotal });
@@ -256,7 +256,7 @@ const CheckoutPage = () => {
               
               clearCart();
               toast.success('Payment successful!');
-              navigate('/dashboard');
+              navigate('/thank-you');
             },
             prefill: { name: shippingAddress.fullName, email: user?.email, contact: shippingAddress.phone },
             theme: { color: '#0B5D3B' }

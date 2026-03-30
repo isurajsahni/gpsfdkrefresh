@@ -25,6 +25,7 @@ import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import UserDashboard from './pages/UserDashboard';
 import SearchPage from './pages/SearchPage';
+import ThankYouPage from './pages/ThankYouPage';
 import AboutUs from './pages/info/AboutUs';
 import Contact from './pages/info/Contact';
 import FAQ from './pages/info/FAQ';
@@ -119,6 +120,7 @@ function App() {
 
               {/* Protected */}
               <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /><Footer /></ProtectedRoute>} />
+              <Route path="/thank-you" element={<ProtectedRoute><ThankYouPage /><Footer /></ProtectedRoute>} />
               <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
 
               {/* Admin */}

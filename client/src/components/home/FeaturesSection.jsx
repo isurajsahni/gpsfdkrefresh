@@ -20,15 +20,15 @@ const FeaturesSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="group text-center p-8 rounded-2xl bg-white hover:bg-secondary transition-all duration-500 hover:shadow-xl cursor-default"
+              className="group text-center p-8 rounded-2xl bg-white transition-all duration-500 hover:shadow-xl cursor-default"
             >
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 group-hover:bg-accent flex items-center justify-center transition-all duration-500">
-                <feature.icon className="w-8 h-8 text-accent group-hover:text-white transition-colors duration-500" />
+              <div className="w-16 h-16 mx-auto rounded-2xl bg-accent/10 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
+                <feature.icon className="w-8 h-8 text-accent transition-transform duration-500" />
               </div>
-              <h3 className="mt-5 font-heading text-lg font-semibold text-secondary group-hover:text-white transition-colors duration-500">
+              <h3 className="mt-5 font-heading text-lg font-semibold text-secondary transition-colors duration-500">
                 {feature.title}
               </h3>
-              <p className="mt-2 text-gray-500 text-sm group-hover:text-white/70 transition-colors duration-500">
+              <p className="mt-2 text-gray-500 text-sm transition-colors duration-500">
                 {feature.desc}
               </p>
             </motion.div>

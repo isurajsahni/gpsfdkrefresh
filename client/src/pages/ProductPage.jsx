@@ -153,7 +153,7 @@ const ProductPage = () => {
           schema={productSchema}
         />
       )}
-      <div className="max-w-7xl mx-auto section-padding">
+      <div className="max-w-7xl mx-auto section-padding pt-8 pb-12">
         {/* Breadcrumb */}
         <nav className="text-gray-400 text-sm mb-8">
           <Link to="/" className="hover:text-secondary">Home</Link>

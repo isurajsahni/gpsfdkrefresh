@@ -142,19 +142,7 @@ const CategoryPage = () => {
       {/* Controls */}
       <div className="max-w-[1200px] mx-auto px-[10px] py-6 flex items-center justify-between">
         <p className="text-gray-500">{products.length} products</p>
-        <div className="flex items-center gap-3">
-          <HiOutlineAdjustments className="w-5 h-5 text-secondary" />
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-accent"
-          >
-            <option value="">Sort: Latest</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
-            <option value="name">Name: A-Z</option>
-          </select>
-        </div>
+
       </div>
 
       {/* Product Grid */}

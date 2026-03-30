@@ -23,6 +23,7 @@ const CheckoutPage = () => {
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(null); // stores address ID being edited
   const [address, setAddress] = useState({
     fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
@@ -128,16 +129,25 @@ const CheckoutPage = () => {
 
     setLoading(true);
     try {
-      const { data: updatedAddresses } = await API.post('/auth/addresses', address);
+      let updatedAddresses;
+      if (isEditing) {
+        const { data } = await API.put(`/auth/addresses/${isEditing}`, address);
+        updatedAddresses = data;
+      } else {
+        const { data } = await API.post('/auth/addresses', address);
+        updatedAddresses = data;
+      }
+      
       setSavedAddresses(updatedAddresses);
-      const newAddr = updatedAddresses[updatedAddresses.length - 1];
-      setSelectedAddressId(newAddr._id);
+      const newAddr = isEditing ? updatedAddresses.find(a => a._id === isEditing) : updatedAddresses[updatedAddresses.length - 1];
+      setSelectedAddressId(newAddr?._id || updatedAddresses[0]?._id);
       setShowNewForm(false);
+      setIsEditing(null);
 
       if (user) {
         updateUser({ ...user, addresses: updatedAddresses });
       }
-      toast.success('Address saved!');
+      toast.success(isEditing ? 'Address updated!' : 'Address saved!');
       setLoading(false);
       return true;
     } catch (err) {
@@ -336,12 +346,26 @@ const CheckoutPage = () => {
                             </p>
                           </div>
                         </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
-                          className="text-gray-400 hover:text-red-500 text-xs font-medium px-2 py-1 rounded transition-colors"
-                        >
-                          Remove
-                        </button>
+                        <div className="flex flex-col items-end gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
+                            className="text-gray-400 hover:text-red-500 text-xs font-medium px-2 py-1 rounded transition-colors"
+                          >
+                            Remove
+                          </button>
+                          <button
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setIsEditing(addr._id);
+                              setAddress({ ...addr });
+                              setShowNewForm(true);
+                              setAddressErrors({});
+                            }}
+                            className="text-accent hover:underline text-xs font-semibold px-2 py-1 rounded transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       </div>
                       {addr.isDefault && (
                         <span className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium hidden sm:inline">Default</span>
@@ -351,8 +375,10 @@ const CheckoutPage = () => {
 
                   <button
                     onClick={() => {
+                      setIsEditing(null);
                       setShowNewForm(true);
                       setAddress({ fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India' });
+                      setAddressErrors({});
                     }}
                     className="w-full p-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-accent hover:text-accent transition-all text-sm font-medium flex items-center justify-center gap-2"
                   >
@@ -373,15 +399,19 @@ const CheckoutPage = () => {
                       <button
                         onClick={() => {
                           setShowNewForm(false);
+                          setIsEditing(null);
                           if (!selectedAddressId && savedAddresses.length > 0) {
                             setSelectedAddressId(savedAddresses[0]._id);
                           }
                         }}
                         className="text-sm text-accent font-medium mb-4 hover:underline"
                       >
-                        ← Use saved address instead
+                        ← {isEditing ? 'Cancel editing' : 'Use saved address instead'}
                       </button>
                     )}
+                    <h3 className="text-lg font-heading font-bold text-secondary mb-4">
+                      {isEditing ? 'Edit Address' : 'New Shipping Address'}
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Full Name */}
                       <div className="md:col-span-2">

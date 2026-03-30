@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiChevronDown, HiOutlineSearch } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
+import useClickOutside from '../../hooks/useClickOutside';
 import logo from '../../assets/vite.webp';
 
 const Navbar = () => {
@@ -18,10 +19,16 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+      setUserMenu(false); // Close user menu on scroll
+    };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const menuRef = useRef(null);
+  useClickOutside(menuRef, () => setUserMenu(false));
 
   const categories = [
     { name: 'Wall Canvas', slug: 'wall-canvas', subcats: [
@@ -117,7 +124,7 @@ const Navbar = () => {
               </button>
 
               {/* User */}
-              <div className="relative">
+              <div className="relative" ref={menuRef}>
                 {user ? (
                   <>
                     <button

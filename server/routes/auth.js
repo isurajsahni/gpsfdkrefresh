@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const {
   registerValidation,
@@ -23,6 +23,7 @@ router.post('/verify-otp', otpLimiter, verifyOtpValidation, verifyOtp);
 router.put('/reset-password', otpLimiter, resetPasswordValidation, resetPassword);
 
 router.post('/addresses', protect, addAddress);
+router.put('/addresses/:id', protect, updateAddress);
 router.delete('/addresses/:id', protect, deleteAddress);
 
 module.exports = router;

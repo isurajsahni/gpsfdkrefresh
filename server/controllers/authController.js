@@ -300,9 +300,36 @@ exports.deleteAddress = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.id);
-    await user.save();
+    res.json(user.addresses);
+  } catch (error) {
+    next(error);
+  }
+};
 
+// PUT /api/auth/addresses/:id — update an existing address
+exports.updateAddress = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const addressIndex = user.addresses.findIndex(a => a._id.toString() === req.params.id);
+    if (addressIndex === -1) return res.status(404).json({ message: 'Address not found' });
+
+    // Update with whitelisted fields
+    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country, isDefault } = req.body;
+    
+    const addr = user.addresses[addressIndex];
+    if (fullName) addr.fullName = fullName;
+    if (phone) addr.phone = phone;
+    if (addressLine1) addr.addressLine1 = addressLine1;
+    if (addressLine2 !== undefined) addr.addressLine2 = addressLine2;
+    if (city) addr.city = city;
+    if (state) addr.state = state;
+    if (pincode) addr.pincode = pincode;
+    if (country) addr.country = country;
+    if (isDefault !== undefined) addr.isDefault = isDefault;
+
+    await user.save();
     res.json(user.addresses);
   } catch (error) {
     next(error);

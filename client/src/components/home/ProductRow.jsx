@@ -24,8 +24,8 @@ const ProductRow = ({ product, index }) => {
   };
 
   const imageBlock = (
-    <div className="w-full lg:w-[50%] flex items-stretch justify-center">
-      <div className="w-full max-w-[550px] h-full">
+    <div className="w-full lg:w-[50%] flex items-center justify-center">
+      <div className="w-full max-w-[550px]">
         <ThumbnailImage
           src={thumbnailSrc}
           alt={product.name}
@@ -121,7 +121,7 @@ const ProductRow = ({ product, index }) => {
 
   return (
     <div
-      className={`zigzag-row flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-stretch gap-[50px] py-12 md:py-16`}
+      className={`zigzag-row flex flex-col ${isEven ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-[50px] py-12 md:py-16`}
     >
       {imageBlock}
       {detailsBlock}

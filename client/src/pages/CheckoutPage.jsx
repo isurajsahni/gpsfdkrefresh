@@ -133,14 +133,22 @@ const CheckoutPage = () => {
       return false;
     }
 
+    // Prepend +91 to phone before saving to DB
+    const payloadAddress = {
+      ...address,
+      phone: address.phone.replace(/\D/g, '').length === 10
+        ? `+91${address.phone.replace(/\D/g, '')}`
+        : address.phone,
+    };
+
     setLoading(true);
     try {
       let updatedAddresses;
       if (isEditing) {
-        const { data } = await API.put(`/auth/addresses/${isEditing}`, address);
+        const { data } = await API.put(`/auth/addresses/${isEditing}`, payloadAddress);
         updatedAddresses = data;
       } else {
-        const { data } = await API.post('/auth/addresses', address);
+        const { data } = await API.post('/auth/addresses', payloadAddress);
         updatedAddresses = data;
       }
       
@@ -164,6 +172,7 @@ const CheckoutPage = () => {
   };
 
   const handleDeleteAddress = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
     try {
       const { data: updatedAddresses } = await API.delete(`/auth/addresses/${id}`);
       setSavedAddresses(updatedAddresses);
@@ -176,6 +185,7 @@ const CheckoutPage = () => {
         }
       }
       if (user) updateUser({ ...user, addresses: updatedAddresses });
+      toast.success('Address deleted successfully');
     } catch {
       toast.error('Failed to delete address');
     }
@@ -382,7 +392,9 @@ const CheckoutPage = () => {
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               setIsEditing(addr._id);
-                              setAddress({ ...addr });
+                              // Strip +91 prefix from phone for display in the input
+                              const editPhone = (addr.phone || '').replace(/^\+91/, '');
+                              setAddress({ ...addr, phone: editPhone });
                               setShowNewForm(true);
                               setAddressErrors({});
                             }}
@@ -455,14 +467,18 @@ const CheckoutPage = () => {
                       {/* Phone */}
                       <div>
                         <label className="block text-sm font-semibold text-secondary mb-1">Phone *</label>
-                        <input
-                          type="tel"
-                          value={address.phone}
-                          onChange={(e) => handleAddressChange('phone', e.target.value)}
-                          onBlur={() => handleAddressBlur('phone')}
-                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
-                          placeholder="10-digit mobile number"
-                        />
+                        <div className={`flex items-center bg-primary border ${addressErrors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus-within:border-accent overflow-hidden`}>
+                          <span className="px-3 py-3 bg-gray-100 text-secondary font-semibold text-sm border-r border-gray-200 select-none">+91</span>
+                          <input
+                            type="tel"
+                            value={address.phone}
+                            onChange={(e) => handleAddressChange('phone', e.target.value)}
+                            onBlur={() => handleAddressBlur('phone')}
+                            className="flex-1 px-3 py-3 bg-transparent focus:outline-none"
+                            placeholder="9876543210"
+                            maxLength={10}
+                          />
+                        </div>
                         {addressErrors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.phone}</p>}
                       </div>
 

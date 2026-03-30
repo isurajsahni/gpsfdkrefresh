@@ -300,6 +300,18 @@ exports.deleteAddress = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const addressIndex = user.addresses.findIndex(a => a._id.toString() === req.params.id);
+    if (addressIndex === -1) return res.status(404).json({ message: 'Address not found' });
+
+    // If deleting the default address, reassign default to the next available
+    const wasDefault = user.addresses[addressIndex].isDefault;
+    user.addresses.splice(addressIndex, 1);
+
+    if (wasDefault && user.addresses.length > 0) {
+      user.addresses[0].isDefault = true;
+    }
+
+    await user.save();
     res.json(user.addresses);
   } catch (error) {
     next(error);

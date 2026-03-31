@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+import SmartPhoneInput from '../common/SmartPhoneInput';
 
 const RESEND_COOLDOWN = 30; // seconds
 const MAX_ATTEMPTS = 3;
@@ -59,9 +60,10 @@ const WhatsAppOtpModal = ({ isOpen, onClose, onVerified, phone: initialPhone }) 
   }, [step]);
 
   const handleSendOtp = async () => {
+    // Validate minimum acceptable length globally
     const cleaned = phone.replace(/\D/g, '');
-    if (!/^[6-9]\d{9}$/.test(cleaned)) {
-      setError('Please enter a valid 10-digit Indian mobile number.');
+    if (cleaned.length < 6) {
+      setError('Please enter a valid mobile number.');
       return;
     }
 
@@ -222,7 +224,7 @@ const WhatsAppOtpModal = ({ isOpen, onClose, onVerified, phone: initialPhone }) 
               <p className="text-white/80 text-sm">
                 {step === 'phone'
                   ? 'We\'ll send a one-time password via WhatsApp'
-                  : `Code sent to +91 ${phone.replace(/\D/g, '').replace(/(\d{5})(\d{5})/, '$1 $2')}`
+                  : `Code sent to ${phone}`
                 }
               </p>
             </div>
@@ -242,28 +244,27 @@ const WhatsAppOtpModal = ({ isOpen, onClose, onVerified, phone: initialPhone }) 
                       Mobile Number
                     </label>
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="flex-shrink-0 flex items-center gap-1.5 bg-gray-100 border border-gray-200 rounded-xl px-3 h-12 text-sm font-medium text-gray-600">
-                        🇮🇳 +91
-                      </div>
-                      <input
-                        type="tel"
-                        value={phone.replace(/\D/g, '').slice(0, 10)}
-                        onChange={e => {
-                          setPhone(e.target.value.replace(/\D/g, '').slice(0, 10));
-                          setError('');
-                        }}
-                        disabled={!phoneEditable}
-                        placeholder="Enter 10-digit number"
-                        className="flex-1 h-12 px-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent text-gray-900 text-sm transition-all disabled:bg-gray-50 disabled:text-gray-600"
-                        onKeyDown={e => { if (e.key === 'Enter') handleSendOtp(); }}
-                      />
-                      {!phoneEditable && (
-                        <button
-                          onClick={() => setPhoneEditable(true)}
-                          className="text-xs text-green-600 font-semibold hover:underline whitespace-nowrap"
-                        >
-                          Edit
-                        </button>
+                      {phoneEditable ? (
+                        <div className="flex-1 w-full">
+                          <SmartPhoneInput
+                            value={phone}
+                            onChange={(val) => {
+                              setPhone(val);
+                              setError('');
+                            }}
+                            error={''}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex-1 flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 h-12">
+                          <span className="text-gray-900 font-medium tracking-wide">{phone}</span>
+                          <button
+                            onClick={() => setPhoneEditable(true)}
+                            className="text-xs text-green-600 font-semibold hover:underline whitespace-nowrap"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       )}
                     </div>
 

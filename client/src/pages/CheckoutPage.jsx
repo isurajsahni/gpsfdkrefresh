@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
@@ -7,6 +7,7 @@ import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import WhatsAppOtpModal from '../components/checkout/WhatsAppOtpModal';
+import SmartPhoneInput from '../components/common/SmartPhoneInput';
 
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
@@ -69,7 +70,7 @@ const CheckoutPage = () => {
         } else {
           toast.error('Pincode details not found. Please enter city/state manually.');
         }
-      } catch (err) {
+      } catch {
         toast.error('Could not auto-fetch city/state. Please enter manually.');
       }
       setPincodeLoading(false);
@@ -97,6 +98,11 @@ const CheckoutPage = () => {
     fetchAddresses();
   }, []);
 
+  const getSelectedAddress = useCallback(() => {
+    if (showNewForm) return address;
+    return savedAddresses.find(a => a._id === selectedAddressId) || address;
+  }, [showNewForm, address, savedAddresses, selectedAddressId]);
+
   // Abandoned Cart Tracker (Debounced)
   useEffect(() => {
     if (!user?.email || cartItems.length === 0) return;
@@ -120,16 +126,11 @@ const CheckoutPage = () => {
           customText: item.customText
         })),
         cartTotal
-      }).catch(err => console.log('Abandoned cart updated silently')); // Silent fail
+      }).catch(() => console.log('Abandoned cart updated silently')); // Silent fail
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [cartItems, cartTotal, address, selectedAddressId, user]);
-
-  const getSelectedAddress = () => {
-    if (showNewForm) return address;
-    return savedAddresses.find(a => a._id === selectedAddressId) || address;
-  };
+  }, [cartItems, cartTotal, address, selectedAddressId, user, getSelectedAddress]);
 
   const handleSaveNewAddress = async () => {
     // Validate all fields
@@ -140,12 +141,9 @@ const CheckoutPage = () => {
       return false;
     }
 
-    // Prepend +91 to phone before saving to DB
+    // SmartPhoneInput natively handles the +CountryCode prefix
     const payloadAddress = {
       ...address,
-      phone: address.phone.replace(/\D/g, '').length === 10
-        ? `+91${address.phone.replace(/\D/g, '')}`
-        : address.phone,
     };
 
     setLoading(true);
@@ -399,9 +397,8 @@ const CheckoutPage = () => {
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               setIsEditing(addr._id);
-                              // Strip +91 prefix from phone for display in the input
-                              const editPhone = (addr.phone || '').replace(/^\+91/, '');
-                              setAddress({ ...addr, phone: editPhone });
+                              // Pass the full phone number, SmartPhoneInput handles splitting it
+                              setAddress({ ...addr, phone: addr.phone || '' });
                               setShowNewForm(true);
                               setAddressErrors({});
                             }}
@@ -474,19 +471,12 @@ const CheckoutPage = () => {
                       {/* Phone */}
                       <div>
                         <label className="block text-sm font-semibold text-secondary mb-1">Phone *</label>
-                        <div className={`flex items-center bg-primary border ${addressErrors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus-within:border-accent overflow-hidden`}>
-                          <span className="px-3 py-3 bg-gray-100 text-secondary font-semibold text-sm border-r border-gray-200 select-none">+91</span>
-                          <input
-                            type="tel"
-                            value={address.phone}
-                            onChange={(e) => handleAddressChange('phone', e.target.value)}
-                            onBlur={() => handleAddressBlur('phone')}
-                            className="flex-1 px-3 py-3 bg-transparent focus:outline-none"
-                            placeholder="9876543210"
-                            maxLength={10}
-                          />
-                        </div>
-                        {addressErrors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.phone}</p>}
+                        <SmartPhoneInput
+                          value={address.phone}
+                          onChange={(val) => handleAddressChange('phone', val)}
+                          onBlur={() => handleAddressBlur('phone')}
+                          error={addressErrors.phone}
+                        />
                       </div>
 
                       {/* Pincode */}

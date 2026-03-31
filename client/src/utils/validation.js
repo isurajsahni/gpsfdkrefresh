@@ -47,14 +47,15 @@ export const validators = {
   },
 
   phone: (v) => {
-    let val = (v || '').replace(/\D/g, '');
-    // Handle +91 or 91 prefix for saved addresses
-    if (val.length === 12 && val.startsWith('91')) {
-      val = val.slice(2);
-    }
+    let val = (v || '');
+    // Strip everything except + and digits
+    val = val.replace(/[^0-9+]/g, '');
     if (!val) return 'Phone number is required';
-    if (val.length !== 10) return 'Phone number must be 10 digits';
-    if (!/^[6-9]/.test(val)) return 'Phone number must start with 6-9';
+    
+    const digitsOnly = val.replace(/\D/g, '');
+    if (digitsOnly.length < 6 || digitsOnly.length > 15) {
+      return 'Phone number must be 6-15 digits';
+    }
     return '';
   },
 
@@ -128,8 +129,8 @@ export const validateAddress = (addr) => {
 // ─── Auto-formatters (for onChange handlers) ───
 export const formatters = {
   phone: (v) => {
-    // Strip non-digits and limit to 10
-    return v.replace(/\D/g, '').slice(0, 10);
+    // Strip non-digits and non-plus, limit safe length
+    return v.replace(/[^0-9+]/g, '').slice(0, 18);
   },
   pincode: (v) => {
     return v.replace(/\D/g, '').slice(0, 6);

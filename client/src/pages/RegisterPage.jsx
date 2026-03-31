@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { validators, formatters } from '../utils/validation';
 import toast from 'react-hot-toast';
+import SmartPhoneInput from '../components/common/SmartPhoneInput';
 
 const RegisterPage = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
@@ -96,15 +97,12 @@ const RegisterPage = () => {
             </div>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Phone</label>
-              <input 
-                type="tel" 
-                value={form.phone} 
-                onChange={(e) => handleChange('phone', e.target.value)}
+              <SmartPhoneInput
+                value={form.phone}
+                onChange={(val) => handleChange('phone', val)}
                 onBlur={() => handleBlur('phone')}
-                className={`w-full px-5 py-3.5 bg-primary border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all`} 
-                placeholder="9876543210" 
+                error={errors.phone}
               />
-              {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-secondary mb-2">Password</label>

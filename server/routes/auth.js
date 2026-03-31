@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const {
   registerValidation,
@@ -25,5 +25,9 @@ router.put('/reset-password', otpLimiter, resetPasswordValidation, resetPassword
 router.post('/addresses', protect, addAddress);
 router.put('/addresses/:id', protect, updateAddress);
 router.delete('/addresses/:id', protect, deleteAddress);
+
+// Email update OTP verification
+router.post('/send-email-update-otp', protect, sendEmailUpdateOtp);
+router.post('/verify-email-update-otp', protect, verifyEmailUpdateOtp);
 
 module.exports = router;

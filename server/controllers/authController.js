@@ -3,6 +3,23 @@ const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const welcomeEmail = require('../utils/welcomeEmailTemplate');
 const otpEmailTemplate = require('../utils/otpEmailTemplate');
+const emailUpdateOtpTemplate = require('../utils/emailUpdateOtpTemplate');
+
+// ─── In-memory email-update OTP store ────────────────────────────────────────
+// Maps userId -> { otp, newEmail, attempts, sentAt }
+const emailOtpSessions = new Map();
+const EMAIL_OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+const EMAIL_OTP_MAX_ATTEMPTS = 5;
+
+// Cleanup expired email OTP sessions every 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, session] of emailOtpSessions.entries()) {
+    if (now - session.sentAt > EMAIL_OTP_EXPIRY_MS) {
+      emailOtpSessions.delete(key);
+    }
+  }
+}, 15 * 60 * 1000);
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -48,6 +65,7 @@ exports.register = async (req, res, next) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      avatar: user.avatar || '',
       addresses: user.addresses || [],
       token: generateToken(user._id),
     });
@@ -87,6 +105,7 @@ exports.login = async (req, res, next) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        avatar: user.avatar || '',
         addresses: user.addresses || [],
         token: generateToken(user._id),
       });
@@ -122,14 +141,59 @@ exports.updateProfile = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     
-    // Only allow safe fields to be updated (no role, no email change)
+    // ── Free updates (no OTP required) ──
     if (req.body.name) user.name = req.body.name.trim();
-    if (req.body.phone) user.phone = req.body.phone.trim();
+    if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
+
     if (req.body.password) {
       if (req.body.password.length < 8) {
         return res.status(400).json({ message: 'Password must be at least 8 characters' });
       }
       user.password = req.body.password;
+    }
+
+    // ── Phone update (requires phoneVerifiedToken from WhatsApp OTP) ──
+    if (req.body.phone && req.body.phone.trim() !== user.phone) {
+      const { phoneVerifiedToken } = req.body;
+      if (!phoneVerifiedToken) {
+        return res.status(400).json({ message: 'Phone verification required. Please verify via OTP first.' });
+      }
+      try {
+        const decoded = jwt.verify(phoneVerifiedToken, process.env.JWT_SECRET);
+        if (!decoded.phoneVerified || decoded.userId !== req.user._id.toString()) {
+          return res.status(400).json({ message: 'Invalid phone verification token.' });
+        }
+        // Check if the phone is already used by another user
+        const phoneInUse = await User.findOne({ phone: req.body.phone.trim(), _id: { $ne: req.user._id } });
+        if (phoneInUse) {
+          return res.status(400).json({ message: 'This phone number is already linked to another account.' });
+        }
+        user.phone = req.body.phone.trim();
+      } catch (e) {
+        return res.status(400).json({ message: 'Phone verification token expired or invalid.' });
+      }
+    }
+
+    // ── Email update (requires emailVerifiedToken from Email OTP) ──
+    if (req.body.email && req.body.email.trim().toLowerCase() !== user.email) {
+      const { emailVerifiedToken } = req.body;
+      if (!emailVerifiedToken) {
+        return res.status(400).json({ message: 'Email verification required. Please verify via OTP first.' });
+      }
+      try {
+        const decoded = jwt.verify(emailVerifiedToken, process.env.JWT_SECRET);
+        if (!decoded.emailVerified || decoded.userId !== req.user._id.toString()) {
+          return res.status(400).json({ message: 'Invalid email verification token.' });
+        }
+        // Check if new email is already used
+        const emailInUse = await User.findOne({ email: req.body.email.trim().toLowerCase(), _id: { $ne: req.user._id } });
+        if (emailInUse) {
+          return res.status(400).json({ message: 'This email is already linked to another account.' });
+        }
+        user.email = req.body.email.trim().toLowerCase();
+      } catch (e) {
+        return res.status(400).json({ message: 'Email verification token expired or invalid.' });
+      }
     }
     
     const updated = await user.save();
@@ -139,8 +203,126 @@ exports.updateProfile = async (req, res, next) => {
       email: updated.email,
       phone: updated.phone,
       role: updated.role,
+      avatar: updated.avatar || '',
       addresses: updated.addresses || [],
       token: generateToken(updated._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/send-email-update-otp
+exports.sendEmailUpdateOtp = async (req, res, next) => {
+  try {
+    const { newEmail } = req.body;
+    const userId = req.user._id.toString();
+
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    }
+
+    // Check if new email is already in use
+    const emailInUse = await User.findOne({ email: newEmail.trim().toLowerCase(), _id: { $ne: req.user._id } });
+    if (emailInUse) {
+      return res.status(400).json({ message: 'This email is already linked to another account.' });
+    }
+
+    // 30-second cooldown
+    const existing = emailOtpSessions.get(userId);
+    if (existing) {
+      const elapsed = Date.now() - existing.sentAt;
+      if (elapsed < 30 * 1000) {
+        const remaining = Math.ceil((30 * 1000 - elapsed) / 1000);
+        return res.status(429).json({
+          message: `Please wait ${remaining} seconds before requesting a new code.`,
+          retryAfter: remaining,
+        });
+      }
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store session
+    emailOtpSessions.set(userId, {
+      otp,
+      newEmail: newEmail.trim().toLowerCase(),
+      attempts: 0,
+      sentAt: Date.now(),
+    });
+
+    const user = await User.findById(req.user._id);
+
+    // Send OTP email to the NEW email address
+    await sendEmail({
+      email: newEmail.trim().toLowerCase(),
+      subject: 'Verify Your New Email - GPSFDK',
+      html: emailUpdateOtpTemplate(user.name || 'there', otp),
+    });
+
+    res.json({
+      success: true,
+      message: `Verification code sent to ${newEmail.replace(/(.{2}).+(@.+)/, '$1***$2')}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/verify-email-update-otp
+exports.verifyEmailUpdateOtp = async (req, res, next) => {
+  try {
+    const { otp } = req.body;
+    const userId = req.user._id.toString();
+
+    if (!otp || !/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ message: 'OTP must be exactly 6 digits.' });
+    }
+
+    const session = emailOtpSessions.get(userId);
+
+    if (!session) {
+      return res.status(400).json({ message: 'No email verification session found. Please request a new code.' });
+    }
+
+    // Check expiry
+    if (Date.now() - session.sentAt > EMAIL_OTP_EXPIRY_MS) {
+      emailOtpSessions.delete(userId);
+      return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
+    }
+
+    // Check attempts
+    if (session.attempts >= EMAIL_OTP_MAX_ATTEMPTS) {
+      emailOtpSessions.delete(userId);
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new code.', locked: true });
+    }
+
+    session.attempts += 1;
+
+    if (session.otp !== otp) {
+      const remaining = EMAIL_OTP_MAX_ATTEMPTS - session.attempts;
+      return res.status(400).json({
+        message: 'Invalid verification code.',
+        attemptsRemaining: remaining,
+        locked: remaining <= 0,
+      });
+    }
+
+    // OTP correct — clean up and issue token
+    emailOtpSessions.delete(userId);
+
+    const emailVerifiedToken = jwt.sign(
+      { userId, newEmail: session.newEmail, emailVerified: true },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' }
+    );
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully!',
+      emailVerifiedToken,
+      newEmail: session.newEmail,
     });
   } catch (error) {
     next(error);

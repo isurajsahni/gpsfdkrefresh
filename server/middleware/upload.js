@@ -68,4 +68,33 @@ const csvUpload = multer({
   }
 });
 
-module.exports = { cloudinary, upload, csvUpload };
+// Avatar-specific Cloudinary storage (smaller, auto-cropped)
+const avatarStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    if (!allowedImageMimeTypes.includes(file.mimetype)) {
+      throw new Error(`File type ${file.mimetype} not allowed. Only JPEG, PNG, WebP, and GIF are accepted.`);
+    }
+    const ext = file.mimetype.split('/')[1] || 'jpg';
+    return {
+      folder: 'gpsfdk-avatars',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+      format: ext === 'jpeg' ? 'jpg' : ext,
+      transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
+    };
+  },
+});
+
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max for avatars
+  fileFilter: (req, file, cb) => {
+    if (allowedImageMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not allowed`), false);
+    }
+  },
+});
+
+module.exports = { cloudinary, upload, csvUpload, avatarUpload };

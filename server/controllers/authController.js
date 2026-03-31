@@ -4,6 +4,7 @@ const sendEmail = require('../utils/sendEmail');
 const welcomeEmail = require('../utils/welcomeEmailTemplate');
 const otpEmailTemplate = require('../utils/otpEmailTemplate');
 const emailUpdateOtpTemplate = require('../utils/emailUpdateOtpTemplate');
+const { cloudinary } = require('../middleware/upload');
 
 // ─── In-memory email-update OTP store ────────────────────────────────────────
 // Maps userId -> { otp, newEmail, attempts, sentAt }
@@ -206,6 +207,43 @@ exports.updateProfile = async (req, res, next) => {
       avatar: updated.avatar || '',
       addresses: updated.addresses || [],
       token: generateToken(updated._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/upload-avatar — upload profile image via Cloudinary
+exports.uploadAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // If user already has a Cloudinary avatar URL, delete the old image
+    if (user.avatar && user.avatar.startsWith('http') && user.avatar.includes('cloudinary')) {
+      try {
+        // Extract public_id from URL: https://res.cloudinary.com/.../gpsfdk-avatars/abc123.jpg
+        const parts = user.avatar.split('/');
+        const folderAndFile = parts.slice(-2).join('/'); // e.g. "gpsfdk-avatars/abc123"
+        const publicId = folderAndFile.replace(/\.[^.]+$/, ''); // remove extension
+        await cloudinary.uploader.destroy(publicId);
+      } catch (e) {
+        console.error('Failed to delete old avatar from Cloudinary:', e.message);
+      }
+    }
+
+    // Save the new Cloudinary URL
+    user.avatar = req.file.path; // multer-storage-cloudinary sets this to the Cloudinary URL
+    await user.save();
+
+    res.json({
+      success: true,
+      avatar: user.avatar,
+      message: 'Profile image updated!',
     });
   } catch (error) {
     next(error);

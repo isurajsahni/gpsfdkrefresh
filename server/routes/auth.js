@@ -1,6 +1,7 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
+const { avatarUpload } = require('../middleware/upload');
 const {
   registerValidation,
   loginValidation,
@@ -15,6 +16,7 @@ router.post('/register', authLimiter, registerValidation, register);
 router.post('/login', authLimiter, loginValidation, login);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
+router.post('/upload-avatar', protect, avatarUpload.single('avatar'), uploadAvatar);
 router.get('/users', protect, admin, getUsers);
 router.delete('/users/:id', protect, admin, deleteUser);
 
@@ -31,3 +33,4 @@ router.post('/send-email-update-otp', protect, sendEmailUpdateOtp);
 router.post('/verify-email-update-otp', protect, verifyEmailUpdateOtp);
 
 module.exports = router;
+

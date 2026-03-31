@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,8 @@ import OtpModal from '../components/OtpModal';
 import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
   HiOutlineMail, HiOutlinePhone, HiOutlinePencil, HiOutlineCheck,
-  HiOutlineX, HiOutlinePlus, HiOutlineTrash, HiOutlineShieldCheck
+  HiOutlineX, HiOutlinePlus, HiOutlineTrash, HiOutlineShieldCheck,
+  HiOutlinePhotograph, HiOutlineCamera
 } from 'react-icons/hi';
 
 const statusColors = {
@@ -40,6 +41,8 @@ const UserDashboard = () => {
   const [editAvatar, setEditAvatar] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // OTP modals
   const [otpModal, setOtpModal] = useState({ open: false, type: 'phone', value: '' });
@@ -227,6 +230,49 @@ const UserDashboard = () => {
   };
 
   const currentAvatar = profile?.avatar || user?.avatar || '';
+  const isAvatarUrl = currentAvatar.startsWith('http');
+
+  // ─── Avatar Image Upload ───────────────────────────────────────────────────
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) {
+      toast.error('Only JPEG, PNG, WebP, and GIF images are allowed');
+      return;
+    }
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const { data } = await API.post('/auth/upload-avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setEditAvatar(data.avatar);
+      // Also update profile and context immediately
+      setProfile(prev => ({ ...prev, avatar: data.avatar }));
+      const stored = JSON.parse(localStorage.getItem('user'));
+      if (stored) {
+        stored.avatar = data.avatar;
+        localStorage.setItem('user', JSON.stringify(stored));
+        updateUser(stored);
+      }
+      toast.success(data.message);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Image upload failed');
+    }
+    setAvatarUploading(false);
+    // Reset input value so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   if (loading) {
     return (
@@ -244,8 +290,10 @@ const UserDashboard = () => {
         <div className="md:w-64 flex-shrink-0">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2rem] p-6 shadow-sm sticky top-[100px]">
             <div className="text-center mb-8">
-              <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 relative group">
-                {currentAvatar ? (
+              <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 relative group overflow-hidden">
+                {isAvatarUrl ? (
+                  <img src={currentAvatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : currentAvatar ? (
                   <span className="text-3xl">{currentAvatar}</span>
                 ) : (
                   <span className="text-3xl font-heading font-bold text-accent">
@@ -331,8 +379,12 @@ const UserDashboard = () => {
                     <div className="mb-8">
                       <label className="text-sm text-gray-500 font-medium mb-3 block">Profile Image</label>
                       <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center relative">
-                          {editAvatar ? (
+                        <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center relative overflow-hidden">
+                          {avatarUploading ? (
+                            <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                          ) : editAvatar && editAvatar.startsWith('http') ? (
+                            <img src={editAvatar} alt="Profile" className="w-full h-full object-cover" />
+                          ) : editAvatar ? (
                             <span className="text-3xl">{editAvatar}</span>
                           ) : (
                             <span className="text-3xl font-heading font-bold text-accent">
@@ -340,7 +392,15 @@ const UserDashboard = () => {
                             </span>
                           )}
                         </div>
-                        <div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={avatarUploading}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-secondary text-white rounded-xl font-medium text-sm hover:opacity-90 transition-all disabled:opacity-50"
+                          >
+                            <HiOutlineCamera className="w-4 h-4" />
+                            {avatarUploading ? 'Uploading...' : 'Upload Photo'}
+                          </button>
                           <button
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             className="px-4 py-2 bg-accent/10 text-accent rounded-xl font-medium text-sm hover:bg-accent/20 transition-colors"
@@ -350,13 +410,21 @@ const UserDashboard = () => {
                           {editAvatar && (
                             <button
                               onClick={() => setEditAvatar('')}
-                              className="ml-2 px-3 py-2 text-red-500 text-sm font-medium hover:bg-red-50 rounded-xl transition-colors"
+                              className="px-3 py-2 text-red-500 text-sm font-medium hover:bg-red-50 rounded-xl transition-colors"
                             >
                               Remove
                             </button>
                           )}
                         </div>
                       </div>
+                      {/* Hidden file input */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
 
                       <AnimatePresence>
                         {showEmojiPicker && (

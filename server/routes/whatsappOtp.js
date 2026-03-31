@@ -48,8 +48,9 @@ router.post('/send', protect, otpSendLimiter, async (req, res, next) => {
     const { phone } = req.body;
 
     // Validate phone
-    if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
-      return res.status(400).json({ message: 'Please provide a valid 10-digit Indian mobile number.' });
+    // Validate phone (6-15 digits, optional +)
+    if (!phone || !/^\+?[0-9]{6,15}$/.test(phone)) {
+      return res.status(400).json({ message: 'Please provide a valid mobile number.' });
     }
 
     const userId = req.user._id.toString();

@@ -22,7 +22,7 @@ const registerValidation = [
   body('phone')
     .trim()
     .notEmpty().withMessage('Phone number is required')
-    .matches(/^[6-9]\d{9}$/).withMessage('Invalid Indian phone number'),
+    .matches(/^\+?[0-9]{6,15}$/).withMessage('Invalid phone number'),
   validate,
 ];
 
@@ -55,7 +55,7 @@ const guestOrderValidation = [
   body('guestEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('items').isArray({ min: 1 }).withMessage('At least one item is required'),
   body('shippingAddress.fullName').trim().isLength({ min: 2, max: 50 }).withMessage('Invalid full name'),
-  body('shippingAddress.phone').matches(/^[6-9]\d{9}$/).withMessage('Invalid phone number'),
+  body('shippingAddress.phone').matches(/^\+?[0-9]{6,15}$/).withMessage('Invalid phone number'),
   body('shippingAddress.addressLine1').trim().isLength({ min: 5 }).withMessage('Address too short'),
   body('shippingAddress.city').trim().notEmpty().withMessage('City is required'),
   body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
@@ -68,7 +68,7 @@ const guestOrderValidation = [
 const leadValidation = [
   body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Invalid name'),
   body('email').trim().isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('phone').optional().matches(/^[6-9]\d{9}$/).withMessage('Invalid phone number'),
+  body('phone').optional().matches(/^\+?[0-9]{6,15}$/).withMessage('Invalid phone number'),
   body('message').trim().isLength({ min: 10, max: 2000 }).withMessage('Message must be 10-2000 characters'),
   validate,
 ];

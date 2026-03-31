@@ -22,6 +22,22 @@ setInterval(() => {
   }
 }, 15 * 60 * 1000);
 
+// ─── In-memory registration OTP store ────────────────────────────────────────
+// Maps email -> { otp, name, email, password, phone, attempts, sentAt }
+const registrationOtpSessions = new Map();
+const REG_OTP_EXPIRY_MS = 10 * 60 * 1000;
+const REG_OTP_MAX_ATTEMPTS = 5;
+
+// Cleanup expired registration OTP sessions every 15 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, session] of registrationOtpSessions.entries()) {
+    if (now - session.sentAt > REG_OTP_EXPIRY_MS) {
+      registrationOtpSessions.delete(key);
+    }
+  }
+}, 15 * 60 * 1000);
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };
@@ -57,6 +73,162 @@ exports.register = async (req, res, next) => {
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+      `
+    }).catch(err => console.error('Admin notification failed:', err.message));
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      avatar: user.avatar || '',
+      addresses: user.addresses || [],
+      token: generateToken(user._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/send-registration-otp — Step 1: validate + send OTP to email
+exports.sendRegistrationOtp = async (req, res, next) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required.' });
+    }
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Invalid input format.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters.' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists. Please login instead.' });
+    }
+
+    // 30-second cooldown
+    const existing = registrationOtpSessions.get(normalizedEmail);
+    if (existing) {
+      const elapsed = Date.now() - existing.sentAt;
+      if (elapsed < 30 * 1000) {
+        const remaining = Math.ceil((30 * 1000 - elapsed) / 1000);
+        return res.status(429).json({
+          message: `Please wait ${remaining} seconds before requesting a new code.`,
+          retryAfter: remaining,
+        });
+      }
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store pending registration + OTP
+    registrationOtpSessions.set(normalizedEmail, {
+      otp,
+      name: name.trim(),
+      email: normalizedEmail,
+      password,
+      phone: phone || '',
+      attempts: 0,
+      sentAt: Date.now(),
+    });
+
+    // Send OTP email
+    const otpEmailTemplate = require('../utils/otpEmailTemplate');
+    await sendEmail({
+      email: normalizedEmail,
+      subject: 'Verify Your Email - GPSFDK',
+      html: otpEmailTemplate(name.trim() || 'there', otp),
+    });
+
+    res.json({
+      success: true,
+      message: `Verification code sent to ${normalizedEmail.replace(/(.{2}).+(@.+)/, '$1***$2')}`,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// POST /api/auth/verify-registration-otp — Step 2: verify OTP + create account
+exports.verifyRegistrationOtp = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp || !/^\d{6}$/.test(otp)) {
+      return res.status(400).json({ message: 'Email and a 6-digit OTP are required.' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const session = registrationOtpSessions.get(normalizedEmail);
+
+    if (!session) {
+      return res.status(400).json({ message: 'No verification session found. Please register again.' });
+    }
+
+    // Check expiry
+    if (Date.now() - session.sentAt > REG_OTP_EXPIRY_MS) {
+      registrationOtpSessions.delete(normalizedEmail);
+      return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
+    }
+
+    // Check attempts
+    if (session.attempts >= REG_OTP_MAX_ATTEMPTS) {
+      registrationOtpSessions.delete(normalizedEmail);
+      return res.status(400).json({ message: 'Too many incorrect attempts. Please register again.', locked: true });
+    }
+
+    session.attempts += 1;
+
+    if (session.otp !== otp) {
+      const remaining = REG_OTP_MAX_ATTEMPTS - session.attempts;
+      return res.status(400).json({
+        message: 'Invalid verification code.',
+        attemptsRemaining: remaining,
+        locked: remaining <= 0,
+      });
+    }
+
+    // OTP is correct — create the user
+    registrationOtpSessions.delete(normalizedEmail);
+
+    // Double-check user doesn't exist (race condition guard)
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists. Please login instead.' });
+    }
+
+    const user = await User.create({
+      name: session.name,
+      email: session.email,
+      password: session.password,
+      phone: session.phone,
+    });
+
+    // Welcome email (non-blocking)
+    sendEmail({
+      email: session.email,
+      subject: 'Welcome to GPSFDK! 🎨',
+      html: welcomeEmail(session.name || 'there'),
+    }).catch(err => console.error('Welcome email failed:', err.message));
+
+    // Admin notification (non-blocking)
+    sendEmail({
+      email: 'suraj.gnimt@gmail.com',
+      subject: 'New User Registration - GPSFDK',
+      html: `
+        <h3>New User Registered</h3>
+        <p><strong>Name:</strong> ${session.name}</p>
+        <p><strong>Email:</strong> ${session.email}</p>
+        <p><strong>Phone:</strong> ${session.phone || 'N/A'}</p>
       `
     }).catch(err => console.error('Admin notification failed:', err.message));
 
@@ -153,26 +325,9 @@ exports.updateProfile = async (req, res, next) => {
       user.password = req.body.password;
     }
 
-    // ── Phone update (requires phoneVerifiedToken from WhatsApp OTP) ──
+    // ── Phone update (free — WhatsApp OTP disabled for now) ──
     if (req.body.phone && req.body.phone.trim() !== user.phone) {
-      const { phoneVerifiedToken } = req.body;
-      if (!phoneVerifiedToken) {
-        return res.status(400).json({ message: 'Phone verification required. Please verify via OTP first.' });
-      }
-      try {
-        const decoded = jwt.verify(phoneVerifiedToken, process.env.JWT_SECRET);
-        if (!decoded.phoneVerified || decoded.userId !== req.user._id.toString()) {
-          return res.status(400).json({ message: 'Invalid phone verification token.' });
-        }
-        // Check if the phone is already used by another user
-        const phoneInUse = await User.findOne({ phone: req.body.phone.trim(), _id: { $ne: req.user._id } });
-        if (phoneInUse) {
-          return res.status(400).json({ message: 'This phone number is already linked to another account.' });
-        }
-        user.phone = req.body.phone.trim();
-      } catch (e) {
-        return res.status(400).json({ message: 'Phone verification token expired or invalid.' });
-      }
+      user.phone = req.body.phone.trim();
     }
 
     // ── Email update (requires emailVerifiedToken from Email OTP) ──

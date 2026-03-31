@@ -114,10 +114,9 @@ const UserDashboard = () => {
       if (editAvatar !== (profile?.avatar || '')) {
         payload.avatar = editAvatar;
       }
-      // Phone (requires token if changed)
-      if (newPhone.trim() !== (profile?.phone || '') && phoneVerifiedToken) {
+      // Phone (free — no OTP required)
+      if (newPhone.trim() !== (profile?.phone || '')) {
         payload.phone = newPhone.trim();
-        payload.phoneVerifiedToken = phoneVerifiedToken;
       }
       // Email (requires token if changed)
       if (newEmail.trim().toLowerCase() !== (profile?.email || '') && emailVerifiedToken) {
@@ -510,30 +509,15 @@ const UserDashboard = () => {
                       <div className="flex items-center gap-3 mb-1">
                         <HiOutlinePhone className="text-accent" />
                         <span className="text-sm text-gray-500 font-medium">Phone Number</span>
-                        {isEditing && phoneVerified && (
-                          <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
-                            <HiOutlineShieldCheck className="w-3 h-3" /> Verified
-                          </span>
-                        )}
                       </div>
                       {isEditing ? (
-                        <div className="flex items-center gap-2 mt-1">
-                          <input
-                            type="tel"
-                            value={newPhone}
-                            onChange={e => { setNewPhone(e.target.value); setPhoneVerified(false); setPhoneVerifiedToken(null); }}
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none text-base font-semibold text-secondary bg-white transition-all"
-                            placeholder="+91XXXXXXXXXX"
-                          />
-                          {newPhone.trim() !== (profile?.phone || '') && !phoneVerified && (
-                            <button
-                              onClick={() => setOtpModal({ open: true, type: 'phone', value: newPhone.trim() })}
-                              className="px-3 py-2.5 bg-green-600 text-white rounded-xl text-xs font-bold whitespace-nowrap hover:bg-green-700 transition-colors"
-                            >
-                              Verify
-                            </button>
-                          )}
-                        </div>
+                        <input
+                          type="tel"
+                          value={newPhone}
+                          onChange={e => setNewPhone(e.target.value)}
+                          className="w-full mt-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none text-base font-semibold text-secondary bg-white transition-all"
+                          placeholder="+91XXXXXXXXXX"
+                        />
                       ) : (
                         <p className="text-lg font-semibold text-secondary">{profile?.phone || user?.phone || 'Not provided'}</p>
                       )}
@@ -767,13 +751,13 @@ const UserDashboard = () => {
         </div>
       </div>
 
-      {/* ─── OTP Modal ────────────────────────────────────────────── */}
+      {/* ─── OTP Modal (Email only) ────────────────────────────────── */}
       <OtpModal
-        type={otpModal.type}
+        type="email"
         value={otpModal.value}
         isOpen={otpModal.open}
-        onClose={() => setOtpModal({ open: false, type: 'phone', value: '' })}
-        onVerified={otpModal.type === 'phone' ? handlePhoneVerified : handleEmailVerified}
+        onClose={() => setOtpModal({ open: false, type: 'email', value: '' })}
+        onVerified={handleEmailVerified}
       />
     </div>
   );

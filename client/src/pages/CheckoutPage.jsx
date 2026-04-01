@@ -225,20 +225,28 @@ const CheckoutPage = () => {
     setLoading(true);
     setCouponError('');
     try {
+      // Validate against the ORIGINAL subtotal (cartTotal)
       const { data } = await API.post('/coupons/validate', { code: couponCode, orderTotal: cartTotal });
       setAppliedCoupon(data);
       setCouponCode('');
       toast.success('Coupon applied!');
     } catch (err) {
+
       setCouponError(err.response?.data?.message || 'Invalid coupon');
       setAppliedCoupon(null);
     }
     setLoading(false);
   };
 
-  const discountedTotal = appliedCoupon ? cartTotal - appliedCoupon.calculatedDiscount : cartTotal;
-  const shippingFee = discountedTotal < 499 ? 50 : 0;
-  const finalTotal = discountedTotal + shippingFee;
+  // 1. Calculate Shipping based on ORIGINAL Subtotal
+  const shippingFee = cartTotal >= 999 ? 0 : 50;
+  
+  // 2. Apply Discount (never more than subtotal)
+  const appliedDiscount = appliedCoupon ? Math.min(appliedCoupon.calculatedDiscount, cartTotal) : 0;
+  
+  // 3. Final Total (never negative)
+  const finalTotal = Math.max(cartTotal + shippingFee - appliedDiscount, 0);
+
 
   const handlePlaceOrder = async () => {
     setLoading(true);
@@ -611,12 +619,12 @@ const CheckoutPage = () => {
             <div>
               <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Review Your Order</h2>
               
-              {/* Shipping Banner */}
+              {/* Shipping Banner - Based on cartTotal (Subtotal) */}
               {shippingFee > 0 ? (
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                   <div className="flex items-start sm:items-center gap-3">
                     <span className="text-xl">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - discountedTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{999 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
                   </div>
                   <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
                     Add Items
@@ -628,6 +636,7 @@ const CheckoutPage = () => {
                   <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
                 </div>
               )}
+
 
               <div className="space-y-3 mb-6">
                 {cartItems.map(item => (
@@ -679,10 +688,11 @@ const CheckoutPage = () => {
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
                     <span>Discount ({appliedCoupon.code})</span>
-                    <span>-₹{Math.round(appliedCoupon.calculatedDiscount).toLocaleString()}</span>
+                    <span>-₹{Math.round(appliedDiscount).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">₹{Math.round(finalTotal).toLocaleString()}</span></div>
+
               </div>
               <div className="flex gap-3 items-center sm:gap-4">
                 <button onClick={() => setStep(2)} className="btn-outline">Back</button>

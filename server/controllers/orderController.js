@@ -149,26 +149,39 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
     });
   }
 
-  // Shipping logic (free shipping over ₹999)
-  const shippingPrice = calculatedItemsPrice >= 999 ? 0 : 99;
+  // 1. Calculate Subtotal (Items Price)
+  // ... already calculated in the loop above: calculatedItemsPrice
+
+  // 2. Determine Shipping based on ORIGINAL Subtotal (before discount)
+  // Rule: If subtotal >= ₹999 -> FREE, else ₹50
+  const shippingPrice = calculatedItemsPrice >= 999 ? 0 : 50;
   const taxPrice = 0;
   let discountPrice = 0;
 
-  // Validate coupon server-side
-  if (couponCode && userId) {
+  // 3. Apply Coupon Discount (Capped and Validated)
+  if (couponCode) {
     const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
     if (coupon && (!coupon.expiryDate || new Date() <= new Date(coupon.expiryDate))) {
+      // Check min order value against itemsPrice
       if (calculatedItemsPrice >= coupon.minOrderValue) {
         if (coupon.discountType === 'percentage') {
           discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;
+          // Apply percentage cap
+          if (coupon.maxDiscountAmount > 0 && discountPrice > coupon.maxDiscountAmount) {
+            discountPrice = coupon.maxDiscountAmount;
+          }
         } else {
           discountPrice = coupon.discountValue;
         }
+        
+        // FINAL SAFETY: Discount must NOT exceed subtotal
+        discountPrice = Math.min(discountPrice, calculatedItemsPrice);
       }
     }
   }
 
-  const totalPrice = calculatedItemsPrice + shippingPrice + taxPrice - discountPrice;
+  // 4. Calculate Final Total (Never negative)
+  const totalPrice = Math.max(calculatedItemsPrice + shippingPrice + taxPrice - discountPrice, 0);
 
   return {
     verifiedItems,
@@ -176,9 +189,10 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
     shippingPrice,
     taxPrice,
     discountPrice,
-    totalPrice: Math.max(totalPrice, 0),
+    totalPrice,
   };
 };
+
 
 // POST /api/orders (logged-in users)
 exports.createOrder = async (req, res, next) => {
@@ -240,7 +254,9 @@ exports.createGuestOrder = async (req, res, next) => {
     if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
 
     // Server-side price calculation — never trust client prices
-    const prices = await calculateOrderPrices(items, null, null);
+    // Support coupons for guests too for production-ready feature
+    const prices = await calculateOrderPrices(items, couponCode, null);
+
 
     const order = await Order.create({
       guestEmail: guestEmail || '',

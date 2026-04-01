@@ -5,7 +5,7 @@ const Coupon = require('../models/Coupon');
 // @access  Private/Admin
 const createCoupon = async (req, res) => {
   try {
-    const { code, discountType, discountValue, minOrderValue, maxUsers, maxUsesPerUser, expiryDate, isActive } = req.body;
+    const { code, discountType, discountValue, minOrderValue, maxDiscountAmount, maxUsers, maxUsesPerUser, expiryDate, isActive } = req.body;
     
     const couponExists = await Coupon.findOne({ code: code.toUpperCase() });
     if (couponExists) {
@@ -17,7 +17,9 @@ const createCoupon = async (req, res) => {
       discountType,
       discountValue,
       minOrderValue: minOrderValue || 0,
+      maxDiscountAmount: maxDiscountAmount || 0,
       maxUsers: maxUsers || 100,
+
       maxUsesPerUser: maxUsesPerUser || 1,
       expiryDate,
       isActive: isActive !== undefined ? isActive : true,
@@ -63,9 +65,10 @@ const deleteCoupon = async (req, res) => {
 const validateCoupon = async (req, res) => {
   try {
     const { code, orderTotal } = req.body;
-    const userId = req.user._id;
-
+    const userId = req.user ? req.user._id : null;
+    
     const coupon = await Coupon.findOne({ code: code.toUpperCase() });
+
 
     if (!coupon) {
       return res.status(404).json({ message: 'Invalid coupon code' });
@@ -83,32 +86,44 @@ const validateCoupon = async (req, res) => {
       return res.status(400).json({ message: `Minimum order value of ₹${coupon.minOrderValue} required` });
     }
 
-    // Check usage limits
-    const userUsage = coupon.usageHistory.find(u => u.userId.toString() === userId.toString());
-    const totalUniqueUsers = coupon.usageHistory.length;
+    // Check usage limits only if it's a logged-in user
+    if (userId) {
+      const userUsage = coupon.usageHistory.find(u => u.userId.toString() === userId.toString());
+      const totalUniqueUsers = coupon.usageHistory.length;
 
-    if (!userUsage && totalUniqueUsers >= coupon.maxUsers) {
-      return res.status(400).json({ message: 'This coupon has reached its maximum user limit' });
+      if (!userUsage && totalUniqueUsers >= coupon.maxUsers) {
+        return res.status(400).json({ message: 'This coupon has reached its maximum user limit' });
+      }
+
+      if (userUsage && userUsage.useCount >= coupon.maxUsesPerUser) {
+        return res.status(400).json({ message: 'You have reached the maximum usage limit for this coupon' });
+      }
     }
 
-    if (userUsage && userUsage.useCount >= coupon.maxUsesPerUser) {
-      return res.status(400).json({ message: 'You have reached the maximum usage limit for this coupon' });
-    }
 
     let calculatedDiscount = 0;
     if (coupon.discountType === 'percentage') {
       calculatedDiscount = (orderTotal * coupon.discountValue) / 100;
+      // Cap percentage discount if maxDiscountAmount is set
+      if (coupon.maxDiscountAmount > 0 && calculatedDiscount > coupon.maxDiscountAmount) {
+        calculatedDiscount = coupon.maxDiscountAmount;
+      }
     } else {
       calculatedDiscount = coupon.discountValue;
     }
+
+    // FINAL SAFETY: Discount must NOT exceed subtotal
+    calculatedDiscount = Math.min(calculatedDiscount, orderTotal);
 
     res.json({
       _id: coupon._id,
       code: coupon.code,
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
+      maxDiscountAmount: coupon.maxDiscountAmount,
       calculatedDiscount,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

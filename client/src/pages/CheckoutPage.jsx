@@ -8,6 +8,17 @@ import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+
 const CheckoutPage = () => {
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user, updateUser } = useAuth();
@@ -265,7 +276,14 @@ const CheckoutPage = () => {
         navigate('/thank-you');
       } else if (paymentMethod === 'razorpay') {
         try {
-          const { data: razorpayOrder } = await API.post('/payments/razorpay', { amount: finalTotal });
+          const isLoaded = await loadRazorpayScript();
+          if (!isLoaded) {
+            toast.error('Razorpay SDK failed to load. Please check your connection.');
+            setLoading(false);
+            return;
+          }
+
+          const { data: razorpayOrder } = await API.post('/create-order', { amount: finalTotal });
           const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: razorpayOrder.amount,
@@ -274,20 +292,36 @@ const CheckoutPage = () => {
             description: 'Order Payment',
             order_id: razorpayOrder.id,
             handler: async (response) => {
-              await API.post('/payments/razorpay/verify', { ...response, orderId: order._id });
-              API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
-              clearCart();
-              toast.success('Payment successful!');
-              navigate('/thank-you');
+              try {
+                await API.post('/verify-payment', { 
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderId: order._id 
+                });
+                API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+                clearCart();
+                toast.success('Payment successful!');
+                navigate('/thank-you');
+              } catch (verifyErr) {
+                toast.error(verifyErr.response?.data?.message || 'Payment verification failed');
+              }
             },
             prefill: { name: shippingAddress.fullName, email: user?.email, contact: shippingAddress.phone },
-            theme: { color: '#0B5D3B' }
+            theme: { color: '#0B5D3B' },
+            modal: {
+              ondismiss: function() {
+                setLoading(false);
+              }
+            }
           };
           const rzp = new window.Razorpay(options);
           rzp.open();
-        } catch {
+        } catch (err) {
+          console.error('Razorpay Error:', err);
           toast.error('Payment initialization failed');
         }
+
       } else if (paymentMethod === 'stripe') {
         try {
           const { data } = await API.post('/payments/stripe', {

@@ -85,7 +85,7 @@ app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/leads', require('./routes/leads'));
-app.use('/api/payments', require('./routes/payments'));
+app.use('/api', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/coupons', require('./routes/coupons'));
 app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));

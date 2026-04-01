@@ -7,18 +7,32 @@ const orderController = require('./orderController');
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
+    const { amount } = req.body;
+    
+    if (!amount) {
+      return res.status(400).json({ message: 'Amount is required' });
+    }
+
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
+
     const options = {
-      amount: req.body.amount * 100,
+      amount: Math.round(amount * 100), // Convert to paise
       currency: 'INR',
-      receipt: 'receipt_' + Date.now(),
+      receipt: 'rcpt_' + Date.now().toString().slice(-8),
     };
+
     const order = await instance.orders.create(options);
+    
+    if (!order) {
+      return res.status(500).json({ message: 'Failed to create Razorpay order' });
+    }
+
     res.json(order);
   } catch (error) {
+    console.error('Razorpay Order Error:', error);
     next(error);
   }
 };
@@ -27,33 +41,50 @@ exports.createRazorpayOrder = async (req, res, next) => {
 exports.verifyRazorpay = async (req, res, next) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ message: 'Missing payment details', success: false });
+    }
+
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
-    const expectedSign = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(sign).digest('hex');
+    const expectedSign = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest('hex');
     
     if (expectedSign === razorpay_signature) {
       const order = await Order.findById(orderId);
-      if (order) {
-        order.isPaid = true;
-        order.paidAt = Date.now();
-        order.status = 'pending';
-        order.paymentResult = {
-          id: razorpay_payment_id,
-          status: 'completed',
-          update_time: new Date().toISOString(),
-        };
-        await order.save();
-        
-        // Trigger notifications now that it's paid
-        orderController.triggerNewOrderNotifications(order);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found', success: false });
       }
-      res.json({ message: 'Payment verified', success: true });
+
+      order.isPaid = true;
+      order.paidAt = Date.now();
+      order.status = 'pending';
+      order.paymentResult = {
+        id: razorpay_payment_id,
+        status: 'completed',
+        update_time: new Date().toISOString(),
+      };
+      await order.save();
+      
+      // Trigger notifications now that it's paid
+      try {
+        await orderController.triggerNewOrderNotifications(order);
+      } catch (notifErr) {
+        console.error('Notification Error (Silently handled):', notifErr);
+      }
+
+      res.json({ message: 'Payment verified successfully', success: true });
     } else {
-      res.status(400).json({ message: 'Invalid signature', success: false });
+      res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
   } catch (error) {
+    console.error('Razorpay Verification Error:', error);
     next(error);
   }
 };
+
 
 // Stripe create checkout session
 exports.createStripeSession = async (req, res, next) => {

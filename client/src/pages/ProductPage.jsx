@@ -397,6 +397,54 @@ const ProductPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Static Nameplate Details - Only show for House Nameplates */}
+            {product.category?.slug === 'house-nameplates' && (
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold text-secondary mb-3">Affordable Elegance, Built To Last</h3>
+                  <p className="text-lg leading-relaxed text-gray-800 italic">
+                    Bring home style and durability at an affordable price! Our Value-Packed Vinyl Nameplates reflect our belief that everyone has the Right To Luxury, offering a sleek, elegant look without compromise.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-secondary mb-4">Description:</h3>
+                  <ul className="space-y-3">
+                    <li className="flex gap-2"><span>✨</span> <strong>Premium House Nameplate At An Affordable Price</strong> – Designed For Every Home.</li>
+                    <li className="flex gap-2"><span>🪞</span> <strong>Built On A Durable Acrylic Base</strong> With A Matte Vinyl Finish For A Smooth, Elegant Look.</li>
+                    <li className="flex gap-2"><span>💧</span> <strong>Weather-Resistant And Long-Lasting</strong> – Perfect For Outdoor Use.</li>
+                    <li className="flex gap-2"><span>⚡</span> <strong>Lightweight Yet Sturdy</strong>, Making It Easy To Install.</li>
+                    <li className="flex gap-2"><span>🌟</span> <strong>Perfect For Those Searching For Custom Vinyl Nameplates Online</strong> That Combine Luxury And Value.</li>
+                  </ul>
+                </div>
+
+                <div className="bg-cream/30 p-6 rounded-2xl border border-accent/10">
+                  <h3 className="text-xl font-bold text-secondary mb-4">What’s Included In The Box:</h3>
+                  <ul className="space-y-2">
+                    <li className="flex gap-2"><span>📦</span> 1 × Value-Packed Vinyl Nameplate</li>
+                    <li className="flex gap-2"><span>🛠</span> 1 × Hanging Kit For Easy Installation</li>
+                    <li className="flex gap-2"><span>🎖</span> 1 × GPS Family Certificate</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-bold text-secondary mb-4">Care & Handling:</h3>
+                  <ul className="space-y-2">
+                    <li className="flex gap-2"><span>🧽</span> Clean directly using a soft damp cloth.</li>
+                    <li className="flex gap-2"><span>💧</span> Avoid washing or rinsing with water.</li>
+                    <li className="flex gap-2"><span>❌</span> Do not use harsh chemicals; simply wipe gently for a long-lasting finish.</li>
+                  </ul>
+                </div>
+
+                <hr className="border-gray-200 my-8" />
+                
+                <div className="text-center">
+                  <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
+                  <p className="text-accent font-medium">Right to Luxury | High durability | Premium finish</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -142,11 +142,10 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     });
 
     // Send OTP email
-    const otpEmailTemplate = require('../utils/otpEmailTemplate');
     await sendEmail({
       email: normalizedEmail,
       subject: 'Verify Your Email - GPSFDK',
-      html: otpEmailTemplate(name.trim() || 'there', otp),
+      html: otpEmailTemplate(name.trim() || 'there', otp, true),
     });
 
     res.json({
@@ -567,7 +566,7 @@ exports.forgotPassword = async (req, res, next) => {
     await sendEmail({
       email: user.email,
       subject: 'Password Reset Code - GPSFDK',
-      html: otpEmailTemplate(user.name, otp),
+      html: otpEmailTemplate(user.name, otp, false),
     });
 
     res.json({ message: 'If that email exists, we have sent a reset code.' });

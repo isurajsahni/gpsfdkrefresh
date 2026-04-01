@@ -5,13 +5,13 @@
 
 const brandColor = '#0B5D3B';
 
-const otpEmail = (userName, otp) => `
+const otpEmail = (userName, otp, isRegistration = true) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Your Password</title>
+  <title>${isRegistration ? 'Verify Your Email' : 'Reset Your Password'} - GPSFDK</title>
   <style>
     body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f7f7; }
     .container { max-width: 600px; margin: 0 auto; background: #ffffff; }
@@ -22,7 +22,7 @@ const otpEmail = (userName, otp) => `
   </style>
 </head>
 <body>
-  <div style="display:none;max-height:0;overflow:hidden;">Your GPSFDK password reset code is ${otp}</div>
+  <div style="display:none;max-height:0;overflow:hidden;">Your GPSFDK verification code is ${otp}</div>
   <div class="container">
     <!-- Header -->
     <div class="header" style="background: ${brandColor}; padding: 40px; text-align: center;">
@@ -32,11 +32,11 @@ const otpEmail = (userName, otp) => `
 
     <!-- Body -->
     <div class="body" style="padding: 45px 40px; text-align: center;">
-      <div style="font-size: 45px; margin-bottom: 20px;">🔒</div>
-      <h2 style="color: #333; margin: 0; font-size: 24px;">Reset Your Password</h2>
+      <div style="font-size: 45px; margin-bottom: 20px;">${isRegistration ? '📩' : '🔒'}</div>
+      <h2 style="color: #333; margin: 0; font-size: 24px;">${isRegistration ? 'Verify Your Email' : 'Reset Your Password'}</h2>
       <p style="color: #666; margin-top: 15px; font-size: 15px; line-height: 1.6;">
         Hi ${userName},<br>
-        We received a request to reset your password. Here is your 6-digit verification code:
+        ${isRegistration ? 'Thank you for signing up! Use the 6-digit code below to verify your email address:' : 'We received a request to reset your password. Here is your 6-digit verification code:'}
       </p>
 
       <!-- OTP Box -->
@@ -46,7 +46,7 @@ const otpEmail = (userName, otp) => `
 
       <p style="color: #666; font-size: 14px; line-height: 1.6;">
         This code is valid for <strong>10 minutes</strong>.<br>
-        If you didn't request a password reset, you can safely ignore this email.
+        If you didn't request this code, you can safely ignore this email.
       </p>
     </div>
 

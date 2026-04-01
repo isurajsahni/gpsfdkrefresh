@@ -273,16 +273,30 @@ const CheckoutPage = () => {
         totalPrice: finalTotal,
       };
 
-      const { data: order } = await API.post('/orders', orderData);
+      const endpoint = user ? '/orders' : '/orders/guest';
+      const { data: order } = await API.post(endpoint, orderData);
       
       // Cleanup abandoned cart safely
       API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
 
+      // CASE 1: Zero-Value Order (Fully Paid by Coupon)
+      if (finalTotal === 0) {
+        clearCart();
+        toast.success('Order placed successfully (100% Discounted)!');
+        navigate('/thank-you');
+        setLoading(false);
+        return;
+      }
+
+      // CASE 2: Cash on Delivery
       if (paymentMethod === 'cod') {
         clearCart();
         toast.success('Order placed successfully!');
         navigate('/thank-you');
-      } else if (paymentMethod === 'razorpay') {
+      } 
+      // CASE 3: Razorpay
+      else if (paymentMethod === 'razorpay') {
+
         try {
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {

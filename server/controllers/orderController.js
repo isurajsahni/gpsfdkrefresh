@@ -203,21 +203,27 @@ exports.createOrder = async (req, res, next) => {
     // Server-side price calculation — never trust client prices
     const prices = await calculateOrderPrices(items, couponCode, req.user._id);
 
+    // If total price is 0 (after coupons), skip payment gateway logic
+    const finalPaymentMethod = prices.totalPrice === 0 ? 'free' : paymentMethod;
+    const isPaid = prices.totalPrice === 0;
+
     const order = await Order.create({
       user: req.user._id,
       items: prices.verifiedItems,
       shippingAddress,
       billingAddress,
-      paymentMethod,
+      paymentMethod: finalPaymentMethod,
       itemsPrice: prices.itemsPrice,
       shippingPrice: prices.shippingPrice,
       taxPrice: prices.taxPrice,
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
-      isPaid: false,
+      status: (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') ? 'pending' : 'payment_pending',
+      isPaid,
+      paidAt: isPaid ? Date.now() : null,
     });
+
 
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
@@ -232,10 +238,11 @@ exports.createOrder = async (req, res, next) => {
       }
     }
 
-    // Only notify if it's COD. Online payments wait for verification.
-    if (paymentMethod === 'cod') {
+    // Notify immediately for COD or FREE orders
+    if (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') {
       triggerNewOrderNotifications(order);
     }
+
 
     res.status(201).json(order);
   } catch (error) {
@@ -258,27 +265,33 @@ exports.createGuestOrder = async (req, res, next) => {
     const prices = await calculateOrderPrices(items, couponCode, null);
 
 
+    // If total price is 0, skip payment gateway
+    const finalPaymentMethod = prices.totalPrice === 0 ? 'free' : paymentMethod;
+    const isPaid = prices.totalPrice === 0;
+
     const order = await Order.create({
       guestEmail: guestEmail || '',
       guestPhone: guestPhone || shippingAddress?.phone || '',
       items: prices.verifiedItems,
       shippingAddress,
       billingAddress,
-      paymentMethod,
+      paymentMethod: finalPaymentMethod,
       itemsPrice: prices.itemsPrice,
       shippingPrice: prices.shippingPrice,
       taxPrice: prices.taxPrice,
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: paymentMethod === 'cod' ? 'pending' : 'payment_pending',
-      isPaid: false,
+      status: (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') ? 'pending' : 'payment_pending',
+      isPaid,
+      paidAt: isPaid ? Date.now() : null,
     });
 
-    // Only notify if it's COD. Online payments wait for verification.
-    if (paymentMethod === 'cod') {
+    // Notify immediately for COD or FREE orders
+    if (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') {
       triggerNewOrderNotifications(order);
     }
+
 
     res.status(201).json(order);
   } catch (error) {

@@ -6,6 +6,23 @@ const slugify = require('slugify');
 const { cloudinary } = require('../middleware/upload');
 
 /**
+ * Retry a Cloudinary upload with exponential backoff
+ * Handles transient network / rate-limit failures
+ */
+const retryCloudinaryUpload = async (uploadFn, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await uploadFn();
+    } catch (err) {
+      const isLast = attempt === maxRetries;
+      const isRetryable = err.http_code === 429 || err.http_code >= 500 || err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET';
+      if (isLast || !isRetryable) throw err;
+      console.warn(`Cloudinary upload attempt ${attempt} failed (${err.message}), retrying in ${attempt}s...`);
+      await new Promise(r => setTimeout(r, attempt * 1000));
+    }
+  }
+};
+/**
  * Generates a unique slug for a product
  * @param {string} name - Product name
  * @returns {Promise<string>} - Unique slug
@@ -430,10 +447,10 @@ exports.importProducts = async (req, res, next) => {
               if (pData.imageUrls.length > 0) {
                 for (const url of pData.imageUrls) {
                   try {
-                    const result = await cloudinary.uploader.upload(url, {
+                    const result = await retryCloudinaryUpload(() => cloudinary.uploader.upload(url, {
                       folder: 'gpsfdk/imported',
                       transformation: [{ width: 1200, crop: 'limit', quality: 'auto' }]
-                    });
+                    }));
                     finalImages.push({ url: result.secure_url, public_id: result.public_id });
                   } catch (imgErr) {
                     console.error(`Failed to upload image from URL: ${url}`, imgErr.message);

@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const multer = require('multer');
 
 const connectDB = require('./config/db');
 const { stripeWebhook } = require('./controllers/paymentController');
@@ -18,13 +19,20 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Let Vercel frontend read responses
 }));
 
-// ─── Security: Global rate limiter (100 req / 15 min per IP) ───
+// ─── Security: Global rate limiter (500 req / 15 min per IP) ───
+// Raised from 100 to 500 because admin product uploads with images
+// generate many sub-requests (Cloudinary uploads) per product
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later.' },
+  skip: (req) => {
+    // Skip rate limiting for admin product upload routes
+    // These routes are already protected by auth + admin middleware
+    return req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method);
+  },
 });
 app.use(globalLimiter);
 
@@ -94,6 +102,23 @@ app.get('/api/health', (req, res) => res.json({
 
 // ─── Error handler (no info leaks in production) ───
 app.use((err, req, res, next) => {
+  // Handle Multer / file-upload errors explicitly
+  if (err instanceof multer.MulterError) {
+    console.error('Multer error:', err.code, err.message);
+    const messages = {
+      LIMIT_FILE_SIZE: 'File is too large. Maximum size is 5 MB.',
+      LIMIT_FILE_COUNT: 'Too many files. Maximum is 10 images + 1 thumbnail.',
+      LIMIT_UNEXPECTED_FILE: 'Unexpected file field.',
+    };
+    return res.status(400).json({ message: messages[err.code] || `Upload error: ${err.message}` });
+  }
+
+  // Handle Cloudinary / storage errors thrown during upload
+  if (err.message && (err.message.includes('File type') || err.message.includes('not allowed') || err.message.includes('not supported'))) {
+    console.error('Upload validation error:', err.message);
+    return res.status(400).json({ message: err.message });
+  }
+
   console.error(err.stack);
   const statusCode = err.statusCode || 500;
   const message = process.env.NODE_ENV === 'production'

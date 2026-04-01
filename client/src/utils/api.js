@@ -12,6 +12,16 @@ if (!baseURL.endsWith('/api')) {
 
 const API = axios.create({
   baseURL,
+  timeout: 30000, // 30s default timeout
+});
+
+// Increase timeout for file upload requests (multipart/form-data)
+API.interceptors.request.use((config) => {
+  // If body is FormData, it's likely a file upload — give it more time
+  if (config.data instanceof FormData) {
+    config.timeout = 120000; // 120s for uploads
+  }
+  return config;
 });
 
 API.interceptors.request.use((config) => {

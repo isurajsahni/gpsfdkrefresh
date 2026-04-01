@@ -161,7 +161,7 @@ const Navbar = () => {
                     </AnimatePresence>
                   </>
                 ) : (
-                  <Link to="/login" className="p-2 text-secondary hover:text-accent transition-colors duration-300">
+                  <Link to="/register" className="p-2 text-secondary hover:text-accent transition-colors duration-300">
                     <HiOutlineUser className="w-6 h-6" />
                   </Link>
                 )}
@@ -252,11 +252,11 @@ const Navbar = () => {
               </button>
               {!user && (
                 <Link
-                  to="/login"
+                  to="/register"
                   onClick={() => setMobileOpen(false)}
                   className="block text-xl text-accent font-heading py-3"
                 >
-                  Login
+                  Register
                 </Link>
               )}
             </div>

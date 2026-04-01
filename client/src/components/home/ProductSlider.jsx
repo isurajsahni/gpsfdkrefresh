@@ -12,7 +12,7 @@ import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-const ProductSlider = ({ title, categorySlug, featured = true }) => {
+const ProductSlider = ({ title, categorySlug, featured = true, excludeId }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
@@ -24,7 +24,11 @@ const ProductSlider = ({ title, categorySlug, featured = true }) => {
         if (featured) params.featured = true;
         if (categorySlug) params.categorySlug = categorySlug;
         const { data } = await API.get('/products', { params });
-        setProducts(data.products);
+        if (excludeId) {
+          setProducts(data.products.filter(p => p._id !== excludeId));
+        } else {
+          setProducts(data.products);
+        }
       } catch (err) {
         // Use empty array on error
         setProducts([]);

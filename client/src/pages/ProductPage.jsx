@@ -329,7 +329,7 @@ const ProductPage = () => {
       </div>
 
       {/* Extensive Product Description Section */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 mt-[100px] pb-16">
         <div className="bg-[#fffdf9] rounded-3xl p-8 md:p-12 border border-[#eae0cc] shadow-sm">
           <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 border-b border-gray-200 pb-4">
             Product Description: {product.name}
@@ -343,58 +343,60 @@ const ProductPage = () => {
               </div>
             )}
 
-            {/* Static Canvas Details */}
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-bold text-secondary mb-3">1. Canvas Print*</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li><strong>Paper Quality:</strong> 350 GSM</li>
-                  <li>Printed using high-quality digital industrial eco-solvent printers</li>
-                  <li><strong>Inks:</strong> Eco-solvent (environment-friendly and long-lasting)</li>
-                  <li><strong>Ideal for:</strong> Premium wall art, photo canvases, exhibitions, and décor</li>
-                </ul>
-              </div>
+            {/* Static Canvas Details - Only show for Wall Canvas */}
+            {product.category?.slug === 'wall-canvas' && (
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold text-secondary mb-3">1. Canvas Print*</h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li><strong>Paper Quality:</strong> 350 GSM</li>
+                    <li>Printed using high-quality digital industrial eco-solvent printers</li>
+                    <li><strong>Inks:</strong> Eco-solvent (environment-friendly and long-lasting)</li>
+                    <li><strong>Ideal for:</strong> Premium wall art, photo canvases, exhibitions, and décor</li>
+                  </ul>
+                </div>
 
-              <div>
-                <h3 className="text-xl font-bold text-secondary mb-4">2. Poster Options*</h3>
-                
-                <div className="space-y-6 pl-4 border-l-2 border-accent/20">
-                  <div>
-                    <h4 className="font-bold text-lg text-secondary mb-2">a) Soft Board Poster</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Material:</strong> 5mm thick sunboard (instead of soft board)</li>
-                      <li><strong>Features:</strong> Lightweight, sturdy, easy to mount</li>
-                      <li><strong>Usage:</strong> Office display, educational charts, presentations, Home decor.</li>
-                    </ul>
-                  </div>
+                <div>
+                  <h3 className="text-xl font-bold text-secondary mb-4">2. Poster Options*</h3>
+                  
+                  <div className="space-y-6 pl-4 border-l-2 border-accent/20">
+                    <div>
+                      <h4 className="font-bold text-lg text-secondary mb-2">a) Soft Board Poster</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Material:</strong> 5mm thick sunboard (instead of soft board)</li>
+                        <li><strong>Features:</strong> Lightweight, sturdy, easy to mount</li>
+                        <li><strong>Usage:</strong> Office display, educational charts, presentations, Home decor.</li>
+                      </ul>
+                    </div>
 
-                  <div>
-                    <h4 className="font-bold text-lg text-secondary mb-2">b) Sticker Poster</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Material:</strong> 120 GSM Vinyl Sheet</li>
-                      <li><strong>Type:</strong> Self-adhesive sticker (peel and stick)</li>
-                      <li><strong>Usage:</strong> Branding, signage, product labels, glass surface display</li>
-                    </ul>
-                  </div>
+                    <div>
+                      <h4 className="font-bold text-lg text-secondary mb-2">b) Sticker Poster</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Material:</strong> 120 GSM Vinyl Sheet</li>
+                        <li><strong>Type:</strong> Self-adhesive sticker (peel and stick)</li>
+                        <li><strong>Usage:</strong> Branding, signage, product labels, glass surface display</li>
+                      </ul>
+                    </div>
 
-                  <div>
-                    <h4 className="font-bold text-lg text-secondary mb-2">c) Paper Poster</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      <li><strong>Paper Quality:</strong> 300 GSM premium paper</li>
-                      <li><strong>Finish:</strong> Matte</li>
-                      <li><strong>Usage:</strong> Wall posters, promotional material, events, décor</li>
-                    </ul>
+                    <div>
+                      <h4 className="font-bold text-lg text-secondary mb-2">c) Paper Poster</h4>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li><strong>Paper Quality:</strong> 300 GSM premium paper</li>
+                        <li><strong>Finish:</strong> Matte</li>
+                        <li><strong>Usage:</strong> Wall posters, promotional material, events, décor</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <hr className="border-gray-200 my-8" />
-              
-              <div className="text-center">
-                <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
-                <p className="text-accent font-medium">Eco-friendly inks | High durability | Premium finish</p>
+                <hr className="border-gray-200 my-8" />
+                
+                <div className="text-center">
+                  <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
+                  <p className="text-accent font-medium">Eco-friendly inks | High durability | Premium finish</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -406,6 +408,7 @@ const ProductPage = () => {
             title="Related Products"
             categorySlug={product.category.slug}
             featured={false}
+            excludeId={product._id}
           />
         </div>
       )}

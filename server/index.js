@@ -43,6 +43,8 @@ app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' 
 const allowedOrigins = [
   'http://localhost:5173',
   'https://gpsfdkrefresh.vercel.app',
+  'https://gpsfdk.com',
+  'https://www.gpsfdk.com',
   process.env.CLIENT_URL,
 ].filter(Boolean);
 

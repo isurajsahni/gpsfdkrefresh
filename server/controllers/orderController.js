@@ -419,3 +419,5 @@ exports.deleteOrder = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.calculateOrderPrices = calculateOrderPrices;

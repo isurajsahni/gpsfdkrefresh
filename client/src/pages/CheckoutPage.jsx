@@ -41,7 +41,7 @@ const CheckoutPage = () => {
     fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
   const [addressErrors, setAddressErrors] = useState({});
-  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
   const handleAddressBlur = (field) => {
     if (!validators[field]) return;
@@ -273,30 +273,18 @@ const CheckoutPage = () => {
         totalPrice: finalTotal,
       };
 
-      const endpoint = user ? '/orders' : '/orders/guest';
-      const { data: order } = await API.post(endpoint, orderData);
-      
-      // Cleanup abandoned cart safely
-      API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
-
-      // CASE 1: Zero-Value Order (Fully Paid by Coupon)
-      if (finalTotal === 0) {
+      // CASE 1: Zero-Value Order (Fully Paid by Coupon) or Cash on Delivery
+      if (finalTotal === 0 || paymentMethod === 'cod') {
+        const endpoint = user ? '/orders' : '/orders/guest';
+        await API.post(endpoint, orderData);
+        
+        API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
         clearCart();
-        toast.success('Order placed successfully (100% Discounted)!');
-        navigate('/thank-you');
-        setLoading(false);
-        return;
-      }
-
-      // CASE 2: Cash on Delivery
-      if (paymentMethod === 'cod') {
-        clearCart();
-        toast.success('Order placed successfully!');
+        toast.success(finalTotal === 0 ? 'Order placed successfully (100% Discounted)!' : 'Order placed successfully!');
         navigate('/thank-you');
       } 
-      // CASE 3: Razorpay
+      // CASE 2: Razorpay
       else if (paymentMethod === 'razorpay') {
-
         try {
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {
@@ -305,7 +293,7 @@ const CheckoutPage = () => {
             return;
           }
 
-          const { data: razorpayOrder } = await API.post('/create-order', { amount: finalTotal });
+          const { data: razorpayOrder } = await API.post('/create-order', { orderData });
           const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: razorpayOrder.amount,
@@ -319,7 +307,7 @@ const CheckoutPage = () => {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  orderId: order._id 
+                  orderData: orderData 
                 });
                 API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
                 clearCart();
@@ -343,18 +331,7 @@ const CheckoutPage = () => {
           console.error('Razorpay Error:', err);
           toast.error('Payment initialization failed');
         }
-
-      } else if (paymentMethod === 'stripe') {
-        try {
-          const { data } = await API.post('/payments/stripe', {
-            items: cartItems.map(item => ({ name: item.name, price: item.price, quantity: item.quantity })),
-            orderId: order._id,
-          });
-          window.location.href = data.url;
-        } catch {
-          toast.error('Payment initialization failed');
-        }
-      }
+      } 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Order failed');
     }
@@ -604,9 +581,8 @@ const CheckoutPage = () => {
               <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Payment Method</h2>
               <div className="space-y-3">
                 {[
-                  { value: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when you receive' },
-                  { value: 'razorpay', label: 'Razorpay', icon: '💳', desc: 'UPI, Cards, Net Banking' },
-                  { value: 'stripe', label: 'Stripe', icon: '🌐', desc: 'International Cards' },
+                  { value: 'razorpay', label: 'Razorpay / Online Payment', icon: '💳', desc: 'Secure payment via UPI, Cards, Net Banking' },
+                  { value: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when you receive' }
                 ].map(method => (
                   <button
                     key={method.value}

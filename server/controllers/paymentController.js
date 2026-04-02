@@ -7,11 +7,15 @@ const orderController = require('./orderController');
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
-    const { amount } = req.body;
+    const { orderData } = req.body;
     
-    if (!amount) {
-      return res.status(400).json({ message: 'Amount is required' });
+    if (!orderData || !orderData.items || orderData.items.length === 0) {
+      return res.status(400).json({ message: 'Order data is required' });
     }
+
+    const userId = req.user ? req.user._id : null;
+    const { calculateOrderPrices } = require('./orderController');
+    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId);
 
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -19,7 +23,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
     });
 
     const options = {
-      amount: Math.round(amount * 100), // Convert to paise
+      amount: Math.round(prices.totalPrice * 100), // Convert to paise
       currency: 'INR',
       receipt: 'rcpt_' + Date.now().toString().slice(-8),
     };
@@ -40,10 +44,10 @@ exports.createRazorpayOrder = async (req, res, next) => {
 // Razorpay verify
 exports.verifyRazorpay = async (req, res, next) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderData } = req.body;
     
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ message: 'Missing payment details', success: false });
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !orderData) {
+      return res.status(400).json({ message: 'Missing payment details or order data', success: false });
     }
 
     const sign = razorpay_order_id + '|' + razorpay_payment_id;
@@ -53,33 +57,76 @@ exports.verifyRazorpay = async (req, res, next) => {
       .digest('hex');
     
     if (expectedSign === razorpay_signature) {
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found', success: false });
+      // 1. Verify exact price to prevent tampering
+      const userId = req.user ? req.user._id : null;
+      const { calculateOrderPrices } = require('./orderController');
+      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId);
+      
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+      const rzpOrder = await instance.orders.fetch(razorpay_order_id);
+      
+      if (Math.round(prices.totalPrice * 100) !== rzpOrder.amount) {
+        return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
       }
 
-      order.isPaid = true;
-      order.paidAt = Date.now();
-      order.status = 'pending';
-      order.paymentResult = {
-        id: razorpay_payment_id,
-        status: 'completed',
-        update_time: new Date().toISOString(),
-      };
-      await order.save();
-      
+      // 2. Create the final Database Order securely
+      const newOrder = await Order.create({
+        user: userId,
+        guestEmail: orderData.guestEmail || '',
+        guestPhone: orderData.guestPhone || orderData.shippingAddress?.phone || '',
+        items: prices.verifiedItems,
+        shippingAddress: orderData.shippingAddress,
+        billingAddress: orderData.billingAddress,
+        paymentMethod: 'razorpay',
+        itemsPrice: prices.itemsPrice,
+        shippingPrice: prices.shippingPrice,
+        taxPrice: prices.taxPrice,
+        discountPrice: prices.discountPrice,
+        couponCode: orderData.couponCode || null,
+        totalPrice: prices.totalPrice,
+        status: 'pending',
+        isPaid: true,
+        paidAt: Date.now(),
+        paymentResult: {
+          id: razorpay_payment_id,
+          status: 'completed',
+          update_time: new Date().toISOString(),
+        }
+      });
+
+      // Handle coupon usage
+      if (orderData.couponCode && userId) {
+        const Coupon = require('../models/Coupon');
+        const coupon = await Coupon.findOne({ code: orderData.couponCode.toUpperCase() });
+        if (coupon) {
+          const userUsage = coupon.usageHistory.find(u => u.userId.toString() === userId.toString());
+          if (userUsage) {
+            userUsage.useCount += 1;
+          } else {
+            coupon.usageHistory.push({ userId: userId, useCount: 1 });
+          }
+          await coupon.save();
+        }
+      }
+
       // Trigger notifications now that it's paid
       try {
-        await orderController.triggerNewOrderNotifications(order);
+        await orderController.triggerNewOrderNotifications(newOrder);
       } catch (notifErr) {
         console.error('Notification Error (Silently handled):', notifErr);
       }
 
-      res.json({ message: 'Payment verified successfully', success: true });
+      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id });
     } else {
       res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
   } catch (error) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+      return res.status(400).json({ message: error.message, success: false });
+    }
     console.error('Razorpay Verification Error:', error);
     next(error);
   }

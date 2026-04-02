@@ -30,7 +30,7 @@ const CategoryPage = () => {
       try {
         const catRes = await API.get(`/categories/${slug}`);
         setCategory(catRes.data);
-        const params = { limit: 50 };
+        const params = { limit: 1000 };
         if (sort) params.sort = sort;
         const { data } = await API.get('/products', { params });
         const filtered = data.products.filter(p => {

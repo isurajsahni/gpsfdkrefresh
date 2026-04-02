@@ -15,7 +15,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       setLoading(true);
       try {
         const { data } = await API.get('/products', {
-          params: { limit: 50 }
+          params: { limit: 1000 }
         });
         const filtered = data.products.filter(
           p => p.category?.slug === slug

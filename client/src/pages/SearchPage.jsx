@@ -19,7 +19,7 @@ const SearchPage = () => {
     const fetchResults = async () => {
       setLoading(true);
       try {
-        const { data } = await API.get(`/products?search=${query}&limit=50`);
+        const { data } = await API.get(`/products?search=${query}&limit=1000`);
         setProducts(data.products);
       } catch (err) {
         console.error(err);

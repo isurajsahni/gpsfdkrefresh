@@ -84,7 +84,7 @@ exports.getProducts = async (req, res, next) => {
     if (sort === 'name') sortObj = { name: 1 };
 
     // Cap limit to prevent abuse
-    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 100);
+    const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
     
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)

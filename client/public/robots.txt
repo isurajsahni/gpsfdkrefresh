@@ -1,7 +1,3 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
-Disallow: /checkout/
-Disallow: /dashboard/
-
-Sitemap: https://www.gpsfdk.com/sitemap.xml
+Sitemap: https://gpsfdk.com/sitemap.xml

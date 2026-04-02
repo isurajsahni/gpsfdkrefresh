@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ProductRow from './ProductRow';
 import API from '../../utils/api';
 import SEO from '../seo/SEO';
+import heroImage from '../../assets/image/housenameplate_poster.webp';
 
 const ProductZigzagPage = ({ category, slug }) => {
   const [products, setProducts] = useState([]);
@@ -104,28 +105,57 @@ const ProductZigzagPage = ({ category, slug }) => {
   );
 
   return (
-    <div className="min-h-screen bg-cream pt-[80px] pb-12">
+    <div className="min-h-screen bg-cream pb-12 w-full">
       <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} />
 
-      {/* Hero Header */}
-      <div className="bg-secondary section-padding py-16 md:py-24 relative overflow-hidden">
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-accent/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-        <div className="max-w-[1200px] mx-auto relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <nav className="text-white/50 text-sm mb-4">
+      {/* Hero Header - 100vh 50/50 Split */}
+      <div className="relative w-full h-[100vh] flex flex-col md:flex-row overflow-hidden bg-secondary">
+        {/* Left Side: Content */}
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col justify-center px-6 md:px-16 lg:px-24 relative z-10 pt-[80px] md:pt-0">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
+            <nav className="text-white/60 text-sm mb-6 flex items-center gap-2">
               <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span className="mx-2">/</span>
-              <span className="text-white">{category?.name || 'House Nameplates'}</span>
+              <span>/</span>
+              <span className="text-white font-medium">{category?.name || 'House Nameplates'}</span>
             </nav>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-7xl font-heading font-bold text-white leading-[1.1] tracking-tight mb-6">
               {category?.name || 'House Nameplates'}
             </h1>
-            <p className="text-white/60 mt-4 max-w-2xl text-lg leading-relaxed">
+            <p className="text-white/80 text-base md:text-lg lg:text-xl leading-relaxed max-w-xl mb-10">
               {category?.description || 'Elegant, customizable house nameplates crafted with precision. Make your home entrance unforgettable.'}
             </p>
+            
+            <button 
+              onClick={() => {
+                containerRef.current?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="group flex items-center gap-3 bg-accent hover:bg-accent-dark text-white px-8 py-4 rounded-full font-semibold transition-all shadow-[0_0_20px_rgba(240,185,11,0.3)] hover:shadow-[0_0_30px_rgba(240,185,11,0.5)] w-fit"
+            >
+              Scroll Down
+              <svg className="w-5 h-5 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </button>
+          </motion.div>
+          {/* Decorative subtle gradient */}
+          <div className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+        </div>
+
+        {/* Right Side: Image */}
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full relative overflow-hidden">
+          <motion.div 
+            initial={{ scale: 1.05 }} 
+            animate={{ scale: 1 }} 
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className="w-full h-full relative"
+          >
+            <img 
+              src={heroImage} 
+              alt={category?.name || "House Nameplates Details"} 
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Gradient to blend with left side on desktop */}
+            <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-transparent via-transparent to-secondary/80 md:to-secondary" />
           </motion.div>
         </div>
       </div>

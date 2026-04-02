@@ -8,6 +8,7 @@ import SEO from '../seo/SEO';
 const ProductZigzagPage = ({ category, slug }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(16);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -25,6 +26,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       }
       setLoading(false);
     };
+    setVisibleCount(16);
     fetchProducts();
   }, [slug]);
 
@@ -149,11 +151,23 @@ const ProductZigzagPage = ({ category, slug }) => {
             <Link to="/" className="btn-primary mt-4 inline-block">Back to Home</Link>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {products.map((product, i) => (
-              <ProductRow key={product._id} product={product} index={i} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-gray-100">
+              {products.slice(0, visibleCount).map((product, i) => (
+                <ProductRow key={product._id} product={product} index={i} />
+              ))}
+            </div>
+            {visibleCount < products.length && (
+              <div className="text-center mt-12 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 16)}
+                  className="bg-accent hover:bg-accent-dark text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

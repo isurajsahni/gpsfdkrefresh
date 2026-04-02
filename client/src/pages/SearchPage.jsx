@@ -11,6 +11,7 @@ const SearchPage = () => {
   const query = searchParams.get('q') || '';
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(16);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
@@ -26,6 +27,7 @@ const SearchPage = () => {
       setLoading(false);
     };
     if (query) {
+      setVisibleCount(16);
       fetchResults();
     } else {
       setProducts([]);
@@ -53,15 +55,16 @@ const SearchPage = () => {
             <Link to="/" className="btn-primary">Back to Home</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product, i) => (
-              <motion.div
-                key={product._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Link to={`/product/${product.slug}`} className="group block">
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.slice(0, visibleCount).map((product, i) => (
+                <motion.div
+                  key={product._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (i % 16) * 0.05 }}
+                >
+                  <Link to={`/product/${product.slug}`} className="group block">
                   <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
                     <img
                       src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
@@ -92,8 +95,19 @@ const SearchPage = () => {
                   </div>
                 </Link>
               </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {visibleCount < products.length && (
+              <div className="text-center mt-12 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 16)}
+                  className="bg-accent hover:bg-accent-dark text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

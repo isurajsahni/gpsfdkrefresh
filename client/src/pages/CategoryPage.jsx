@@ -14,6 +14,7 @@ const CategoryPage = () => {
   const [category, setCategory] = useState(null);
   const [sort, setSort] = useState('');
   const [loading, setLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(16);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
@@ -44,6 +45,7 @@ const CategoryPage = () => {
       setLoading(false);
     };
     fetchData();
+    setVisibleCount(16);
   }, [slug, sort, subcategorySlug]);
 
   // Generate dynamic SEO based on category
@@ -162,15 +164,16 @@ const CategoryPage = () => {
             <Link to="/" className="btn-primary mt-4 inline-block">Back to Home</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product, i) => (
-              <motion.div
-                key={product._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Link to={`/product/${product.slug}`} className="group block h-full">
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {products.slice(0, visibleCount).map((product, i) => (
+                <motion.div
+                  key={product._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: (i % 16) * 0.05 }}
+                >
+                  <Link to={`/product/${product.slug}`} className="group block h-full">
                   {slug === 'wall-canvas' ? (
                     <div className="bg-[#fff7e7] rounded-2xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                       <div className="relative aspect-[4/5] w-full rounded-xl overflow-hidden mb-5 shadow-sm">
@@ -224,8 +227,19 @@ const CategoryPage = () => {
                   )}
                 </Link>
               </motion.div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {visibleCount < products.length && (
+              <div className="text-center mt-12 flex justify-center">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 16)}
+                  className="bg-accent hover:bg-accent-dark text-white px-8 py-3 rounded-full font-semibold transition-colors shadow-sm"
+                >
+                  Load More
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -26,7 +26,9 @@ const emailUpdateOtpTemplate = (userName, otp) => `
   <div class="container">
     <!-- Header -->
     <div class="header" style="background: ${brandColor}; padding: 40px; text-align: center;">
-      <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 2px;">GPSFDK</h1>
+      <a href="${process.env.CLIENT_URL}" style="text-decoration: none;">
+        <h1 style="color: #ffffff; margin: 0; font-size: 32px; letter-spacing: 2px;">GPSFDK</h1>
+      </a>
       <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0; font-size: 14px; letter-spacing: 1px;">PREMIUM WALL ART & DECOR</p>
     </div>
 

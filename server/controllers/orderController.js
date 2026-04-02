@@ -334,7 +334,7 @@ exports.getOrderById = async (req, res, next) => {
 // PUT /api/orders/:id (admin)
 exports.updateOrderStatus = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('items.product', 'slug');
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const previousStatus = order.status;
@@ -385,7 +385,7 @@ exports.getOrderStats = async (req, res, next) => {
 // PUT /api/orders/:id/cancel
 exports.cancelOrder = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const order = await Order.findById(req.params.id).populate('items.product', 'slug');
     if (!order) return res.status(404).json({ message: 'Order not found' });
     
     // Check authorization: must be admin or order owner

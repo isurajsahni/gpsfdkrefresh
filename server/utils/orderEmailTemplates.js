@@ -36,7 +36,7 @@ const emailWrapper = (content, previewText = '') => `
   <div style="display:none;max-height:0;overflow:hidden;">${previewText}</div>
   <div class="container">
     <div class="header">
-      <h1>GPSFDK</h1>
+      <a href="${process.env.CLIENT_URL}" style="text-decoration: none;"><h1 style="color: #ffffff; margin: 0; font-size: 28px; letter-spacing: 2px;">GPSFDK</h1></a>
     </div>
     <div class="body">
       ${content}
@@ -63,7 +63,9 @@ const renderItems = (items) => {
         <div style="display: flex; align-items: center; gap: 12px;">
           ${item.image ? `<img src="${item.image}" alt="${item.name}" width="55" height="55" style="border-radius: 8px; object-fit: cover;" />` : ''}
           <div>
-            <div style="font-weight: 600; color: #333; font-size: 14px;">${item.name}</div>
+            <div style="font-weight: 600; color: #333; font-size: 14px;">
+              <a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}" style="color: #333; text-decoration: none;">${item.name}</a>
+            </div>
             ${item.variation ? `<div style="font-size: 12px; color: #888; margin-top: 2px;">
               ${[item.variation.size, item.variation.material, item.variation.frame, item.variation.color].filter(Boolean).join(' · ')}
             </div>` : ''}

@@ -114,13 +114,11 @@ exports.getProductBySlug = async (req, res, next) => {
 // POST /api/products (admin)
 exports.createProduct = async (req, res, next) => {
   try {
-    // Parse variations from FormData string
-    let variations = req.body.variations;
+    let variations = req.body.variations || [];
     if (typeof variations === 'string') {
       variations = JSON.parse(variations);
     }
 
-    // Parse boolean fields (FormData sends them as strings)
     const parseBool = (val) => val === 'true' || val === true;
 
     const productData = {
@@ -132,27 +130,10 @@ exports.createProduct = async (req, res, next) => {
       customizationLabel: req.body.customizationLabel || 'Custom Text',
       featured: parseBool(req.body.featured),
       isMasonry: parseBool(req.body.isMasonry),
-      variations: variations || [],
-      images: [],
+      variations: variations,
+      images: req.body.images || [],
+      thumbnailImage: req.body.thumbnailImage || undefined,
     };
-
-    // Use uploaded files for images (upload.fields format)
-    if (req.files && req.files.images && req.files.images.length > 0) {
-      productData.images = req.files.images.map(f => {
-        const url = f.secure_url || f.path || f.url;
-        const public_id = f.public_id || f.filename;
-        return { url, public_id };
-      });
-    }
-
-    // Handle thumbnail image (listing-only)
-    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage.length > 0) {
-      const t = req.files.thumbnailImage[0];
-      productData.thumbnailImage = {
-        url: t.secure_url || t.path || t.url,
-        public_id: t.public_id || t.filename
-      };
-    }
 
     const product = new Product(productData);
     await product.save();
@@ -168,10 +149,8 @@ exports.updateProduct = async (req, res, next) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
-    // Parse boolean fields (FormData sends them as strings)
     const parseBool = (val) => val === 'true' || val === true;
 
-    // Update scalar fields explicitly
     if (req.body.name !== undefined) product.name = req.body.name;
     if (req.body.description !== undefined) product.description = req.body.description;
     if (req.body.category !== undefined) product.category = req.body.category;
@@ -181,42 +160,17 @@ exports.updateProduct = async (req, res, next) => {
     if (req.body.featured !== undefined) product.featured = parseBool(req.body.featured);
     if (req.body.isMasonry !== undefined) product.isMasonry = parseBool(req.body.isMasonry);
 
-    // Parse variations
     if (typeof req.body.variations === 'string') {
       product.variations = JSON.parse(req.body.variations);
     } else if (Array.isArray(req.body.variations)) {
       product.variations = req.body.variations;
     }
 
-    // Handle images: start with existing images the frontend says to keep
-    let keptImages = [];
-    if (req.body.existingImages) {
-      try {
-        keptImages = typeof req.body.existingImages === 'string'
-          ? JSON.parse(req.body.existingImages)
-          : req.body.existingImages;
-      } catch (e) {
-        keptImages = [];
-      }
-    }
+    const newImages = req.body.images || [];
+    const keptPublicIds = newImages.map(img => img.public_id).filter(Boolean);
 
-    // Append newly uploaded files (upload.fields format)
-    const newImages = (req.files && req.files.images && req.files.images.length > 0)
-      ? req.files.images.map(f => {
-          const url = f.secure_url || f.path || f.url;
-          const public_id = f.public_id || f.filename;
-          return { url, public_id };
-        })
-      : [];
-
-    product.images = [...keptImages, ...newImages];
-
-    // Find images that were removed and delete them from Cloudinary
-    if (product.images.length >= 0) {
-      const keptPublicIds = keptImages.map(img => img.public_id).filter(Boolean);
-      const removedImages = product._doc.images || [];
-
-      for (const img of removedImages) {
+    if (product.images && product.images.length >= 0) {
+      for (const img of product.images) {
         if (img.public_id && !keptPublicIds.includes(img.public_id)) {
           try {
             await cloudinary.uploader.destroy(img.public_id);
@@ -226,33 +180,20 @@ exports.updateProduct = async (req, res, next) => {
         }
       }
     }
+    
+    product.images = newImages;
 
-    // Handle thumbnail image
-    if (req.files && req.files.thumbnailImage && req.files.thumbnailImage.length > 0) {
-      // Delete old thumbnail from Cloudinary if it exists
-      if (product.thumbnailImage && product.thumbnailImage.public_id) {
+    const newThumbnail = req.body.thumbnailImage;
+    if (product.thumbnailImage && product.thumbnailImage.public_id) {
+      if (!newThumbnail || newThumbnail.public_id !== product.thumbnailImage.public_id) {
         try {
           await cloudinary.uploader.destroy(product.thumbnailImage.public_id);
         } catch (err) {
           console.error(`Failed to delete old thumbnail:`, err);
         }
       }
-      const t = req.files.thumbnailImage[0];
-      product.thumbnailImage = {
-        url: t.secure_url || t.path || t.url,
-        public_id: t.public_id || t.filename
-      };
-    } else if (req.body.removeThumbnail === 'true') {
-      // Admin explicitly removed the thumbnail
-      if (product.thumbnailImage && product.thumbnailImage.public_id) {
-        try {
-          await cloudinary.uploader.destroy(product.thumbnailImage.public_id);
-        } catch (err) {
-          console.error(`Failed to delete thumbnail:`, err);
-        }
-      }
-      product.thumbnailImage = undefined;
     }
+    product.thumbnailImage = newThumbnail || undefined;
 
     await product.save();
     res.json(product);

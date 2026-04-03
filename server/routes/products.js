@@ -1,12 +1,7 @@
 const router = require('express').Router();
 const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, bulkDeleteProducts, importProducts } = require('../controllers/productController');
 const { protect, admin } = require('../middleware/auth');
-const { upload, csvUpload } = require('../middleware/upload');
-
-const productUpload = upload.fields([
-  { name: 'images', maxCount: 10 },
-  { name: 'thumbnailImage', maxCount: 1 }
-]);
+const { csvUpload } = require('../middleware/upload');
 
 // Wrapper that catches multer / Cloudinary upload errors gracefully
 // instead of letting them crash as unhandled 500s
@@ -21,11 +16,11 @@ const handleUpload = (uploadMiddleware) => (req, res, next) => {
 };
 
 router.get('/', getProducts);
-router.post('/', protect, admin, handleUpload(productUpload), createProduct);
+router.post('/', protect, admin, createProduct);
 router.post('/import', protect, admin, handleUpload(csvUpload.single('csv')), importProducts);
 router.post('/bulk-delete', protect, admin, bulkDeleteProducts);
 router.get('/:slug', getProductBySlug);
-router.put('/:id', protect, admin, handleUpload(productUpload), updateProduct);
+router.put('/:id', protect, admin, updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
 
 module.exports = router;

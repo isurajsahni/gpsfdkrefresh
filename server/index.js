@@ -31,7 +31,9 @@ const globalLimiter = rateLimit({
   skip: (req) => {
     // Skip rate limiting for admin product upload routes
     // These routes are already protected by auth + admin middleware
-    return req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method);
+    if (req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method)) return true;
+    if (req.path.startsWith('/api/upload') && req.method === 'POST') return true;
+    return false;
   },
 });
 app.use(globalLimiter);
@@ -81,6 +83,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/upload', require('./routes/upload'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));

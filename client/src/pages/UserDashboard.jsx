@@ -284,7 +284,7 @@ const UserDashboard = () => {
   return (
     <div className="min-h-screen bg-primary pt-[120px] pb-20">
       <div className="max-w-6xl mx-auto section-padding flex flex-col md:flex-row gap-8">
-        
+
         {/* ─── Sidebar Navigation ─────────────────────────────────────── */}
         <div className="md:w-64 flex-shrink-0">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2rem] p-6 shadow-sm md:sticky top-[100px] relative z-10">
@@ -305,13 +305,13 @@ const UserDashboard = () => {
             </div>
 
             <div className="space-y-2">
-              <button 
+              <button
                 onClick={() => setActiveTab('profile')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${activeTab === 'profile' ? 'bg-secondary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
               >
                 <HiOutlineUser className="w-5 h-5" /> My Profile
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('orders')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium ${activeTab === 'orders' ? 'bg-secondary text-white' : 'text-gray-600 hover:bg-gray-100'}`}
               >
@@ -339,7 +339,7 @@ const UserDashboard = () => {
                 className="space-y-6"
               >
                 {/* ─── Personal Information Card ─── */}
-                <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm mt-20 md:mt-0">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
                     <h3 className="text-2xl font-heading font-bold text-secondary">Personal Information</h3>
                     {!isEditing ? (
@@ -699,15 +699,15 @@ const UserDashboard = () => {
                             </span>
                             <span className="font-bold text-accent text-xl">₹{order.totalPrice?.toLocaleString()}</span>
                             {(order.status === 'pending' || order.status === 'processing') && (
-                              <button 
+                              <button
                                 onClick={async () => {
-                                  if(window.confirm('Are you sure you want to cancel this order?')) {
+                                  if (window.confirm('Are you sure you want to cancel this order?')) {
                                     try {
                                       await API.put(`/orders/${order._id}/cancel`);
                                       toast.success('Order cancelled successfully');
                                       const { data } = await API.get('/orders');
                                       setOrders(data);
-                                    } catch(err) {
+                                    } catch (err) {
                                       toast.error(err.response?.data?.message || 'Cancellation failed');
                                     }
                                   }

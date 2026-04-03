@@ -287,7 +287,7 @@ const UserDashboard = () => {
         
         {/* ─── Sidebar Navigation ─────────────────────────────────────── */}
         <div className="md:w-64 flex-shrink-0">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2rem] p-6 shadow-sm sticky top-[100px]">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-[2rem] p-6 shadow-sm md:sticky top-[100px] relative z-10">
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 relative group overflow-hidden">
                 {isAvatarUrl ? (
@@ -339,8 +339,8 @@ const UserDashboard = () => {
                 className="space-y-6"
               >
                 {/* ─── Personal Information Card ─── */}
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
                     <h3 className="text-2xl font-heading font-bold text-secondary">Personal Information</h3>
                     {!isEditing ? (
                       <button
@@ -526,8 +526,8 @@ const UserDashboard = () => {
                 </div>
 
                 {/* ─── Saved Addresses Card ─── */}
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-gray-100 pb-4 mb-6 gap-4">
                     <h3 className="text-2xl font-heading font-bold text-secondary">Saved Addresses</h3>
                     <button
                       onClick={() => { resetAddressForm(); setEditingAddress(null); setShowAddAddress(true); }}
@@ -667,7 +667,7 @@ const UserDashboard = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <div className="bg-white rounded-[2rem] p-8 shadow-sm mb-6 flex items-center justify-between">
+                <div className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h3 className="text-2xl font-heading font-bold text-secondary">Order History</h3>
                   <span className="bg-primary text-accent px-4 py-1.5 rounded-full text-sm font-bold">{orders.length} Orders</span>
                 </div>
@@ -686,7 +686,7 @@ const UserDashboard = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm"
+                        className="bg-white rounded-[2rem] p-5 sm:p-8 shadow-sm"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-6 border-b border-gray-100 pb-6">
                           <div>

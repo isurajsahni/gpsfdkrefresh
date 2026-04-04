@@ -168,11 +168,11 @@ const ProductPage = () => {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-row gap-3"
+            className="flex flex-col-reverse sm:flex-row gap-3"
           >
             {/* Thumbnails */}
             {product.images?.length > 1 && (
-              <div className="flex flex-col gap-2 overflow-y-auto scrollbar-hide">
+              <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto scrollbar-hide">
                 {product.images.map((img, index) => (
                   <div
                     key={index}
@@ -196,7 +196,7 @@ const ProductPage = () => {
                 transition={{ duration: 0.35, ease: 'easeOut' }}
                 src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
                 alt={product.name}
-                className="w-full h-full object-contain"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-xl"
               />
             </div>
           </motion.div>

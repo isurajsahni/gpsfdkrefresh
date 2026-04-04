@@ -30,6 +30,10 @@ const productSchema = new mongoose.Schema({
   tags: [String],
   rating: { type: Number, default: 0 },
   numReviews: { type: Number, default: 0 },
+  weight: { type: Number, default: 0.5 },
+  length: { type: Number, default: 10 },
+  breadth: { type: Number, default: 10 },
+  height: { type: Number, default: 10 },
   isActive: { type: Boolean, default: true },
 }, { timestamps: true });
 

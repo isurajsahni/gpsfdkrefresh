@@ -3,6 +3,7 @@ const Coupon = require('../models/Coupon');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
+const shiprocket = require('../utils/shiprocket');
 
 // Helper: get customer email and name from order
 const getCustomerInfo = async (order) => {
@@ -91,6 +92,32 @@ const triggerNewOrderNotifications = async (order) => {
         ${productListHtml}
       `
     }).catch(err => console.error('Admin order notification failed:', err.message));
+
+    // ─── Shiprocket Integration ───
+    // Automatically create shipment for Prepaid (isPaid: true) OR COD
+    if (order.isPaid || order.paymentMethod === 'cod') {
+      try {
+        console.log(`Starting Shiprocket automation for order: ${order.orderNumber}`);
+        // Populate products for dimensions/weight
+        if (!order.items[0]?.product?.weight) {
+          await order.populate('items.product', 'weight length breadth height');
+        }
+
+        const shipData = await shiprocket.createShipment(order);
+        
+        if (shipData && shipData.shipment_id) {
+          order.shipmentId = shipData.shipment_id;
+          order.awbCode = shipData.awb_code || '';
+          order.courierName = shipData.courier_name || '';
+          await order.save();
+          console.log(`Shiprocket order created: ${order.orderNumber}, Shipment ID: ${order.shipmentId}`);
+        }
+      } catch (shipErr) {
+        console.error('Shiprocket Automation Failed:', shipErr.message);
+        // We still have the internal order, so we just log the failure. 
+        // Admin can manually retry in Shiprocket panel if needed.
+      }
+    }
   } catch (err) {
     console.error('Failed to trigger order notifications:', err.message);
   }
@@ -497,10 +524,26 @@ exports.trackOrder = async (req, res, next) => {
       totalPrice: order.totalPrice,
       isPaid: order.isPaid,
       trackingNumber: order.trackingNumber,
+      awbCode: order.awbCode,
+      courierName: order.courierName,
+      trackingUrl: order.trackingUrl,
       deliveredAt: order.deliveredAt,
       paymentMethod: order.paymentMethod
     });
 
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/orders/track-awb/:awb
+exports.getShipmentTracking = async (req, res, next) => {
+  try {
+    const { awb } = req.params;
+    if (!awb) return res.status(400).json({ message: 'AWB code is required' });
+
+    const trackingData = await shiprocket.getTracking(awb);
+    res.json(trackingData);
   } catch (error) {
     next(error);
   }

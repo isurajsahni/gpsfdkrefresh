@@ -10,6 +10,7 @@ const TrackOrderPage = () => {
   const [contact, setContact] = useState('');
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
+  const [shiprocketData, setShiprocketData] = useState(null);
 
   const handleTrack = async (e) => {
     e.preventDefault();
@@ -20,10 +21,22 @@ const TrackOrderPage = () => {
 
     setLoading(true);
     setOrderData(null);
+    setShiprocketData(null);
 
     try {
       const response = await API.get(`/orders/track?orderId=${encodeURIComponent(orderId)}&contact=${encodeURIComponent(contact)}`);
       setOrderData(response.data);
+      
+      // If AWB exists, try to get real-time tracking (non-blocking)
+      if (response.data.awbCode) {
+        try {
+          const trackRes = await API.get(`/orders/track-awb/${response.data.awbCode}`);
+          setShiprocketData(trackRes.data);
+        } catch (srErr) {
+          console.error('Shiprocket tracking fetch failed:', srErr);
+        }
+      }
+      
       toast.success('Order found!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to track order. Please check your details.');
@@ -207,10 +220,41 @@ const TrackOrderPage = () => {
             ) : null}
 
             {/* Tracking / Shipping info */}
-            {orderData.trackingNumber && (
-              <div className="mt-8 sm:mt-16 bg-primary/50 rounded-xl p-4 border border-secondary/10">
-                <p className="text-secondary/80 font-medium">Tracking Number:</p>
-                <p className="text-accent font-mono mt-1">{orderData.trackingNumber}</p>
+            {(orderData.awbCode || orderData.trackingNumber) && (
+              <div className="mt-8 sm:mt-16 bg-primary/50 rounded-xl p-6 border border-secondary/10">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-1">AWB / Tracking Number</p>
+                    <p className="text-accent font-mono text-lg">{orderData.awbCode || orderData.trackingNumber}</p>
+                    {orderData.courierName && (
+                      <p className="text-secondary/80 text-sm mt-1">Courier: <span className="font-bold text-secondary">{orderData.courierName}</span></p>
+                    )}
+                  </div>
+                  {shiprocketData?.tracking_data?.track_url && (
+                    <a 
+                      href={shiprocketData.tracking_data.track_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-accent text-accent hover:bg-accent hover:text-white rounded-lg transition-colors text-sm font-medium"
+                    >
+                      Real-time Tracking <FaTruck className="ml-2 w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+
+                {/* Real-time status from Shiprocket */}
+                {shiprocketData?.tracking_data?.shipment_track?.[0] && (
+                  <div className="mt-6 pt-6 border-t border-secondary/5">
+                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-3">Live Shipment Status</p>
+                    <div className="flex items-center gap-3 text-secondary">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <p className="font-medium">{shiprocketData.tracking_data.shipment_track[0].current_status}</p>
+                    </div>
+                    {shiprocketData.tracking_data.shipment_track[0].last_location && (
+                      <p className="text-secondary/50 text-sm mt-1 ml-5">Last location: {shiprocketData.tracking_data.shipment_track[0].last_location}</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

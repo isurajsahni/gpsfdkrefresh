@@ -38,6 +38,7 @@ import TermsConditions from './pages/support/TermsConditions';
 import LocationPage from './pages/LocationPage';
 import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
+import TrackOrderPage from './pages/TrackOrderPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -136,6 +137,9 @@ function App() {
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
+
+              {/* Order Tracking */}
+              <Route path="/track-order" element={<><TrackOrderPage /><Footer /></>} />
 
               {/* Category pages — MUST be last (catch-all pattern) */}
               <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />

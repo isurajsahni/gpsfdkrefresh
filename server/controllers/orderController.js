@@ -421,3 +421,87 @@ exports.deleteOrder = async (req, res, next) => {
 };
 
 exports.calculateOrderPrices = calculateOrderPrices;
+
+// GET /api/orders/track
+exports.trackOrder = async (req, res, next) => {
+  try {
+    const { orderId, contact } = req.query;
+    
+    if (!orderId || !contact) {
+      return res.status(400).json({ message: 'Order ID and Contact (Email or Phone) are required' });
+    }
+
+    // Convert to uppercase as order numbers are uppercase
+    const cleanOrderId = orderId.trim().toUpperCase();
+    const cleanContact = contact.trim().toLowerCase();
+
+    const order = await Order.findOne({ orderNumber: cleanOrderId }).populate('items.product', 'slug name image price');
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found. Please check your Order ID.' });
+    }
+
+    let isValidContact = false;
+
+    // Check Guest Email
+    if (order.guestEmail && order.guestEmail.toLowerCase() === cleanContact) {
+      isValidContact = true;
+    }
+    
+    // Check Guest Phone
+    if (order.guestPhone && order.guestPhone === cleanContact) {
+      isValidContact = true;
+    }
+    
+    // Check Shipping Address Phone
+    if (order.shippingAddress && order.shippingAddress.phone && order.shippingAddress.phone === cleanContact) {
+      isValidContact = true;
+    }
+
+    // Check Billing Address Phone
+    if (order.billingAddress && order.billingAddress.phone && order.billingAddress.phone === cleanContact) {
+      isValidContact = true;
+    }
+
+    // Check Registered User Email/Phone if linked
+    if (!isValidContact && order.user) {
+      const User = require('../models/User');
+      const user = await User.findById(order.user);
+      if (user) {
+        if (user.email && user.email.toLowerCase() === cleanContact) isValidContact = true;
+        if (user.phone && user.phone === cleanContact) isValidContact = true;
+      }
+    }
+
+    if (!isValidContact) {
+      return res.status(403).json({ message: 'Order found, but the provided email/phone does not match our records.' });
+    }
+
+    // Return safe/redacted data
+    res.json({
+      orderNumber: order.orderNumber,
+      createdAt: order.createdAt,
+      status: order.status,
+      items: order.items.map(item => ({
+        name: item.name,
+        image: item.image,
+        quantity: item.quantity,
+        price: item.price,
+        variation: item.variation,
+        productSlug: item.product?.slug
+      })),
+      shippingAddress: {
+        city: order.shippingAddress?.city,
+        state: order.shippingAddress?.state,
+      },
+      totalPrice: order.totalPrice,
+      isPaid: order.isPaid,
+      trackingNumber: order.trackingNumber,
+      deliveredAt: order.deliveredAt,
+      paymentMethod: order.paymentMethod
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

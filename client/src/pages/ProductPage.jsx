@@ -170,26 +170,25 @@ const ProductPage = () => {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-row gap-3"
           >
-            {/* Vertical Thumbnails */}
+            {/* Thumbnails */}
             {product.images?.length > 1 && (
-              <div className="flex flex-col gap-2 overflow-y-auto max-h-[520px] scrollbar-hide">
-                {product.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={`flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 relative ${selectedImage === i
-                      ? 'border-accent shadow-md ring-2 ring-accent/30'
-                      : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-accent/50'
-                      }`}
+              <div className="flex flex-col gap-2 overflow-y-auto scrollbar-hide">
+                {product.images.map((img, index) => (
+                  <div
+                    key={index}
+                    className={`aspect-square w-20 sm:w-24 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
+                    }`}
+                    onClick={() => setSelectedImage(index)}
                   >
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
 
             {/* Main Image */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 flex items-center justify-center min-h-[400px] md:h-[520px]">
+            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white border border-gray-100 flex items-center justify-center">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}

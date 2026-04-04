@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiX } from 'react-icons/hi';
+import { motion } from 'framer-motion';
+import { HiOutlineShoppingCart, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
-import { optimizeImage } from '../utils/imageOptimizer';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -17,7 +16,7 @@ const ProductPage = () => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariation, setSelectedVariation] = useState({});
   const [customText, setCustomText] = useState('');
-  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
@@ -188,24 +187,16 @@ const ProductPage = () => {
             )}
 
             {/* Main Image */}
-            <div 
-              className="flex-1 relative rounded-2xl overflow-hidden bg-white flex items-baseline justify-center cursor-zoom-in group/zoom"
-              onClick={() => setIsZoomOpen(true)}
-            >
+            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white  flex items-baseline justify-center">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                src={optimizeImage(product.images?.[selectedImage]?.url, 900) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
+                src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
                 alt={product.name}
                 className="w-full h-auto max-h-[70vh] object-contain rounded-xl"
               />
-              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-sm p-2 rounded-full opacity-0 group-hover/zoom:opacity-100 transition-opacity duration-300 shadow-sm border border-gray-100">
-                <svg className="w-5 h-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-              </div>
             </div>
           </motion.div>
 
@@ -467,41 +458,6 @@ const ProductPage = () => {
           />
         </div>
       )}
-      {/* Zoom Modal (Lightbox) */}
-      <AnimatePresence>
-        {isZoomOpen && product.images?.[selectedImage]?.url && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsZoomOpen(false)}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 cursor-zoom-out"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="relative max-w-7xl w-full h-full flex items-center justify-center"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <img
-                src={optimizeImage(product.images[selectedImage].url, 1400)}
-                alt={product.name}
-                className="max-w-full max-h-full object-contain shadow-2xl rounded-lg"
-              />
-              
-              <button
-                onClick={() => setIsZoomOpen(false)}
-                className="absolute top-0 right-0 sm:-top-4 sm:-right-4 bg-white text-secondary p-2.5 rounded-full shadow-lg hover:bg-accent hover:text-white transition-all duration-300"
-              >
-                <HiX className="w-6 h-6" />
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
     </div>
   );
 };

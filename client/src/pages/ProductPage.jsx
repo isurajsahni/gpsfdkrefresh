@@ -176,9 +176,8 @@ const ProductPage = () => {
                 {product.images.map((img, index) => (
                   <div
                     key={index}
-                    className={`aspect-square w-20 sm:w-24 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${
-                      selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
-                    }`}
+                    className={`aspect-square w-20 sm:w-24 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
+                      }`}
                     onClick={() => setSelectedImage(index)}
                   >
                     <img src={img.url} alt="" className="w-full h-full object-cover" />
@@ -188,7 +187,7 @@ const ProductPage = () => {
             )}
 
             {/* Main Image */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white border border-gray-100 flex items-center justify-center">
+            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white  flex items-baseline justify-center">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -333,7 +332,7 @@ const ProductPage = () => {
           <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 border-b border-gray-200 pb-4">
             Product Description: {product.name}
           </h2>
-          
+
           <div className="prose prose-lg max-w-none text-gray-700">
             {/* Dynamic Description provided by Admin */}
             {product.description && (
@@ -357,7 +356,7 @@ const ProductPage = () => {
 
                 <div>
                   <h3 className="text-xl font-bold text-secondary mb-4">2. Poster Options*</h3>
-                  
+
                   <div className="space-y-6 pl-4 border-l-2 border-accent/20">
                     <div>
                       <h4 className="font-bold text-lg text-secondary mb-2">a) Soft Board Poster</h4>
@@ -389,7 +388,7 @@ const ProductPage = () => {
                 </div>
 
                 <hr className="border-gray-200 my-8" />
-                
+
                 <div className="text-center">
                   <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
                   <p className="text-accent font-medium">Eco-friendly inks | High durability | Premium finish</p>
@@ -437,7 +436,7 @@ const ProductPage = () => {
                 </div>
 
                 <hr className="border-gray-200 my-8" />
-                
+
                 <div className="text-center">
                   <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
                   <p className="text-accent font-medium">Right to Luxury | High durability | Premium finish</p>

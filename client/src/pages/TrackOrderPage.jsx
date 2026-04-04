@@ -204,7 +204,7 @@ const TrackOrderPage = () => {
               <div className="py-6 text-center text-orange-500 flex flex-col items-center justify-center">
                 <p className="font-medium">Waiting for payment confirmation.</p>
               </div>
-            )}
+            ) : null}
 
             {/* Tracking / Shipping info */}
             {orderData.trackingNumber && (

@@ -98,10 +98,8 @@ const triggerNewOrderNotifications = async (order) => {
     if (order.isPaid || order.paymentMethod === 'cod') {
       try {
         console.log(`Starting Shiprocket automation for order: ${order.orderNumber}`);
-        // Populate products for dimensions/weight
-        if (!order.items[0]?.product?.weight) {
-          await order.populate('items.product', 'weight length breadth height');
-        }
+        // Weight & dimensions are auto-calculated from item variation size
+        // via weightMapping.js — no need to populate product weight fields
 
         const shipData = await shiprocket.createShipment(order);
         

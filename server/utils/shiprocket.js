@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { getWeightBySize, getDimensionsBySize } = require('./weightMapping');
 
 class ShiprocketService {
   constructor() {
@@ -36,11 +37,27 @@ class ShiprocketService {
     try {
       const token = await this.getToken();
       
-      // Map order items and calculate total weight
+      // ─── Auto Weight & Dimension Calculation from Product Size ───
       let totalWeight = 0;
+      let maxLength = 0, maxBreadth = 0, maxHeight = 0;
+
       const orderItems = order.items.map(item => {
-        const itemWeight = (item.product?.weight || 0.5) * item.quantity;
+        // Get the variation size from the order item
+        const size = item.variation?.size || '';
+
+        // Auto-calculate weight from size mapping
+        const unitWeight = getWeightBySize(size);
+        const itemWeight = unitWeight * item.quantity;
         totalWeight += itemWeight;
+
+        // Track max dimensions (package must fit the largest item)
+        const dims = getDimensionsBySize(size);
+        maxLength = Math.max(maxLength, dims.length);
+        maxBreadth = Math.max(maxBreadth, dims.breadth);
+        maxHeight = Math.max(maxHeight, dims.height);
+
+        console.log(`[Shiprocket] Item: "${item.name}" | Size: "${size}" | Weight: ${unitWeight}kg x ${item.quantity} = ${itemWeight}kg`);
+
         return {
           name: item.name,
           sku: item.variation?.sku || item.product?._id || 'SKU-001',
@@ -57,6 +74,14 @@ class ShiprocketService {
       const nameParts = full_name.trim().split(' ');
       const billing_customer_name = nameParts[0];
       const billing_last_name = nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'Customer';
+
+      // Ensure minimum viable weight & dimensions
+      const finalWeight = Math.max(totalWeight, 0.5);
+      const finalLength = Math.max(maxLength, 10);
+      const finalBreadth = Math.max(maxBreadth, 10);
+      const finalHeight = Math.max(maxHeight, 5);
+
+      console.log(`[Shiprocket] Order ${order.orderNumber} → Total Weight: ${finalWeight}kg | Dims: ${finalLength}x${finalBreadth}x${finalHeight}cm`);
 
       const payload = {
         order_id: order.orderNumber,
@@ -76,10 +101,10 @@ class ShiprocketService {
         order_items: orderItems,
         payment_method: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
         sub_total: order.totalPrice,
-        length: 10, // Defaults, would usually take from first product or max dimensions
-        breadth: 10,
-        height: 10,
-        weight: Math.max(totalWeight, 0.5),
+        length: finalLength,
+        breadth: finalBreadth,
+        height: finalHeight,
+        weight: finalWeight,
       };
 
       const response = await axios.post(

@@ -189,7 +189,7 @@ const ProductPage = () => {
             )}
 
             {/* Main Image */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 flex items-center justify-center">
+            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 flex items-center justify-center min-h-[400px] md:h-[520px]">
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -197,7 +197,7 @@ const ProductPage = () => {
                 transition={{ duration: 0.35, ease: 'easeOut' }}
                 src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
                 alt={product.name}
-                className="w-full h-full"
+                className="w-full h-full object-contain"
               />
             </div>
           </motion.div>

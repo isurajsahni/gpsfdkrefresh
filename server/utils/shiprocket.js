@@ -6,6 +6,13 @@ class ShiprocketService {
     this.baseUrl = 'https://apiv2.shiprocket.in/v1/external';
     this.token = null;
     this.tokenExpiry = null;
+
+    // Validate credentials on startup
+    if (!process.env.SHIPROCKET_EMAIL || !process.env.SHIPROCKET_PASSWORD) {
+      console.error('⚠️ [Shiprocket] SHIPROCKET_EMAIL or SHIPROCKET_PASSWORD not set in environment variables!');
+    } else {
+      console.log(`✅ [Shiprocket] Credentials loaded for: ${process.env.SHIPROCKET_EMAIL}`);
+    }
   }
 
   async getToken() {
@@ -14,7 +21,13 @@ class ShiprocketService {
       return this.token;
     }
 
+    // Fail fast if credentials are missing
+    if (!process.env.SHIPROCKET_EMAIL || !process.env.SHIPROCKET_PASSWORD) {
+      throw new Error('Shiprocket credentials not configured. Set SHIPROCKET_EMAIL and SHIPROCKET_PASSWORD in environment.');
+    }
+
     try {
+      console.log(`[Shiprocket] Authenticating with email: ${process.env.SHIPROCKET_EMAIL}`);
       const response = await axios.post(`${this.baseUrl}/auth/login`, {
         email: process.env.SHIPROCKET_EMAIL,
         password: process.env.SHIPROCKET_PASSWORD,
@@ -24,12 +37,17 @@ class ShiprocketService {
         this.token = response.data.token;
         // Set expiry to 9 days from now
         this.tokenExpiry = Date.now() + 9 * 24 * 60 * 60 * 1000;
+        console.log('✅ [Shiprocket] Authentication successful, token acquired.');
         return this.token;
       }
-      throw new Error('Failed to get Shiprocket token');
+      throw new Error('Shiprocket auth response did not contain a token');
     } catch (error) {
-      console.error('Shiprocket Login Error:', error.response?.data || error.message);
-      throw error;
+      const errData = error.response?.data || error.message;
+      console.error('❌ [Shiprocket] Login FAILED:', JSON.stringify(errData, null, 2));
+      // Reset token on auth failure
+      this.token = null;
+      this.tokenExpiry = null;
+      throw new Error(`Shiprocket authentication failed: ${typeof errData === 'object' ? JSON.stringify(errData) : errData}`);
     }
   }
 
@@ -60,7 +78,7 @@ class ShiprocketService {
 
         return {
           name: item.name,
-          sku: item.variation?.sku || item.product?._id || 'SKU-001',
+          sku: item.variation?.sku || item.product?._id?.toString() || `SKU-${Date.now()}`,
           units: item.quantity,
           selling_price: item.price,
           discount: 0,
@@ -81,12 +99,17 @@ class ShiprocketService {
       const finalBreadth = Math.max(maxBreadth, 10);
       const finalHeight = Math.max(maxHeight, 5);
 
-      console.log(`[Shiprocket] Order ${order.orderNumber} → Total Weight: ${finalWeight}kg | Dims: ${finalLength}x${finalBreadth}x${finalHeight}cm`);
+      // Clean phone number — Shiprocket requires 10-digit Indian number
+      let phone = (order.shippingAddress.phone || order.guestPhone || '').toString().trim();
+      phone = phone.replace(/[^0-9]/g, ''); // strip non-digits
+      if (phone.length > 10) phone = phone.slice(-10); // take last 10 digits
+
+      const pickupLocation = process.env.SHIPROCKET_PICKUP_LOCATION || 'Home';
 
       const payload = {
         order_id: order.orderNumber,
         order_date: new Date(order.createdAt).toISOString().split('T')[0],
-        pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'Primary',
+        pickup_location: pickupLocation,
         billing_customer_name,
         billing_last_name,
         billing_address: order.shippingAddress.addressLine1,
@@ -96,7 +119,7 @@ class ShiprocketService {
         billing_state: order.shippingAddress.state,
         billing_country: order.shippingAddress.country || 'India',
         billing_email: order.guestEmail || 'customer@gpsfdk.com',
-        billing_phone: order.shippingAddress.phone || order.guestPhone || '',
+        billing_phone: phone,
         shipping_is_billing: true,
         order_items: orderItems,
         payment_method: order.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
@@ -107,15 +130,31 @@ class ShiprocketService {
         weight: finalWeight,
       };
 
+      console.log(`[Shiprocket] Creating order ${order.orderNumber} → Weight: ${finalWeight}kg | Dims: ${finalLength}x${finalBreadth}x${finalHeight}cm | Pickup: "${pickupLocation}" | Phone: ${phone}`);
+      console.log(`[Shiprocket] Full payload:`, JSON.stringify(payload, null, 2));
+
       const response = await axios.post(
         `${this.baseUrl}/orders/create/adhoc`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      return response.data;
+      console.log(`✅ [Shiprocket] API Response for ${order.orderNumber}:`, JSON.stringify(response.data, null, 2));
+
+      // Validate response
+      if (response.data && (response.data.order_id || response.data.shipment_id)) {
+        return response.data;
+      } else {
+        console.error(`❌ [Shiprocket] Unexpected response structure:`, JSON.stringify(response.data, null, 2));
+        throw new Error(`Shiprocket returned unexpected response: ${JSON.stringify(response.data)}`);
+      }
     } catch (error) {
-      console.error('Shiprocket Create Order Error:', error.response?.data || error.message);
+      // Extract detailed error info from Shiprocket API
+      if (error.response) {
+        console.error(`❌ [Shiprocket] API Error (HTTP ${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
+        throw new Error(`Shiprocket API error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+      }
+      console.error('❌ [Shiprocket] Create Order Error:', error.message);
       throw error;
     }
   }
@@ -129,10 +168,15 @@ class ShiprocketService {
       );
       return response.data;
     } catch (error) {
-      console.error('Shiprocket Tracking Error:', error.response?.data || error.message);
+      if (error.response) {
+        console.error(`❌ [Shiprocket] Tracking Error (HTTP ${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
+      } else {
+        console.error('❌ [Shiprocket] Tracking Error:', error.message);
+      }
       throw error;
     }
   }
 }
 
 module.exports = new ShiprocketService();
+

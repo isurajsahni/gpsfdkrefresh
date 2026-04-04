@@ -97,7 +97,7 @@ const triggerNewOrderNotifications = async (order) => {
     // Automatically create shipment for Prepaid (isPaid: true) OR COD
     if (order.isPaid || order.paymentMethod === 'cod') {
       try {
-        console.log(`Starting Shiprocket automation for order: ${order.orderNumber}`);
+        console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
         // Weight & dimensions are auto-calculated from item variation size
         // via weightMapping.js — no need to populate product weight fields
 
@@ -108,13 +108,19 @@ const triggerNewOrderNotifications = async (order) => {
           order.awbCode = shipData.awb_code || '';
           order.courierName = shipData.courier_name || '';
           await order.save();
-          console.log(`Shiprocket order created: ${order.orderNumber}, Shipment ID: ${order.shipmentId}`);
+          console.log(`✅ [Shiprocket] Order created: ${order.orderNumber}, Shipment ID: ${order.shipmentId}, AWB: ${order.awbCode || 'pending'}`);
+        } else if (shipData && shipData.order_id) {
+          // Shiprocket accepted the order but hasn't assigned shipment yet
+          console.log(`⚠️ [Shiprocket] Order ${order.orderNumber} accepted (SR Order ID: ${shipData.order_id}) but no shipment_id yet. Full response:`, JSON.stringify(shipData));
+        } else {
+          console.error(`❌ [Shiprocket] Unexpected response for ${order.orderNumber}:`, JSON.stringify(shipData));
         }
       } catch (shipErr) {
-        console.error('Shiprocket Automation Failed:', shipErr.message);
-        // We still have the internal order, so we just log the failure. 
-        // Admin can manually retry in Shiprocket panel if needed.
+        console.error(`❌ [Shiprocket] Automation FAILED for ${order.orderNumber}:`, shipErr.message);
+        // We still have the internal order, so admin can manually retry in Shiprocket panel.
       }
+    } else {
+      console.log(`[Shiprocket] Skipping for order ${order.orderNumber} — isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod}`);
     }
   } catch (err) {
     console.error('Failed to trigger order notifications:', err.message);

@@ -111,7 +111,7 @@ const CategoryPage = () => {
                 'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse',
                 'The Celestial Frontier', 'The Ethereal Gaze', 'The Gaze of Power',
                 'The Modern Legend', 'The Gilded Bloom', 'The Velocity Suite',
-                'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'Ink & Interval'
+                'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'Ink & Interval', 'The Wild Eccentrics'
               ].map(sub => {
                 const subSlug = generateSlug(sub);
                 const isActive = subcategorySlug === subSlug;

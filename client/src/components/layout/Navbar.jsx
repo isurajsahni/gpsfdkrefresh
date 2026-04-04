@@ -44,7 +44,8 @@ const Navbar = () => {
       'Millionaire Art',
       'Nostalgia Noir',
       'The After Hour Suite',
-      'Ink & Interval'
+      'Ink & Interval',
+      'The Wild Eccentrics'
     ] },
     { name: 'House Nameplates', slug: 'house-nameplates', subcats: [] },
   ];

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
+import ViewOnWallModal from '../components/product/ViewOnWallModal';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -17,6 +18,7 @@ const ProductPage = () => {
   const [selectedVariation, setSelectedVariation] = useState({});
   const [customText, setCustomText] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [isWallPreviewOpen, setIsWallPreviewOpen] = useState(false);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
@@ -321,6 +323,12 @@ const ProductPage = () => {
               <button onClick={handleAddToCart} className="btn-primary w-full flex items-center justify-center gap-3 text-lg">
                 <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
               </button>
+              <button 
+                onClick={() => setIsWallPreviewOpen(true)}
+                className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+              >
+                <HiEye className="w-5 h-5" /> View on Your Wall
+              </button>
             </div>
           </motion.div>
         </div>
@@ -457,6 +465,15 @@ const ProductPage = () => {
             excludeId={product._id}
           />
         </div>
+      )}
+
+      {/* View on Wall AR Modal */}
+      {product && (
+        <ViewOnWallModal 
+          isOpen={isWallPreviewOpen} 
+          onClose={() => setIsWallPreviewOpen(false)} 
+          imageUrl={product.images?.[selectedImage]?.url} 
+        />
       )}
     </div>
   );

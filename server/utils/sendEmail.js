@@ -1,12 +1,16 @@
 const { Resend } = require('resend');
 
+// Support both RESEND_API_KEY (recommended) and EMAIL_PASS (legacy)
+const getApiKey = () => (process.env.RESEND_API_KEY || process.env.EMAIL_PASS || '').trim();
+
 const sendEmail = async (options) => {
-  if (!process.env.EMAIL_PASS) {
-    console.warn('Resend API key missing in EMAIL_PASS, skipping email.');
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    console.warn('Resend API key missing (set RESEND_API_KEY or EMAIL_PASS), skipping email.');
     return; // Silent fail gracefully in dev if no key
   }
 
-  const resend = new Resend(process.env.EMAIL_PASS);
+  const resend = new Resend(apiKey);
   
   // Use the verified domain from EMAIL_FROM, fallback to testing address
   const senderEmail = (process.env.EMAIL_FROM || 'onboarding@resend.dev').trim();

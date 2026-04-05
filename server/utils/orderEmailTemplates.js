@@ -103,6 +103,11 @@ const renderPriceSummary = (order) => `
       <td style="padding: 6px 0; color: #666; font-size: 14px;">Shipping</td>
       <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${order.shippingPrice > 0 ? formatPrice(order.shippingPrice) : 'Free'}</td>
     </tr>
+    ${order.discountPrice > 0 ? `
+    <tr>
+      <td style="padding: 6px 0; color: #16a34a; font-size: 14px;">Discount${order.couponCode ? ' (' + order.couponCode + ')' : ''}</td>
+      <td style="padding: 6px 0; text-align: right; color: #16a34a; font-size: 14px;">-${formatPrice(order.discountPrice)}</td>
+    </tr>` : ''}
     ${order.taxPrice > 0 ? `
     <tr>
       <td style="padding: 6px 0; color: #666; font-size: 14px;">Tax</td>
@@ -138,18 +143,30 @@ const renderAddress = (address) => {
 
 // 1. ORDER PLACED
 const orderPlaced = (order, customerName) => {
+  const trackingLink = order.awbCode ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?awb=${order.awbCode}` : '';
+
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">🎉</div>
-      <h2 style="color: #333; margin: 0; font-size: 24px;">Thank You for Your Order!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your order has been placed successfully.</p>
+      <h2 style="color: #333; margin: 0; font-size: 24px;">Your Order is Confirmed!</h2>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, thank you for shopping with GPSFDK! Your order has been placed successfully.</p>
     </div>
 
     <div style="background: #f0faf4; border-left: 4px solid ${brandColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
       <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Order Number</div>
       <div style="font-size: 20px; font-weight: 700; color: ${brandColor}; margin-top: 4px;">${order.orderNumber}</div>
-      <div style="font-size: 12px; color: #888; margin-top: 4px;">Payment: ${order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod.toUpperCase()}</div>
+      <div style="font-size: 12px; color: #888; margin-top: 4px;">Payment: ${order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod === 'free' ? 'Free Order' : order.paymentMethod.toUpperCase()}</div>
     </div>
+
+    ${order.awbCode ? `
+    <div style="background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
+      <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
+      <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${order.awbCode}</div>
+      ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
+      <div style="margin-top: 12px;">
+        <a href="${trackingLink}" style="display: inline-block; background: #1976d2; color: #ffffff !important; text-decoration: none; padding: 10px 25px; border-radius: 6px; font-weight: 600; font-size: 13px;">Track Your Order →</a>
+      </div>
+    </div>` : ''}
 
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Order Summary</h3>
     ${renderItems(order.items)}
@@ -157,7 +174,8 @@ const orderPlaced = (order, customerName) => {
     ${renderAddress(order.shippingAddress)}
 
     <div style="text-align: center; margin-top: 30px;">
-      <p style="color: #666; font-size: 14px;">We'll notify you when your order is shipped.</p>
+      ${order.awbCode ? `<p style="color: #666; font-size: 14px;">You can track your order anytime using the link above.</p>` : `<p style="color: #666; font-size: 14px;">We'll notify you when your order is shipped with tracking details.</p>`}
+      <p style="color: #888; font-size: 13px; margin-top: 10px;">Thank you for choosing GPSFDK! 💚</p>
     </div>
   `;
   return emailWrapper(content, `Order ${order.orderNumber} confirmed! Thank you for shopping with GPSFDK.`);
@@ -192,6 +210,9 @@ const orderProcessing = (order, customerName) => {
 
 // 3. ORDER SHIPPED / DISPATCHED
 const orderShipped = (order, customerName) => {
+  const awb = order.awbCode || order.trackingNumber || '';
+  const trackingLink = awb ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?awb=${awb}` : '';
+
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">🚚</div>
@@ -202,16 +223,22 @@ const orderShipped = (order, customerName) => {
     <div style="background: #e8f5e9; border-left: 4px solid ${brandColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
       <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Order Number</div>
       <div style="font-size: 20px; font-weight: 700; color: ${brandColor}; margin-top: 4px;">${order.orderNumber}</div>
-      ${order.trackingNumber ? `
+      ${awb ? `
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #c8e6c9;">
-          <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number</div>
-          <div style="font-size: 16px; font-weight: 700; color: #333; margin-top: 4px;">${order.trackingNumber}</div>
+          <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
+          <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${awb}</div>
+          ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
         </div>
       ` : ''}
       <div style="margin-top: 10px;">
         <span class="status-badge" style="background: #e8f5e9; color: ${brandColor};">Shipped</span>
       </div>
     </div>
+
+    ${awb ? `
+    <div style="text-align: center; margin-bottom: 25px;">
+      <a href="${trackingLink}" class="btn" style="display: inline-block; background: ${brandColor}; color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">Track Your Order →</a>
+    </div>` : ''}
 
     ${renderAddress(order.shippingAddress)}
 
@@ -221,6 +248,7 @@ const orderShipped = (order, customerName) => {
 
     <div style="text-align: center; margin-top: 25px;">
       <p style="color: #666; font-size: 14px;">Estimated delivery: 5-7 business days</p>
+      <p style="color: #888; font-size: 13px; margin-top: 5px;">Thank you for shopping with GPSFDK! 💚</p>
     </div>
   `;
   return emailWrapper(content, `Your order ${order.orderNumber} has been shipped!`);

@@ -36,10 +36,10 @@ const sendOrderEmail = async (order, status) => {
     };
 
     const subjectMap = {
-      pending: `Order Confirmed - ${order.orderNumber}`,
-      processing: `Order Being Prepared - ${order.orderNumber}`,
-      shipped: `Order Shipped - ${order.orderNumber}`,
-      delivered: `Order Delivered - ${order.orderNumber}`,
+      pending: `Your Order is Confirmed 🎉 - ${order.orderNumber}`,
+      processing: `Order Being Prepared ⚙️ - ${order.orderNumber}`,
+      shipped: `Your Order Has Been Shipped 🚚 - ${order.orderNumber}`,
+      delivered: `Order Delivered ✅ - ${order.orderNumber}`,
       cancelled: `Order Cancelled - ${order.orderNumber}`,
     };
 
@@ -64,9 +64,6 @@ const triggerNewOrderNotifications = async (order) => {
       await order.populate('items.product', 'slug');
     }
 
-    // Send customer confirmation
-    sendOrderEmail(order, 'pending');
-
     const productListHtml = order.items.map(item => `
       <div style="margin-bottom: 10px;">
         <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
@@ -77,7 +74,7 @@ const triggerNewOrderNotifications = async (order) => {
       </div>
     `).join('');
 
-    // Send Admin Alert
+    // Send Admin Alert (immediately, doesn't need AWB)
     sendEmail({
       email: 'suraj.gnimt@gmail.com',
       subject: `New ${order.user ? '' : 'Guest '}Order Placed - ${order.orderNumber}`,
@@ -95,6 +92,7 @@ const triggerNewOrderNotifications = async (order) => {
 
     // ─── Shiprocket Integration ───
     // Automatically create shipment for Prepaid (isPaid: true) OR COD
+    // IMPORTANT: Run Shiprocket BEFORE sending customer email so AWB is included
     if (order.isPaid || order.paymentMethod === 'cod') {
       try {
         console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
@@ -122,6 +120,11 @@ const triggerNewOrderNotifications = async (order) => {
     } else {
       console.log(`[Shiprocket] Skipping for order ${order.orderNumber} — isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod}`);
     }
+
+    // ─── Send Customer Confirmation Email ───
+    // Sent AFTER Shiprocket so the order object now has AWB/tracking data
+    sendOrderEmail(order, 'pending');
+
   } catch (err) {
     console.error('Failed to trigger order notifications:', err.message);
   }

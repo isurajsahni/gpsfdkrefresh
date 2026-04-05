@@ -63,9 +63,19 @@ const TrackOrderPage = () => {
     }
   };
 
-  const currentStep = orderData ? getStepIndex(orderData.status) : -1;
+  let currentStep = orderData ? getStepIndex(orderData.status) : -1;
   const isCancelled = orderData?.status === 'cancelled';
   const isPaymentPending = orderData?.status === 'payment_pending';
+
+  // Sync our local progress tracker with live Shiprocket status
+  if (shiprocketData?.tracking_data?.shipment_track?.[0]) {
+    const srStatus = shiprocketData.tracking_data.shipment_track[0].current_status?.toLowerCase() || '';
+    if (srStatus.includes('delivered')) {
+      currentStep = 3;
+    } else if (srStatus.includes('out for delivery') || srStatus.includes('shipped') || srStatus.includes('in transit') || srStatus.includes('dispatched')) {
+      currentStep = Math.max(currentStep, 2);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-primary pt-24 pb-12 px-4 sm:px-6 lg:px-8">
@@ -243,16 +253,59 @@ const TrackOrderPage = () => {
                 </div>
 
                 {/* Real-time status from Shiprocket */}
-                {shiprocketData?.tracking_data?.shipment_track?.[0] && (
+                {shiprocketData?.tracking_data && (
                   <div className="mt-6 pt-6 border-t border-secondary/5">
-                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-3">Live Shipment Status</p>
-                    <div className="flex items-center gap-3 text-secondary">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <p className="font-medium">{shiprocketData.tracking_data.shipment_track[0].current_status}</p>
-                    </div>
-                    {shiprocketData.tracking_data.shipment_track[0].last_location && (
-                      <p className="text-secondary/50 text-sm mt-1 ml-5">Last location: {shiprocketData.tracking_data.shipment_track[0].last_location}</p>
-                    )}
+                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-4">Detailed Tracking History</p>
+                    
+                    {(() => {
+                      const trackObj = shiprocketData.tracking_data.shipment_track?.[0] || {};
+                      const activities = shiprocketData.tracking_data.shipment_track_activities || trackObj.activities || [];
+                      
+                      if (activities.length > 0) {
+                        return (
+                          <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
+                            {activities.map((activity, index) => (
+                              <div key={index} className="relative pl-6">
+                                {/* Dot for timeline */}
+                                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? 'bg-accent animate-pulse' : 'bg-secondary/40'}`}></div>
+                                
+                                <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
+                                  {activity.activity || activity.status || 'Status Updated'}
+                                </p>
+                                
+                                <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
+                                  {activity.date && (
+                                    <span className="flex items-center gap-1">
+                                      <FaCheckCircle className="w-3 h-3 opacity-50" />
+                                      {new Date(activity.date).toLocaleString()}
+                                    </span>
+                                  )}
+                                  {activity.location && (
+                                    <span className="flex items-center gap-1">
+                                      <FaMapMarkerAlt className="w-3 h-3 opacity-50" />
+                                      {activity.location}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      } else {
+                        // Fallback if no activities array but we have current status
+                        return trackObj.current_status ? (
+                          <div className="flex items-center gap-3 text-secondary">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <p className="font-medium">{trackObj.current_status}</p>
+                            {trackObj.last_location && (
+                              <span className="text-secondary/50 text-sm ml-2">({trackObj.last_location})</span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-secondary/60 text-sm italic py-2">Tracking details will update once the courier scans your package.</p>
+                        );
+                      }
+                    })()}
                   </div>
                 )}
               </div>

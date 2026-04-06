@@ -14,6 +14,7 @@ import CartDrawer from './components/layout/CartDrawer';
 import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
 import PageLoader from './components/common/PageLoader';
+import ChatBot from './components/common/ChatBot';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -93,6 +94,7 @@ function App() {
               <Navbar />
               <CartDrawer />
               <SearchOverlay />
+              <ChatBot />
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<><HomePage /><Footer /></>} />

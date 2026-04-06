@@ -83,7 +83,7 @@ const MasonryGrid = () => {
               >
                 <Link to={`/product/${product.slug}`} className="block w-full h-full">
                   <img
-                    src={optimizeImage(product.images?.[0]?.url, 600) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                    src={optimizeImage(product.images?.[0]?.url, 500) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                     alt={product.name}
                     className="w-full h-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                     fetchpriority="high"

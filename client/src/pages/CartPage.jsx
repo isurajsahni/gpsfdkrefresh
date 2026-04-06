@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiOutlineTrash, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
@@ -41,7 +42,7 @@ const CartPage = () => {
                 className="bg-white rounded-2xl p-5 flex gap-5 shadow-sm"
               >
                 <Link to={`/product/${item.slug}`} className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-cream-dark">
-                  <img src={item.image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300'} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={optimizeImage(item.image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300', 200)} alt={item.name} className="w-full h-full object-cover" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
 import { useUI } from '../../context/UIContext';
 import API from '../../utils/api';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const SearchOverlay = () => {
   const { isSearchOpen, setIsSearchOpen } = useUI();
@@ -108,7 +109,7 @@ const SearchOverlay = () => {
                           to={`/product/${product.slug}`}
                           className="flex items-center gap-6 p-4 rounded-2xl hover:bg-white transition-colors group"
                         >
-                          <img src={product.images?.[0]?.url} alt={product.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl bg-cream-dark" />
+                          <img src={optimizeImage(product.images?.[0]?.url, 200)} alt={product.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl bg-cream-dark" />
                           <div>
                             <h4 className="font-heading font-bold text-lg md:text-xl text-secondary group-hover:text-accent transition-colors">{product.name}</h4>
                             <p className="text-gray-500 text-sm mt-1">{product.category?.name}</p>

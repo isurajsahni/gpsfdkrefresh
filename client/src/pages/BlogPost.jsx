@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import SEO from '../components/seo/SEO';
 import blogs from '../content/blogs/index';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const BlogPost = () => {
   const { slug } = useParams();
@@ -96,7 +97,7 @@ const BlogPost = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
             <div className="w-full aspect-square bg-white rounded-sm shadow-2xl flex items-center justify-center p-2 relative">
               <img
-                src={blog.image}
+                src={optimizeImage(blog.image, 1000)}
                 alt={blog.title}
                 className="w-full h-full object-cover rounded-sm border border-gray-100"
               />
@@ -165,7 +166,7 @@ const BlogPost = () => {
                   <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 h-full flex flex-col hover:-translate-y-1">
                     <div className="relative aspect-[16/10] overflow-hidden">
                       <img
-                        src={r.image}
+                        src={optimizeImage(r.image, 500)}
                         alt={r.title}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                         loading="lazy"

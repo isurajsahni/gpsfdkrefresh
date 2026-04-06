@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -151,7 +152,7 @@ const ProductPage = () => {
         <SEO
           title={`${product.name} | Custom Designs by GPSFDK`}
           description={product.description?.substring(0, 160)}
-          image={product.images?.[0]?.url}
+          image={optimizeImage(product.images?.[0]?.url, 800)}
           schema={productSchema}
         />
       )}
@@ -182,7 +183,7 @@ const ProductPage = () => {
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    <img src={optimizeImage(img.url, 200)} alt="" className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -195,7 +196,7 @@ const ProductPage = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                src={product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900'}
+                src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 800)}
                 alt={product.name}
                 className="w-full h-auto max-h-[70vh] object-contain rounded-xl"
               />
@@ -475,7 +476,7 @@ const ProductPage = () => {
         <ViewOnWallModal 
           isOpen={isWallPreviewOpen} 
           onClose={() => setIsWallPreviewOpen(false)} 
-          imageUrl={product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url} 
+          imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)} 
         />
       )}
     </div>

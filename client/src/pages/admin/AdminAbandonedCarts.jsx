@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingCart, HiOutlineTrash, HiOutlineMail } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const AdminAbandonedCarts = () => {
   const [carts, setCarts] = useState([]);
@@ -90,7 +91,7 @@ const AdminAbandonedCarts = () => {
                 <div className="space-y-3 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
                   {cart.cartItems?.map((item, idx) => (
                     <div key={idx} className="flex gap-3 text-sm">
-                      <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded shadow-sm border border-gray-100" />
+                      <img src={optimizeImage(item.image, 100)} alt={item.name} className="w-10 h-10 object-cover rounded shadow-sm border border-gray-100" />
                       <div>
                         <p className="text-secondary font-medium leading-tight line-clamp-1">{item.name}</p>
                         <p className="text-gray-500 text-xs mt-0.5">Qty: {item.quantity} · ₹{item.price}</p>

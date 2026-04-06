@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
+import { optimizeImage } from '../utils/imageOptimizer';
 import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
   HiOutlineMail, HiOutlinePhone, HiOutlinePencil, HiOutlineCheck,
@@ -291,7 +292,7 @@ const UserDashboard = () => {
             <div className="text-center mb-8">
               <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4 relative group overflow-hidden">
                 {isAvatarUrl ? (
-                  <img src={currentAvatar} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={optimizeImage(currentAvatar, 200)} alt="Profile" className="w-full h-full object-cover" />
                 ) : currentAvatar ? (
                   <span className="text-3xl">{currentAvatar}</span>
                 ) : (
@@ -382,7 +383,7 @@ const UserDashboard = () => {
                           {avatarUploading ? (
                             <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
                           ) : editAvatar && editAvatar.startsWith('http') ? (
-                            <img src={editAvatar} alt="Profile" className="w-full h-full object-cover" />
+                            <img src={optimizeImage(editAvatar, 200)} alt="Profile" className="w-full h-full object-cover" />
                           ) : editAvatar ? (
                             <span className="text-3xl">{editAvatar}</span>
                           ) : (
@@ -722,7 +723,7 @@ const UserDashboard = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {order.items?.map((item, j) => (
                             <Link key={j} to={`/product/${item.product?.slug || item.product}`} className="flex items-center gap-4 bg-primary rounded-xl p-3 hover:shadow-md transition-shadow group">
-                              <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
+                              <img src={optimizeImage(item.image, 200)} alt={item.name} className="w-16 h-16 rounded-lg object-cover" />
                               <div className="flex-1">
                                 <span className="font-bold text-secondary group-hover:text-accent transition-colors line-clamp-1">{item.name}</span>
                                 <div className="text-sm text-gray-500 mt-1 flex justify-between">

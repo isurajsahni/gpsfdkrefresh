@@ -7,6 +7,7 @@ import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -632,7 +633,7 @@ const CheckoutPage = () => {
                 {cartItems.map(item => (
                   <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                      <img src={optimizeImage(item.image, 200)} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                       <div>
                         <p className="font-semibold text-sm">{item.name}</p>
                         <p className="text-xs text-gray-500">{item.variation?.size} × {item.quantity}</p>

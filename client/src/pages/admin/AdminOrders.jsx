@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineChevronDown, HiOutlineChevronUp, HiOutlinePhone, HiOutlineMail, HiOutlineLocationMarker, HiOutlineTrash } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -155,7 +156,7 @@ const AdminOrders = () => {
                     {order.items?.map((item, j) => (
                       <div key={j} className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1.5">
                         {item.image && (
-                          <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                          <img src={optimizeImage(item.image, 100)} alt={item.name} className="w-8 h-8 rounded object-cover flex-shrink-0" />
                         )}
                         <span className="text-xs font-medium text-gray-700">{item.name} ×{item.quantity}</span>
                       </div>
@@ -187,7 +188,7 @@ const AdminOrders = () => {
                               {order.items?.map((item, j) => (
                                 <div key={j} className="flex gap-3 bg-gray-50 rounded-xl p-3">
                                   {item.image ? (
-                                    <img src={item.image} alt={item.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
+                                    <img src={optimizeImage(item.image, 200)} alt={item.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
                                   ) : (
                                     <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center text-gray-400 text-xs flex-shrink-0">No img</div>
                                   )}

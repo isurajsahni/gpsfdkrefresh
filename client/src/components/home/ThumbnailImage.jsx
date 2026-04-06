@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const ThumbnailImage = ({ src, alt, slug, isEven }) => {
   return (
@@ -12,7 +13,7 @@ const ThumbnailImage = ({ src, alt, slug, isEven }) => {
         }`}
       >
         <img
-          src={src}
+          src={optimizeImage(src, 500)}
           alt={alt}
           loading="lazy"
           className="w-full h-auto object-cover"

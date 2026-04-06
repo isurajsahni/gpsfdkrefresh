@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+import { optimizeImage } from '../../utils/imageOptimizer';
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
@@ -276,7 +277,7 @@ const AdminProducts = () => {
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-4 mb-4">
                   {form.images.map((img, i) => (
                     <div key={`img-${i}`} className="relative aspect-square rounded-xl overflow-hidden border">
-                      <img src={img.url} alt="" className="w-full h-full object-cover" />
+                      <img src={optimizeImage(img.url, 200)} alt="" className="w-full h-full object-cover" />
                       <button type="button" onClick={() => handleRemoveImage(i)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
                         <HiOutlineX className="w-3 h-3" />
                       </button>
@@ -293,7 +294,7 @@ const AdminProducts = () => {
                 <div className="flex gap-4 mb-4">
                   {form.thumbnailImage ? (
                     <div className="relative w-32 aspect-square rounded-xl overflow-hidden border">
-                      <img src={form.thumbnailImage.url} alt="Thumbnail" className="w-full h-full object-cover" />
+                      <img src={optimizeImage(form.thumbnailImage.url, 400)} alt="Thumbnail" className="w-full h-full object-cover" />
                       <button type="button" onClick={() => setForm({ ...form, thumbnailImage: null })} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors">
                         <HiOutlineX className="w-3 h-3" />
                       </button>
@@ -361,7 +362,7 @@ const AdminProducts = () => {
                     <td className="px-4 py-4"><input type="checkbox" checked={selectedIds.includes(product._id)} onChange={() => toggleSelect(product._id)} className="accent-accent w-4 h-4 cursor-pointer" /></td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <img src={product.images?.[0]?.url || 'https://via.placeholder.com/50'} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                        <img src={optimizeImage(product.images?.[0]?.url || 'https://via.placeholder.com/50', 100)} alt="" className="w-10 h-10 rounded-lg object-cover" />
                         <span className="font-medium text-secondary">{product.name}</span>
                       </div>
                     </td>

@@ -1,29 +1,37 @@
 /**
  * Optimizes Cloudinary URLs by injecting transformation parameters.
- * Automatically converts massive RAW uploads into tiny WebP formats, 
- * slashing image payloads to fix rendering delays.
+ * - f_auto: Automatically selects the best image format (WebP/AVIF).
+ * - q_auto: Automatically adjusts quality for optimal size/clarity.
+ * - c_limit: Resize the image while maintaining aspect ratio, without upscaling.
+ * - w_{width}: Specifies the target width.
  * 
  * @param {string} url - The original image URL
- * @param {number} width - The maximum width to scale to
+ * @param {number} width - The target width (optional)
  * @returns {string} The optimized CDN URL
  */
-export const optimizeImage = (url, width = 600) => {
+export const optimizeImage = (url, width) => {
   if (!url) return '';
   
   // Only intercept known Cloudinary raw upload URLs
   if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
-    // If the image already has transformation parameters, don't double dip
-    if (url.includes('/upload/v') || url.match(/\/upload\/[a-z_]+/)) {
-      const parts = url.split('/upload/');
-      if (parts.length === 2 && parts[1].startsWith('v')) {
-        return `${parts[0]}/upload/w_${width},q_auto,f_auto/${parts[1]}`;
-      }
+    // Avoid double transformation or transforming already optimized URLs
+    if (url.includes('/f_auto') || url.includes('/q_auto')) {
+      return url;
     }
-    
-    // Default safe fallback interception
+
     const parts = url.split('/upload/');
     if (parts.length === 2) {
-      return `${parts[0]}/upload/w_${width},q_auto,f_auto/${parts[1]}`;
+      // Construct transformation string
+      // Always include f_auto,q_auto
+      let transform = 'f_auto,q_auto';
+      
+      // If width is provided, add scaling transformation
+      if (width) {
+        transform += `,w_${width},c_limit`;
+      }
+      
+      // Reconstruct the URL with the transformation
+      return `${parts[0]}/upload/${transform}/${parts[1]}`;
     }
   }
   

@@ -4,6 +4,7 @@ import { FaSearch, FaBox, FaCheckCircle, FaTruck, FaMapMarkerAlt, FaTimesCircle 
 import { Link } from 'react-router-dom';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const TrackOrderPage = () => {
   const [orderId, setOrderId] = useState('');
@@ -318,7 +319,7 @@ const TrackOrderPage = () => {
                 {orderData.items.map((item, index) => (
                   <div key={index} className="flex items-center gap-4 bg-primary/30 p-3 rounded-xl border border-secondary/5 hover:border-secondary/20 transition-colors">
                     <img 
-                      src={item.image} 
+                      src={optimizeImage(item.image, 200)} 
                       alt={item.name} 
                       className="w-16 h-16 object-cover rounded-lg"
                     />

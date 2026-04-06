@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import SEO from '../components/seo/SEO';
 import blogs from '../content/blogs/index';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const BlogList = () => {
   const blogSchema = {
@@ -72,7 +73,7 @@ const BlogList = () => {
                   {/* Padded Image Container */}
                   <div className="relative aspect-[4/3] overflow-hidden mb-5">
                     <img
-                      src={blog.image}
+                      src={optimizeImage(blog.image, 600)}
                       alt={blog.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       loading="lazy"

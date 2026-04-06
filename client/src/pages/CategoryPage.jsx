@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
+import { optimizeImage } from '../utils/imageOptimizer';
 
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
@@ -177,7 +178,7 @@ const CategoryPage = () => {
                   {slug === 'wall-canvas' ? (
                     <div className="bg-[#fff7e7] rounded-2xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
                       <div className="relative aspect-[4/5] w-full rounded-xl overflow-hidden mb-5 shadow-sm">
-                        <img src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
+                        <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                       </div>
                       <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
                         <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
@@ -194,7 +195,7 @@ const CategoryPage = () => {
                     <>
                       <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
                         <img
-                          src={product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                          src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)}
                           alt={product.name}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                           loading="lazy"

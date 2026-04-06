@@ -124,8 +124,8 @@ const ProductZigzagPage = ({ category, slug }) => {
             <p className="text-white/80 text-base md:text-lg lg:text-xl leading-relaxed max-w-xl mb-10">
               {category?.description || 'Elegant, customizable house nameplates crafted with precision. Make your home entrance unforgettable.'}
             </p>
-            
-            <button 
+
+            <button
               onClick={() => {
                 containerRef.current?.scrollIntoView({ behavior: 'smooth' });
               }}
@@ -138,20 +138,20 @@ const ProductZigzagPage = ({ category, slug }) => {
             </button>
           </motion.div>
           {/* Decorative subtle gradient */}
-          <div className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-[15%] left-0 w-96 h-96 bg-accent/5 rounded-full blur-[100px] pointer-events-none" />
         </div>
 
         {/* Right Side: Image */}
         <div className="w-full md:w-1/2 h-[50vh] md:h-full relative overflow-hidden">
-          <motion.div 
-            initial={{ scale: 1.05 }} 
-            animate={{ scale: 1 }} 
+          <motion.div
+            initial={{ scale: 1.05 }}
+            animate={{ scale: 1 }}
             transition={{ duration: 1.5, ease: "easeOut" }}
             className="w-full h-full relative"
           >
-            <img 
-              src={heroImage} 
-              alt={category?.name || "House Nameplates Details"} 
+            <img
+              src={heroImage}
+              alt={category?.name || "House Nameplates Details"}
               className="w-full h-full object-cover object-center"
             />
             {/* Gradient to blend with left side on desktop */}

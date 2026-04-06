@@ -475,7 +475,7 @@ const ProductPage = () => {
         <ViewOnWallModal 
           isOpen={isWallPreviewOpen} 
           onClose={() => setIsWallPreviewOpen(false)} 
-          imageUrl={product.images?.[selectedImage]?.url} 
+          imageUrl={product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url} 
         />
       )}
     </div>

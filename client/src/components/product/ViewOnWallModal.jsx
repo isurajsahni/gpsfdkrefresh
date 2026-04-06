@@ -78,6 +78,13 @@ const ViewOnWallModal = ({ isOpen, onClose, imageUrl }) => {
     };
   }, []);
 
+  // Bind the video stream to the video element after it has been mounted
+  useEffect(() => {
+    if (hasStarted && stream && videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [hasStarted, stream]);
+
   if (!isOpen) return null;
 
   const handlePointerDown = (e) => {

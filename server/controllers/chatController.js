@@ -1,18 +1,10 @@
-const { OpenAI } = require('openai');
-
-// Note: Initialization happens once, but we check for existence of API key
-if (!process.env.OPENAI_API_KEY) {
-  console.warn('WARNING: OPENAI_API_KEY is not defined in environment variables.');
-}
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 /**
- * Handles AI Chatbot messages
- * POST /api/chat
+ * AI Chatbot powered by Google Gemini
+ * Model: gemini-1.5-flash (Free/Fast)
  */
+
 exports.handleChat = async (req, res) => {
   const { message, history } = req.body;
 
@@ -20,61 +12,61 @@ exports.handleChat = async (req, res) => {
     return res.status(400).json({ message: 'Message is required' });
   }
 
-  // Double check API key inside handler to catch late-load issues
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('CRITICAL ERROR: OPENAI_API_KEY is null or undefined.');
-    return res.status(500).json({ message: 'AI Assistant initialization error.' });
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('CRITICAL ERROR: GEMINI_API_KEY is not defined.');
+    return res.status(500).json({ message: 'AI Assistant internal configuration error.' });
   }
 
   try {
-    const systemPrompt = {
-      role: 'system',
-      content: 'You are a wall decor expert for GPSFDK. Help users choose canvas size, design, and placement. Keep answers short, friendly, and helpful.'
-    };
-
-    const messages = [systemPrompt];
-    
-    if (history && Array.isArray(history)) {
-      const recentHistory = history.slice(-10).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-      messages.push(...recentHistory);
-    }
-
-    messages.push({ role: 'user', content: message });
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages,
-      max_tokens: 250,
-      temperature: 0.7,
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-1.5-flash",
+      systemInstruction: "You are a wall decor expert for GPSFDK. Help users choose canvas size, design, and placement. Keep responses short, friendly, and helpful."
     });
 
-    const aiMessage = response.choices[0].message.content;
-    res.json({ message: aiMessage });
+    // Gemini expects 'user' and 'model' roles
+    const contents = [];
+    
+    if (history && Array.isArray(history)) {
+      // Use last 10 messages for context
+      const recentHistory = history.slice(-10).map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      }));
+      contents.push(...recentHistory);
+    }
+
+    // Add current user message
+    contents.push({
+      role: 'user',
+      parts: [{ text: message }]
+    });
+
+    const result = await model.generateContent({
+      contents,
+      generationConfig: {
+        maxOutputTokens: 300,
+        temperature: 0.7,
+      },
+    });
+
+    const response = await result.response;
+    const aiText = response.text();
+    
+    res.json({ message: aiText });
   } catch (error) {
-    // Explicit requested logging: log errors clearly for Render/Debug
-    console.error('--- OpenAI API Error Start ---');
+    console.error('--- Gemini API Error Start ---');
     console.error('Message:', error.message);
     if (error.response) {
-      console.error('Status:', error.response.status);
-      console.error('Data:', JSON.stringify(error.response.data, null, 2));
+      console.error('Details:', error.response);
     } else {
-      console.error('Error Details:', error);
+      console.error('Stack:', error.stack);
     }
-    console.error('--- OpenAI API Error End ---');
-
-    // Handle specific common API failures
-    if (error.status === 401) {
-      return res.status(500).json({ message: 'Invalid API configuration. Please check the backend settings.' });
-    }
-    if (error.status === 429) {
-      return res.status(429).json({ message: 'The AI is very busy! Please wait a moment and try again.' });
-    }
+    console.error('--- Gemini API Error End ---');
 
     res.status(500).json({ 
-      message: 'I’m having a small technical hiccup. Could you try sending that again?' 
+      message: 'I’m taking a quick break to admire some art. Please try again in a moment!' 
     });
   }
 };

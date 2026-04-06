@@ -323,12 +323,15 @@ const ProductPage = () => {
               <button onClick={handleAddToCart} className="btn-primary w-full flex items-center justify-center gap-3 text-lg">
                 <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
               </button>
-              <button 
-                onClick={() => setIsWallPreviewOpen(true)}
-                className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
-              >
-                <HiEye className="w-5 h-5" /> View on Your Wall
-              </button>
+              {/* Only show 'View on Your Wall' for wall-related products instead of applying it to all products */}
+              {['wall-canvas', 'house-nameplates', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
+                <button 
+                  onClick={() => setIsWallPreviewOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
+                >
+                  <HiEye className="w-5 h-5" /> View on Your Wall
+                </button>
+              )}
             </div>
           </motion.div>
         </div>

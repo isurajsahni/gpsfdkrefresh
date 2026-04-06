@@ -1,68 +1,82 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HiX } from 'react-icons/hi';
+import { HiX, HiCamera } from 'react-icons/hi';
 import { motion } from 'framer-motion';
 
 const ViewOnWallModal = ({ isOpen, onClose, imageUrl }) => {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
+  const streamRef = useRef(null);
+  
   const [stream, setStream] = useState(null);
   const [error, setError] = useState(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const dragStartInfo = useRef({ x: 0, y: 0, startPosX: 0, startPosY: 0 });
 
-  // Initialize camera when modal opens
-  useEffect(() => {
-    let activeStream = null;
-
-    const startCamera = async () => {
-      if (!isOpen) return;
-      setError(null);
+  const startCamera = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API not available. Please ensure you are using a secure connection (HTTPS).");
+      }
       
-      try {
-        const constraints = {
-          video: { facingMode: 'environment' } // Prefer rear camera
-        };
-        const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = newStream;
-        }
-        setStream(newStream);
-        activeStream = newStream;
-        
-        // Reset position and scale on open
+      const constraints = {
+        video: { facingMode: 'environment' } // Prefer rear camera
+      };
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+      }
+      streamRef.current = newStream;
+      setStream(newStream);
+      setHasStarted(true);
+      
+      // Reset position and scale on open
+      if (containerRef.current) {
+        setPosition({
+          x: 0,
+          y: containerRef.current.clientHeight * 0.2 // Slightly above center
+        });
+      } else {
         setPosition({ x: 0, y: 0 });
-        setScale(1);
-
-      } catch (err) {
-        console.error("Error accessing camera:", err);
-        setError("Could not access camera. Please check your browser permissions.");
       }
-    };
+      setScale(1);
 
-    if (isOpen) {
-      startCamera();
+    } catch (err) {
+      console.error("Error accessing camera:", err);
+      // More descriptive error for iOS where permissions might be globally denied or require action
+      setError("Could not access camera. Please check your browser permissions to allow camera access.");
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    return () => {
-      if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [isOpen]);
-
-  // Center the image initially once container is sized (rough approx)
+  // Cleanup on close and unmount
   useEffect(() => {
-    if (isOpen && containerRef.current) {
-      const container = containerRef.current;
-      setPosition({
-        x: 0, // Centered horizontally by default via CSS
-        y: container.clientHeight * 0.2 // Slightly above center
-      });
+    if (!isOpen) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      setStream(null);
+      setHasStarted(false);
+      setError(null);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -105,7 +119,7 @@ const ViewOnWallModal = ({ isOpen, onClose, imageUrl }) => {
       <div className="absolute top-0 left-0 right-0 p-4 z-10 flex justify-between items-center bg-gradient-to-b from-black/70 to-transparent">
         <div className="text-white">
           <p className="font-bold text-lg drop-shadow-md">View on Wall</p>
-          {!error && <p className="text-xs opacity-80 drop-shadow-sm">Drag to move • Use slider to resize</p>}
+          {hasStarted && !error && <p className="text-xs opacity-80 drop-shadow-sm">Drag to move • Use slider to resize</p>}
         </div>
         <button 
           onClick={onClose}
@@ -123,6 +137,30 @@ const ViewOnWallModal = ({ isOpen, onClose, imageUrl }) => {
               <span className="text-2xl">⚠️</span> Camera Error
             </p>
             <p className="text-sm">{error}</p>
+            <button 
+              onClick={startCamera}
+              className="mt-4 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : !hasStarted ? (
+          /* iOS Camera Fix: Prompt user interaction directly */
+          <div className="text-white text-center z-20 flex flex-col items-center justify-center p-6 bg-black/50 backdrop-blur-sm rounded-2xl max-w-sm mx-4">
+            <div className="bg-accent/20 p-4 rounded-full mb-4">
+              <HiCamera className="w-10 h-10 text-accent" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Enable Camera</h3>
+            <p className="text-gray-300 text-sm mb-6 max-w-xs leading-relaxed">
+              To view this product on your wall, we need access to your device's camera.
+            </p>
+            <button 
+              onClick={startCamera} 
+              disabled={isLoading}
+              className="btn-primary w-full shadow-lg shadow-accent/20 disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'Starting Camera...' : 'Allow Camera Access'}
+            </button>
           </div>
         ) : (
           <>
@@ -169,7 +207,7 @@ const ViewOnWallModal = ({ isOpen, onClose, imageUrl }) => {
       </div>
 
       {/* Bottom Controls (Resize Slider) */}
-      {!error && (
+      {hasStarted && !error && (
         <div className="absolute bottom-0 left-0 right-0 p-6 z-10 bg-gradient-to-t from-black/80 to-transparent pb-10">
           <div className="max-w-xs mx-auto bg-black/40 backdrop-blur-md p-4 rounded-2xl border border-white/10">
             <label className="text-white text-xs font-semibold mb-2 block text-center uppercase tracking-wider">

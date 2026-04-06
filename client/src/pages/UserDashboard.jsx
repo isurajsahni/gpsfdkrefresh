@@ -523,6 +523,22 @@ const UserDashboard = () => {
                         <p className="text-lg font-semibold text-secondary">{profile?.phone || user?.phone || 'Not provided'}</p>
                       )}
                     </div>
+
+                    {/* Default Address (if filled) */}
+                    {!isEditing && profile?.addresses?.find(a => a.isDefault) && (
+                      <div className="bg-primary p-5 rounded-2xl border border-gray-100 md:col-span-2">
+                        <div className="flex items-center gap-3 mb-2">
+                          <HiOutlineLocationMarker className="text-accent" />
+                          <span className="text-sm text-gray-500 font-medium">Default Shipping Address</span>
+                        </div>
+                        <p className="text-base font-semibold text-secondary">
+                          {(() => {
+                            const addr = profile.addresses.find(a => a.isDefault);
+                            return `${addr.addressLine1}${addr.addressLine2 ? ', ' + addr.addressLine2 : ''}, ${addr.city}, ${addr.state} - ${addr.pincode}`;
+                          })()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 

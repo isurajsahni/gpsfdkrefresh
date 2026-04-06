@@ -176,6 +176,34 @@ class ShiprocketService {
       throw error;
     }
   }
+
+  /**
+   * Fetch full order details from Shiprocket
+   * Endpoint: /v1/external/orders/show/{order_id}
+   */
+  async getOrderDetails(shiprocketOrderId) {
+    try {
+      const token = await this.getToken();
+      console.log(`[Shiprocket] Fetching details for SR Order ID: ${shiprocketOrderId}`);
+      
+      const response = await axios.get(
+        `${this.baseUrl}/orders/show/${shiprocketOrderId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data && response.data.data) {
+        return response.data.data;
+      }
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`❌ [Shiprocket] Get Order Details Error (HTTP ${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
+        throw new Error(`Shiprocket API error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+      }
+      console.error('❌ [Shiprocket] Get Order Details Error:', error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ShiprocketService();

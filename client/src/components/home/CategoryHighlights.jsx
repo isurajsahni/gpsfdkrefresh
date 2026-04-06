@@ -59,7 +59,7 @@ const CategoryCard = ({ number, title, description, image, isReverse, link, bgCo
             
             <div className="pt-2 md:pt-4">
               <WebflowButton to={link} dark={false} fullWidth={typeof window !== 'undefined' && window.innerWidth < 768}>
-                Explore Now
+                {number === "03" ? "Consulte Now" : "Call Now"}
               </WebflowButton>
             </div>
           </div>
@@ -78,7 +78,7 @@ const CategoryHighlights = () => {
       description: "Transform your walls into a gallery of expression. Our museum-grade canvases bring vibrant color and sophisticated texture to any interior environment.",
       image: poster1, 
       isReverse: false,
-      link: "/wall-canvas",
+      link: "tel:+919646646063",
       bgColor: "bg-primary",
       isDark: false
     },
@@ -88,7 +88,7 @@ const CategoryHighlights = () => {
       description: "Define your entrance with absolute distinction. Handcrafted with premium materials that withstand the elements while making a bold statement of identity.",
       image: poster2, 
       isReverse: true,
-      link: "/house-nameplates",
+      link: "tel:+919646646063",
       bgColor: "bg-primary",
       isDark: false
     },
@@ -98,7 +98,7 @@ const CategoryHighlights = () => {
       description: "Exclusively curated series for the discerning collector. Limited edition prints and oversized formats that redefine the boundaries of modern home decor.",
       image: poster3, 
       isReverse: false,
-      link: "/wall-canvas",
+      link: "tel:+919646646063",
       bgColor: "bg-primary",
       isDark: false
     }

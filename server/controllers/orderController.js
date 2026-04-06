@@ -555,3 +555,15 @@ exports.getShipmentTracking = async (req, res, next) => {
     next(error);
   }
 };
+// GET /api/orders/shiprocket/:id (admin)
+exports.getShiprocketOrderDetails = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Shiprocket Order ID is required' });
+
+    const orderDetails = await shiprocket.getOrderDetails(id);
+    res.json(orderDetails);
+  } catch (error) {
+    next(error);
+  }
+};

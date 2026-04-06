@@ -37,7 +37,7 @@ const HomePage = () => {
         schema={orgSchema}
       />
       <HeroVideo />
-      <ProductSlider title="Wall Canvas" categorySlug="wall-canvas" />
+      <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" />
       <MasonryGrid />
       <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
       <CategoryHighlights />

@@ -30,6 +30,16 @@ const WebflowButton = ({
   );
 
   if (to) {
+    const isSpecialProtocol = to.startsWith('tel:') || to.startsWith('mailto:') || to.startsWith('http');
+    
+    if (isSpecialProtocol) {
+      return (
+        <a href={to} className={baseClasses} onClick={onClick}>
+          {content}
+        </a>
+      );
+    }
+
     return (
       <Link to={to} className={baseClasses} onClick={onClick}>
         {content}

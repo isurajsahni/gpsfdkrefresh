@@ -43,8 +43,10 @@ const generateUniqueSlug = async (name) => {
 // GET /api/products
 exports.getProducts = async (req, res, next) => {
   try {
-    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry } = req.query;
-    const query = { isActive: true };
+    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry, all } = req.query;
+    const query = {};
+    // By default only show active products; admin can pass all=true to see everything
+    if (all !== 'true') query.isActive = true;
     
     if (category) query.category = category;
     

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload, HiOutlineSearch } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
@@ -12,6 +12,7 @@ const AdminProducts = () => {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({
     name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
@@ -21,13 +22,25 @@ const AdminProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data } = await API.get('/products?limit=100');
+      const { data } = await API.get('/products?limit=1000&all=true');
       setProducts(data.products);
     } catch (err) {
       console.error(err);
     }
     setLoading(false);
   };
+
+  // Client-side search filtering
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return products;
+    const q = searchQuery.toLowerCase();
+    return products.filter(p =>
+      p.name?.toLowerCase().includes(q) ||
+      p.category?.name?.toLowerCase().includes(q) ||
+      p.subCategory?.toLowerCase().includes(q) ||
+      p.slug?.toLowerCase().includes(q)
+    );
+  }, [products, searchQuery]);
 
   useEffect(() => {
     fetchProducts();
@@ -206,8 +219,8 @@ const AdminProducts = () => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-        <h1 className="text-2xl font-heading font-bold text-secondary">Products</h1>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+        <h1 className="text-2xl font-heading font-bold text-secondary">Products <span className="text-base font-normal text-gray-400">({filteredProducts.length}{searchQuery ? ` of ${products.length}` : ''})</span></h1>
         <div className="flex flex-wrap gap-3">
 
           <label className="btn-secondary text-sm flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
@@ -223,6 +236,26 @@ const AdminProducts = () => {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative mb-6">
+        <HiOutlineSearch className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search products by name, category, subcategory..."
+          className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 transition-all shadow-sm"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+          >
+            <HiOutlineX className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Product Form Modal */}
@@ -347,7 +380,7 @@ const AdminProducts = () => {
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-4"><input type="checkbox" checked={products.length > 0 && selectedIds.length === products.length} onChange={toggleSelectAll} className="accent-accent w-4 h-4 cursor-pointer" /></th>
+                  <th className="px-4 py-4"><input type="checkbox" checked={filteredProducts.length > 0 && selectedIds.length === filteredProducts.length} onChange={toggleSelectAll} className="accent-accent w-4 h-4 cursor-pointer" /></th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Product</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Category</th>
                   <th className="text-left px-6 py-4 font-semibold text-gray-600">Subcategory</th>
@@ -357,7 +390,10 @@ const AdminProducts = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {products.map(product => (
+                {filteredProducts.length === 0 && (
+                  <tr><td colSpan="7" className="text-center py-12 text-gray-400">{searchQuery ? `No products found for "${searchQuery}"` : 'No products found'}</td></tr>
+                )}
+                {filteredProducts.map(product => (
                   <tr key={product._id} className={`hover:bg-gray-50 transition-colors ${selectedIds.includes(product._id) ? 'bg-accent/5' : ''}`}>
                     <td className="px-4 py-4"><input type="checkbox" checked={selectedIds.includes(product._id)} onChange={() => toggleSelect(product._id)} className="accent-accent w-4 h-4 cursor-pointer" /></td>
                     <td className="px-6 py-4">

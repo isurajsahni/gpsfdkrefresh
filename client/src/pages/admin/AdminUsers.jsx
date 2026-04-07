@@ -1,12 +1,26 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { HiOutlineTrash } from 'react-icons/hi';
+import { useState, useEffect, Fragment } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiOutlineTrash, HiChevronDown, HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineCalendar, HiOutlineUser, HiOutlineShieldCheck } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+
+const InfoItem = ({ icon: Icon, label, value }) => {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+      <div>
+        <p className="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">{label}</p>
+        <p className="text-sm text-secondary font-medium mt-0.5">{value}</p>
+      </div>
+    </div>
+  );
+};
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedUserId, setExpandedUserId] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -20,15 +34,21 @@ const AdminUsers = () => {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation();
     if (!window.confirm('Delete this user?')) return;
     try {
       await API.delete(`/auth/users/${id}`);
       toast.success('User deleted');
+      if (expandedUserId === id) setExpandedUserId(null);
       fetchUsers();
     } catch (err) {
       toast.error('Delete failed');
     }
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedUserId(prev => prev === id ? null : id);
   };
 
   return (
@@ -41,6 +61,7 @@ const AdminUsers = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
+                <th className="text-left px-4 py-4 font-semibold text-gray-600 w-10"></th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-600">Name</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-600">Email</th>
                 <th className="text-left px-6 py-4 font-semibold text-gray-600">Role</th>
@@ -49,21 +70,105 @@ const AdminUsers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {users.map(user => (
-                <tr key={user._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-secondary">{user.name}</td>
-                  <td className="px-6 py-4 text-gray-500">{user.email}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button onClick={() => handleDelete(user._id)} className="text-red-400 hover:text-red-600 p-1"><HiOutlineTrash className="w-4 h-4" /></button>
-                  </td>
-                </tr>
-              ))}
+              {users.map(user => {
+                const isExpanded = expandedUserId === user._id;
+                return (
+                  <Fragment key={user._id}>
+                    {/* Clickable Main Row */}
+                    <tr
+                      onClick={() => toggleExpand(user._id)}
+                      className={`cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-amber-50/50' : 'hover:bg-gray-50'}`}
+                    >
+                      <td className="px-4 py-4">
+                        <HiChevronDown
+                          className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                        />
+                      </td>
+                      <td className="px-6 py-4 font-medium text-secondary">{user.name}</td>
+                      <td className="px-6 py-4 text-gray-500">{user.email}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <button onClick={(e) => handleDelete(user._id, e)} className="text-red-400 hover:text-red-600 p-1">
+                          <HiOutlineTrash className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Expanded Detail Row */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan="6" className="p-0 border-t-0">
+                          <div className="px-8 py-6 bg-gradient-to-r from-amber-50/60 via-white to-amber-50/60 border-t border-amber-100/50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {/* Basic Info */}
+                              <div className="space-y-4">
+                                <h4 className="text-xs uppercase tracking-widest text-accent font-bold border-b border-amber-200/50 pb-2">
+                                  Basic Information
+                                </h4>
+                                <InfoItem icon={HiOutlineUser} label="Full Name" value={user.name} />
+                                <InfoItem icon={HiOutlineMail} label="Email Address" value={user.email} />
+                                <InfoItem icon={HiOutlinePhone} label="Phone Number" value={user.phone || 'Not provided'} />
+                                <InfoItem icon={HiOutlineShieldCheck} label="Role" value={user.role?.charAt(0).toUpperCase() + user.role?.slice(1)} />
+                              </div>
+
+                              {/* Account Details */}
+                              <div className="space-y-4">
+                                <h4 className="text-xs uppercase tracking-widest text-accent font-bold border-b border-amber-200/50 pb-2">
+                                  Account Details
+                                </h4>
+                                <InfoItem icon={HiOutlineCalendar} label="Account Created" value={new Date(user.createdAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })} />
+                                <InfoItem icon={HiOutlineCalendar} label="Last Updated" value={new Date(user.updatedAt).toLocaleString('en-IN', { dateStyle: 'long', timeStyle: 'short' })} />
+                                <InfoItem icon={HiOutlineUser} label="User ID" value={user._id} />
+                              </div>
+
+                              {/* Addresses */}
+                              <div className="space-y-4">
+                                <h4 className="text-xs uppercase tracking-widest text-accent font-bold border-b border-amber-200/50 pb-2">
+                                  Saved Addresses ({user.addresses?.length || 0})
+                                </h4>
+                                {user.addresses && user.addresses.length > 0 ? (
+                                  <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2">
+                                    {user.addresses.map((addr, idx) => (
+                                      <div key={idx} className="bg-white rounded-xl p-3 border border-gray-100 shadow-sm relative">
+                                        {addr.isDefault && (
+                                          <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">
+                                            Default
+                                          </span>
+                                        )}
+                                        <div className="flex items-start gap-2">
+                                          <HiOutlineLocationMarker className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                                          <div className="text-xs text-gray-600 leading-relaxed">
+                                            {addr.fullName && <p className="font-semibold text-secondary text-sm">{addr.fullName}</p>}
+                                            {addr.phone && <p className="text-gray-400">📞 {addr.phone}</p>}
+                                            <p>
+                                              {[addr.addressLine1, addr.addressLine2].filter(Boolean).join(', ')}
+                                            </p>
+                                            <p>
+                                              {[addr.city, addr.state, addr.pincode].filter(Boolean).join(', ')}
+                                            </p>
+                                            {addr.country && <p>{addr.country}</p>}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-gray-400 italic">No saved addresses</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -31,7 +31,7 @@ const MasonryGrid = () => {
         <div
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Curated Collection</h2>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Series of the Month</h2>
           <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
         </div>
 

@@ -21,7 +21,7 @@ const CategoryCard = ({ number, title, description, image, isReverse, link, bgCo
   return (
     <div 
       ref={containerRef} 
-      className="h-full w-full sticky top-0 flex items-center justify-center pointer-events-none" 
+      className="h-full w-full sticky top-[100px] flex items-center justify-center pointer-events-none" 
       style={{ zIndex }}
     >
       <motion.div 

@@ -83,8 +83,19 @@ const CheckoutPage = () => {
     }
   };
 
-  // Fetch saved addresses on mount
+  // Fetch saved addresses on mount + fire InitiateCheckout pixel event
   useEffect(() => {
+    // Meta Pixel: InitiateCheckout
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'InitiateCheckout', {
+        content_type: 'product',
+        contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+        num_items: cartItems.length,
+        value: cartTotal,
+        currency: 'INR',
+      });
+    }
+
     const fetchAddresses = async () => {
       try {
         const { data } = await API.get('/auth/me');
@@ -280,6 +291,16 @@ const CheckoutPage = () => {
         await API.post(endpoint, orderData);
         
         API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+        // Meta Pixel: Purchase conversion
+        if (typeof window.fbq === 'function') {
+          window.fbq('track', 'Purchase', {
+            content_type: 'product',
+            contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+            num_items: cartItems.length,
+            value: finalTotal,
+            currency: 'INR',
+          });
+        }
         clearCart();
         toast.success(finalTotal === 0 ? 'Order placed successfully (100% Discounted)!' : 'Order placed successfully!');
         navigate('/thank-you');
@@ -311,6 +332,16 @@ const CheckoutPage = () => {
                   orderData: orderData 
                 });
                 API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+                // Meta Pixel: Purchase conversion
+                if (typeof window.fbq === 'function') {
+                  window.fbq('track', 'Purchase', {
+                    content_type: 'product',
+                    contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+                    num_items: cartItems.length,
+                    value: finalTotal,
+                    currency: 'INR',
+                  });
+                }
                 clearCart();
                 toast.success('Payment successful!');
                 navigate('/thank-you');

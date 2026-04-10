@@ -32,6 +32,16 @@ const ProductPage = () => {
         if (data.variations?.length > 0) {
           setSelectedVariation(data.variations[0]);
         }
+        // Meta Pixel: ViewContent event
+        if (typeof window.fbq === 'function') {
+          window.fbq('track', 'ViewContent', {
+            content_name: data.name,
+            content_ids: [data._id],
+            content_type: 'product',
+            value: data.variations?.[0]?.price || data.basePrice,
+            currency: 'INR',
+          });
+        }
       } catch (err) {
         console.error(err);
       }

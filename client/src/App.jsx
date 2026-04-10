@@ -58,7 +58,19 @@ function ScrollManager() {
   useEffect(() => {
     // Simple scroll to top on route change
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+
+    // Fire Meta Pixel PageView on every route change (SPA support)
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'PageView');
+    }
+
+    // Fire Google Analytics pageview on every route change (SPA support)
+    if (typeof window.gtag === 'function') {
+      window.gtag('config', 'G-5VKTKJYN5R', {
+        page_path: location.pathname + location.search,
+      });
+    }
+  }, [location.pathname, location.search]);
 
   return null;
 }

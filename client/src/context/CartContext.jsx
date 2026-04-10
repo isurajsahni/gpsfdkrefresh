@@ -15,6 +15,16 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   const addToCart = (product, variation, quantity = 1, customText = '') => {
+    // Meta Pixel: AddToCart event
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'AddToCart', {
+        content_name: product.name,
+        content_ids: [product._id],
+        content_type: 'product',
+        value: variation.price * quantity,
+        currency: 'INR',
+      });
+    }
     setCartItems(prev => {
       const key = `${product._id}-${variation.size}-${variation.material || ''}-${variation.color || ''}-${customText}`;
       const existing = prev.find(item => item.key === key);

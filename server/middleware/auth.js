@@ -39,4 +39,12 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = { protect, admin, optionalAuth };
+const marketing = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'marketing')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized as marketing user' });
+  }
+};
+
+module.exports = { protect, admin, marketing, optionalAuth };

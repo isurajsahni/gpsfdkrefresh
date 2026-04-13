@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Coupon = require('../models/Coupon');
+const CouponUsage = require('../models/CouponUsage');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
@@ -269,6 +270,17 @@ exports.createOrder = async (req, res, next) => {
           coupon.usageHistory.push({ userId: req.user._id, useCount: 1 });
         }
         await coupon.save();
+
+        // Track usage for marketing dashboard
+        if (coupon.assignedTo) {
+          CouponUsage.create({
+            couponId: coupon._id,
+            customerId: req.user._id,
+            orderId: order.orderNumber,
+            orderAmount: prices.itemsPrice,
+            discountAmount: prices.discountPrice,
+          }).catch(err => console.error('CouponUsage tracking failed:', err.message));
+        }
       }
     }
 
@@ -320,6 +332,20 @@ exports.createGuestOrder = async (req, res, next) => {
       isPaid,
       paidAt: isPaid ? Date.now() : null,
     });
+
+    // Track coupon usage for marketing dashboard (guest orders)
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      if (coupon && coupon.assignedTo) {
+        CouponUsage.create({
+          couponId: coupon._id,
+          customerId: null,
+          orderId: order.orderNumber,
+          orderAmount: prices.itemsPrice,
+          discountAmount: prices.discountPrice,
+        }).catch(err => console.error('CouponUsage tracking failed:', err.message));
+      }
+    }
 
     // Notify immediately for COD or FREE orders
     if (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') {

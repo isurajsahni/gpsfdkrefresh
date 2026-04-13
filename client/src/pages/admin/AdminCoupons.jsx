@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 const AdminCoupons = () => {
   const [coupons, setCoupons] = useState([]);
+  const [marketingUsers, setMarketingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ 
@@ -15,18 +16,24 @@ const AdminCoupons = () => {
     minOrderValue: 0, 
     maxUsers: 100, 
     maxUsesPerUser: 1, 
-    expiryDate: '' 
+    expiryDate: '',
+    assignedTo: '',
+    commissionRate: 10,
   });
 
-  const fetchCoupons = async () => {
+  const fetchInitialData = async () => {
     try {
-      const { data } = await API.get('/coupons');
-      setCoupons(data);
+      const [couponsRes, usersRes] = await Promise.all([
+        API.get('/coupons'),
+        API.get('/marketing/admin/users').catch(() => ({ data: [] }))
+      ]);
+      setCoupons(couponsRes.data);
+      setMarketingUsers(usersRes.data);
     } catch (err) { console.error(err); }
     setLoading(false);
   };
 
-  useEffect(() => { fetchCoupons(); }, []);
+  useEffect(() => { fetchInitialData(); }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,9 +42,9 @@ const AdminCoupons = () => {
       toast.success('Coupon created');
       setShowForm(false);
       setForm({
-        code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUsers: 100, maxUsesPerUser: 1, expiryDate: ''
+        code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUsers: 100, maxUsesPerUser: 1, expiryDate: '', assignedTo: '', commissionRate: 10
       });
-      fetchCoupons();
+      fetchInitialData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create coupon');
     }
@@ -48,7 +55,7 @@ const AdminCoupons = () => {
     try {
       await API.delete(`/coupons/${id}`);
       toast.success('Coupon deleted');
-      fetchCoupons();
+      fetchInitialData();
     } catch (err) { toast.error('Delete failed'); }
   };
 
@@ -104,6 +111,21 @@ const AdminCoupons = () => {
                 <label className="block text-sm font-semibold mb-1">Expiry Date (Optional)</label>
                 <input type="date" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
               </div>
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-secondary">Assign Marketing Partner</label>
+                  <select value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent">
+                    <option value="">None (Standard Coupon)</option>
+                    {marketingUsers.map(u => (
+                      <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1 text-secondary">Commission Rate (%)</label>
+                  <input type="number" min="0" max="100" value={form.commissionRate} onChange={(e) => setForm({ ...form, commissionRate: Number(e.target.value) })} disabled={!form.assignedTo} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent disabled:opacity-50" />
+                </div>
+              </div>
               
               <button type="submit" className="btn-primary w-full mt-6">Create Coupon</button>
             </form>
@@ -130,6 +152,12 @@ const AdminCoupons = () => {
                 <p className="text-sm text-gray-500">Uses/User: {coupon.maxUsesPerUser}</p>
                 {coupon.expiryDate && (
                   <p className="text-xs text-gray-400 mt-2">Expires: {new Date(coupon.expiryDate).toLocaleDateString()}</p>
+                )}
+                {coupon.assignedTo && (
+                  <div className="mt-3 py-2 px-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs font-semibold text-secondary">Marketing Partner</p>
+                    <p className="text-xs text-gray-500">{marketingUsers.find(u => u._id === coupon.assignedTo)?.name || 'Unknown'} — {coupon.commissionRate}% Commission</p>
+                  </div>
                 )}
               </div>
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">

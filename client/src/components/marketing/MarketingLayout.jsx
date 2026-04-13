@@ -1,25 +1,16 @@
 import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineTrendingUp } from 'react-icons/hi';
+import { HiOutlineChartBar, HiOutlineClipboardList, HiOutlineArrowLeft, HiOutlineMenu } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
-  { path: '/admin', icon: HiOutlineChartBar, label: 'Dashboard' },
-  { path: '/admin/products', icon: HiOutlineCube, label: 'Products' },
-  { path: '/admin/categories', icon: HiOutlineTag, label: 'Categories' },
-  { path: '/admin/orders', icon: HiOutlineClipboardList, label: 'Orders' },
-  { path: '/admin/users', icon: HiOutlineUsers, label: 'Users' },
-  { path: '/admin/coupons', icon: HiOutlineTicket, label: 'Coupons' },
-  { path: '/admin/abandoned-carts', icon: HiOutlineShoppingCart, label: 'Abandoned Carts' },
-  { path: '/admin/leads', icon: HiOutlineMail, label: 'Leads' },
-  { path: '/admin/analytics', icon: HiOutlineChartPie, label: 'Analytics' },
-  { path: '/admin/marketing-performance', icon: HiOutlineTrendingUp, label: 'Marketing' },
+  { path: '/marketing', icon: HiOutlineChartBar, label: 'Dashboard' },
+  { path: '/marketing/usage', icon: HiOutlineClipboardList, label: 'Usage History' },
 ];
 
-const AdminLayout = () => {
+const MarketingLayout = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -33,15 +24,15 @@ const AdminLayout = () => {
         {/* Sidebar */}
         <aside className={`fixed lg:sticky top-20 left-0 z-40 w-64 h-[calc(100vh-5rem)] bg-white border-r border-gray-100 shadow-sm transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           <div className="p-6">
-            <h2 className="font-heading text-xl font-bold text-secondary">Admin Panel</h2>
-            <p className="text-sm text-gray-400 mt-1">{user?.email}</p>
+            <h2 className="font-heading text-xl font-bold text-secondary">Marketing Hub</h2>
+            <p className="text-sm text-gray-400 mt-1">{user?.name || user?.email}</p>
           </div>
           <nav className="px-3 space-y-1">
             {navItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
-                end={item.path === '/admin' ? 'true' : undefined}
+                end={item.path === '/marketing' ? 'true' : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${location.pathname === item.path ? 'bg-secondary text-white' : 'text-gray-600 hover:bg-cream hover:text-secondary'}`}
               >
@@ -69,4 +60,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default MarketingLayout;

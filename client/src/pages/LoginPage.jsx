@@ -40,6 +40,8 @@ const LoginPage = () => {
       
       if (data.role === 'admin') {
         navigate('/admin');
+      } else if (data.role === 'marketing') {
+        navigate('/marketing');
       } else if (cartItems.length > 0) {
         navigate('/checkout');
       } else {

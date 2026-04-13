@@ -47,6 +47,17 @@ const AdminUsers = () => {
     }
   };
 
+  const handleRoleChange = async (id, newRole, e) => {
+    e.stopPropagation();
+    try {
+      await API.put(`/auth/users/${id}/role`, { role: newRole });
+      toast.success('Role updated successfully');
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update role');
+    }
+  };
+
   const toggleExpand = (id) => {
     setExpandedUserId(prev => prev === id ? null : id);
   };
@@ -87,9 +98,26 @@ const AdminUsers = () => {
                       <td className="px-6 py-4 font-medium text-secondary">{user.name}</td>
                       <td className="px-6 py-4 text-gray-500">{user.email}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                          {user.role}
-                        </span>
+                        <select 
+                          value={user.role} 
+                          onChange={(e) => handleRoleChange(user._id, e.target.value, e)}
+                          onClick={(e) => e.stopPropagation()}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold border-none cursor-pointer appearance-none pr-8 ${
+                            user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                            user.role === 'marketing' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}
+                          style={{
+                            backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                            backgroundPosition: 'right 0.25rem center',
+                            backgroundRepeat: 'no-repeat',
+                            backgroundSize: '1.2em 1.2em'
+                          }}
+                        >
+                          <option value="user">USER</option>
+                          <option value="marketing">MARKETING</option>
+                          <option value="admin">ADMIN</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
                       <td className="px-6 py-4 text-right">

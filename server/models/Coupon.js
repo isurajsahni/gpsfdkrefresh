@@ -55,6 +55,15 @@ const couponSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  commissionRate: {
+    type: Number,
+    default: 10,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Coupon', couponSchema);

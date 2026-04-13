@@ -543,6 +543,26 @@ exports.deleteUser = async (req, res, next) => {
   }
 };
 
+// PUT /api/auth/users/:id/role (admin)
+exports.updateUserRole = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (req.body.role) {
+      if (!['user', 'admin', 'marketing'].includes(req.body.role)) {
+        return res.status(400).json({ message: 'Invalid role' });
+      }
+      user.role = req.body.role;
+      await user.save();
+    }
+    
+    res.json({ message: 'User role updated', role: user.role });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // POST /api/auth/forgot-password
 exports.forgotPassword = async (req, res, next) => {
   try {

@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const {
@@ -24,6 +24,7 @@ router.put('/profile', protect, updateProfile);
 router.post('/upload-avatar', protect, avatarUpload.single('avatar'), uploadAvatar);
 router.get('/users', protect, admin, getUsers);
 router.delete('/users/:id', protect, admin, deleteUser);
+router.put('/users/:id/role', protect, admin, updateUserRole);
 
 router.post('/forgot-password', authLimiter, forgotPasswordValidation, forgotPassword);
 router.post('/verify-otp', otpLimiter, verifyOtpValidation, verifyOtp);

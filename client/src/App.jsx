@@ -51,6 +51,12 @@ import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminAbandonedCarts from './pages/admin/AdminAbandonedCarts';
 import AdminLeads from './pages/admin/AdminLeads';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminMarketingPerformance from './pages/admin/AdminMarketingPerformance';
+
+// Marketing Pages
+import MarketingLayout from './components/marketing/MarketingLayout';
+import MarketingDashboard from './pages/marketing/MarketingDashboard';
+import MarketingUsageHistory from './pages/marketing/MarketingUsageHistory';
 
 function ScrollManager() {
   const location = useLocation();
@@ -150,6 +156,13 @@ function App() {
                 <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
+                <Route path="marketing-performance" element={<AdminMarketingPerformance />} />
+              </Route>
+
+              {/* Marketing Dashboard */}
+              <Route path="/marketing" element={<ProtectedRoute marketingOnly><MarketingLayout /></ProtectedRoute>}>
+                <Route index element={<MarketingDashboard />} />
+                <Route path="usage" element={<MarketingUsageHistory />} />
               </Route>
 
               {/* Order Tracking */}

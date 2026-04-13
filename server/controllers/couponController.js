@@ -5,7 +5,7 @@ const Coupon = require('../models/Coupon');
 // @access  Private/Admin
 const createCoupon = async (req, res) => {
   try {
-    const { code, discountType, discountValue, minOrderValue, maxDiscountAmount, maxUsers, maxUsesPerUser, expiryDate, isActive } = req.body;
+    const { code, discountType, discountValue, minOrderValue, maxDiscountAmount, maxUsers, maxUsesPerUser, expiryDate, isActive, assignedTo, commissionRate } = req.body;
     
     const couponExists = await Coupon.findOne({ code: code.toUpperCase() });
     if (couponExists) {
@@ -23,6 +23,8 @@ const createCoupon = async (req, res) => {
       maxUsesPerUser: maxUsesPerUser || 1,
       expiryDate,
       isActive: isActive !== undefined ? isActive : true,
+      assignedTo: assignedTo || null,
+      commissionRate: commissionRate || 10,
     });
 
     res.status(201).json(coupon);

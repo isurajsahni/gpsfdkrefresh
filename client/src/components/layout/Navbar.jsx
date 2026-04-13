@@ -27,6 +27,27 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close mobile Menu on Scroll
+  useEffect(() => {
+    if (!mobileOpen) return;
+    
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      if (Math.abs(window.scrollY - lastScrollY) > 10) {
+        setMobileOpen(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [mobileOpen]);
+
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setUserMenu(false));
 
@@ -64,7 +85,7 @@ const Navbar = () => {
 
             <div className="flex items-center gap-12">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group">
               <span className="">
                 <img src={logo} alt="Logo" className="h-20 w-auto" />
               </span>

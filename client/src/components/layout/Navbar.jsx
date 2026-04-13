@@ -52,7 +52,12 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
+      <div className="absolute top-0 left-0 right-0 h-[36px] bg-secondary text-white z-50 flex items-center overflow-hidden">
+        <marquee className="text-xs sm:text-sm font-semibold tracking-wider font-heading">
+          USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
+        </marquee>
+      </div>
+      <nav className={`fixed left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-md top-0' : 'bg-cream top-[36px]'}`}>
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
           <div className="flex items-center justify-between h-16 md:h-20">
 

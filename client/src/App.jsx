@@ -119,9 +119,9 @@ function App() {
                 <Route path="/search" element={<><SearchPage /><Footer /></>} />
                 <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/login" element={<><LoginPage /><Footer /></>} />
+                <Route path="/register" element={<><RegisterPage /><Footer /></>} />
+                <Route path="/forgot-password" element={<><ForgotPasswordPage /><Footer /></>} />
                 
                 {/* Location SEO Landing Pages */}
                 <Route path="/location/:city" element={<><LocationPage /><Footer /></>} />

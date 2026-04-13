@@ -93,7 +93,7 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary flex items-center justify-center px-4 pt-20">
+    <div className="min-h-screen bg-primary flex items-center justify-center px-4 pt-32 pb-24">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

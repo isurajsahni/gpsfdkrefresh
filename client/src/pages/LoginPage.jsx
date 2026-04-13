@@ -38,7 +38,7 @@ const LoginPage = () => {
       const data = await login(cleanEmail, password);
       toast.success(`Welcome back, ${data.name}!`);
       
-      if (data.role === 'admin') {
+      if (data.role === 'admin' || data.role === 'admin_marketing') {
         navigate('/admin');
       } else if (data.role === 'marketing') {
         navigate('/marketing');

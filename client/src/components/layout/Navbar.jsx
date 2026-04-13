@@ -53,9 +53,13 @@ const Navbar = () => {
   return (
     <>
       <div className="absolute top-0 left-0 right-0 h-[36px] bg-secondary text-white z-50 flex items-center overflow-hidden">
-        <marquee className="text-xs sm:text-sm font-semibold tracking-wider font-heading">
-          USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
-        </marquee>
+        <div className="animate-marquee flex w-max gap-8 px-4">
+          {[...Array(6)].map((_, i) => (
+            <span key={i} className="text-[10px] sm:text-xs font-semibold tracking-widest font-heading whitespace-nowrap">
+              USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
+            </span>
+          ))}
+        </div>
       </div>
       <nav className={`fixed left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-md top-0' : 'bg-cream top-[36px]'}`}>
         <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">

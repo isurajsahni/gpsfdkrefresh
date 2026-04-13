@@ -208,7 +208,7 @@ const getPerformance = async (req, res) => {
 // @access  Private/Admin
 const getMarketingUsers = async (req, res) => {
   try {
-    const users = await User.find({ role: 'marketing' }).select('name email _id').sort('name');
+    const users = await User.find({ role: { $in: ['marketing', 'admin_marketing'] } }).select('name email _id').sort('name');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });

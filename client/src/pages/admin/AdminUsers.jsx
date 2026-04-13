@@ -104,6 +104,7 @@ const AdminUsers = () => {
                           onClick={(e) => e.stopPropagation()}
                           className={`px-3 py-1 rounded-full text-xs font-semibold border-none cursor-pointer appearance-none pr-8 ${
                             user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                            user.role === 'admin_marketing' ? 'bg-indigo-100 text-indigo-700' :
                             user.role === 'marketing' ? 'bg-blue-100 text-blue-700' :
                             'bg-gray-100 text-gray-600'
                           }`}
@@ -117,6 +118,7 @@ const AdminUsers = () => {
                           <option value="user">USER</option>
                           <option value="marketing">MARKETING</option>
                           <option value="admin">ADMIN</option>
+                          <option value="admin_marketing">ADMIN & MARKETING</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>

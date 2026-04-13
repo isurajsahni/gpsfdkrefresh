@@ -18,11 +18,12 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Admin middleware
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing')) {
     next();
   } else {
-    res.status(403).json({ message: 'Not authorized as admin' });
+    res.status(401).json({ message: 'Not authorized as an admin' });
   }
 };
 
@@ -40,7 +41,7 @@ const optionalAuth = async (req, res, next) => {
 };
 
 const marketing = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'marketing')) {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'marketing' || req.user.role === 'admin_marketing')) {
     next();
   } else {
     res.status(403).json({ message: 'Not authorized as marketing user' });

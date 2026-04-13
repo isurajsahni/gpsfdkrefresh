@@ -113,6 +113,10 @@ function App() {
               <CartDrawer />
               <SearchOverlay />
               <ChatBot />
+              
+              {/* Spacer for fixed top promotional banner */}
+              <div className="h-[36px] w-full shrink-0" />
+
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<><HomePage /><Footer /></>} />

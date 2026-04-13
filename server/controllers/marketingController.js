@@ -16,7 +16,7 @@ const getDashboard = async (req, res) => {
     if (!coupons.length) {
       return res.json({
         coupons: [],
-        totals: { totalUses: 0, totalRevenue: 0, totalDiscount: 0, estimatedEarnings: 0 },
+        totals: { totalUses: 0 },
       });
     }
 
@@ -29,8 +29,6 @@ const getDashboard = async (req, res) => {
         $group: {
           _id: '$couponId',
           totalUses: { $sum: 1 },
-          totalRevenue: { $sum: '$orderAmount' },
-          totalDiscount: { $sum: '$discountAmount' },
         },
       },
     ]);
@@ -40,25 +38,18 @@ const getDashboard = async (req, res) => {
     stats.forEach(s => { statsMap[s._id.toString()] = s; });
 
     const couponStats = coupons.map(coupon => {
-      const s = statsMap[coupon._id.toString()] || { totalUses: 0, totalRevenue: 0, totalDiscount: 0 };
+      const s = statsMap[coupon._id.toString()] || { totalUses: 0 };
       return {
         couponId: coupon._id,
         couponCode: coupon.code,
-        commissionRate: coupon.commissionRate,
         totalUses: s.totalUses,
-        totalRevenue: s.totalRevenue,
-        totalDiscount: s.totalDiscount,
-        estimatedEarnings: Math.round((s.totalRevenue * coupon.commissionRate) / 100),
       };
     });
 
     // Overall totals
     const totals = couponStats.reduce((acc, c) => ({
       totalUses: acc.totalUses + c.totalUses,
-      totalRevenue: acc.totalRevenue + c.totalRevenue,
-      totalDiscount: acc.totalDiscount + c.totalDiscount,
-      estimatedEarnings: acc.estimatedEarnings + c.estimatedEarnings,
-    }), { totalUses: 0, totalRevenue: 0, totalDiscount: 0, estimatedEarnings: 0 });
+    }), { totalUses: 0 });
 
     res.json({ coupons: couponStats, totals });
   } catch (error) {
@@ -97,6 +88,7 @@ const getCouponUsage = async (req, res) => {
     const totalPages = Math.ceil(total / limit);
 
     const usages = await CouponUsage.find(match)
+      .select('-orderAmount -discountAmount')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
@@ -136,7 +128,6 @@ const getUsageTrend = async (req, res) => {
             month: { $month: '$createdAt' },
           },
           uses: { $sum: 1 },
-          revenue: { $sum: '$orderAmount' },
         },
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } },
@@ -146,7 +137,6 @@ const getUsageTrend = async (req, res) => {
     const formatted = trend.map(t => ({
       label: `${t._id.year}-${String(t._id.month).padStart(2, '0')}`,
       uses: t.uses,
-      revenue: t.revenue,
     }));
 
     res.json({ trend: formatted });

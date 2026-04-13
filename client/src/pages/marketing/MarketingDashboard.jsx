@@ -96,14 +96,11 @@ const MarketingDashboard = () => {
     );
   }
 
-  const totals = stats?.totals || { totalUses: 0, totalRevenue: 0, totalDiscount: 0, estimatedEarnings: 0 };
+  const totals = stats?.totals || { totalUses: 0 };
   const coupons = stats?.coupons || [];
 
   const cards = [
     { label: 'Total Uses', value: totals.totalUses, icon: HiOutlineCursorClick, color: '#3B82F6', bg: 'from-blue-500/10 to-blue-600/5' },
-    { label: 'Revenue Generated', value: totals.totalRevenue, icon: HiOutlineCurrencyRupee, prefix: '₹', color: '#10B981', bg: 'from-emerald-500/10 to-emerald-600/5' },
-    { label: 'Total Discount', value: totals.totalDiscount, icon: HiOutlineTicket, prefix: '₹', color: '#F59E0B', bg: 'from-amber-500/10 to-amber-600/5' },
-    { label: 'Estimated Earnings', value: totals.estimatedEarnings, icon: HiOutlineTrendingUp, prefix: '₹', color: '#F15A29', bg: 'from-orange-500/10 to-orange-600/5' },
   ];
 
   return (
@@ -170,11 +167,9 @@ const MarketingDashboard = () => {
                 <div key={c.couponId} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
                   <div>
                     <span className="inline-block px-3 py-1 bg-green-100 text-green-700 rounded-lg font-heading font-bold text-sm">{c.couponCode}</span>
-                    <p className="text-xs text-gray-400 mt-1">{c.commissionRate}% commission</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-secondary">{c.totalUses} uses</p>
-                    <p className="text-xs text-gray-400">₹{c.totalRevenue.toLocaleString('en-IN')}</p>
                   </div>
                 </div>
               ))}

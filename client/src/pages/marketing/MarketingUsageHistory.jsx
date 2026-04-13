@@ -89,8 +89,6 @@ const MarketingUsageHistory = () => {
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Order ID</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Coupon</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Order Amount</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Discount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -107,8 +105,6 @@ const MarketingUsageHistory = () => {
                       <span className="inline-block px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-bold">{u.couponCode}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-500">{new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">₹{u.orderAmount?.toLocaleString('en-IN')}</td>
-                    <td className="px-6 py-4 text-sm font-semibold text-amber-600 text-right">-₹{u.discountAmount?.toLocaleString('en-IN')}</td>
                   </motion.tr>
                 ))}
               </tbody>

@@ -73,14 +73,17 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="absolute top-0 left-0 right-0 h-[36px] bg-secondary text-white z-50 flex items-center justify-center overflow-hidden px-2">
-        <span className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-wide sm:tracking-widest font-heading text-center whitespace-nowrap">
-          <span className="hidden sm:inline">USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY</span>
-          <span className="sm:hidden">USE CODE <span className="text-accent underline">THE-R2L-SUMMER</span>: WIN A TRIP + 10% OFF</span>
-        </span>
-      </div>
-      <nav className={`fixed left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-md top-0' : 'bg-cream top-[36px]'}`}>
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
+      <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
+        <div 
+          className={`bg-secondary text-white flex items-center justify-center overflow-hidden px-2 transition-all duration-500 ease-in-out ${scrolled ? 'h-0 opacity-0' : 'h-[36px] opacity-100'}`}
+        >
+          <span className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-wide sm:tracking-widest font-heading text-center whitespace-nowrap">
+            <span className="hidden sm:inline">USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY</span>
+            <span className="sm:hidden">USE CODE <span className="text-accent underline">THE-R2L-SUMMER</span>: WIN A TRIP + 10% OFF</span>
+          </span>
+        </div>
+        <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
           <div className="flex items-center justify-between h-16 md:h-20">
 
             <div className="flex items-center gap-12">
@@ -206,6 +209,7 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
+      </header>
 
       {/* Mobile Menu */}
       <AnimatePresence>

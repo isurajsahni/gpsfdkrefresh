@@ -52,9 +52,10 @@ const Navbar = () => {
 
   return (
     <>
-      <div className="absolute top-0 left-0 right-0 h-[36px] bg-secondary text-white z-50 flex items-center justify-center overflow-hidden px-4">
-        <span className="text-[10px] sm:text-xs font-semibold tracking-widest font-heading whitespace-nowrap text-center">
-          USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
+      <div className="absolute top-0 left-0 right-0 h-[36px] bg-secondary text-white z-50 flex items-center justify-center overflow-hidden px-2">
+        <span className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-wide sm:tracking-widest font-heading text-center whitespace-nowrap">
+          <span className="hidden sm:inline">USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY</span>
+          <span className="sm:hidden">USE CODE <span className="text-accent underline">THE-R2L-SUMMER</span>: WIN A TRIP + 10% OFF</span>
         </span>
       </div>
       <nav className={`fixed left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-cream backdrop-blur-lg shadow-md top-0' : 'bg-cream top-[36px]'}`}>

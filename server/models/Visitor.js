@@ -35,6 +35,14 @@ const visitorSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  country: {
+    type: String,
+    default: '',
+  },
+  countryCode: {
+    type: String,
+    default: '',
+  },
 });
 
 module.exports = mongoose.model('Visitor', visitorSchema);

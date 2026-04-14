@@ -2,6 +2,23 @@ const Visitor = require('../models/Visitor');
 const PageView = require('../models/PageView');
 const UAParser = require('ua-parser-js');
 
+// ─── Helper: Get country from IP (non-blocking, best-effort) ───
+const getCountryFromIP = async (ip) => {
+  try {
+    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168') || ip.startsWith('10.')) {
+      return { name: 'Local', code: 'LO' };
+    }
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,countryCode`);
+    const data = await res.json();
+    if (data.country) {
+      return { name: data.country, code: data.countryCode };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 // ─── Helper: Detect traffic source from UTM params or referrer ───
 const detectSource = (utmSource, referrer) => {
   if (utmSource) {
@@ -83,8 +100,17 @@ exports.trackPageView = async (req, res, next) => {
       existingVisitor.lastVisitAt = new Date();
       existingVisitor.totalVisits += 1;
       existingVisitor.returning = true;
+      // Update country if not set yet
+      if (!existingVisitor.country) {
+        const geo = await getCountryFromIP(ip);
+        if (geo) {
+          existingVisitor.country = geo.name;
+          existingVisitor.countryCode = geo.code;
+        }
+      }
       await existingVisitor.save();
     } else {
+      const geo = await getCountryFromIP(ip);
       await Visitor.create({
         visitorId,
         firstVisitAt: new Date(),
@@ -94,6 +120,8 @@ exports.trackPageView = async (req, res, next) => {
         browser,
         ip,
         returning: false,
+        country: geo?.name || '',
+        countryCode: geo?.code || '',
       });
     }
 
@@ -344,6 +372,24 @@ exports.getDashboardData = async (req, res, next) => {
       { $sort: { count: -1 } },
     ]);
 
+    // ── Country breakdown ──
+    const countries = await Visitor.aggregate([
+      {
+        $lookup: {
+          from: 'pageviews',
+          localField: 'visitorId',
+          foreignField: 'visitorId',
+          pipeline: [{ $match: { timestamp: { $gte: start } } }, { $limit: 1 }],
+          as: 'recentViews',
+        },
+      },
+      { $match: { 'recentViews.0': { $exists: true }, country: { $ne: '' } } },
+      { $group: { _id: { country: '$country', code: '$countryCode' }, visitors: { $sum: 1 } } },
+      { $project: { name: '$_id.country', code: '$_id.code', views: '$visitors' } },
+      { $sort: { views: -1 } },
+      { $limit: 15 },
+    ]);
+
     res.json({
       success: true,
       sources: sourceAgg,
@@ -351,6 +397,7 @@ exports.getDashboardData = async (req, res, next) => {
       campaigns,
       referrers,
       devices,
+      locations: { countries, regions: [], cities: [] },
     });
   } catch (error) {
     next(error);

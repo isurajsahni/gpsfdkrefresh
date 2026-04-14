@@ -4,6 +4,7 @@ import { HiOutlineCalendar, HiOutlineEye, HiOutlineUsers, HiOutlineRefresh, HiOu
 import API from '../../utils/api';
 import ChartSection from '../../components/admin/analytics/ChartSection';
 import StatsCard from '../../components/admin/analytics/StatsCard';
+import LocationsSection from '../../components/admin/analytics/LocationsSection';
 import SkeletonLoader from '../../components/admin/analytics/SkeletonLoader';
 
 const DATE_RANGES = [
@@ -25,6 +26,7 @@ const AdminAnalytics = () => {
   const [topPages, setTopPages] = useState([]);
   const [campaigns, setCampaigns] = useState([]);
   const [referrers, setReferrers] = useState([]);
+  const [locations, setLocations] = useState({ countries: [], regions: [], cities: [] });
   const [activeMetric, setActiveMetric] = useState('views');
 
   const fetchData = async (selectedRange) => {
@@ -44,6 +46,7 @@ const AdminAnalytics = () => {
         setTopPages(dashboardRes.data.topPages || []);
         setCampaigns(dashboardRes.data.campaigns || []);
         setReferrers(dashboardRes.data.referrers || []);
+        setLocations(dashboardRes.data.locations || { countries: [], regions: [], cities: [] });
       }
     } catch (err) {
       console.error('Failed to fetch analytics:', err);
@@ -328,6 +331,15 @@ const AdminAnalytics = () => {
               })}
             </div>
           </motion.div>
+        )}
+      </div>
+
+      {/* Locations */}
+      <div className="mt-6 mb-8">
+        {loading ? (
+          <SkeletonLoader type="list" />
+        ) : (
+          <LocationsSection locations={locations} />
         )}
       </div>
     </div>

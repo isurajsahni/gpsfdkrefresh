@@ -176,9 +176,14 @@ const Navbar = () => {
                           <Link to="/dashboard" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
                             My Orders
                           </Link>
-                          {user.role === 'admin' && (
+                          {(user.role === 'admin' || user.role === 'admin_marketing') && (
                             <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
                               Admin Panel
+                            </Link>
+                          )}
+                          {(user.role === 'marketing' || user.role === 'admin_marketing') && (
+                            <Link to="/marketing" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
+                              Marketing Dashboard
                             </Link>
                           )}
                           <button

@@ -183,14 +183,12 @@ const getPerformance = async (req, res) => {
       return {
         couponId: coupon._id,
         couponCode: coupon.code,
-        commissionRate: coupon.commissionRate,
         userName: coupon.assignedTo?.name || 'Unknown',
         userEmail: coupon.assignedTo?.email || '',
         userId: coupon.assignedTo?._id || null,
         totalUses: s.totalUses,
         totalRevenue: s.totalRevenue,
         totalDiscount: s.totalDiscount,
-        estimatedEarnings: Math.round((s.totalRevenue * coupon.commissionRate) / 100),
       };
     });
 

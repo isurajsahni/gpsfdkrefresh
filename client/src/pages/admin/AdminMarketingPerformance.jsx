@@ -24,7 +24,6 @@ const AdminMarketingPerformance = () => {
   const sorted = [...performance].sort((a, b) => {
     if (sortBy === 'revenue') return b.totalRevenue - a.totalRevenue;
     if (sortBy === 'uses') return b.totalUses - a.totalUses;
-    if (sortBy === 'earnings') return b.estimatedEarnings - a.estimatedEarnings;
     return 0;
   });
 
@@ -48,7 +47,6 @@ const AdminMarketingPerformance = () => {
           >
             <option value="revenue">Sort by Revenue</option>
             <option value="uses">Sort by Uses</option>
-            <option value="earnings">Sort by Earnings</option>
           </select>
         </div>
       </div>
@@ -74,8 +72,6 @@ const AdminMarketingPerformance = () => {
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Uses</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Revenue</th>
                   <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Discount</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Commission</th>
-                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Earnings</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -98,8 +94,6 @@ const AdminMarketingPerformance = () => {
                     <td className="px-6 py-4 text-sm font-semibold text-gray-700 text-right">{p.totalUses}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-emerald-600 text-right">₹{p.totalRevenue.toLocaleString('en-IN')}</td>
                     <td className="px-6 py-4 text-sm text-gray-500 text-right">₹{p.totalDiscount.toLocaleString('en-IN')}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500 text-right">{p.commissionRate}%</td>
-                    <td className="px-6 py-4 text-sm font-bold text-right" style={{ color: '#F15A29' }}>₹{p.estimatedEarnings.toLocaleString('en-IN')}</td>
                   </motion.tr>
                 ))}
               </tbody>

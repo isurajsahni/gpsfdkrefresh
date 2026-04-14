@@ -59,6 +59,32 @@ import MarketingLayout from './components/marketing/MarketingLayout';
 import MarketingDashboard from './pages/marketing/MarketingDashboard';
 import MarketingUsageHistory from './pages/marketing/MarketingUsageHistory';
 
+// ─── Visitor ID + UTM Capture ───
+const getVisitorId = () => {
+  let id = localStorage.getItem('gpsfdk_visitor_id');
+  if (!id) {
+    id = 'v_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    localStorage.setItem('gpsfdk_visitor_id', id);
+  }
+  return id;
+};
+
+const captureUTMOnce = () => {
+  // Only capture UTM params on the very first page load of the session
+  if (sessionStorage.getItem('utm_captured')) return;
+  const params = new URLSearchParams(window.location.search);
+  const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+  utmKeys.forEach(key => {
+    const val = params.get(key);
+    if (val) sessionStorage.setItem(key, val);
+  });
+  // Capture referrer once
+  if (document.referrer && !sessionStorage.getItem('initial_referrer')) {
+    sessionStorage.setItem('initial_referrer', document.referrer);
+  }
+  sessionStorage.setItem('utm_captured', 'true');
+};
+
 function ScrollManager() {
   const location = useLocation();
 
@@ -77,6 +103,25 @@ function ScrollManager() {
         page_path: location.pathname + location.search,
       });
     }
+
+    // ─── Track page view to our analytics ───
+    const trackPageView = async () => {
+      try {
+        await API.post('/analytics/track', {
+          visitorId: getVisitorId(),
+          pageUrl: location.pathname,
+          referrer: sessionStorage.getItem('initial_referrer') || '',
+          utmSource: sessionStorage.getItem('utm_source') || '',
+          utmMedium: sessionStorage.getItem('utm_medium') || '',
+          utmCampaign: sessionStorage.getItem('utm_campaign') || '',
+          utmTerm: sessionStorage.getItem('utm_term') || '',
+          utmContent: sessionStorage.getItem('utm_content') || '',
+        });
+      } catch (err) {
+        // Silent fail — analytics should never block the user
+      }
+    };
+    trackPageView();
   }, [location.pathname, location.search]);
 
   return null;
@@ -84,18 +129,7 @@ function ScrollManager() {
 
 function App() {
   useEffect(() => {
-    // Analytics tracking
-    const trackVisit = async () => {
-      if (!sessionStorage.getItem('hasVisited')) {
-        try {
-          await API.post('/analytics/visit');
-          sessionStorage.setItem('hasVisited', 'true');
-        } catch (error) {
-          console.error('Failed to track visit:', error);
-        }
-      }
-    };
-    trackVisit();
+    captureUTMOnce();
   }, []);
 
   return (

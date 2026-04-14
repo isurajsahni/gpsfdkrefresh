@@ -18,7 +18,6 @@ const AdminCoupons = () => {
     maxUsesPerUser: 1, 
     expiryDate: '',
     assignedTo: '',
-    commissionRate: 10,
   });
 
   const fetchInitialData = async () => {
@@ -42,7 +41,7 @@ const AdminCoupons = () => {
       toast.success('Coupon created');
       setShowForm(false);
       setForm({
-        code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUsers: 100, maxUsesPerUser: 1, expiryDate: '', assignedTo: '', commissionRate: 10
+        code: '', discountType: 'percentage', discountValue: 0, minOrderValue: 0, maxUsers: 100, maxUsesPerUser: 1, expiryDate: '', assignedTo: ''
       });
       fetchInitialData();
     } catch (err) {
@@ -111,7 +110,7 @@ const AdminCoupons = () => {
                 <label className="block text-sm font-semibold mb-1">Expiry Date (Optional)</label>
                 <input type="date" value={form.expiryDate} onChange={(e) => setForm({ ...form, expiryDate: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
               </div>
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+              <div className="border-t pt-4">
                 <div>
                   <label className="block text-sm font-semibold mb-1 text-secondary">Assign Marketing Partner</label>
                   <select value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent">
@@ -120,10 +119,6 @@ const AdminCoupons = () => {
                       <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
                     ))}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold mb-1 text-secondary">Commission Rate (%)</label>
-                  <input type="number" min="0" max="100" value={form.commissionRate} onChange={(e) => setForm({ ...form, commissionRate: Number(e.target.value) })} disabled={!form.assignedTo} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent disabled:opacity-50" />
                 </div>
               </div>
               
@@ -156,7 +151,7 @@ const AdminCoupons = () => {
                 {coupon.assignedTo && (
                   <div className="mt-3 py-2 px-3 bg-gray-50 rounded-lg">
                     <p className="text-xs font-semibold text-secondary">Marketing Partner</p>
-                    <p className="text-xs text-gray-500">{marketingUsers.find(u => u._id === coupon.assignedTo)?.name || 'Unknown'} — {coupon.commissionRate}% Commission</p>
+                    <p className="text-xs text-gray-500">{marketingUsers.find(u => u._id === coupon.assignedTo)?.name || 'Unknown'}</p>
                   </div>
                 )}
               </div>

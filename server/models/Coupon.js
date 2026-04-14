@@ -60,10 +60,6 @@ const couponSchema = new mongoose.Schema({
     ref: 'User',
     default: null,
   },
-  commissionRate: {
-    type: Number,
-    default: 10,
-  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Coupon', couponSchema);

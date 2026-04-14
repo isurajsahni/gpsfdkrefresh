@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { HiOutlineEye, HiOutlineUsers, HiOutlineHeart, HiOutlineChatAlt2 } from 'react-icons/hi';
+import { HiOutlineEye, HiOutlineUsers, HiOutlineHeart, HiOutlineChatAlt2, HiOutlineRefresh } from 'react-icons/hi';
 
 const iconMap = {
   views: HiOutlineEye,
   visitors: HiOutlineUsers,
+  returning: HiOutlineRefresh,
   likes: HiOutlineHeart,
   comments: HiOutlineChatAlt2,
 };

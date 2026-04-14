@@ -1,183 +1,356 @@
-const Visit = require('../models/Visit');
+const Visitor = require('../models/Visitor');
+const PageView = require('../models/PageView');
+const UAParser = require('ua-parser-js');
 
-// Helper: get country from IP using free API
-const getCountryFromIP = async (ip) => {
-  try {
-    // Skip for localhost/private IPs
-    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168') || ip.startsWith('10.')) {
-      return { name: 'Local', code: 'LO' };
-    }
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,countryCode`);
-    const data = await res.json();
-    if (data.country) {
-      return { name: data.country, code: data.countryCode };
-    }
-    return null;
-  } catch {
-    return null;
+// ─── Helper: Detect traffic source from UTM params or referrer ───
+const detectSource = (utmSource, referrer) => {
+  if (utmSource) {
+    const src = utmSource.toLowerCase();
+    if (src.includes('instagram')) return 'Instagram';
+    if (src.includes('facebook') || src.includes('fb')) return 'Facebook';
+    if (src.includes('google')) return 'Google';
+    if (src.includes('youtube')) return 'YouTube';
+    if (src.includes('twitter') || src.includes('x.com')) return 'Twitter/X';
+    if (src.includes('whatsapp')) return 'WhatsApp';
+    if (src.includes('email') || src.includes('mail')) return 'Email';
+    return utmSource; // Return raw utm_source if no match
   }
+
+  if (referrer) {
+    const ref = referrer.toLowerCase();
+    if (ref.includes('instagram.com') || ref.includes('l.instagram.com')) return 'Instagram';
+    if (ref.includes('facebook.com') || ref.includes('fb.com') || ref.includes('l.facebook.com') || ref.includes('lm.facebook.com')) return 'Facebook';
+    if (ref.includes('google.com') || ref.includes('google.co.in')) return 'Google';
+    if (ref.includes('youtube.com')) return 'YouTube';
+    if (ref.includes('twitter.com') || ref.includes('t.co') || ref.includes('x.com')) return 'Twitter/X';
+    if (ref.includes('whatsapp.com')) return 'WhatsApp';
+    if (ref.includes('bing.com')) return 'Bing';
+    if (ref.includes('pinterest.com')) return 'Pinterest';
+    return 'Other';
+  }
+
+  return 'Direct';
 };
 
-// Track a new visit for today
-exports.trackVisit = async (req, res, next) => {
+// ─── Helper: get date range boundaries ───
+const getDateRange = (range) => {
+  const now = new Date();
+  let start;
+
+  switch (range) {
+    case 'today':
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      break;
+    case '30d':
+      start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      break;
+    case '7d':
+    default:
+      start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      break;
+  }
+
+  return { start, end: now };
+};
+
+// ─── POST /api/analytics/track ───
+// Called on every page view from the client
+exports.trackPageView = async (req, res, next) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const { visitorId, pageUrl, referrer, utmSource, utmMedium, utmCampaign, utmTerm, utmContent } = req.body;
 
-    // Get visitor's IP
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
-    const country = await getCountryFromIP(ip);
-
-    let visit = await Visit.findOne({ date: today });
-    if (visit) {
-      visit.count += 1;
-      visit.visitors += 1;
-
-      // Update country count
-      if (country) {
-        const existing = visit.countries.find(c => c.code === country.code);
-        if (existing) {
-          existing.count += 1;
-        } else {
-          visit.countries.push({ name: country.name, code: country.code, count: 1 });
-        }
-      }
-
-      await visit.save();
-    } else {
-      const countries = country ? [{ name: country.name, code: country.code, count: 1 }] : [];
-      visit = await Visit.create({ date: today, count: 1, visitors: 1, countries });
+    if (!visitorId) {
+      return res.status(400).json({ message: 'visitorId is required' });
     }
 
-    res.status(200).json({ success: true, visit });
+    // Parse user agent
+    const ua = new UAParser(req.headers['user-agent']);
+    const browser = ua.getBrowser().name || '';
+    const deviceType = ua.getDevice().type || 'desktop'; // mobile, tablet, or desktop
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
+
+    // Detect traffic source
+    const source = detectSource(utmSource, referrer);
+
+    // Upsert visitor
+    const existingVisitor = await Visitor.findOne({ visitorId });
+    let isReturning = false;
+
+    if (existingVisitor) {
+      isReturning = true;
+      existingVisitor.lastVisitAt = new Date();
+      existingVisitor.totalVisits += 1;
+      existingVisitor.returning = true;
+      await existingVisitor.save();
+    } else {
+      await Visitor.create({
+        visitorId,
+        firstVisitAt: new Date(),
+        lastVisitAt: new Date(),
+        totalVisits: 1,
+        device: deviceType,
+        browser,
+        ip,
+        returning: false,
+      });
+    }
+
+    // Log page view (always)
+    await PageView.create({
+      visitorId,
+      pageUrl: pageUrl || '/',
+      referrer: referrer || '',
+      utmSource: utmSource || '',
+      utmMedium: utmMedium || '',
+      utmCampaign: utmCampaign || '',
+      utmTerm: utmTerm || '',
+      utmContent: utmContent || '',
+      source,
+    });
+
+    res.status(200).json({ success: true, returning: isReturning });
   } catch (error) {
     next(error);
   }
 };
 
-// Get visitor statistics
+// ─── GET /api/analytics/stats?range=7d|30d|today ───
 exports.getStats = async (req, res, next) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const sevenDaysAgoDate = new Date();
-    sevenDaysAgoDate.setDate(sevenDaysAgoDate.getDate() - 7);
-    const sevenDaysAgo = sevenDaysAgoDate.toISOString().split('T')[0];
+    const range = req.query.range || '7d';
+    const { start, end } = getDateRange(range);
 
-    const todayVisit = await Visit.findOne({ date: today });
-    const todayCount = todayVisit ? todayVisit.count : 0;
-
-    const past7DaysVisits = await Visit.find({
-      date: { $gte: sevenDaysAgo, $lte: today }
+    // Total page views in range
+    const totalViews = await PageView.countDocuments({
+      timestamp: { $gte: start, $lte: end },
     });
-    const past7DaysCount = past7DaysVisits.reduce((acc, curr) => acc + curr.count, 0);
 
-    const allVisits = await Visit.aggregate([
-      { $group: { _id: null, total: { $sum: '$count' } } }
-    ]);
-    const totalCount = allVisits.length > 0 ? allVisits[0].total : 0;
+    // Unique visitors in range (distinct visitorIds)
+    const uniqueVisitorIds = await PageView.distinct('visitorId', {
+      timestamp: { $gte: start, $lte: end },
+    });
+    const uniqueVisitors = uniqueVisitorIds.length;
 
-    res.status(200).json({
+    // Returning visitors (visitors who existed before this range)
+    const returningCount = await Visitor.countDocuments({
+      visitorId: { $in: uniqueVisitorIds },
+      returning: true,
+    });
+
+    // Previous period for growth calculation
+    const periodMs = end.getTime() - start.getTime();
+    const prevStart = new Date(start.getTime() - periodMs);
+    const prevEnd = start;
+
+    const prevViews = await PageView.countDocuments({
+      timestamp: { $gte: prevStart, $lt: prevEnd },
+    });
+    const prevVisitorIds = await PageView.distinct('visitorId', {
+      timestamp: { $gte: prevStart, $lt: prevEnd },
+    });
+
+    const viewsGrowth = prevViews > 0
+      ? Math.round(((totalViews - prevViews) / prevViews) * 100)
+      : (totalViews > 0 ? 100 : 0);
+    const visitorsGrowth = prevVisitorIds.length > 0
+      ? Math.round(((uniqueVisitors - prevVisitorIds.length) / prevVisitorIds.length) * 100)
+      : (uniqueVisitors > 0 ? 100 : 0);
+
+    // All-time totals
+    const allTimeViews = await PageView.countDocuments();
+    const allTimeVisitors = (await Visitor.countDocuments());
+
+    res.json({
       success: true,
       stats: {
-        today: todayCount,
-        past7Days: past7DaysCount,
-        total: totalCount
-      }
+        today: await PageView.countDocuments({
+          timestamp: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) },
+        }),
+        past7Days: await PageView.countDocuments({
+          timestamp: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        }),
+        total: allTimeViews,
+      },
+      summary: {
+        views: { total: totalViews, growth: viewsGrowth },
+        visitors: { total: uniqueVisitors, growth: visitorsGrowth },
+        returning: { total: returningCount, growth: 0 },
+      },
+      allTime: {
+        views: allTimeViews,
+        visitors: allTimeVisitors,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Get daily breakdown for the last 7 days
+// ─── GET /api/analytics/daily?range=7d|30d|today ───
 exports.getDailyBreakdown = async (req, res, next) => {
   try {
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
+    const range = req.query.range || '7d';
+    const days = range === '30d' ? 30 : range === 'today' ? 1 : 7;
+    const { start } = getDateRange(range);
+
+    // Aggregate page views by day
+    const viewsByDay = await PageView.aggregate([
+      { $match: { timestamp: { $gte: start } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+          views: { $sum: 1 },
+          visitors: { $addToSet: '$visitorId' },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Build day-by-day array
+    const dayMap = {};
+    viewsByDay.forEach(d => {
+      dayMap[d._id] = { views: d.views, visitors: d.visitors.length };
+    });
+
+    const daily = [];
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      days.push(d.toISOString().split('T')[0]);
+      const dateStr = d.toISOString().split('T')[0];
+      const entry = dayMap[dateStr] || { views: 0, visitors: 0 };
+      daily.push({
+        date: dateStr,
+        views: entry.views,
+        visitors: entry.visitors,
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      });
     }
-
-    const visits = await Visit.find({ date: { $in: days } });
-    const visitMap = {};
-    visits.forEach(v => { visitMap[v.date] = v; });
-
-    const daily = days.map(date => {
-      const visit = visitMap[date];
-      return {
-        date,
-        views: visit ? visit.count : 0,
-        visitors: visit ? (visit.visitors || visit.count) : 0,
-        label: new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      };
-    });
 
     const totalViews = daily.reduce((s, d) => s + d.views, 0);
     const totalVisitors = daily.reduce((s, d) => s + d.visitors, 0);
 
-    // Get previous 7 days for growth comparison
-    const prevDays = [];
-    for (let i = 13; i >= 7; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      prevDays.push(d.toISOString().split('T')[0]);
-    }
-    const prevVisits = await Visit.find({ date: { $in: prevDays } });
-    const prevTotalViews = prevVisits.reduce((s, v) => s + v.count, 0);
-    const prevTotalVisitors = prevVisits.reduce((s, v) => s + (v.visitors || v.count), 0);
+    // Previous period comparison
+    const prevStart = new Date(start);
+    prevStart.setDate(prevStart.getDate() - days);
 
-    const viewsGrowth = prevTotalViews > 0
-      ? Math.round(((totalViews - prevTotalViews) / prevTotalViews) * 100)
+    const prevViews = await PageView.countDocuments({
+      timestamp: { $gte: prevStart, $lt: start },
+    });
+    const prevVisitorIds = await PageView.distinct('visitorId', {
+      timestamp: { $gte: prevStart, $lt: start },
+    });
+
+    const viewsGrowth = prevViews > 0
+      ? Math.round(((totalViews - prevViews) / prevViews) * 100)
       : (totalViews > 0 ? 100 : 0);
-    const visitorsGrowth = prevTotalVisitors > 0
-      ? Math.round(((totalVisitors - prevTotalVisitors) / prevTotalVisitors) * 100)
+    const visitorsGrowth = prevVisitorIds.length > 0
+      ? Math.round(((totalVisitors - prevVisitorIds.length) / prevVisitorIds.length) * 100)
       : (totalVisitors > 0 ? 100 : 0);
 
-    res.status(200).json({
+    // Returning visitors count
+    const currentVisitorIds = await PageView.distinct('visitorId', {
+      timestamp: { $gte: start },
+    });
+    const returningCount = await Visitor.countDocuments({
+      visitorId: { $in: currentVisitorIds },
+      returning: true,
+    });
+
+    res.json({
       success: true,
       daily,
       summary: {
         views: { total: totalViews, growth: viewsGrowth },
         visitors: { total: totalVisitors, growth: visitorsGrowth },
-        likes: { total: 0, growth: 0 },
-        comments: { total: 0, growth: 0 },
-      }
+        returning: { total: returningCount, growth: 0 },
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Get full dashboard data (most viewed, referrers, locations)
+// ─── GET /api/analytics/dashboard?range=7d|30d|today ───
 exports.getDashboardData = async (req, res, next) => {
   try {
-    // Aggregate country data from the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    const since = sevenDaysAgo.toISOString().split('T')[0];
+    const range = req.query.range || '7d';
+    const { start } = getDateRange(range);
 
-    const visits = await Visit.find({ date: { $gte: since } });
+    // ── Traffic Sources ──
+    const sourceAgg = await PageView.aggregate([
+      { $match: { timestamp: { $gte: start } } },
+      { $group: { _id: '$source', views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } },
+      { $project: { source: '$_id', views: 1, visitors: { $size: '$visitors' } } },
+      { $sort: { views: -1 } },
+      { $limit: 15 },
+    ]);
 
-    // Merge country counts across all days
-    const countryMap = {};
-    visits.forEach(v => {
-      if (v.countries && v.countries.length) {
-        v.countries.forEach(c => {
-          if (!countryMap[c.code]) {
-            countryMap[c.code] = { name: c.name, code: c.code, views: 0 };
-          }
-          countryMap[c.code].views += c.count;
-        });
-      }
-    });
+    // ── Top Pages ──
+    const topPages = await PageView.aggregate([
+      { $match: { timestamp: { $gte: start } } },
+      { $group: { _id: '$pageUrl', views: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } },
+      { $project: { page: '$_id', views: 1, visitors: { $size: '$visitors' } } },
+      { $sort: { views: -1 } },
+      { $limit: 10 },
+    ]);
 
-    const countries = Object.values(countryMap).sort((a, b) => b.views - a.views);
+    // ── UTM Campaign Performance ──
+    const campaigns = await PageView.aggregate([
+      { $match: { timestamp: { $gte: start }, utmCampaign: { $ne: '' } } },
+      {
+        $group: {
+          _id: { campaign: '$utmCampaign', source: '$utmSource', medium: '$utmMedium' },
+          views: { $sum: 1 },
+          visitors: { $addToSet: '$visitorId' },
+        },
+      },
+      {
+        $project: {
+          campaign: '$_id.campaign',
+          source: '$_id.source',
+          medium: '$_id.medium',
+          views: 1,
+          visitors: { $size: '$visitors' },
+        },
+      },
+      { $sort: { views: -1 } },
+      { $limit: 10 },
+    ]);
 
-    res.status(200).json({
+    // ── Referrers (raw referrer domains) ──
+    const referrers = await PageView.aggregate([
+      { $match: { timestamp: { $gte: start }, referrer: { $ne: '' } } },
+      { $group: { _id: '$referrer', views: { $sum: 1 } } },
+      { $project: { source: '$_id', views: 1 } },
+      { $sort: { views: -1 } },
+      { $limit: 10 },
+    ]);
+
+    // ── Device breakdown ──
+    const devices = await Visitor.aggregate([
+      {
+        $lookup: {
+          from: 'pageviews',
+          localField: 'visitorId',
+          foreignField: 'visitorId',
+          pipeline: [{ $match: { timestamp: { $gte: start } } }, { $limit: 1 }],
+          as: 'recentViews',
+        },
+      },
+      { $match: { 'recentViews.0': { $exists: true } } },
+      { $group: { _id: '$device', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    res.json({
       success: true,
-      mostViewed: { postsAndPages: [], archive: [] },
-      referrers: [],
-      locations: { countries, regions: [], cities: [] }
+      sources: sourceAgg,
+      topPages,
+      campaigns,
+      referrers,
+      devices,
     });
   } catch (error) {
     next(error);

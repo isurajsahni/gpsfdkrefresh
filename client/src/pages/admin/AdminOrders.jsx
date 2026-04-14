@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
 
 const statusColors = {
+  payment_pending: 'bg-orange-100 text-orange-700',
   pending: 'bg-yellow-100 text-yellow-700',
   processing: 'bg-blue-100 text-blue-700',
   shipped: 'bg-purple-100 text-purple-700',
@@ -132,8 +133,8 @@ const AdminOrders = () => {
                         onChange={(e) => updateStatus(order._id, e.target.value)}
                         className={`px-3 py-1.5 rounded-full text-xs font-semibold border-0 cursor-pointer ${statusColors[order.status] || 'bg-gray-100'}`}
                       >
-                        {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
-                          <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                        {['payment_pending', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
+                          <option key={s} value={s}>{s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
                         ))}
                       </select>
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>

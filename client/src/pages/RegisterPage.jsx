@@ -130,6 +130,14 @@ const RegisterPage = () => {
 
       setStep('success');
       toast.success('Account created successfully!');
+      // Meta Pixel: CompleteRegistration event on successful account creation
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'CompleteRegistration', {
+          content_name: 'User Registration',
+          status: true,
+        });
+        console.log('[Meta Pixel] CompleteRegistration event fired');
+      }
 
       setTimeout(() => {
         if (cartItems.length > 0) {

@@ -47,6 +47,14 @@ const Contact = () => {
         message: sanitize(formData.message)
       });
       setStatus('Message sent successfully! We will get back to you soon.');
+      // Meta Pixel: Lead event on successful contact form submission
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'Lead', {
+          content_name: 'Contact Form',
+          content_category: 'Contact Page',
+        });
+        console.log('[Meta Pixel] Lead event fired (Contact Page)');
+      }
       setFormData({ name: '', email: '', message: '' });
       setLoading(false);
       setTimeout(() => setStatus(''), 5000);
@@ -78,11 +86,11 @@ const Contact = () => {
           >
             <div>
               <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Email</h3>
-              <a href="mailto:customer@gpsfdk.com" className="text-secondary/80 text-lg hover:text-accent transition-colors">customer@gpsfdk.com</a>
+              <a href="mailto:customer@gpsfdk.com" className="text-secondary/80 text-lg hover:text-accent transition-colors" onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: 'Email' }); console.log('[Meta Pixel] Contact event fired (Email)'); } }}>customer@gpsfdk.com</a>
             </div>
             <div>
               <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Phone Number</h3>
-              <a href="tel:+916280310103" className="text-secondary/80 text-lg hover:text-accent transition-colors">+91 62803-10103</a>
+              <a href="tel:+916280310103" className="text-secondary/80 text-lg hover:text-accent transition-colors" onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: 'Phone' }); console.log('[Meta Pixel] Contact event fired (Phone)'); } }}>+91 62803-10103</a>
             </div>
             <div>
               <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Address</h3>

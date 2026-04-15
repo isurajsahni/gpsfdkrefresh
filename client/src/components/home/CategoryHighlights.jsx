@@ -58,7 +58,7 @@ const CategoryCard = ({ number, title, description, image, isReverse, link, bgCo
             </div>
             
             <div className="pt-2 md:pt-4">
-              <WebflowButton to={link} dark={false} fullWidth={typeof window !== 'undefined' && window.innerWidth < 768}>
+              <WebflowButton to={link} dark={false} fullWidth={typeof window !== 'undefined' && window.innerWidth < 768} onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: `Call Now - ${title}` }); console.log('[Meta Pixel] Contact event fired (Call Now)'); } }}>
                 Call Now
               </WebflowButton>
             </div>

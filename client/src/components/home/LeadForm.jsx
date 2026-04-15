@@ -14,6 +14,14 @@ const LeadForm = () => {
     try {
       await API.post('/leads', form);
       setStatus('success');
+      // Meta Pixel: Lead event on successful form submission
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'Lead', {
+          content_name: form.subject || 'Lead Form',
+          content_category: 'Homepage Lead',
+        });
+        console.log('[Meta Pixel] Lead event fired');
+      }
       setForm({ name: '', email: '', phone: '', subject: '', message: '' });
     } catch (err) {
       setStatus('error');

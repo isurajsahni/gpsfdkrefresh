@@ -1,9 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import SEO from '../components/seo/SEO';
 import ProductSlider from '../components/home/ProductSlider';
 import FeaturesSection from '../components/home/FeaturesSection';
-import React from 'react';
 
 const LocationPage = () => {
   const { city } = useParams();
@@ -24,6 +24,17 @@ const LocationPage = () => {
   ];
   
   const cityName = formatCity(city);
+
+  // Meta Pixel: ViewContent event for location landing pages
+  useEffect(() => {
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'ViewContent', {
+        content_name: `Location Page - ${cityName}`,
+        content_category: 'Landing Page',
+      });
+      console.log(`[Meta Pixel] ViewContent event fired (Location: ${cityName})`);
+    }
+  }, [cityName]);
   
   // Default values based on the generated SEO strategy
   const title = `Premium Wall Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
@@ -102,7 +113,7 @@ const LocationPage = () => {
              We understand the unique architectural styles and modern decor preferences of homeowners in {cityName}. Our durable, weather-resistant materials ensure your custom decor lasts a lifetime.
            </p>
            
-           <Link to="/contact" className="inline-block btn-primary relative z-10 px-8 py-4 text-lg">
+           <Link to="/contact" className="inline-block btn-primary relative z-10 px-8 py-4 text-lg" onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: `Location CTA - ${cityName}` }); console.log('[Meta Pixel] Contact event fired (Location CTA)'); } }}>
              Contact Our Local Team
            </Link>
         </div>

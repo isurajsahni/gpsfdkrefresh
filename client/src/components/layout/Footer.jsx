@@ -2,6 +2,16 @@ import { Link } from 'react-router-dom';
 import { FaInstagram, FaWhatsapp, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import logo from '../../assets/vite.webp';
 
+// Helper: fire Meta Pixel Contact event (once per click)
+const fireContactPixel = (method) => {
+  if (typeof window.fbq === 'function') {
+    window.fbq('track', 'Contact', {
+      content_name: method,
+    });
+    console.log(`[Meta Pixel] Contact event fired (${method})`);
+  }
+};
+
 const Footer = () => {
   const navLinks = [
     { name: 'Track Order', path: '/track-order' },
@@ -57,6 +67,7 @@ const Footer = () => {
               rel="noopener noreferrer"
               aria-label={social.label}
               className="text-secondary/50 hover:text-accent transition-colors duration-200"
+              onClick={() => social.label === 'WhatsApp' && fireContactPixel('WhatsApp')}
             >
               <social.icon className="w-5 h-5" />
             </a>
@@ -74,6 +85,7 @@ const Footer = () => {
           <a
             href="mailto:customer@gpsfdk.com"
             className="flex items-center gap-2 text-secondary/70 hover:text-accent transition-colors"
+            onClick={() => fireContactPixel('Email')}
           >
             <FaEnvelope className="w-4 h-4" />
             customer@gpsfdk.com
@@ -88,6 +100,7 @@ const Footer = () => {
           <a
             href="tel:+916280310103"
             className="flex items-center gap-2 text-secondary/70 hover:text-accent transition-colors"
+            onClick={() => fireContactPixel('Phone')}
           >
             <FaPhoneAlt className="w-4 h-4" />
             +91 62803-10103

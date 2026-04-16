@@ -38,7 +38,22 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
           setProducts(data.products);
         }
       } catch (err) {
-        // Use empty array on error
+        // Fallback: if hot-selling endpoint fails, fetch featured products instead
+        if (hotSelling) {
+          try {
+            const params = { limit: 20 };
+            params.featured = true;
+            if (categorySlug) params.categorySlug = categorySlug;
+            const fallbackRes = await API.get('/products', { params });
+            const fallbackProducts = fallbackRes.data.products || [];
+            if (excludeId) {
+              setProducts(fallbackProducts.filter(p => p._id !== excludeId));
+            } else {
+              setProducts(fallbackProducts);
+            }
+            return;
+          } catch (_) { /* ignore fallback error */ }
+        }
         setProducts([]);
       }
     };

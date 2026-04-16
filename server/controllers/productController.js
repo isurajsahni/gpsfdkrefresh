@@ -102,6 +102,79 @@ exports.getProducts = async (req, res, next) => {
   }
 };
 
+// GET /api/products/hot-selling
+exports.getHotSellingProducts = async (req, res, next) => {
+  try {
+    const Order = require('../models/Order');
+    const Category = require('../models/Category');
+    const MAX_PRODUCTS = 20;
+
+    // Find the wall-canvas category
+    const wallCanvasCat = await Category.findOne({ slug: 'wall-canvas' });
+    if (!wallCanvasCat) {
+      return res.json({ products: [] });
+    }
+
+    // Aggregate orders to find best-selling product IDs in wall-canvas category
+    // Only count orders that are not cancelled and are paid (or COD pending)
+    const bestSellers = await Order.aggregate([
+      { $match: { status: { $nin: ['cancelled', 'payment_pending'] } } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.product',
+          totalSold: { $sum: '$items.quantity' },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: MAX_PRODUCTS },
+    ]);
+
+    const bestSellerIds = bestSellers.map((b) => b._id);
+
+    // Fetch the actual product docs for those IDs, filtered to wall-canvas & active
+    let sellingProducts = [];
+    if (bestSellerIds.length > 0) {
+      sellingProducts = await Product.find({
+        _id: { $in: bestSellerIds },
+        category: wallCanvasCat._id,
+        isActive: true,
+      })
+        .populate('category', 'name slug')
+        .lean();
+
+      // Preserve the sales-rank order
+      const idOrder = new Map(bestSellerIds.map((id, i) => [id.toString(), i]));
+      sellingProducts.sort(
+        (a, b) => (idOrder.get(a._id.toString()) ?? 999) - (idOrder.get(b._id.toString()) ?? 999)
+      );
+    }
+
+    const remaining = MAX_PRODUCTS - sellingProducts.length;
+
+    // If there's room left, fill with featured products (excluding duplicates)
+    let featuredProducts = [];
+    if (remaining > 0) {
+      const excludeIds = sellingProducts.map((p) => p._id);
+      featuredProducts = await Product.find({
+        category: wallCanvasCat._id,
+        featured: true,
+        isActive: true,
+        _id: { $nin: excludeIds },
+      })
+        .populate('category', 'name slug')
+        .sort({ createdAt: -1 })
+        .limit(remaining)
+        .lean();
+    }
+
+    const combined = [...sellingProducts, ...featuredProducts];
+    res.json({ products: combined });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // GET /api/products/:slug
 exports.getProductBySlug = async (req, res, next) => {
   try {

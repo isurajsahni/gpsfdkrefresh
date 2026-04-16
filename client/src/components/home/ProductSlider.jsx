@@ -12,7 +12,7 @@ import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-const ProductSlider = ({ title, categorySlug, featured = true, excludeId }) => {
+const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
@@ -20,10 +20,18 @@ const ProductSlider = ({ title, categorySlug, featured = true, excludeId }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const params = { limit: 12 };
-        if (featured) params.featured = true;
-        if (categorySlug) params.categorySlug = categorySlug;
-        const { data } = await API.get('/products', { params });
+        let data;
+        if (hotSelling) {
+          // Use the dedicated hot-selling endpoint
+          const res = await API.get('/products/hot-selling');
+          data = res.data;
+        } else {
+          const params = { limit: 12 };
+          if (featured) params.featured = true;
+          if (categorySlug) params.categorySlug = categorySlug;
+          const res = await API.get('/products', { params });
+          data = res.data;
+        }
         if (excludeId) {
           setProducts(data.products.filter(p => p._id !== excludeId));
         } else {
@@ -35,7 +43,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, excludeId }) => {
       }
     };
     fetchProducts();
-  }, [categorySlug, featured]);
+  }, [categorySlug, featured, hotSelling]);
 
   const handleQuickAdd = (e, product) => {
     e.preventDefault();

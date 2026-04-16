@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, bulkDeleteProducts, importProducts } = require('../controllers/productController');
+const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, bulkDeleteProducts, importProducts, getHotSellingProducts } = require('../controllers/productController');
 const { protect, admin } = require('../middleware/auth');
 const { csvUpload } = require('../middleware/upload');
 
@@ -16,6 +16,7 @@ const handleUpload = (uploadMiddleware) => (req, res, next) => {
 };
 
 router.get('/', getProducts);
+router.get('/hot-selling', getHotSellingProducts);
 router.post('/', protect, admin, createProduct);
 router.post('/import', protect, admin, handleUpload(csvUpload.single('csv')), importProducts);
 router.post('/bulk-delete', protect, admin, bulkDeleteProducts);

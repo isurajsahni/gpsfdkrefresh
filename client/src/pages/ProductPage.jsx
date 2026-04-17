@@ -23,6 +23,14 @@ const ProductPage = () => {
   const [zoomStyle, setZoomStyle] = useState({});
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(true);
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleMouseMove = (e) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -188,19 +196,19 @@ const ProductPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Images — thumbnails left, main image right */}
+          {/* Images — thumbnails left (desktop) / bottom (mobile), main image right/top */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col-reverse sm:flex-row gap-3"
+            className="flex flex-col-reverse lg:flex-row gap-4"
           >
             {/* Thumbnails */}
             {product.images?.length > 1 && (
-              <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto scrollbar-hide">
+              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto scrollbar-hide py-1 lg:py-0 w-full lg:w-24 shrink-0">
                 {product.images.map((img, index) => (
                   <div
                     key={index}
-                    className={`aspect-square w-20 sm:w-24 flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
+                    className={`aspect-square w-20 lg:w-full flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
@@ -212,9 +220,9 @@ const ProductPage = () => {
 
             {/* Main Image */}
             <div 
-              className="flex-1 relative rounded-2xl overflow-hidden bg-white flex items-center justify-center group cursor-zoom-in"
-              onMouseMove={handleMouseMove}
-              onMouseEnter={() => setIsZooming(true)}
+              className="flex-1 w-full bg-gray-50 rounded-2xl overflow-hidden relative group cursor-zoom-in flex items-center justify-center p-2"
+              onMouseMove={isDesktop ? handleMouseMove : undefined}
+              onMouseEnter={() => isDesktop && setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}
               onClick={() => setIsFullscreenZoom(true)}
             >
@@ -225,8 +233,8 @@ const ProductPage = () => {
                 transition={{ duration: 0.35, ease: 'easeOut' }}
                 src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
                 alt={product.name}
-                style={isZooming ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
-                className="w-full h-auto max-h-[70vh] object-contain rounded-xl transition-transform duration-200 ease-out will-change-transform"
+                style={(isZooming && isDesktop) ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
+                className="w-full h-auto max-h-[600px] object-contain transition-transform duration-200 ease-out will-change-transform"
               />
             </div>
           </motion.div>

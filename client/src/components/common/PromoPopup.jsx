@@ -98,7 +98,7 @@ const PromoPopup = () => {
     }
   }, [showPopup, isCheckout, shouldShowPopup]);
 
-  // 2. Timer popup — 15 seconds of interaction
+  // 2. Timer popup — 20 seconds of interaction
   useEffect(() => {
     if (isCheckout || !shouldShowPopup()) return;
 
@@ -108,7 +108,7 @@ const PromoPopup = () => {
         if (!isOpen && shouldShowPopup()) {
           showPopup('timer');
         }
-      }, 15000); // Changed to 15 seconds
+      }, 20000); // Changed to 20 seconds
     };
 
     // Start timer on user interaction

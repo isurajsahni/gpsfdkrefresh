@@ -1,97 +1,69 @@
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useSearchParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiOutlineShoppingCart } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const SearchPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
+  const navigate = useNavigate();
   const location = useLocation();
 
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const currentPageRef = useRef(1);
-  const initialLoadDone = useRef(false);
-
-  const observerTarget = useRef(null);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
-  const fetchResults = async (pageToFetch, isAppend = false) => {
-    if (!isAppend) setLoading(true);
-    else setLoadingMore(true);
+  useEffect(() => {
+    if (!query) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
 
-    try {
-      const { data } = await API.get(`/products?search=${query}&limit=16&page=${pageToFetch}`);
-      
-      if (isAppend) {
-        setProducts(prev => [...prev, ...data.products]);
-      } else {
+    const fetchResults = async () => {
+      setLoading(true);
+      try {
+        const { data } = await API.get(`/products?search=${query}&limit=12&page=${currentPage}`);
         setProducts(data.products);
-      }
-      
-      setHasMore(data.products.length > 0 && data.page < data.pages);
-      currentPageRef.current = data.page;
+        setTotalPages(data.pages || 1);
+        setTotalProducts(data.total || 0);
 
-      if (!isAppend) {
-        initialLoadDone.current = true;
         // Restore scroll position
         const scrollKey = `scroll_${location.pathname}${location.search}`;
         const savedPos = sessionStorage.getItem(scrollKey);
         if (savedPos) {
           setTimeout(() => window.scrollTo(0, parseInt(savedPos, 10)), 100);
           sessionStorage.removeItem(scrollKey);
+        } else {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      if (!isAppend) setLoading(false);
-      else setLoadingMore(false);
-    }
-  };
-
-  useEffect(() => {
-    if (query) {
-      setProducts([]);
-      initialLoadDone.current = false;
-      currentPageRef.current = 1;
-      fetchResults(1, false);
-    } else {
-      setProducts([]);
-      setLoading(false);
-      setHasMore(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  // Infinite Scroll Observer
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore && initialLoadDone.current) {
-          fetchResults(currentPageRef.current + 1, true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    
-    // Have to capture ref current safely for cleanup
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-    return () => {
-      if (currentTarget) observer.unobserve(currentTarget);
     };
-  }, [hasMore, loading, loadingMore]);
+    
+    fetchResults();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', newPage.toString());
+    navigate({ search: newParams.toString() });
+  };
 
   const handleProductClick = () => {
     sessionStorage.setItem(`scroll_${location.pathname}${location.search}`, window.scrollY.toString());
@@ -102,21 +74,21 @@ const SearchPage = () => {
       <div className="max-w-[1200px] mx-auto px-[15px]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12 text-center">
           <h1 className="text-3xl md:text-5xl font-heading font-bold text-secondary">Search Results</h1>
-          <p className="text-gray-500 mt-4 text-lg">Showing results for <span className="font-bold text-secondary">"{query}"</span></p>
+          <p className="text-gray-500 mt-4 text-lg">Showing {products.length} of {totalProducts} results for <span className="font-bold text-secondary">"{query}"</span></p>
         </motion.div>
 
-        {loading && products.length === 0 ? (
+        {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : products.length === 0 ? (
+        ) : products.length === 0 && query ? (
           <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
             <div className="text-6xl mb-6">🔍</div>
             <h2 className="text-2xl font-bold text-secondary mb-2">No products found</h2>
             <p className="text-gray-500 mb-8">We couldn't find anything matching your search. Please try a different keyword.</p>
             <Link to="/" className="btn-primary">Back to Home</Link>
           </div>
-        ) : (
+        ) : query ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product, i) => (
@@ -124,7 +96,7 @@ const SearchPage = () => {
                   key={`${product._id}-${i}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (i % 16) * 0.05 }}
+                  transition={{ delay: (i % 12) * 0.05 }}
                 >
                   <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md">
@@ -170,17 +142,30 @@ const SearchPage = () => {
               ))}
             </div>
             
-            {/* Intersection Observer Target for Infinite Scroll */}
-            <div ref={observerTarget} className="py-12 mt-4 flex items-center justify-center">
-              {loadingMore && (
-                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
-              )}
-              {!hasMore && products.length > 0 && (
-                <p className="text-gray-400 font-medium">End of search results.</p>
-              )}
-            </div>
+            {/* Traditional Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-16 pb-8">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all shadow-sm border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-secondary border-gray-200 hover:border-accent hover:text-accent'}`}
+                >
+                  <HiChevronLeft className="w-5 h-5" /> Previous
+                </button>
+                <div className="hidden sm:flex text-sm font-semibold text-gray-500 items-center justify-center min-w-[80px]">
+                  {currentPage} <span className="mx-1 text-gray-300">/</span> {totalPages}
+                </div>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all shadow-sm border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-secondary border-gray-200 hover:border-accent hover:text-accent'}`}
+                >
+                  Next <HiChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </>
-        )}
+        ) : null}
       </div>
     </div>
   );

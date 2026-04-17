@@ -195,20 +195,20 @@ const ProductPage = () => {
           <span className="text-secondary">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Images — thumbnails left (desktop) / bottom (mobile), main image right/top */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          {/* Images — thumbnails below on mobile, left column on desktop */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col-reverse lg:flex-row gap-4"
+            className="flex flex-col lg:flex-row gap-3"
           >
-            {/* Thumbnails */}
+            {/* Thumbnails — horizontal on mobile, vertical on desktop */}
             {product.images?.length > 1 && (
-              <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto scrollbar-hide py-1 lg:py-0 w-full lg:w-24 shrink-0">
+              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto scrollbar-hide order-2 lg:order-1 lg:w-20 shrink-0">
                 {product.images.map((img, index) => (
                   <div
                     key={index}
-                    className={`aspect-square w-20 lg:w-full flex-shrink-0 cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent' : 'border-gray-100 hover:border-accent/40'
+                    className={`aspect-square w-16 lg:w-20 flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent shadow-md' : 'border-gray-200 hover:border-accent/40'
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
@@ -220,22 +220,24 @@ const ProductPage = () => {
 
             {/* Main Image */}
             <div 
-              className="flex-1 w-full bg-gray-50 rounded-2xl overflow-hidden relative group cursor-zoom-in flex items-center justify-center p-2"
+              className="flex-1 order-1 lg:order-2 rounded-2xl overflow-hidden relative group cursor-zoom-in"
               onMouseMove={isDesktop ? handleMouseMove : undefined}
               onMouseEnter={() => isDesktop && setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}
               onClick={() => setIsFullscreenZoom(true)}
             >
-              <motion.img
-                key={selectedImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
-                alt={product.name}
-                style={(isZooming && isDesktop) ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
-                className="w-full h-auto max-h-[600px] object-contain transition-transform duration-200 ease-out will-change-transform"
-              />
+              <div className="aspect-[4/5] w-full relative overflow-hidden rounded-2xl bg-white">
+                <motion.img
+                  key={selectedImage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
+                  alt={product.name}
+                  style={(isZooming && isDesktop) ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 ease-out will-change-transform"
+                />
+              </div>
             </div>
           </motion.div>
 

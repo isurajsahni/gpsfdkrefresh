@@ -43,27 +43,50 @@ const generateUniqueSlug = async (name) => {
 // GET /api/products
 exports.getProducts = async (req, res, next) => {
   try {
-    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry, all } = req.query;
-    const query = {};
-    // By default only show active products; admin can pass all=true to see everything
-    if (all !== 'true') query.isActive = true;
+    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry, all, subCategoryExact, subCategory, minPrice, maxPrice } = req.query;
     
-    if (category) query.category = category;
+    const andConditions = [];
+
+    // By default only show active products; admin can pass all=true to see everything
+    if (all !== 'true') andConditions.push({ isActive: true });
+    
+    if (category) andConditions.push({ category });
     
     if (categorySlug) {
       const Category = require('../models/Category');
       const cat = await Category.findOne({ slug: categorySlug });
       if (cat) {
-        query.category = cat._id;
+        andConditions.push({ category: cat._id });
       } else {
         // If category slug is requested but doesn't exist, return no products
         return res.json({ products: [], total: 0, pages: 0, page: 1 });
       }
     }
 
-    if (featured === 'true') query.featured = true;
-    if (masonry === 'true') query.isMasonry = true;
+    if (featured === 'true') andConditions.push({ featured: true });
+    if (masonry === 'true') andConditions.push({ isMasonry: true });
+
+    if (subCategoryExact) {
+      andConditions.push({ subCategory: subCategoryExact });
+    } else if (subCategory) {
+      const escaped = subCategory.replace(/-/g, '.*');
+      andConditions.push({ subCategory: { $regex: escaped, $options: 'i' } });
+    }
+
+    if (minPrice || maxPrice) {
+      const priceFilter = {};
+      if (minPrice) priceFilter.$gte = Number(minPrice);
+      if (maxPrice) priceFilter.$lte = Number(maxPrice);
+      andConditions.push({
+        $or: [
+          { basePrice: priceFilter },
+          { 'variations.price': priceFilter }
+        ]
+      });
+    }
+
     if (search) {
+      const Category = require('../models/Category');
       // Escape regex special characters to prevent ReDoS attacks
       const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const searchRegex = { $regex: escaped, $options: 'i' };
@@ -72,12 +95,14 @@ exports.getProducts = async (req, res, next) => {
       const matchedCategories = await Category.find({ name: searchRegex }).select('_id');
       const categoryIds = matchedCategories.map(c => c._id);
 
-      query.$or = [
-        { name: searchRegex },
-        { description: searchRegex },
-        { subCategory: searchRegex },
-        { category: { $in: categoryIds } }
-      ];
+      andConditions.push({
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex },
+          { subCategory: searchRegex },
+          { category: { $in: categoryIds } }
+        ]
+      });
     }
     
     let sortObj = { createdAt: -1 };
@@ -88,8 +113,10 @@ exports.getProducts = async (req, res, next) => {
     // Cap limit to prevent abuse
     const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
     
-    const total = await Product.countDocuments(query);
-    const products = await Product.find(query)
+    const finalQuery = andConditions.length > 0 ? { $and: andConditions } : {};
+
+    const total = await Product.countDocuments(finalQuery);
+    const products = await Product.find(finalQuery)
       .populate('category', 'name slug')
       .sort(sortObj)
       .skip((page - 1) * safeLimit)

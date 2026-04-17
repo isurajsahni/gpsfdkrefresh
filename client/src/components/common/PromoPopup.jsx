@@ -1,31 +1,59 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineX, HiOutlineClipboardCopy, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi';
 
 const COUPON_CODE = 'THE-R2L-SUMMER';
-const SESSION_KEY = 'promoPopupShown';
-const EXIT_SESSION_KEY = 'promoExitShown';
+const NEVER_SHOW_KEY = 'coupon_popup_never';
+const LAST_SHOWN_KEY = 'coupon_popup_timestamp';
 
 const PromoPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [trigger, setTrigger] = useState(''); // 'entry', 'timer', 'exit'
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const timerRef = useRef(null);
   const exitShownRef = useRef(false);
+  const location = useLocation();
+
+  // Helper to check if we should show popup based on localStorage conditions
+  const shouldShowPopup = useCallback(() => {
+    if (localStorage.getItem(NEVER_SHOW_KEY) === 'true') {
+      return false;
+    }
+    const lastShown = localStorage.getItem(LAST_SHOWN_KEY);
+    if (lastShown) {
+      const now = Date.now();
+      const diff = now - parseInt(lastShown, 10);
+      const hours24 = 24 * 60 * 60 * 1000;
+      if (diff < hours24) {
+        return false;
+      }
+    }
+    return true;
+  }, []);
 
   // Show popup
   const showPopup = useCallback((triggerType) => {
+    if (!shouldShowPopup()) return;
     setTrigger(triggerType);
     setIsOpen(true);
-  }, []);
+  }, [shouldShowPopup]);
 
   // Close popup
   const closePopup = useCallback(() => {
     setIsOpen(false);
     setCopied(false);
-    sessionStorage.setItem(SESSION_KEY, 'true');
-  }, []);
+    if (dontShowAgain) {
+      localStorage.setItem(NEVER_SHOW_KEY, 'true');
+    } else {
+      localStorage.setItem(LAST_SHOWN_KEY, Date.now().toString());
+    }
+  }, [dontShowAgain]);
+
+  const handleDontShowChange = (e) => {
+    setDontShowAgain(e.target.checked);
+  };
 
   // Copy coupon code
   const handleCopy = useCallback(async () => {
@@ -46,26 +74,41 @@ const PromoPopup = () => {
     }
   }, []);
 
+  // Check route: NEVER show on checkout
+  const isCheckout = location.pathname.includes('/checkout');
+
+  // Force close if we navigate to checkout while open
+  useEffect(() => {
+    if (isCheckout && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isCheckout, isOpen]);
+
   // 1. Entry popup — show on first visit
   useEffect(() => {
-    if (!sessionStorage.getItem(SESSION_KEY)) {
+    if (isCheckout || !shouldShowPopup()) return;
+    
+    // Only attempt entry popup if it hasn't been shown in this session at all
+    if (!sessionStorage.getItem('promo_entry_attempted')) {
       const entryTimer = setTimeout(() => {
         showPopup('entry');
-        sessionStorage.setItem(SESSION_KEY, 'true');
+        sessionStorage.setItem('promo_entry_attempted', 'true');
       }, 1500); // Small delay for page to settle
       return () => clearTimeout(entryTimer);
     }
-  }, [showPopup]);
+  }, [showPopup, isCheckout, shouldShowPopup]);
 
-  // 2. Timer popup — 8 seconds of interaction
+  // 2. Timer popup — 15 seconds of interaction
   useEffect(() => {
+    if (isCheckout || !shouldShowPopup()) return;
+
     const startTimer = () => {
       if (timerRef.current) return;
       timerRef.current = setTimeout(() => {
-        if (!isOpen && sessionStorage.getItem(SESSION_KEY)) {
+        if (!isOpen && shouldShowPopup()) {
           showPopup('timer');
         }
-      }, 8000);
+      }, 15000); // Changed to 15 seconds
     };
 
     // Start timer on user interaction
@@ -82,26 +125,27 @@ const PromoPopup = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
       events.forEach(e => window.removeEventListener(e, handler));
     };
-  }, [isOpen, showPopup]);
+  }, [isOpen, showPopup, isCheckout, shouldShowPopup]);
 
   // 3. Exit intent popup — mouse leaves viewport
   useEffect(() => {
+    if (isCheckout || !shouldShowPopup()) return;
+
     const handleMouseLeave = (e) => {
       if (
         e.clientY <= 0 &&
         !isOpen &&
         !exitShownRef.current &&
-        !sessionStorage.getItem(EXIT_SESSION_KEY)
+        shouldShowPopup()
       ) {
         exitShownRef.current = true;
-        sessionStorage.setItem(EXIT_SESSION_KEY, 'true');
         showPopup('exit');
       }
     };
 
     document.addEventListener('mouseout', handleMouseLeave);
     return () => document.removeEventListener('mouseout', handleMouseLeave);
-  }, [isOpen, showPopup]);
+  }, [isOpen, showPopup, isCheckout, shouldShowPopup]);
 
   return (
     <AnimatePresence>
@@ -136,7 +180,7 @@ const PromoPopup = () => {
                 <HiOutlineX className="w-5 h-5" />
               </button>
 
-              <div className="px-6 pt-6 pb-8 text-center">
+              <div className="px-6 pt-6 pb-6 text-center">
                 {/* Sparkle icon */}
                 <motion.div
                   initial={{ rotate: -15 }}
@@ -193,13 +237,27 @@ const PromoPopup = () => {
                 <Link
                   to="/wall-canvas"
                   onClick={closePopup}
-                  className="inline-block w-full py-3.5 px-6 bg-gradient-to-r from-[#0B5D3B] to-[#0a4f33] text-white font-bold rounded-xl text-sm tracking-wide hover:shadow-lg hover:shadow-[#0B5D3B]/20 hover:-translate-y-0.5 transition-all duration-300"
+                  className="inline-block w-full py-3.5 px-6 bg-gradient-to-r from-[#0B5D3B] to-[#0a4f33] text-white font-bold rounded-xl text-sm tracking-wide hover:shadow-lg hover:shadow-[#0B5D3B]/20 hover:-translate-y-0.5 transition-all duration-300 mb-3"
                 >
                   SHOP WALL CANVAS NOW →
                 </Link>
 
+                {/* Don't show again Option */}
+                <div className="flex items-center justify-center gap-2 mt-2 mb-1">
+                  <input 
+                    type="checkbox" 
+                    id="dont-show-again"
+                    checked={dontShowAgain}
+                    onChange={handleDontShowChange}
+                    className="w-4 h-4 text-accent border-gray-300 rounded focus:ring-accent"
+                  />
+                  <label htmlFor="dont-show-again" className="text-xs text-gray-500 cursor-pointer">
+                    Don't show this again
+                  </label>
+                </div>
+
                 {/* T&C */}
-                <p className="text-[10px] text-gray-400 mt-3">*T&C Apply</p>
+                <p className="text-[10px] text-gray-400 mt-2">*T&C Apply</p>
               </div>
             </div>
           </motion.div>

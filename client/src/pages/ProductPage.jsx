@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
@@ -20,6 +20,17 @@ const ProductPage = () => {
   const [customText, setCustomText] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isWallPreviewOpen, setIsWallPreviewOpen] = useState(false);
+  const [zoomStyle, setZoomStyle] = useState({});
+  const [isZooming, setIsZooming] = useState(false);
+  const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
+
+  const handleMouseMove = (e) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setZoomStyle({ transformOrigin: `${x}% ${y}%` });
+  };
+
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
 
@@ -200,15 +211,22 @@ const ProductPage = () => {
             )}
 
             {/* Main Image */}
-            <div className="flex-1 relative rounded-2xl overflow-hidden bg-white  flex items-baseline justify-center">
+            <div 
+              className="flex-1 relative rounded-2xl overflow-hidden bg-white flex items-center justify-center group cursor-zoom-in"
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              onClick={() => setIsFullscreenZoom(true)}
+            >
               <motion.img
                 key={selectedImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35, ease: 'easeOut' }}
-                src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 800)}
+                src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
                 alt={product.name}
-                className="w-full h-auto max-h-[70vh] object-contain rounded-xl"
+                style={isZooming ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
+                className="w-full h-auto max-h-[70vh] object-contain rounded-xl transition-transform duration-200 ease-out will-change-transform"
               />
             </div>
           </motion.div>
@@ -489,6 +507,31 @@ const ProductPage = () => {
           imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)} 
         />
       )}
+
+      {/* Fullscreen HD Zoom Modal */}
+      <AnimatePresence>
+        {isFullscreenZoom && product && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[99999] bg-black flex items-center justify-center cursor-zoom-out"
+            onClick={() => setIsFullscreenZoom(false)}
+          >
+            <button 
+              className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+              onClick={() => setIsFullscreenZoom(false)}
+            >
+              <HiOutlineX className="w-8 h-8" />
+            </button>
+            <img 
+              src={product.images?.[selectedImage]?.url} 
+              alt={product.name} 
+              className="w-full h-full object-contain"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

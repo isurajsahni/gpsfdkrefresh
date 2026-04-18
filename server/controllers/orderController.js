@@ -141,7 +141,17 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
   const verifiedItems = [];
 
   for (const item of items) {
-    const product = await Product.findById(item.product);
+    let product = await Product.findById(item.product).catch(() => null);
+    
+    // Fallback for custom uploads: use a template product for price verification
+    if (!product && item.uploadedImageUrl) {
+      product = await Product.findOne({ slug: 'the-dapper-predator' });
+      // If still not found, try to find any product in wall-canvas category
+      if (!product) {
+        product = await Product.findOne({ category: { $exists: true }, name: /Canvas/i });
+      }
+    }
+
     if (!product) throw new Error(`Product not found: ${item.product}`);
     if (!product.isActive) throw new Error(`Product is not available: ${product.name}`);
 
@@ -160,8 +170,8 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
     }
     if (!variation) throw new Error(`Invalid variation for ${product.name}`);
 
-    // Check stock
-    if (variation.stock < item.quantity) {
+    // Check stock (skip for custom orders as they are made to order)
+    if (!item.uploadedImageUrl && variation.stock < item.quantity) {
       throw new Error(`Insufficient stock for ${product.name} (${variation.size})`);
     }
 
@@ -170,15 +180,16 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
 
     verifiedItems.push({
       product: product._id,
-      name: product.name,
-      image: item.image,
+      name: item.uploadedImageUrl ? `Custom ${item.variation?.material || 'Canvas'}` : product.name,
+      image: item.uploadedImageUrl || item.image,
       variation: {
-        material: variation.material,
-        frame: variation.frame,
-        size: variation.size,
-        color: variation.color,
+        material: item.variation?.material || variation.material,
+        frame: item.variation?.frame || variation.frame,
+        size: item.variation?.size || variation.size,
+        color: item.variation?.color || variation.color,
       },
       customText: item.customText || '',
+      uploadedImageUrl: item.uploadedImageUrl || '',
       price: serverPrice,
       quantity: item.quantity,
     });

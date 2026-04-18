@@ -49,7 +49,7 @@ GUIDELINES:
     if (history && Array.isArray(history)) {
       const recentHistory = history.slice(-10).map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content || '' }]
       }));
       contents.push(...recentHistory);
     }
@@ -100,20 +100,17 @@ GUIDELINES:
     console.error('--- Gemini API Error ---');
     console.error('Stack:', error.stack || error.message);
 
-    if (error.status === 429 || error.message.includes('429')) {
+    const errorMessage = error.message || 'Unknown error';
+
+    if (error.status === 429 || errorMessage.includes('429')) {
       return res.status(429).json({ 
         message: 'I am feeling a bit overwhelmed with requests. Please wait a few seconds!' 
       });
     }
 
-    if (error.message.includes('API_KEY_INVALID') || error.message.includes('key not found')) {
-      return res.status(500).json({ 
-        message: 'Configuration error: API key is missing or invalid.' 
-      });
-    }
-
+    // Include debug info in the regular fallback message for the user to report back
     res.status(500).json({ 
-      message: 'I’m taking a quick break to admire some art. Please try again soon!' 
+      message: `I’m taking a quick break to admire some art. Please try again soon! (Debug: ${errorMessage})` 
     });
   }
 };

@@ -31,8 +31,11 @@ const ThankYouPage = () => {
                     <h1 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-4">
                         Thank You!
                     </h1>
-                    <p className="text-gray-500 text-sm md:text-base mb-8 max-w-sm mx-auto">
+                    <p className="text-gray-500 text-sm md:text-base mb-4 max-w-sm mx-auto">
                         Your purchase was successful. We are getting your order ready to be shipped. We will notify you once it's on the way.
+                    </p>
+                    <p className="text-xs font-bold text-accent bg-accent/5 py-1 px-3 rounded-full inline-block mb-8">
+                        Check your Spam/Junk folder if you don't receive an email.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

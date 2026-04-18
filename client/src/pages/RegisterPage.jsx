@@ -271,6 +271,9 @@ const RegisterPage = () => {
                   <p className="text-gray-500 mt-2 text-sm">
                     We sent a 6-digit code to <strong className="text-secondary">{maskedEmail}</strong>
                   </p>
+                  <p className="mt-2 text-xs font-bold text-accent bg-accent/5 py-1 px-3 rounded-full inline-block">
+                    Check your Spam/Junk folder if not in Inbox
+                  </p>
                 </div>
 
                 {/* OTP Inputs */}

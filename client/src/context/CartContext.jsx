@@ -14,7 +14,7 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = (product, variation, quantity = 1, customText = '') => {
+  const addToCart = (product, variation, quantity = 1, customText = '', uploadedImageUrl = '') => {
     // Meta Pixel: AddToCart event
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'AddToCart', {
@@ -26,7 +26,7 @@ export const CartProvider = ({ children }) => {
       });
     }
     setCartItems(prev => {
-      const key = `${product._id}-${variation.size}-${variation.material || ''}-${variation.color || ''}-${customText}`;
+      const key = `${product._id}-${variation.size || ''}-${variation.material || ''}-${variation.color || ''}-${variation.frame || ''}-${customText}-${uploadedImageUrl}`;
       const existing = prev.find(item => item.key === key);
       if (existing) {
         return prev.map(item =>
@@ -38,9 +38,10 @@ export const CartProvider = ({ children }) => {
         productId: product._id,
         name: product.name,
         slug: product.slug,
-        image: product.images?.[0]?.url || '',
+        image: uploadedImageUrl || product.images?.[0]?.url || '',
         variation,
         customText,
+        uploadedImageUrl,
         price: variation.price,
         quantity,
       }];

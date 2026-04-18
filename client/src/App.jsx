@@ -41,6 +41,7 @@ import LocationPage from './pages/LocationPage';
 import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
 import TrackOrderPage from './pages/TrackOrderPage';
+import CustomizeCanvasPage from './pages/CustomizeCanvasPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -157,6 +158,7 @@ function App() {
                 {/* Public */}
                 <Route path="/" element={<><HomePage /><Footer /></>} />
                 <Route path="/search" element={<><SearchPage /><Footer /></>} />
+                <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />
                 <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
                 <Route path="/login" element={<><LoginPage /><Footer /></>} />

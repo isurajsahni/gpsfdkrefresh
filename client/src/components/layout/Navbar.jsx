@@ -69,6 +69,7 @@ const Navbar = () => {
       'The Wild Eccentrics'
     ] },
     { name: 'House Nameplates', slug: 'house-nameplates', subcats: [] },
+    { name: 'Customize Canvas', slug: 'customize-canvas', subcats: [] },
   ];
 
   return (

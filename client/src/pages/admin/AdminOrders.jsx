@@ -201,7 +201,19 @@ const AdminOrders = () => {
                                       {item.variation?.frame && <span className="text-[10px] bg-white border rounded px-1.5 py-0.5">{item.variation.frame}</span>}
                                       {item.variation?.color && <span className="text-[10px] bg-white border rounded px-1.5 py-0.5">{item.variation.color}</span>}
                                     </div>
-                                    {item.customText && <p className="text-[10px] text-accent mt-1">Custom: "{item.customText}"</p>}
+                                    {item.customText && <p className="text-[10px] text-accent mt-1 uppercase font-bold tracking-wider">Instructions: "{item.customText}"</p>}
+                                    {item.uploadedImageUrl && (
+                                      <div className="mt-2 flex items-center gap-2">
+                                        <a 
+                                          href={item.uploadedImageUrl} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="text-[10px] bg-accent text-white px-3 py-1 rounded-full font-bold hover:bg-accent/80 transition-colors flex items-center gap-1"
+                                        >
+                                          Download Design
+                                        </a>
+                                      </div>
+                                    )}
                                     <p className="text-xs mt-1">
                                       <span className="text-gray-500">Qty: {item.quantity}</span>
                                       <span className="ml-3 font-bold text-accent">₹{(item.price * item.quantity).toLocaleString()}</span>

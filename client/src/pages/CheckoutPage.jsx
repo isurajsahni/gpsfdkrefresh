@@ -140,7 +140,8 @@ const CheckoutPage = () => {
           quantity: item.quantity,
           image: item.image,
           variation: item.variation,
-          customText: item.customText
+          customText: item.customText,
+          uploadedImageUrl: item.uploadedImageUrl
         })),
         cartTotal
       }).catch(() => console.log('Abandoned cart updated silently')); // Silent fail
@@ -271,6 +272,7 @@ const CheckoutPage = () => {
           image: item.image,
           variation: item.variation,
           customText: item.customText,
+          uploadedImageUrl: item.uploadedImageUrl,
           price: item.price,
           quantity: item.quantity,
         })),

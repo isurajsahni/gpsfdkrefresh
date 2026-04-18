@@ -77,7 +77,7 @@ const triggerNewOrderNotifications = async (order) => {
 
     // Send Admin Alert (immediately, doesn't need AWB)
     sendEmail({
-      email: 'suraj.gnimt@gmail.com',
+      email: process.env.ADMIN_EMAIL || 'suraj.gnimt@gmail.com',
       subject: `New ${order.user ? '' : 'Guest '}Order Placed - ${order.orderNumber}`,
       html: `
         <h3>New Order Received</h3>

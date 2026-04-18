@@ -66,7 +66,7 @@ exports.register = async (req, res, next) => {
 
     // Send notification email to admin (non-blocking)
     sendEmail({
-      email: 'suraj.gnimt@gmail.com',
+      email: process.env.ADMIN_EMAIL || 'suraj.gnimt@gmail.com',
       subject: 'New User Registration - GPSFDK',
       html: `
         <h3>New User Registered</h3>
@@ -221,7 +221,7 @@ exports.verifyRegistrationOtp = async (req, res, next) => {
 
     // Admin notification (non-blocking)
     sendEmail({
-      email: 'suraj.gnimt@gmail.com',
+      email: process.env.ADMIN_EMAIL || 'suraj.gnimt@gmail.com',
       subject: 'New User Registration - GPSFDK',
       html: `
         <h3>New User Registered</h3>

@@ -93,7 +93,7 @@ const PromoPopup = () => {
       const entryTimer = setTimeout(() => {
         showPopup('entry');
         sessionStorage.setItem('promo_entry_attempted', 'true');
-      }, 1500); // Small delay for page to settle
+      }, 15000); // 15 second delay before showing entry popup
       return () => clearTimeout(entryTimer);
     }
   }, [showPopup, isCheckout, shouldShowPopup]);

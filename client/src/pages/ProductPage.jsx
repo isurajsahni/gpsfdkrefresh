@@ -26,7 +26,7 @@ const ProductPage = () => {
   const [isDesktop, setIsDesktop] = useState(true);
 
   useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -195,7 +195,7 @@ const ProductPage = () => {
           <span className="text-secondary">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
           {/* Images — thumbnails below on mobile, left column on desktop */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
@@ -204,11 +204,11 @@ const ProductPage = () => {
           >
             {/* Thumbnails — horizontal on mobile, vertical on desktop */}
             {product.images?.length > 1 && (
-              <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto scrollbar-hide order-2 lg:order-1 lg:w-20 shrink-0">
+              <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto scrollbar-hide order-2 md:order-1 md:w-20 shrink-0">
                 {product.images.map((img, index) => (
                   <div
                     key={index}
-                    className={`aspect-square w-16 lg:w-20 flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent shadow-md' : 'border-gray-200 hover:border-accent/40'
+                    className={`aspect-square w-16 md:w-20 flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent shadow-md' : 'border-gray-200 hover:border-accent/40'
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
@@ -220,7 +220,7 @@ const ProductPage = () => {
 
             {/* Main Image */}
             <div
-              className="flex-1 order-1 lg:order-2 rounded-2xl overflow-hidden relative group cursor-zoom-in"
+              className="flex-1 order-1 md:order-2 rounded-2xl overflow-hidden relative group cursor-zoom-in"
               onMouseMove={isDesktop ? handleMouseMove : undefined}
               onMouseEnter={() => isDesktop && setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineUpload, HiOutlineCheck, HiOutlineShoppingBag, HiOutlineChevronLeft, HiOutlinePencilAlt, HiStar } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
@@ -7,22 +7,36 @@ import API from '../utils/api';
 import toast from 'react-hot-toast';
 import SEO from '../components/seo/SEO';
 
-const SIZES = [
-  { label: '12 x 18', price: 2500 },
-  { label: '18 x 24', price: 3500 },
-  { label: '20 x 30', price: 4500 },
-  { label: '24 x 36', price: 6000 },
-  { label: '30 x 40', price: 8500 },
-  { label: '36 x 48', price: 12000 },
-  { label: '48 x 66', price: 18000 },
+const MATERIALS = [
+  { id: 'canvas', label: 'Canvas', icon: '🎨' },
+  { id: 'poster', label: 'Poster', icon: '📄' },
 ];
 
-const FRAMES = [
-  { id: 'rolled', label: 'Without Frame (Rolled)', price: 0, icon: '🕳️' },
-  { id: 'stretched', label: 'Stretched Canvas', price: 500, icon: '⬜' },
-  { id: 'black', label: 'Black Frame', price: 800, icon: '🖼️' },
-  { id: 'white', label: 'White Frame', price: 800, icon: '🖼️' },
-  { id: 'darkwood', label: 'Dark Wood Frame', price: 1000, icon: '🪵' },
+const CANVAS_SIZES = [
+  { label: '12 x 18', rolledPrice: 999, stretchedPrice: 1499 },
+  { label: '18 x 24', rolledPrice: 1499, stretchedPrice: 2499 },
+  { label: '24 x 36', rolledPrice: 2899, stretchedPrice: 3696 },
+  { label: '30 x 48', rolledPrice: 4199, stretchedPrice: 5999 },
+  { label: '36 x 60', rolledPrice: 5999, stretchedPrice: 7999 },
+];
+
+const POSTER_SIZES = [
+  { label: 'A4', paperPrice: 99, stickerPrice: 149, softBoardPrice: 599 },
+  { label: 'A3', paperPrice: 199, stickerPrice: 299, softBoardPrice: 999 },
+];
+
+const CANVAS_FRAMES = [
+  { id: 'rolled', label: 'Rolled', icon: '🕳️' },
+  { id: 'stretched', label: 'Stretched', icon: '⬜' },
+  { id: 'black', label: 'Black Frame', icon: '🖼️', premium: 800 },
+  { id: 'white', label: 'White Frame', icon: '🖼️', premium: 800 },
+  { id: 'darkwood', label: 'Dark Wood Frame', icon: '🪵', premium: 1000 },
+];
+
+const POSTER_FRAMES = [
+  { id: 'paper', label: 'Paper', icon: '📄' },
+  { id: 'sticker', label: 'Sticker', icon: '🏷️' },
+  { id: 'softboard', label: 'Soft Board', icon: '🧱' },
 ];
 
 const CustomizeCanvasPage = () => {
@@ -32,9 +46,21 @@ const CustomizeCanvasPage = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState('');
   
-  const [selectedSize, setSelectedSize] = useState(SIZES[0]);
-  const [selectedFrame, setSelectedFrame] = useState(FRAMES[0]);
+  const [selectedMaterial, setSelectedMaterial] = useState(MATERIALS[0]);
+  const [selectedSize, setSelectedSize] = useState(CANVAS_SIZES[0]);
+  const [selectedFrame, setSelectedFrame] = useState(CANVAS_FRAMES[0]);
   const [instructions, setInstructions] = useState('');
+
+  // Set defaults on material change
+  useEffect(() => {
+    if (selectedMaterial.id === 'canvas') {
+      setSelectedSize(CANVAS_SIZES[0]);
+      setSelectedFrame(CANVAS_FRAMES[0]);
+    } else {
+      setSelectedSize(POSTER_SIZES[0]);
+      setSelectedFrame(POSTER_FRAMES[0]);
+    }
+  }, [selectedMaterial]);
   
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
@@ -75,18 +101,36 @@ const CustomizeCanvasPage = () => {
     }
   };
 
+  const getPrice = () => {
+    if (!selectedSize || !selectedFrame) return 0;
+
+    if (selectedMaterial.id === 'canvas') {
+      let basePrice = selectedFrame.id === 'rolled' ? selectedSize.rolledPrice : selectedSize.stretchedPrice;
+      if (['black', 'white', 'darkwood'].includes(selectedFrame.id)) {
+        basePrice = selectedSize.stretchedPrice + (selectedFrame.premium || 0);
+      }
+      return basePrice;
+    } else {
+      if (selectedFrame.id === 'sticker') return selectedSize.stickerPrice;
+      if (selectedFrame.id === 'softboard') return selectedSize.softBoardPrice;
+      return selectedSize.paperPrice;
+    }
+  };
+
   const handleAddToCart = () => {
     const product = {
-      _id: 'custom-canvas-id', // Placeholder or fetch actual product
-      name: 'Custom Portrait Canvas',
+      _id: 'custom-canvas-id',
+      name: `Custom ${selectedMaterial.label}`,
       slug: 'custom-canvas',
-      images: [{ url: uploadedUrl }]
+      images: [{ url: uploadedUrl }],
+      category: { slug: 'wall-canvas', name: 'Wall Canvas' }
     };
 
     const variation = {
+      material: selectedMaterial.label,
       size: selectedSize.label,
       frame: selectedFrame.label,
-      price: selectedSize.price + selectedFrame.price
+      price: getPrice()
     };
 
     addToCart(product, variation, 1, instructions, uploadedUrl);
@@ -94,10 +138,10 @@ const CustomizeCanvasPage = () => {
     toast.success('Added to cart!');
   };
 
-  const total = selectedSize.price + selectedFrame.price;
+  const total = getPrice();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white pt-28 pb-20 px-4">
+    <div className="min-h-screen bg-[#FFF7E7] text-secondary pt-28 pb-20 px-4">
       <SEO 
         title="Customize Your Canvas | Turn Photos Into Art" 
         description="Upload your photo and customize your own museum-grade canvas portrait."
@@ -105,12 +149,10 @@ const CustomizeCanvasPage = () => {
 
       <div className="max-w-4xl mx-auto">
         {/* Progress Header */}
-        <div className="flex items-center justify-center gap-4 mb-12 text-sm font-medium tracking-wider">
-          <span className={`${step >= 1 ? 'text-accent' : 'text-gray-500'} transition-colors`}>Upload</span>
-          <span className="text-gray-700">›</span>
-          <span className={`${step >= 2 ? 'text-accent' : 'text-gray-500'} transition-colors`}>Customize</span>
-          <span className="text-gray-700">›</span>
-          <span className="text-gray-500">Order Print</span>
+        <div className="flex items-center justify-center gap-4 mb-12 text-sm font-medium tracking-[0.2em] font-body uppercase">
+          <span className={`${step >= 1 ? 'text-accent' : 'text-gray-400'} transition-colors`}>Step 1: Upload</span>
+          <span className="text-gray-300">/</span>
+          <span className={`${step >= 2 ? 'text-accent' : 'text-gray-400'} transition-colors`}>Step 2: Customize</span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -122,16 +164,16 @@ const CustomizeCanvasPage = () => {
               exit={{ opacity: 0, y: -20 }}
               className="text-center"
             >
-              <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6">
-                Turn Your Photos Into <br /> <span className="text-white">Timeless Art</span>
+              <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 text-secondary leading-tight">
+                Turn Your Photos Into <br /> <span className="text-accent underline decoration-[#adc140]">Timeless Art</span>
               </h1>
-              <p className="text-gray-400 mb-12">
+              <p className="text-gray-600 font-body text-lg mb-12 max-w-2xl mx-auto">
                 Upload a photo. Choose your style. We'll create the masterpiece.
               </p>
 
               {/* Upload Box */}
               <div 
-                className="max-w-xl mx-auto bg-[#1a1a1a] border-2 border-dashed border-gray-800 rounded-[2rem] p-12 mb-8 cursor-pointer hover:border-accent/50 transition-colors"
+                className="max-w-xl mx-auto bg-white border-2 border-dashed border-[#0B5D3B]/20 rounded-[2.5rem] p-12 mb-8 cursor-pointer hover:border-accent shadow-sm transition-all"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <input 
@@ -144,19 +186,19 @@ const CustomizeCanvasPage = () => {
                 
                 {preview ? (
                   <div className="relative group">
-                    <img src={preview} alt="Preview" className="max-h-64 mx-auto rounded-xl shadow-2xl" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
-                      <p className="text-sm font-bold">Change Image</p>
+                    <img src={preview} alt="Preview" className="max-h-80 mx-auto rounded-2xl shadow-xl" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
+                      <p className="text-white text-sm font-bold uppercase tracking-widest">Change Image</p>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="w-16 h-16 bg-[#262626] rounded-full flex items-center justify-center mx-auto mb-6">
-                      <HiOutlineUpload className="w-8 h-8 text-accent" />
+                    <div className="w-20 h-20 bg-accent/10 rounded-3xl flex items-center justify-center mx-auto mb-6 transform transition-transform group-hover:scale-110">
+                      <HiOutlineUpload className="w-10 h-10 text-accent" />
                     </div>
-                    <h3 className="text-xl font-bold">Upload one or more photos</h3>
-                    <p className="text-gray-500 text-sm">or drag & drop here</p>
-                    <p className="text-gray-600 text-xs">JPG or PNG · Max 10 MB</p>
+                    <h3 className="text-2xl font-heading font-bold text-secondary">Upload your photo</h3>
+                    <p className="text-gray-500 font-body">or drag & drop here</p>
+                    <p className="text-gray-400 text-xs uppercase tracking-widest mt-4">JPG, PNG or WEBP · Max 10 MB</p>
                   </div>
                 )}
               </div>
@@ -164,39 +206,26 @@ const CustomizeCanvasPage = () => {
               <button
                 onClick={handleUpload}
                 disabled={!file || uploading}
-                className={`w-full max-w-xl py-5 px-8 rounded-full font-bold text-lg transition-all ${
+                className={`w-full max-w-xl py-5 px-8 rounded-2xl font-bold text-xl transition-all font-heading ${
                   !file || uploading 
-                  ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-                  : 'bg-[#4a5a1f] hover:bg-[#5a6a2f] text-white shadow-lg shadow-black/20'
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
+                  : 'bg-accent hover:bg-accent-dark text-white shadow-xl shadow-accent/20 active:scale-95'
                 }`}
               >
-                {uploading ? 'Uploading...' : 'Continue to Customize'}
+                {uploading ? 'Processing Image...' : 'Continue to Customize →'}
               </button>
 
               <div className="mt-12 space-y-4">
-                <div className="flex items-center justify-center gap-1 text-accent">
+                <div className="flex items-center justify-center gap-1 text-[#adc140]">
                   <HiStar className="w-5 h-5 fill-current" />
                   <HiStar className="w-5 h-5 fill-current" />
                   <HiStar className="w-5 h-5 fill-current" />
                   <HiStar className="w-5 h-5 fill-current" />
                   <HiStar className="w-5 h-5 fill-current" />
-                  <span className="text-white font-bold ml-2">4.8</span>
-                  <button className="text-gray-400 underline text-sm ml-2">Read Reviews</button>
+                  <span className="text-secondary font-bold ml-2">4.8/5</span>
+                  <span className="text-gray-400 text-sm ml-2">from 1500+ happy customers</span>
                 </div>
-                <p className="text-gray-500 text-sm italic">Over 1 Lakh Portraits Made</p>
-              </div>
-
-              {/* Sample Images */}
-              <div className="grid grid-cols-3 gap-4 mt-16 max-w-2xl mx-auto opacity-70">
-                <div className="aspect-[3/4] rounded-2xl bg-gray-900 overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400" alt="Sample 1" className="w-full h-full object-cover" />
-                </div>
-                <div className="aspect-[3/4] rounded-2xl bg-gray-900 overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400" alt="Sample 2" className="w-full h-full object-cover" />
-                </div>
-                <div className="aspect-[3/4] rounded-2xl bg-gray-900 overflow-hidden">
-                  <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400" alt="Sample 3" className="w-full h-full object-cover" />
-                </div>
+                <p className="text-accent font-bold text-xs uppercase tracking-[0.2em] font-body">Premium Quality Guaranteed</p>
               </div>
             </motion.div>
           ) : (
@@ -208,47 +237,51 @@ const CustomizeCanvasPage = () => {
               className="space-y-12"
             >
               <div className="text-center">
-                <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6">
-                  Turn Your Photos Into <br /> <span className="text-white">Timeless Art</span>
+                 <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 text-secondary">
+                  Customize Your <span className="text-accent">{selectedMaterial.label}</span>
                 </h1>
-                <p className="text-gray-400">
-                  Upload a photo. Choose your style. We'll create the masterpiece.
-                </p>
+                <p className="text-gray-600">Select your preferences below to see the final look.</p>
               </div>
 
               <button 
                 onClick={() => setStep(1)}
-                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-secondary font-bold hover:text-accent transition-colors uppercase text-xs tracking-widest"
               >
-                <HiOutlineChevronLeft className="w-5 h-5" /> Back
+                <HiOutlineChevronLeft className="w-5 h-5" /> Change Photo
               </button>
 
-              {/* Selected Image Info */}
-              <div className="bg-[#1a1a1a] rounded-2xl p-4 flex items-center justify-between border border-gray-800">
-                <div className="flex items-center gap-4">
-                  <img src={preview} alt="Thumb" className="w-12 h-12 rounded object-cover" />
-                  <span className="font-medium truncate max-w-[200px]">{file?.name}</span>
+              {/* Material Selection */}
+              <div className="space-y-4">
+                <h3 className="uppercase text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Select Material</h3>
+                <div className="flex gap-4">
+                  {MATERIALS.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setSelectedMaterial(m)}
+                      className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl border-2 font-bold transition-all ${
+                        selectedMaterial.id === m.id
+                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
+                        : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'
+                      }`}
+                    >
+                      <span>{m.icon}</span> {m.label}
+                    </button>
+                  ))}
                 </div>
-                <button 
-                  onClick={() => setStep(1)}
-                  className="text-accent text-sm font-bold flex items-center gap-1"
-                >
-                  <HiOutlinePencilAlt className="w-4 h-4" /> Edit
-                </button>
               </div>
 
               {/* Size Selection */}
               <div className="space-y-4">
-                <h3 className="uppercase text-sm font-bold tracking-[0.1em] text-gray-500">Size (In Inches)</h3>
+                <h3 className="uppercase text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Select Size (In Inches)</h3>
                 <div className="flex flex-wrap gap-3">
-                  {SIZES.map(s => (
+                  {(selectedMaterial.id === 'canvas' ? CANVAS_SIZES : POSTER_SIZES).map(s => (
                     <button
                       key={s.label}
                       onClick={() => setSelectedSize(s)}
-                      className={`px-6 py-3 rounded-full border-2 transition-all ${
-                        selectedSize.label === s.label
-                        ? 'border-accent bg-accent/10 text-accent'
-                        : 'border-gray-800 text-gray-500 hover:border-gray-600'
+                      className={`px-8 py-4 rounded-2xl border-2 font-bold transition-all ${
+                        selectedSize?.label === s.label
+                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
+                        : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'
                       }`}
                     >
                       {s.label}
@@ -259,23 +292,23 @@ const CustomizeCanvasPage = () => {
 
               {/* Frame Selection */}
               <div className="space-y-4">
-                <h3 className="uppercase text-sm font-bold tracking-[0.1em] text-gray-500">Frame</h3>
+                <h3 className="uppercase text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Choose Frame Style</h3>
                 <div className="flex flex-wrap gap-4">
-                  {FRAMES.map(f => (
+                  {(selectedMaterial.id === 'canvas' ? CANVAS_FRAMES : POSTER_FRAMES).map(f => (
                     <button
                       key={f.id}
                       onClick={() => setSelectedFrame(f)}
-                      className="group flex flex-col items-center gap-2"
+                      className="group flex flex-col items-center gap-3"
                     >
-                      <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 flex items-center justify-center text-3xl transition-all ${
-                        selectedFrame.id === f.id
-                        ? 'border-accent bg-accent/10'
-                        : 'border-gray-800 bg-[#1a1a1a] group-hover:border-gray-600'
+                      <div className={`w-24 h-24 rounded-[2rem] border-2 flex items-center justify-center text-3xl transition-all ${
+                        selectedFrame?.id === f.id
+                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
+                        : 'border-white bg-white text-secondary group-hover:border-accent/30 shadow-sm'
                       }`}>
                         {f.icon}
                       </div>
-                      <span className={`text-[10px] sm:text-xs font-bold w-20 sm:w-24 text-center leading-tight transition-colors ${
-                        selectedFrame.id === f.id ? 'text-white' : 'text-gray-500'
+                      <span className={`text-[10px] font-bold uppercase tracking-widest text-center leading-tight transition-colors ${
+                        selectedFrame?.id === f.id ? 'text-secondary font-extrabold' : 'text-gray-400'
                       }`}>
                         {f.label}
                       </span>
@@ -286,33 +319,33 @@ const CustomizeCanvasPage = () => {
 
               {/* Special Instructions */}
               <div className="space-y-4">
-                <h3 className="uppercase text-sm font-bold tracking-[0.1em] text-gray-500">
-                  Special Instructions <span className="text-gray-700 capitalize font-normal">(optional)</span>
+                <h3 className="uppercase text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">
+                  Notes for Design Team <span className="text-gray-400 lowercase font-normal italic">(optional)</span>
                 </h3>
                 <textarea
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="E.g., 'Add a crown', 'Use warm tones', 'Include both pets in one frame'..."
-                  className="w-full h-32 bg-[#1a1a1a] border border-gray-800 rounded-2xl p-4 focus:outline-none focus:border-accent transition-colors"
+                  placeholder="Tell us about color preferences, custom text placements, etc."
+                  className="w-full h-32 bg-white border-2 border-transparent rounded-[2rem] p-6 focus:outline-none focus:border-accent/30 shadow-sm transition-all text-secondary"
                 />
               </div>
 
-              {/* Sticky Price Bar */}
-              <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-black/80 backdrop-blur-xl border-t border-gray-800 md:relative md:bg-transparent md:border-none md:p-0">
-                <div className="max-w-4xl mx-auto bg-[#1a1a1a] rounded-[2rem] p-4 flex items-center justify-between border border-gray-800 shadow-2xl">
-                  <div className="pl-4">
-                    <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">Total</p>
-                    <p className="text-3xl font-bold">₹{total.toLocaleString()}</p>
+              {/* Enhanced Sticky Price Bar */}
+              <div className="fixed bottom-0 left-0 right-0 z-50 p-6 bg-[#FFF7E7]/80 backdrop-blur-xl border-t border-[#0B5D3B]/5 md:relative md:bg-transparent md:border-none md:p-0">
+                <div className="max-w-4xl mx-auto bg-secondary rounded-[2.5rem] p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl">
+                  <div className="text-center sm:text-left sm:pl-4">
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-[0.3em]">Total Value</p>
+                    <p className="text-4xl font-heading font-bold text-accent">₹{total.toLocaleString()}</p>
                   </div>
                   <button
                     onClick={handleAddToCart}
-                    className="bg-[#adc140] hover:bg-[#bdcf50] text-black font-bold py-4 px-8 sm:px-12 rounded-2xl transition-all flex items-center gap-3 active:scale-95"
+                    className="w-full sm:w-auto bg-accent hover:bg-accent-dark text-white font-bold py-5 px-12 rounded-2xl transition-all flex items-center justify-center gap-3 active:scale-95 shadow-xl shadow-accent/20 font-heading text-lg"
                   >
-                    Add to Cart <HiOutlineShoppingBag className="w-5 h-5" />
+                    Add to Cart <HiOutlineShoppingBag className="w-6 h-6" />
                   </button>
                 </div>
               </div>
-              <div className="h-24 md:hidden"></div> {/* Spacer for sticky bar */}
+              <div className="h-24 md:hidden"></div>
             </motion.div>
           )}
         </AnimatePresence>

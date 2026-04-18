@@ -108,9 +108,8 @@ GUIDELINES:
       });
     }
 
-    // Include debug info in the regular fallback message for the user to report back
     res.status(500).json({ 
-      message: `I’m taking a quick break to admire some art. Please try again soon! (Debug: ${errorMessage})` 
+      message: 'I’m taking a quick break to admire some art. Please try again soon!' 
     });
   }
 };

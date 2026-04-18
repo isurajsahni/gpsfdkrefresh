@@ -5,7 +5,7 @@ import poster1 from '../../assets/image/wallcanvas_poster_1.webp';
 import poster2 from '../../assets/image/housenameplate_poster.webp';
 import poster3 from '../../assets/image/wallcanvas_poster_2.webp';
 
-const CategoryCard = ({ number, title, description, image, isReverse, link, bgColor, isDark = false, zIndex }) => {
+const CategoryCard = ({ number, title, description, image, isReverse, link, bgColor, isDark = false, zIndex, ctaText = 'Call Now' }) => {
   const containerRef = useRef(null);
   
   // Refined scroll progress for the stacking-down effect
@@ -58,8 +58,8 @@ const CategoryCard = ({ number, title, description, image, isReverse, link, bgCo
             </div>
             
             <div className="pt-2 md:pt-4">
-              <WebflowButton to={link} dark={false} fullWidth={typeof window !== 'undefined' && window.innerWidth < 768} onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: `Call Now - ${title}` }); console.log('[Meta Pixel] Contact event fired (Call Now)'); } }}>
-                Call Now
+              <WebflowButton to={link} dark={false} fullWidth={typeof window !== 'undefined' && window.innerWidth < 768} onClick={() => { if (ctaText === 'Call Now' && typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: `Call Now - ${title}` }); console.log('[Meta Pixel] Contact event fired (Call Now)'); } }}>
+                {ctaText}
               </WebflowButton>
             </div>
           </div>
@@ -78,9 +78,10 @@ const CategoryHighlights = () => {
       description: "Transform your walls into a gallery of expression. Our museum-grade canvases bring vibrant color and sophisticated texture to any interior environment.",
       image: poster1, 
       isReverse: false,
-      link: "tel:+916280310103",
+      link: "/wall-canvas",
       bgColor: "bg-primary",
-      isDark: false
+      isDark: false,
+      ctaText: "View All"
     },
     {
       number: "02",
@@ -88,9 +89,10 @@ const CategoryHighlights = () => {
       description: "Define your entrance with absolute distinction. Handcrafted with premium materials that withstand the elements while making a bold statement of identity.",
       image: poster2, 
       isReverse: true,
-      link: "tel:+916280310103",
+      link: "/house-nameplates",
       bgColor: "bg-primary",
-      isDark: false
+      isDark: false,
+      ctaText: "View All"
     },
     {
       number: "03",

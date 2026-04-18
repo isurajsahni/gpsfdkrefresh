@@ -200,7 +200,7 @@ const ProductPage = () => {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col lg:flex-row gap-3"
+            className="flex flex-col md:flex-row gap-3"
           >
             {/* Thumbnails — horizontal on mobile, vertical on desktop */}
             {product.images?.length > 1 && (
@@ -219,7 +219,7 @@ const ProductPage = () => {
             )}
 
             {/* Main Image */}
-            <div 
+            <div
               className="flex-1 order-1 lg:order-2 rounded-2xl overflow-hidden relative group cursor-zoom-in"
               onMouseMove={isDesktop ? handleMouseMove : undefined}
               onMouseEnter={() => isDesktop && setIsZooming(true)}
@@ -364,7 +364,7 @@ const ProductPage = () => {
               </button>
               {/* Only show 'View on Your Wall' for wall-related products instead of applying it to all products */}
               {['wall-canvas', 'house-nameplates', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
-                <button 
+                <button
                   onClick={() => setIsWallPreviewOpen(true)}
                   className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
                 >
@@ -511,10 +511,10 @@ const ProductPage = () => {
 
       {/* View on Wall AR Modal */}
       {product && (
-        <ViewOnWallModal 
-          isOpen={isWallPreviewOpen} 
-          onClose={() => setIsWallPreviewOpen(false)} 
-          imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)} 
+        <ViewOnWallModal
+          isOpen={isWallPreviewOpen}
+          onClose={() => setIsWallPreviewOpen(false)}
+          imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)}
         />
       )}
 
@@ -528,15 +528,15 @@ const ProductPage = () => {
             className="fixed inset-0 z-[99999] bg-black flex items-center justify-center cursor-zoom-out"
             onClick={() => setIsFullscreenZoom(false)}
           >
-            <button 
+            <button
               className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
               onClick={() => setIsFullscreenZoom(false)}
             >
               <HiOutlineX className="w-8 h-8" />
             </button>
-            <img 
-              src={product.images?.[selectedImage]?.url} 
-              alt={product.name} 
+            <img
+              src={product.images?.[selectedImage]?.url}
+              alt={product.name}
               className="w-full h-full object-contain"
             />
           </motion.div>

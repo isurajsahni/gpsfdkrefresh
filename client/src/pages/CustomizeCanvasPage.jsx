@@ -28,9 +28,6 @@ const POSTER_SIZES = [
 const CANVAS_FRAMES = [
   { id: 'rolled', label: 'Rolled', icon: '🕳️' },
   { id: 'stretched', label: 'Stretched', icon: '⬜' },
-  { id: 'black', label: 'Black Frame', icon: '🖼️', premium: 800 },
-  { id: 'white', label: 'White Frame', icon: '🖼️', premium: 800 },
-  { id: 'darkwood', label: 'Dark Wood Frame', icon: '🪵', premium: 1000 },
 ];
 
 const POSTER_FRAMES = [
@@ -51,16 +48,17 @@ const CustomizeCanvasPage = () => {
   const [selectedFrame, setSelectedFrame] = useState(CANVAS_FRAMES[0]);
   const [instructions, setInstructions] = useState('');
 
-  // Set defaults on material change
-  useEffect(() => {
-    if (selectedMaterial.id === 'canvas') {
+  // Handle Material Switching Robustly
+  const handleMaterialChange = (material) => {
+    setSelectedMaterial(material);
+    if (material.id === 'canvas') {
       setSelectedSize(CANVAS_SIZES[0]);
       setSelectedFrame(CANVAS_FRAMES[0]);
     } else {
       setSelectedSize(POSTER_SIZES[0]);
       setSelectedFrame(POSTER_FRAMES[0]);
     }
-  }, [selectedMaterial]);
+  };
   
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
@@ -104,17 +102,23 @@ const CustomizeCanvasPage = () => {
   const getPrice = () => {
     if (!selectedSize || !selectedFrame) return 0;
 
+    // Canvas Pricing
     if (selectedMaterial.id === 'canvas') {
-      let basePrice = selectedFrame.id === 'rolled' ? selectedSize.rolledPrice : selectedSize.stretchedPrice;
-      if (['black', 'white', 'darkwood'].includes(selectedFrame.id)) {
-        basePrice = selectedSize.stretchedPrice + (selectedFrame.premium || 0);
-      }
-      return basePrice;
-    } else {
+      // Ensure we are looking at a canvas size object
+      if (selectedSize.rolledPrice === undefined) return 0; 
+      return selectedFrame.id === 'rolled' ? selectedSize.rolledPrice : selectedSize.stretchedPrice;
+    } 
+    
+    // Poster Pricing
+    if (selectedMaterial.id === 'poster') {
+      // Ensure we are looking at a poster size object
+      if (selectedSize.paperPrice === undefined) return 0;
       if (selectedFrame.id === 'sticker') return selectedSize.stickerPrice;
       if (selectedFrame.id === 'softboard') return selectedSize.softBoardPrice;
       return selectedSize.paperPrice;
     }
+
+    return 0;
   };
 
   const handleAddToCart = () => {
@@ -257,7 +261,7 @@ const CustomizeCanvasPage = () => {
                   {MATERIALS.map(m => (
                     <button
                       key={m.id}
-                      onClick={() => setSelectedMaterial(m)}
+                      onClick={() => handleMaterialChange(m)}
                       className={`flex-1 flex items-center justify-center gap-3 py-4 rounded-2xl border-2 font-bold transition-all ${
                         selectedMaterial.id === m.id
                         ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'

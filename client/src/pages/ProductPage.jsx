@@ -179,8 +179,8 @@ const ProductPage = () => {
     <div className="min-h-screen bg-white pt-28 pb-0">
       {product && (
         <SEO
-          title={`${product.name} | Custom Designs by GPSFDK`}
-          description={product.description?.substring(0, 160)}
+          title={product.metaTitle || `${product.name} | Custom Designs by GPSFDK`}
+          description={product.metaDescription || product.description?.substring(0, 160)}
           image={optimizeImage(product.images?.[0]?.url, 800)}
           schema={productSchema}
         />
@@ -386,9 +386,10 @@ const ProductPage = () => {
           <div className="prose prose-lg max-w-none text-gray-700">
             {/* Dynamic Description provided by Admin */}
             {product.description && (
-              <div className="mb-10 text-lg leading-relaxed whitespace-pre-line text-gray-800">
-                {product.description}
-              </div>
+              <div 
+                className="mb-10 text-lg leading-relaxed text-gray-800 prose prose-secondary max-w-none"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
             )}
 
             {/* Static Canvas Details - Only show for Wall Canvas */}

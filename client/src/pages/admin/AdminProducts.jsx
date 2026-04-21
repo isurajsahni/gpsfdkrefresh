@@ -14,7 +14,7 @@ const AdminProducts = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({
-    name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
+    name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
     images: [],
     thumbnailImage: null,
@@ -61,7 +61,7 @@ const AdminProducts = () => {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: '', description: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [], thumbnailImage: null });
+      setForm({ name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [], thumbnailImage: null });
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
@@ -72,6 +72,8 @@ const AdminProducts = () => {
     setForm({
       name: product.name,
       description: product.description,
+      metaTitle: product.metaTitle || '',
+      metaDescription: product.metaDescription || '',
       category: product.category?._id || product.category,
       subCategory: product.subCategory || '',
       customizable: product.customizable,
@@ -95,6 +97,8 @@ const AdminProducts = () => {
     setForm({
       name: `${product.name} (Copy)`,
       description: product.description,
+      metaTitle: product.metaTitle || '',
+      metaDescription: product.metaDescription || '',
       category: product.category?._id || product.category,
       subCategory: product.subCategory || '',
       customizable: product.customizable,
@@ -273,8 +277,16 @@ const AdminProducts = () => {
                   <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold mb-1">Description</label>
+                  <label className="block text-sm font-semibold mb-1">Description (HTML allowed)</label>
                   <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" rows={3} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-1">SEO Title (50-60 characters)</label>
+                  <input type="text" value={form.metaTitle} onChange={(e) => setForm({ ...form, metaTitle: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" maxLength={60} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-1">SEO Description (140-160 characters)</label>
+                  <textarea value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" rows={2} maxLength={160} />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Category</label>

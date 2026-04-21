@@ -31,7 +31,7 @@ const HomePage = () => {
 
   return (
     <>
-      <SEO 
+      <SEO
         title="Premium Wall Canvas & Name Plates in India | Custom Designs"
         description="Buy custom wall canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing. Transform your home today!"
         schema={orgSchema}

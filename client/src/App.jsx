@@ -42,6 +42,7 @@ import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
 import TrackOrderPage from './pages/TrackOrderPage';
 import CustomizeCanvasPage from './pages/CustomizeCanvasPage';
+import SEO_PremiumWallCanvasIndia from './pages/SEO_PremiumWallCanvasIndia';
 import NotFoundPage from './pages/NotFoundPage';
 
 // Admin Pages
@@ -210,6 +211,9 @@ function App() {
 
               {/* Order Tracking */}
               <Route path="/track-order" element={<><TrackOrderPage /><Footer /></>} />
+
+              {/* SEO Top Landing Pages */}
+              <Route path="/premium-wall-canvas-india" element={<><SEO_PremiumWallCanvasIndia /><Footer /></>} />
 
               {/* Category pages — MUST be last (catch-all pattern) */}
               <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />

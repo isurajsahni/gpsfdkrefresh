@@ -13,6 +13,11 @@ import blog9 from './custom-canvas-prints-anniversary-gift.md?raw';
 import blog10 from './split-canvas-prints-multi-panel-display.md?raw';
 import blog11 from './eco-friendly-sustainable-canvas-prints-india.md?raw';
 import blog12 from './transforming-home-offices-wall-canvas.md?raw';
+import blog13 from './buyer-guide-museum-grade-canvas-worth-it.md?raw';
+import blog14 from './wall-canvas-size-guide-living-room-layouts.md?raw';
+import blog15 from './vaastu-wall-art-canvas-painting-ideas-positive-energy.md?raw';
+import blog16 from './luxury-wall-decor-trends-2026-japandi-abstract.md?raw';
+import blog17 from './why-uv-resistant-canvas-prints-matter-india.md?raw';
 
 const blogs = [
   {
@@ -147,6 +152,61 @@ const blogs = [
     keywords: ['home office wall art', 'canvas for office decor', 'motivational canvas prints', 'professional wall art India'],
     content: blog12,
   },
+  {
+    slug: 'buyer-guide-museum-grade-canvas-worth-it',
+    title: 'The Ultimate Buyer\'s Guide to Museum-Grade Canvas: Is it Worth the Investment?',
+    excerpt: 'Discover exactly what makes a luxury museum-grade canvas different from budget posters, and why it holds long-term value for modern Indian homes.',
+    category: 'Education',
+    readTime: '6 min read',
+    date: '2025-01-02',
+    image: 'https://images.unsplash.com/photo-1542456561-8fcd51b66ab0?w=800&q=80',
+    keywords: ['premium wall canvas', 'museum-grade canvas', 'luxury wall art', 'eco-solvent inks', 'pine wood frames'],
+    content: blog13,
+  },
+  {
+    slug: 'wall-canvas-size-guide-living-room-layouts',
+    title: 'How to Choose the Perfect Wall Canvas Size for Your Living Room',
+    excerpt: 'Avoid the most common interior design sizing mistakes. Learn the 60% rule and master placement for massive, luxurious living room art.',
+    category: 'Guide',
+    readTime: '7 min read',
+    date: '2025-01-05',
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80',
+    keywords: ['luxury wall canvas for living room', 'premium wall canvas india', 'large wall art for bedroom india', 'wall decor India'],
+    content: blog14,
+  },
+  {
+    slug: 'vaastu-wall-art-canvas-painting-ideas-positive-energy',
+    title: 'Vaastu for Wall Art: 7 Canvas Painting Ideas to Bring Positive Energy',
+    excerpt: 'Bridge the gap between luxury decor and ancient architectural science. Discover the 7 best Vaastu-approved canvas prints for a prosperous home.',
+    category: 'Inspiration',
+    readTime: '9 min read',
+    date: '2025-01-10',
+    image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80',
+    keywords: ['vaastu wall art', 'premium wall canvas india', 'lucky canvas paintings', 'custom wall canvas india', 'spiritual wall decor'],
+    content: blog15,
+  },
+  {
+    slug: 'luxury-wall-decor-trends-2026-japandi-abstract',
+    title: 'Top 5 Luxury Wall Decor Trends for 2026: From Japandi to Modern Abstract',
+    excerpt: 'Stay ahead of the interior design curve. Here are the 5 explosive wall canvas trends that will dominate luxury Indian architecture in 2026.',
+    category: 'Trends',
+    readTime: '8 min read',
+    date: '2025-01-14',
+    image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&q=80',
+    keywords: ['luxury wall art', 'Japandi canvas', 'wall decor India', 'large wall art for bedroom india', 'textured abstract canvas'],
+    content: blog16,
+  },
+  {
+    slug: 'why-uv-resistant-canvas-prints-matter-india',
+    title: 'Why UV-Resistant Canvas Prints Are Essential for Indian Homes',
+    excerpt: 'Don\'t let the harsh Indian sun ruin your premium investments. Uncover the secret science behind fading and how UV-resistant inks save your art.',
+    category: 'Education',
+    readTime: '6 min read',
+    date: '2025-01-18',
+    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800&q=80',
+    keywords: ['premium wall canvas', 'UV resistant canvas', 'fading canvas prints', 'custom wall canvas india', 'wall decor India'],
+    content: blog17,
+  }
 ];
 
 export default blogs;

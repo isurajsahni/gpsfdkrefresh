@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
+import NotFoundPage from './NotFoundPage';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const SUBCATEGORIES = [
@@ -27,6 +28,7 @@ const CategoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isNotFound, setIsNotFound] = useState(false);
   
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   
@@ -44,13 +46,18 @@ const CategoryPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setIsNotFound(false);
 
       if (!category) {
         try {
           const catRes = await API.get(`/categories/${slug}`);
           setCategory(catRes.data);
         } catch (e) {
-          // ignore
+          if (e.response?.status === 404) {
+            setIsNotFound(true);
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -100,6 +107,10 @@ const CategoryPage = () => {
     // Save scroll position
     sessionStorage.setItem(`scroll_${location.pathname}${location.search}`, window.scrollY.toString());
   };
+
+  if (isNotFound) {
+    return <NotFoundPage />;
+  }
 
   // Generate dynamic SEO based on category
   const dynamicTitle = displaySubcategory

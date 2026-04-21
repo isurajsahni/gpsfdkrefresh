@@ -42,6 +42,7 @@ import BlogList from './pages/BlogList';
 import BlogPost from './pages/BlogPost';
 import TrackOrderPage from './pages/TrackOrderPage';
 import CustomizeCanvasPage from './pages/CustomizeCanvasPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -213,6 +214,9 @@ function App() {
               {/* Category pages — MUST be last (catch-all pattern) */}
               <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />
               <Route path="/:slug/:subcategorySlug" element={<><CategoryPage /><Footer /></>} />
+
+              {/* 404 Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </CartProvider>
         </UIProvider>

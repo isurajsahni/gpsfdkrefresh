@@ -10,6 +10,7 @@ import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
 import { optimizeImage } from '../utils/imageOptimizer';
+import NotFoundPage from './NotFoundPage';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -78,12 +79,7 @@ const ProductPage = () => {
   }
 
   if (!product) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center pt-20">
-        <h2 className="text-2xl font-heading text-secondary">Product not found</h2>
-        <Link to="/" className="btn-primary mt-4">Back to Home</Link>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   // Determine if this is a nameplate product (show custom text only for nameplates)

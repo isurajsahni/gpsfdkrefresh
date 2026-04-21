@@ -108,6 +108,11 @@ app.get('/api/health', (req, res) => res.json({
   timestamp: new Date().toISOString() 
 }));
 
+// ─── Catch-All 404 handler for Unknown Routes ───
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'API Route Not Found' });
+});
+
 // ─── Error handler (no info leaks in production) ───
 app.use((err, req, res, next) => {
   // Handle Multer / file-upload errors explicitly

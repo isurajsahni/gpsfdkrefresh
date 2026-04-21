@@ -403,3 +403,25 @@ exports.getDashboardData = async (req, res, next) => {
     next(error);
   }
 };
+
+// ─── POST /api/analytics/log-404 ───
+const NotFoundLog = require('../models/NotFoundLog');
+exports.log404 = async (req, res, next) => {
+  try {
+    const { path, referrer, userAgent } = req.body;
+    
+    if (!path) {
+      return res.status(400).json({ message: 'Path is required' });
+    }
+
+    await NotFoundLog.create({
+      path,
+      referrer: referrer || '',
+      userAgent: userAgent || ''
+    });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};

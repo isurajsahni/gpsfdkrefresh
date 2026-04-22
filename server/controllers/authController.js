@@ -168,10 +168,22 @@ exports.sendRegistrationOtp = async (req, res, next) => {
             template: {
               name: 'opt_code_template',
               language: { code: 'en_US' },
-              components: [{
-                type: 'body',
-                parameters: [{ type: 'text', text: otp }]
-              }]
+              components: [
+                {
+                  type: 'body',
+                  parameters: [
+                    { type: 'text', text: otp },
+                    { type: 'text', text: otp },
+                    { type: 'text', text: otp }
+                  ]
+                },
+                {
+                  type: 'button',
+                  sub_type: 'url',
+                  index: '0',
+                  parameters: [{ type: 'text', text: otp }]
+                }
+              ]
             }
           },
           {

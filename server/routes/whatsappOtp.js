@@ -62,6 +62,16 @@ router.post('/send', async (req, res) => {
         components: [
           {
             type: "body",
+            parameters: [
+              { type: "text", text: generatedOtp },
+              { type: "text", text: generatedOtp },
+              { type: "text", text: generatedOtp }
+            ]
+          },
+          {
+            type: "button",
+            sub_type: "url",
+            index: "0",
             parameters: [{ type: "text", text: generatedOtp }]
           }
         ]

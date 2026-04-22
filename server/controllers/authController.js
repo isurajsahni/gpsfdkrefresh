@@ -166,8 +166,8 @@ exports.sendRegistrationOtp = async (req, res, next) => {
             to: whatsappPhone,
             type: 'template',
             template: {
-              name: 'otp_verification',
-              language: { code: 'en' },
+              name: 'opt_code_template',
+              language: { code: 'en_US' },
               components: [{
                 type: 'body',
                 parameters: [{ type: 'text', text: otp }]

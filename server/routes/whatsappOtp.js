@@ -57,8 +57,8 @@ router.post('/send', async (req, res) => {
       to: phoneNumber,
       type: "template",
       template: {
-        name: "otp_verification",
-        language: { code: "en" },
+        name: "opt_code_template",
+        language: { code: "en_US" },
         components: [
           {
             type: "body",

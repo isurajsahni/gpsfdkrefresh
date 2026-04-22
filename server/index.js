@@ -95,6 +95,7 @@ app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/sitemap.xml', require('./routes/sitemap'));
+app.use('/webhook', require('./routes/webhook'));
 // WhatsApp OTP — disabled for now, will re-enable when Meta WhatsApp API is configured
 // app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 

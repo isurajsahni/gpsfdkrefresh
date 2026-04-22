@@ -44,40 +44,50 @@ router.get('/', (req, res) => {
 // 2. POST method to receive WhatsApp events
 router.post('/', (req, res) => {
   try {
-    // Log full webhook payload for debugging
-    // This helps in understanding different event types (messages, status updates, etc.)
-    console.log('📥 Incoming WhatsApp Webhook Payload:', JSON.stringify(req.body, null, 2));
+    // 1. Log full payload for debugging (essential for production troubleshooting)
+    console.log('📥 WhatsApp Webhook Payload:', JSON.stringify(req.body, null, 2));
 
-    // Extracting message details
-    // The structure is nested: object -> entry[] -> changes[] -> value -> messages[]
-    if (req.body.object) {
-      if (
-        req.body.entry &&
-        req.body.entry[0].changes &&
-        req.body.entry[0].changes[0] &&
-        req.body.entry[0].changes[0].value.messages &&
-        req.body.entry[0].changes[0].value.messages[0]
-      ) {
-        const message = req.body.entry[0].changes[0].value.messages[0];
-        const sender = message.from; // Sender's phone number
-        const messageText = message.text ? message.text.body : '[Non-text message]';
+    /**
+     * 2. Safe extraction using Optional Chaining (?.)
+     * Meta structure: object -> entry[] -> changes[] -> value -> messages[]
+     */
+    const value = req.body?.entry?.[0]?.changes?.[0]?.value;
+    const message = value?.messages?.[0];
 
-        // Print cleanly in the console as requested
-        console.log('\n--- NEW WHATSAPP MESSAGE ---');
-        console.log(`FROM: ${sender}`);
-        console.log(`TEXT: ${messageText}`);
-        console.log('----------------------------\n');
-      }
+    // 3. Process the message if it exists
+    if (message) {
+      const sender = message.from;
+      const messageBody = message.text?.body || `[Type: ${message.type}]`;
+
+      // 4. Structured Clean Logging
+      console.log('\n--- New WhatsApp Message ---');
+      console.log(`From: ${sender}`);
+      console.log(`Message: ${messageBody}`);
+      console.log('---------------------------\n');
+    } 
+    /**
+     * 5. Handle Status Updates
+     * (e.g., message sent, delivered, or read notifications)
+     */
+    else if (value?.statuses?.[0]) {
+      const status = value.statuses[0];
+      console.log(`ℹ️ Status Update: ${status.status} for recipient ${status.recipient_id}`);
     }
 
-    // Always send a 200 OK response to Meta within 20 seconds.
-    // If you don't return 200, Meta will keep retrying and might eventually disable the webhook.
-    res.status(200).send('EVENT_RECEIVED');
+    /**
+     * 6. Always return HTTP 200
+     * Meta requires a 200 OK within 20 seconds. If you don't send it, 
+     * they will retry and eventually disable your webhook.
+     */
+    return res.status(200).send('EVENT_RECEIVED');
 
   } catch (error) {
-    console.error('⚠️ Webhook Error:', error);
-    // Even on error, we send 200 to acknowledge receipt and prevent retries
-    res.status(200).send('EVENT_RECEIVED_WITH_ERROR');
+    /**
+     * 7. Graceful Error Handling
+     * We log the error but still return 200 to acknowledge receipt.
+     */
+    console.error('❌ Webhook Processing Error:', error.message);
+    return res.status(200).send('ERROR_ACKNOWLEDGED');
   }
 });
 

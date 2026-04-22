@@ -1,207 +1,122 @@
-const router = require('express').Router();
-const jwt = require('jsonwebtoken');
-const { protect } = require('../middleware/auth');
-const { sendWhatsAppOtp, verifyWhatsAppOtp, resendWhatsAppOtp } = require('../utils/whatsappOtp');
-const rateLimit = require('express-rate-limit');
+const express = require('express');
+const router = express.Router();
+const axios = require('axios');
+const Otp = require('../models/Otp');
 
-// ─── Rate limiters ───────────────────────────────────────────────────────────
+/**
+ * Senior Engineer Note:
+ * Using a dedicated model with MongoDB TTL index for automatic cleanup.
+ * Added basic cooldown to prevent spam.
+ */
 
-// Allow max 5 OTP sends per 10 minutes per IP
-const otpSendLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 5,
-  message: { message: 'Too many OTP requests. Please wait 10 minutes before trying again.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Allow max 10 verify attempts per 10 minutes per IP
-const otpVerifyLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
-  message: { message: 'Too many verification attempts. Please wait 10 minutes.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// ─── In-memory OTP session store ─────────────────────────────────────────────
-// Maps userId -> { requestId, phone, attempts, sentAt }
-// In production at scale, replace with Redis. For this app, in-memory is fine.
-const otpSessions = new Map();
-
-const OTP_EXPIRY_MS = 10 * 60 * 1000;  // 10 minutes
-const MAX_ATTEMPTS = 3;
-
-// Cleanup expired sessions every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, session] of otpSessions.entries()) {
-    if (now - session.sentAt > OTP_EXPIRY_MS) {
-      otpSessions.delete(key);
-    }
-  }
-}, 15 * 60 * 1000);
-
-// ─── POST /api/whatsapp-otp/send ─────────────────────────────────────────────
-router.post('/send', protect, otpSendLimiter, async (req, res, next) => {
+// POST /api/whatsapp-otp/send
+router.post('/send', async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phoneNumber } = req.body;
 
-    // Validate phone
-    // Validate phone (6-15 digits, optional +)
-    if (!phone || !/^\+?[0-9]{6,15}$/.test(phone)) {
-      return res.status(400).json({ message: 'Please provide a valid mobile number.' });
+    if (!phoneNumber || phoneNumber.length < 10) {
+      return res.status(400).json({ message: 'Invalid phone number format' });
     }
 
-    const userId = req.user._id.toString();
-    const existing = otpSessions.get(userId);
+    // 1. Cooldown Check: Prevent sending OTP if one was sent in the last 60 seconds
+    const lastOtp = await Otp.findOne({ phoneNumber }).sort({ createdAt: -1 });
+    if (lastOtp && (new Date() - lastOtp.createdAt) < 60000) {
+      return res.status(429).json({ message: 'Please wait 60 seconds before requesting another OTP' });
+    }
 
-    // Enforce 30-second cooldown between sends (same phone)
-    if (existing && existing.phone === phone) {
-      const elapsed = Date.now() - existing.sentAt;
-      if (elapsed < 30 * 1000) {
-        const remaining = Math.ceil((30 * 1000 - elapsed) / 1000);
-        return res.status(429).json({
-          message: `Please wait ${remaining} seconds before requesting a new OTP.`,
-          retryAfter: remaining,
-        });
+    // 2. Generate 6-digit OTP
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // 3. Save to Database (Expires in 5 minutes)
+    await Otp.create({
+      phoneNumber,
+      otp: generatedOtp,
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000)
+    });
+
+    // 4. Send via WhatsApp Cloud API
+    const whatsappUrl = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
+    
+    const payload = {
+      messaging_product: "whatsapp",
+      to: phoneNumber,
+      type: "template",
+      template: {
+        name: "otp_verification",
+        language: {
+          code: "en"
+        },
+        components: [
+          {
+            type: "body",
+            parameters: [
+              {
+                type: "text",
+                text: generatedOtp
+              }
+            ]
+          }
+        ]
       }
-    }
+    };
 
-    const result = await sendWhatsAppOtp(phone);
+    console.log(`📤 Sending OTP to ${phoneNumber}...`);
 
-    if (!result.success) {
-      return res.status(502).json({ message: result.message || 'Failed to send OTP. Please try again.' });
-    }
-
-    // Store session
-    otpSessions.set(userId, {
-      requestId: result.requestId,
-      phone,
-      attempts: 0,
-      sentAt: Date.now(),
-    });
-
-    res.json({
-      success: true,
-      message: `OTP sent to WhatsApp number ending in ${phone.slice(-4)}`,
-      // Return requestId to frontend so it can pass it back on verify
-      requestId: result.requestId,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// ─── POST /api/whatsapp-otp/verify ───────────────────────────────────────────
-router.post('/verify', protect, otpVerifyLimiter, async (req, res, next) => {
-  try {
-    const { otp, requestId } = req.body;
-    const userId = req.user._id.toString();
-
-    if (!otp || !/^\d{6}$/.test(otp)) {
-      return res.status(400).json({ message: 'OTP must be exactly 6 digits.' });
-    }
-
-    const session = otpSessions.get(userId);
-
-    // No session found
-    if (!session) {
-      return res.status(400).json({ message: 'No OTP session found. Please request a new OTP.' });
-    }
-
-    // Check expiry
-    if (Date.now() - session.sentAt > OTP_EXPIRY_MS) {
-      otpSessions.delete(userId);
-      return res.status(400).json({ message: 'OTP has expired. Please request a new one.' });
-    }
-
-    // Check attempts
-    if (session.attempts >= MAX_ATTEMPTS) {
-      otpSessions.delete(userId);
-      return res.status(400).json({
-        message: 'Too many incorrect attempts. Please request a new OTP.',
-        locked: true,
-      });
-    }
-
-    // Increment attempts
-    session.attempts += 1;
-
-    const result = await verifyWhatsAppOtp(requestId || session.requestId, otp, session.phone);
-
-    if (!result.success) {
-      const remaining = MAX_ATTEMPTS - session.attempts;
-      return res.status(400).json({
-        message: result.message || 'Invalid OTP. Please try again.',
-        attemptsRemaining: remaining,
-        locked: remaining <= 0,
-      });
-    }
-
-    // OTP verified — clean up session
-    otpSessions.delete(userId);
-
-    // Issue a short-lived phone-verified token (15 min)
-    const verifiedToken = jwt.sign(
-      { userId, phone: session.phone, phoneVerified: true },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
-    );
-
-    res.json({
-      success: true,
-      message: 'Phone number verified successfully!',
-      verifiedToken,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// ─── POST /api/whatsapp-otp/resend ───────────────────────────────────────────
-router.post('/resend', protect, otpSendLimiter, async (req, res, next) => {
-  try {
-    const userId = req.user._id.toString();
-    const session = otpSessions.get(userId);
-
-    if (!session) {
-      return res.status(400).json({ message: 'No active OTP session. Please start a new one.' });
-    }
-
-    // 30-second cooldown
-    const elapsed = Date.now() - session.sentAt;
-    if (elapsed < 30 * 1000) {
-      const remaining = Math.ceil((30 * 1000 - elapsed) / 1000);
-      return res.status(429).json({
-        message: `Please wait ${remaining} seconds before resending.`,
-        retryAfter: remaining,
-      });
-    }
-
-    const result = await resendWhatsAppOtp(session.requestId, session.phone);
-
-    if (!result.success) {
-      // Fall back: send a new OTP if resend fails
-      const newResult = await sendWhatsAppOtp(session.phone);
-      if (!newResult.success) {
-        return res.status(502).json({ message: 'Failed to resend OTP. Please try again.' });
+    const response = await axios.post(whatsappUrl, payload, {
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+        'Content-Type': 'application/json'
       }
-      session.requestId = newResult.requestId;
+    });
+
+    console.log('✅ WhatsApp API Response:', response.data);
+
+    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+
+  } catch (error) {
+    console.error('❌ Send OTP Error:', error.response?.data || error.message);
+    res.status(500).json({ 
+      message: 'Failed to send OTP', 
+      error: error.response?.data?.error?.message || error.message 
+    });
+  }
+});
+
+// POST /api/whatsapp-otp/verify
+router.post('/verify', async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
+
+    if (!phoneNumber || !otp) {
+      return res.status(400).json({ message: 'Phone number and OTP are required' });
     }
 
-    // Reset timer and attempts
-    session.sentAt = Date.now();
-    session.attempts = 0;
-    otpSessions.set(userId, session);
+    // 1. Find the latest OTP for this number
+    const otpRecord = await Otp.findOne({ phoneNumber, otp }).sort({ createdAt: -1 });
 
-    res.json({
-      success: true,
-      message: `OTP resent to WhatsApp number ending in ${session.phone.slice(-4)}`,
-      requestId: session.requestId,
+    if (!otpRecord) {
+      return res.status(400).json({ message: 'Invalid OTP or phone number' });
+    }
+
+    // 2. Check Expiry (Though MongoDB TTL usually handles this, we do it for extra safety)
+    if (new Date() > otpRecord.expiresAt) {
+      await Otp.deleteOne({ _id: otpRecord._id });
+      return res.status(400).json({ message: 'OTP has expired' });
+    }
+
+    // 3. Success: Delete OTP so it can't be used again
+    await Otp.deleteOne({ _id: otpRecord._id });
+
+    console.log(`✅ Verification successful for ${phoneNumber}`);
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'OTP verified successfully'
     });
-  } catch (err) {
-    next(err);
+
+  } catch (error) {
+    console.error('❌ Verify OTP Error:', error.message);
+    res.status(500).json({ message: 'Internal server error during verification' });
   }
 });
 

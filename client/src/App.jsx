@@ -44,6 +44,7 @@ import TrackOrderPage from './pages/TrackOrderPage';
 import CustomizeCanvasPage from './pages/CustomizeCanvasPage';
 import SEO_PremiumWallCanvasIndia from './pages/SEO_PremiumWallCanvasIndia';
 import NotFoundPage from './pages/NotFoundPage';
+import WhatsAppLogin from './pages/WhatsAppLogin';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -166,6 +167,7 @@ function App() {
                 <Route path="/login" element={<><LoginPage /><Footer /></>} />
                 <Route path="/register" element={<><RegisterPage /><Footer /></>} />
                 <Route path="/forgot-password" element={<><ForgotPasswordPage /><Footer /></>} />
+                <Route path="/whatsapp-login" element={<><WhatsAppLogin /><Footer /></>} />
                 
                 {/* Location SEO Landing Pages */}
                 <Route path="/location/:city" element={<><LocationPage /><Footer /></>} />

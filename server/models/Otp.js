@@ -6,6 +6,10 @@ const otpSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  email: {
+    type: String,
+    default: null
+  },
   otp: {
     type: String,
     required: true

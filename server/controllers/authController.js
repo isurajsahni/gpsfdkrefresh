@@ -91,7 +91,7 @@ exports.register = async (req, res, next) => {
   }
 };
 
-// POST /api/auth/send-registration-otp — Step 1: validate + send OTP to email
+// POST /api/auth/send-registration-otp — Step 1: validate + send OTP via Email + WhatsApp
 exports.sendRegistrationOtp = async (req, res, next) => {
   try {
     const { name, email, password, phone } = req.body;
@@ -141,21 +141,72 @@ exports.sendRegistrationOtp = async (req, res, next) => {
       sentAt: Date.now(),
     });
 
-    // Send OTP email
-    await sendEmail({
+    // ─── Send OTP via BOTH channels simultaneously ───
+    const channels = [];
+
+    // Channel 1: Email (always sent)
+    const emailPromise = sendEmail({
       email: normalizedEmail,
       subject: 'Verify Your Email - GPSFDK',
       html: otpEmailTemplate(name.trim() || 'there', otp, true),
-    });
+    })
+    .then(() => { channels.push('email'); console.log(`✅ Registration OTP emailed to ${normalizedEmail}`); })
+    .catch(err => console.error(`❌ Registration OTP email failed:`, err.message));
+
+    // Channel 2: WhatsApp (sent if phone number provided and WhatsApp API is configured)
+    let whatsappPromise = Promise.resolve();
+    if (phone && process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID) {
+      const whatsappPhone = phone.replace(/\D/g, ''); // strip non-digits
+      if (whatsappPhone.length >= 10) {
+        const axios = require('axios');
+        whatsappPromise = axios.post(
+          `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+          {
+            messaging_product: 'whatsapp',
+            to: whatsappPhone,
+            type: 'template',
+            template: {
+              name: 'otp_verification',
+              language: { code: 'en' },
+              components: [{
+                type: 'body',
+                parameters: [{ type: 'text', text: otp }]
+              }]
+            }
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+        .then(() => { channels.push('whatsapp'); console.log(`✅ Registration OTP WhatsApp sent to ${whatsappPhone}`); })
+        .catch(err => console.error(`❌ Registration OTP WhatsApp failed:`, err.response?.data?.error?.message || err.message));
+      }
+    }
+
+    // Wait for both to finish
+    await Promise.all([emailPromise, whatsappPromise]);
+
+    if (channels.length === 0) {
+      return res.status(500).json({ message: 'Failed to send verification code. Please try again.' });
+    }
+
+    const channelText = channels.join(' & ');
+    const maskedEmail = normalizedEmail.replace(/(.{2}).+(@.+)/, '$1***$2');
 
     res.json({
       success: true,
-      message: `Verification code sent to ${normalizedEmail.replace(/(.{2}).+(@.+)/, '$1***$2')}`,
+      message: `Verification code sent via ${channelText}`,
+      channels,
+      maskedEmail,
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 // POST /api/auth/verify-registration-otp — Step 2: verify OTP + create account
 exports.verifyRegistrationOtp = async (req, res, next) => {

@@ -263,15 +263,29 @@ const RegisterPage = () => {
               >
                 <div className="text-center mb-8">
                   <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}
+                    style={{ background: 'linear-gradient(135deg, #0B5D3B, #10b981)' }}
                   >
-                    <HiOutlineMail className="w-8 h-8 text-white" />
+                    <HiOutlineShieldCheck className="w-8 h-8 text-white" />
                   </div>
-                  <h1 className="text-2xl font-heading font-bold text-secondary">Verify Your Email</h1>
+                  <h1 className="text-2xl font-heading font-bold text-secondary">Verify Your Identity</h1>
                   <p className="text-gray-500 mt-2 text-sm">
                     We sent a 6-digit code to <strong className="text-secondary">{maskedEmail}</strong>
+                    {form.phone && <> &amp; your <strong className="text-secondary">WhatsApp</strong></>}
                   </p>
-                  <p className="mt-2 text-xs font-bold text-accent bg-accent/5 py-1 px-3 rounded-full inline-block">
+
+                  {/* Channel badges */}
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                      📧 Email
+                    </span>
+                    {form.phone && (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">
+                        💬 WhatsApp
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="mt-3 text-xs font-bold text-accent bg-accent/5 py-1 px-3 rounded-full inline-block">
                     Check your Spam/Junk folder if not in Inbox
                   </p>
                 </div>
@@ -324,6 +338,7 @@ const RegisterPage = () => {
                 </button>
               </motion.div>
             )}
+
 
             {/* ─── Step 3: Success ─── */}
             {step === 'success' && (

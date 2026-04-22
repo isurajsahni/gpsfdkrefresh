@@ -8,6 +8,7 @@ import API from '../utils/api';
 import toast from 'react-hot-toast';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { HiOutlineShieldCheck, HiOutlineMail } from 'react-icons/hi';
+import { IoLogoWhatsapp } from 'react-icons/io5';
 
 const RegisterPage = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '' });
@@ -262,10 +263,17 @@ const RegisterPage = () => {
                 exit={{ opacity: 0, x: -30 }}
               >
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #0B5D3B, #10b981)' }}
-                  >
-                    <HiOutlineShieldCheck className="w-8 h-8 text-white" />
+                  <div className="flex items-center justify-center gap-1">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)' }}
+                    >
+                      <IoLogoWhatsapp className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}
+                    >
+                      <HiOutlineMail className="w-7 h-7 text-white" />
+                    </div>
                   </div>
                   <h1 className="text-2xl font-heading font-bold text-secondary">Verify Your Identity</h1>
                   <p className="text-gray-500 mt-2 text-sm">
@@ -275,12 +283,15 @@ const RegisterPage = () => {
 
                   {/* Channel badges */}
                   <div className="flex items-center justify-center gap-2 mt-3">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-                      📧 Email
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">
+                      <IoLogoWhatsapp className="w-3.5 h-3.5" /> WhatsApp
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                      <HiOutlineMail className="w-3.5 h-3.5" /> Email
                     </span>
                     {form.phone && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-200">
-                        💬 WhatsApp
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-bold">
+                        ✓ Sent
                       </span>
                     )}
                   </div>

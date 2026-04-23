@@ -15,7 +15,7 @@ import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
 import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
-import PromoPopup from './components/common/PromoPopup';
+
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -152,7 +152,7 @@ function App() {
               <CartDrawer />
               <SearchOverlay />
               <ChatBot />
-              <PromoPopup />
+
               
               {/* Spacer for fixed top promotional banner */}
               <div className="h-[36px] w-full shrink-0" />

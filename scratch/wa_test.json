@@ -1,0 +1,11 @@
+{
+  "messaging_product": "whatsapp",
+  "to": "917973386875",
+  "type": "template",
+  "template": {
+    "name": "hello_world",
+    "language": {
+      "code": "en_US"
+    }
+  }
+}

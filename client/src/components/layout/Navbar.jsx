@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import useClickOutside from '../../hooks/useClickOutside';
 import logo from '../../assets/vite.webp';
+import toast from 'react-hot-toast';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -76,12 +77,13 @@ const Navbar = () => {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
         <div 
-          className={`bg-secondary text-white flex items-center justify-center overflow-hidden px-2 transition-all duration-500 ease-in-out ${scrolled ? 'h-0 opacity-0' : 'h-[36px] opacity-100'}`}
+          className={`bg-secondary text-white flex items-center overflow-hidden px-2 transition-all duration-500 ease-in-out ${scrolled ? 'h-0 opacity-0' : 'h-[36px] opacity-100'}`}
         >
-          <span className="text-[9px] sm:text-[10px] md:text-xs font-semibold tracking-wide sm:tracking-widest font-heading text-center whitespace-nowrap">
-            <span className="hidden sm:inline">USE COUPON CODE: THE-R2L-SUMMER &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY</span>
-            <span className="sm:hidden">USE CODE <span className="text-accent underline">THE-R2L-SUMMER</span>: WIN A TRIP + 10% OFF</span>
-          </span>
+          <marquee className="text-[10px] font-semibold tracking-widest font-heading whitespace-nowrap">
+            USE COUPON CODE: <button onClick={() => { navigator.clipboard.writeText('THE-R2L-SUMMER'); toast.success('Coupon code copied!'); }} className="text-accent font-bold bg-white/20 px-2 py-0.5 rounded shadow-sm hover:bg-white/30 transition-colors mx-1">THE-R2L-SUMMER</button> &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            USE COUPON CODE: <button onClick={() => { navigator.clipboard.writeText('THE-R2L-SUMMER'); toast.success('Coupon code copied!'); }} className="text-accent font-bold bg-white/20 px-2 py-0.5 rounded shadow-sm hover:bg-white/30 transition-colors mx-1">THE-R2L-SUMMER</button> &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
+          </marquee>
         </div>
         <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
           <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
@@ -96,7 +98,7 @@ const Navbar = () => {
             </Link>
 
             {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-8">
               {categories.map((cat) => (
                 <div key={cat.slug} className="relative group">
                   <Link
@@ -207,7 +209,7 @@ const Navbar = () => {
               {/* Mobile Toggle */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2 text-secondary hover:text-accent transition-colors"
+                className="lg:hidden p-2 text-secondary hover:text-accent transition-colors"
               >
                 {mobileOpen ? <HiOutlineX className="w-6 h-6" /> : <HiOutlineMenu className="w-6 h-6" />}
               </button>

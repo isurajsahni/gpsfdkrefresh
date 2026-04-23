@@ -260,7 +260,7 @@ const OtpModal = ({ type = 'phone', value, isOpen, onClose, onVerified }) => {
                     className="space-y-5"
                   >
                     {/* OTP Inputs */}
-                    <div className="flex justify-center gap-3" onPaste={handlePaste}>
+                    <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
                       {otp.map((digit, i) => (
                         <input
                           key={i}
@@ -271,7 +271,7 @@ const OtpModal = ({ type = 'phone', value, isOpen, onClose, onVerified }) => {
                           value={digit}
                           onChange={e => handleOtpChange(i, e.target.value)}
                           onKeyDown={e => handleKeyDown(i, e)}
-                          className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all bg-gray-50"
+                          className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all bg-gray-50"
                           style={{ caretColor: 'transparent' }}
                         />
                       ))}

@@ -243,7 +243,7 @@ const RegisterPage = () => {
                   <button
                     type="submit"
                     disabled={loading || Object.values(errors).some(e => e !== '')}
-                    className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn-primary w-full text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Sending Verification Code...' : 'Create Account'}
                   </button>
@@ -302,7 +302,7 @@ const RegisterPage = () => {
                 </div>
 
                 {/* OTP Inputs */}
-                <div className="flex justify-center gap-3 mb-6" onPaste={handleOtpPaste}>
+                <div className="flex justify-center gap-2 sm:gap-3 mb-6" onPaste={handleOtpPaste}>
                   {otp.map((digit, i) => (
                     <input
                       key={i}
@@ -313,7 +313,7 @@ const RegisterPage = () => {
                       value={digit}
                       onChange={e => handleOtpChange(i, e.target.value)}
                       onKeyDown={e => handleOtpKeyDown(i, e)}
-                      className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all bg-primary"
+                      className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold rounded-xl border-2 border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all bg-primary"
                       style={{ caretColor: 'transparent' }}
                     />
                   ))}
@@ -322,7 +322,7 @@ const RegisterPage = () => {
                 <button
                   onClick={handleVerifyOtp}
                   disabled={verifying || otp.join('').length !== 6}
-                  className="btn-primary w-full text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="btn-primary w-full text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {verifying ? (
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

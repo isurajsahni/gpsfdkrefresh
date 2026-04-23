@@ -310,7 +310,7 @@ const WhatsAppOtpModal = ({ isOpen, onClose, onVerified, phone: initialPhone }) 
                       Enter 6-digit OTP
                     </label>
                     <div
-                      className="flex justify-center gap-2 mb-4"
+                      className="flex justify-center gap-1.5 sm:gap-2 mb-4"
                       onPaste={handleOtpPaste}
                     >
                       {otp.map((digit, i) => (
@@ -324,7 +324,7 @@ const WhatsAppOtpModal = ({ isOpen, onClose, onVerified, phone: initialPhone }) 
                           onChange={e => handleOtpChange(i, e.target.value)}
                           onKeyDown={e => handleOtpKeyDown(i, e)}
                           disabled={locked || loading}
-                          className={`w-11 h-12 text-center text-xl font-bold rounded-xl border-2 transition-all focus:outline-none
+                          className={`w-10 h-11 sm:w-11 sm:h-12 text-center text-lg sm:text-xl font-bold rounded-xl border-2 transition-all focus:outline-none
                             ${locked ? 'bg-red-50 border-red-200 text-red-400 cursor-not-allowed'
                               : digit ? 'border-green-400 bg-green-50 text-green-700'
                               : 'border-gray-200 text-gray-900 focus:border-green-400 focus:bg-green-50/30'}

@@ -1,10 +1,10 @@
 /**
  * Shiprocket Tracking Webhook Route
  *
- * POST /api/webhook/tracking
+ * GET  /api/webhook/tracking → Health check (Shiprocket verifies URL is live)
+ * POST /api/webhook/tracking → Handles tracking status updates
  *
  * Secured via x-api-key header validation.
- * Shiprocket sends tracking status updates to this endpoint.
  */
 
 const express = require('express');
@@ -24,7 +24,12 @@ const validateApiKey = (req, res, next) => {
   next();
 };
 
-// POST /api/webhook/tracking
+// GET /api/webhook/tracking — Health check (no auth required for Shiprocket URL verification)
+router.get('/tracking', (req, res) => {
+  res.status(200).json({ message: 'Webhook endpoint is live' });
+});
+
+// POST /api/webhook/tracking — Webhook handler (auth required)
 router.post('/tracking', validateApiKey, handleTrackingUpdate);
 
 module.exports = router;

@@ -33,6 +33,8 @@ const globalLimiter = rateLimit({
     // These routes are already protected by auth + admin middleware
     if (req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method)) return true;
     if (req.path.startsWith('/api/upload') && req.method === 'POST') return true;
+    // Skip rate limiting for webhook routes (Shiprocket fires rapid status updates)
+    if (req.path.startsWith('/api/webhook')) return true;
     return false;
   },
 });
@@ -40,6 +42,10 @@ app.use(globalLimiter);
 
 // Stripe webhook needs raw body — MUST be before express.json()
 app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+
+// ─── Shiprocket Webhook (mounted BEFORE CORS — server-to-server, no browser origin) ───
+// Needs its own JSON parser since it's mounted before the global express.json()
+app.use('/api/webhook', express.json(), require('./routes/shiprocketWebhook'));
 
 // ─── Security: CORS ───
 const allowedOrigins = [
@@ -96,7 +102,6 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/sitemap.xml', require('./routes/sitemap'));
 app.use('/webhook', require('./routes/webhook'));
-app.use('/api/webhook', require('./routes/shiprocketWebhook'));
 app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 
 // Root route

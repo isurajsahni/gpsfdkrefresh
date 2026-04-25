@@ -80,11 +80,12 @@ exports.handleTrackingUpdate = async (req, res) => {
     console.log('\n📦 [Shiprocket Webhook] Incoming payload:', JSON.stringify(req.body, null, 2));
 
     // 2. Extract fields
-    const { awb, shipment_id, current_status } = req.body;
+    const { awb, shipment_id, current_status } = req.body || {};
 
+    // Handle Shiprocket test ping (empty body or missing required fields)
     if (!shipment_id) {
-      console.warn('[Shiprocket Webhook] Missing shipment_id in payload');
-      return res.status(400).json({ success: false, message: 'Missing shipment_id' });
+      console.log('[Shiprocket Webhook] Test ping received (no shipment_id) — acknowledging');
+      return res.status(200).json({ success: true, message: 'Webhook received (test ping)' });
     }
 
     // 3. Map numeric status

@@ -52,27 +52,32 @@ router.post('/send', async (req, res) => {
 
     // 4a. WhatsApp Channel
     const whatsappUrl = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
+    
+    // Support phone number to be passed as {{2}}
+    const supportPhoneNumber = "+916280310103";
+    
     const whatsappPayload = {
       messaging_product: "whatsapp",
       to: phoneNumber,
       type: "template",
       template: {
-        name: "opt_code_template",
-        language: { code: "en_US" },
+        name: "otp_verification",
+        language: { code: "en" },
         components: [
           {
             type: "body",
             parameters: [
               { type: "text", text: generatedOtp },
-              { type: "text", text: generatedOtp },
-              { type: "text", text: generatedOtp }
+              { type: "text", text: supportPhoneNumber }
             ]
           },
           {
             type: "button",
             sub_type: "url",
             index: "0",
-            parameters: [{ type: "text", text: generatedOtp }]
+            parameters: [
+              { type: "text", text: generatedOtp }
+            ]
           }
         ]
       }

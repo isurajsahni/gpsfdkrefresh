@@ -70,6 +70,7 @@ const orderSchema = new mongoose.Schema({
   trackingUrl: { type: String, default: '' },
   deliveredAt: Date,
   notes: { type: String, default: '' },
+  trackingEmailSent: { type: Boolean, default: false },
 }, { timestamps: true });
 
 orderSchema.pre('save', function() {

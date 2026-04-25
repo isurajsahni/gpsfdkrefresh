@@ -54,7 +54,7 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
 }));
 
 // ─── Body parsers ───
@@ -96,6 +96,7 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/sitemap.xml', require('./routes/sitemap'));
 app.use('/webhook', require('./routes/webhook'));
+app.use('/api/webhook', require('./routes/shiprocketWebhook'));
 app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 
 // Root route

@@ -192,7 +192,7 @@ const TrackOrderPage = () => {
                       const isCurrent = currentStep === index;
 
                       return (
-                        <div key={step.id} className="flex sm:flex-col items-center gap-4 sm:gap-2 z-10">
+                        <div key={step.id} className="relative flex sm:flex-col items-center gap-4 sm:gap-2 z-10">
                           <div className={`
                             w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-colors duration-300
                             ${isCompleted 

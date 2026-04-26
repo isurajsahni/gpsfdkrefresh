@@ -1,16 +1,65 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
 import { useUI } from '../../context/UIContext';
-import API from '../../utils/api';
-import { optimizeImage } from '../../utils/imageOptimizer';
+// import API from '../../utils/api'; // Not needed for mock data
+// import { optimizeImage } from '../../utils/imageOptimizer'; // Not needed for mock data
+
+// Using favicon from public folder as requested
+const MOCK_DATA = [
+  {
+    id: 1,
+    name: 'Premium Wall Canvas',
+    category: 'Wall Art',
+    price: '₹2,499',
+    logoUrl: '/favicon.svg',
+    slug: 'wall-canvas',
+    description: 'Elevate your space with our premium quality matte canvas prints.'
+  },
+  {
+    id: 2,
+    name: 'Acrylic House Nameplate',
+    category: 'House Nameplates',
+    price: '₹1,299',
+    logoUrl: '/favicon.svg',
+    slug: 'house-nameplates',
+    description: 'Weatherproof, elegant acrylic nameplates for your modern home.'
+  },
+  {
+    id: 3,
+    name: 'Millionaire Art Series',
+    category: 'Wall Art',
+    price: '₹4,999',
+    logoUrl: '/favicon.svg',
+    slug: 'wall-canvas/millionaire-art',
+    description: 'Exclusive, limited edition art pieces for the ambitious.'
+  },
+  {
+    id: 4,
+    name: 'Custom Canvas Print',
+    category: 'Customize Canvas',
+    price: '₹1,999',
+    logoUrl: '/favicon.svg',
+    slug: 'customize-canvas',
+    description: 'Turn your favorite memories into beautiful custom wall art.'
+  },
+  {
+    id: 5,
+    name: 'The Botanical Muse',
+    category: 'Wall Art',
+    price: '₹3,499',
+    logoUrl: '/favicon.svg',
+    slug: 'wall-canvas/the-botanical-muse',
+    description: 'Nature-inspired art that brings life and color to any room.'
+  }
+];
 
 const SearchOverlay = () => {
   const { isSearchOpen, setIsSearchOpen } = useUI();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -23,6 +72,7 @@ const SearchOverlay = () => {
       document.body.style.overflow = '';
       setQuery('');
       setResults([]);
+      setHoveredItem(null);
     }
   }, [isSearchOpen]);
 
@@ -31,20 +81,26 @@ const SearchOverlay = () => {
     setIsSearchOpen(false);
   }, [location.pathname, setIsSearchOpen]);
 
+  // Debounce search logic
   useEffect(() => {
-    const fetchResults = async () => {
-      if (query.trim().length < 2) {
+    const fetchResults = () => {
+      if (query.trim().length === 0) {
         setResults([]);
+        setHoveredItem(null);
         return;
       }
-      setLoading(true);
-      try {
-        const { data } = await API.get(`/products?search=${query}&limit=5`);
-        setResults(data.products);
-      } catch (err) {
-        console.error(err);
+      
+      const filtered = MOCK_DATA.filter(item => 
+        item.name.toLowerCase().includes(query.toLowerCase()) || 
+        item.category.toLowerCase().includes(query.toLowerCase())
+      );
+      
+      setResults(filtered);
+      if (filtered.length > 0) {
+        setHoveredItem(filtered[0]);
+      } else {
+        setHoveredItem(null);
       }
-      setLoading(false);
     };
 
     const debounce = setTimeout(fetchResults, 300);
@@ -59,6 +115,11 @@ const SearchOverlay = () => {
     }
   };
 
+  const handleItemClick = (slug) => {
+    setIsSearchOpen(false);
+    navigate(`/${slug}`);
+  };
+
   return (
     <AnimatePresence>
       {isSearchOpen && (
@@ -66,86 +127,129 @@ const SearchOverlay = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] bg-primary/95 backdrop-blur-md flex flex-col items-center pt-24 px-4 overflow-y-auto"
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex justify-center pt-8 sm:pt-16 px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsSearchOpen(false);
+          }}
         >
-          <button
-            onClick={() => setIsSearchOpen(false)}
-            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white text-secondary hover:text-accent rounded-full transition-colors"
-          >
-            <HiOutlineX className="w-8 h-8" />
-          </button>
-
-          <div className="w-full max-w-3xl">
-            <form onSubmit={handleSearch} className="relative w-full mb-12">
+          <div className="w-full max-w-4xl bg-[#202124] rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[70vh]">
+            {/* Header / Input */}
+            <form onSubmit={handleSearch} className="flex items-center px-4 sm:px-6 py-4 border-b border-gray-700 bg-[#202124]">
+              <HiOutlineSearch className="w-6 h-6 text-gray-400 mr-3" />
               <input
                 ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search products, categories..."
-                className="w-full bg-transparent border-b-2 border-secondary/20 text-xl font-heading font-bold text-secondary placeholder-secondary/30 pb-4 focus:outline-none focus:border-accent transition-colors"
+                className="flex-1 bg-transparent text-white text-lg placeholder-gray-500 focus:outline-none"
               />
-              <button
-                type="submit"
-                className="absolute right-0 bottom-4 text-secondary hover:text-accent transition-colors"
-              >
-                <HiOutlineSearch className="w-8 h-8 md:w-10 md:h-10" />
-              </button>
+              {query && (
+                <button 
+                  type="button" 
+                  onClick={() => setQuery('')} 
+                  className="p-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  <HiOutlineX className="w-5 h-5" />
+                </button>
+              )}
             </form>
 
-            <div className="w-full">
-              {loading ? (
-                <div className="flex justify-center py-10">
-                  <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : (
-                <>
-                  {results.length > 0 ? (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                      <h3 className="text-gray-500 font-medium mb-6">Suggestions</h3>
-                      {results.map((product) => (
-                        <Link
-                          key={product._id}
-                          to={`/product/${product.slug}`}
-                          className="flex items-center gap-6 p-4 rounded-2xl hover:bg-white transition-colors group"
-                        >
-                          <img src={optimizeImage(product.images?.[0]?.url, 200)} alt={product.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl bg-cream-dark" />
-                          <div>
-                            <h4 className="font-heading font-bold text-lg md:text-xl text-secondary group-hover:text-accent transition-colors">{product.name}</h4>
-                            <p className="text-gray-500 text-sm mt-1">{product.category?.name}</p>
-                            <p className="font-bold text-accent mt-1">₹{product.basePrice?.toLocaleString()}</p>
-                          </div>
-                        </Link>
-                      ))}
-                      <button
-                        onClick={handleSearch}
-                        className="w-full py-4 text-center text-sm font-bold text-accent hover:text-secondary hover:underline transition-all mt-6 block"
+            {/* Body */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Left side: Suggestions */}
+              <div className="w-full md:w-1/2 flex flex-col border-r border-gray-700 overflow-y-auto bg-[#202124] custom-scrollbar">
+                {results.length > 0 ? (
+                  <div className="py-2">
+                    <h3 className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Suggestions</h3>
+                    {results.map((item) => (
+                      <div
+                        key={item.id}
+                        onMouseEnter={() => setHoveredItem(item)}
+                        onClick={() => handleItemClick(item.slug)}
+                        className={`flex items-center px-6 py-3 cursor-pointer transition-colors ${hoveredItem?.id === item.id ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
                       >
-                        View all results for "{query}" →
-                      </button>
-                    </motion.div>
-                  ) : query.trim().length > 1 ? (
-                    <p className="text-center text-gray-500 py-10">No products found for "{query}"</p>
-                  ) : (
-                    <div className="text-center text-gray-500 py-10 space-y-4">
-                      <p>Popular Searches:</p>
-                      <div className="flex flex-wrap justify-center gap-3">
-                        {['Wall Canvas', 'Nameplate', 'Millionaire Art', 'Acrylic'].map(term => (
-                          <button
-                            key={term}
-                            onClick={() => setQuery(term)}
-                            className="px-4 py-2 bg-white rounded-full text-sm hover:bg-secondary hover:text-white transition-colors"
-                          >
-                            {term}
-                          </button>
-                        ))}
+                        <HiOutlineSearch className="w-5 h-5 text-gray-400 mr-4 flex-shrink-0" />
+                        <div className="flex-1 flex flex-col truncate">
+                          <span className="text-gray-100 font-medium truncate">{item.name}</span>
+                          <span className="text-gray-400 text-xs truncate">{item.category}</span>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                ) : query.length > 0 ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+                    <HiOutlineSearch className="w-12 h-12 text-gray-600 mb-4" />
+                    <p className="text-gray-400">No results found for "{query}"</p>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    <h3 className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Popular Searches</h3>
+                    {MOCK_DATA.slice(0, 4).map((item) => (
+                      <div
+                        key={item.id}
+                        onMouseEnter={() => setHoveredItem(item)}
+                        onClick={() => handleItemClick(item.slug)}
+                        className="flex items-center px-6 py-3 cursor-pointer transition-colors hover:bg-gray-800/50"
+                      >
+                        <HiOutlineSearch className="w-5 h-5 text-gray-400 mr-4 flex-shrink-0" />
+                        <span className="text-gray-100">{item.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right side: Preview Card */}
+              <div className="hidden md:flex w-1/2 bg-[#171717] p-8 flex-col items-center justify-center relative overflow-y-auto">
+                {hoveredItem ? (
+                  <motion.div
+                    key={hoveredItem.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="w-full max-w-sm flex flex-col items-center text-center"
+                  >
+                    <div className="w-32 h-32 bg-gray-800/50 rounded-2xl p-6 flex items-center justify-center shadow-lg border border-gray-700/50 mb-6 group hover:bg-gray-800 transition-colors">
+                      <img 
+                        src={hoveredItem.logoUrl} 
+                        alt={hoveredItem.name} 
+                        className="max-w-full max-h-full object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-300" 
+                      />
                     </div>
-                  )}
-                </>
-              )}
+                    
+                    <span className="text-xs font-bold text-accent uppercase tracking-wider mb-2">{hoveredItem.category}</span>
+                    <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{hoveredItem.name}</h2>
+                    <p className="text-gray-300 font-semibold text-xl mb-4">{hoveredItem.price}</p>
+                    <p className="text-gray-400 text-sm leading-relaxed mb-8 px-4">
+                      {hoveredItem.description}
+                    </p>
+                    
+                    <button 
+                      onClick={() => handleItemClick(hoveredItem.slug)}
+                      className="w-full py-3.5 px-6 bg-accent text-secondary font-bold rounded-xl hover:bg-white hover:text-accent transition-all shadow-[0_0_15px_rgba(var(--color-accent),0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transform hover:-translate-y-1"
+                    >
+                      View Details
+                    </button>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-gray-500 space-y-4 h-full">
+                    <div className="w-24 h-24 bg-gray-800/30 rounded-full flex items-center justify-center border border-gray-700/30">
+                      <HiOutlineSearch className="w-10 h-10 opacity-40" />
+                    </div>
+                    <p className="text-sm font-medium">Hover over a suggestion to preview</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+          
+          {/* Close button outside container for mobile */}
+          <button
+            onClick={() => setIsSearchOpen(false)}
+            className="md:hidden absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-full transition-colors"
+          >
+            <HiOutlineX className="w-6 h-6" />
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -153,3 +257,4 @@ const SearchOverlay = () => {
 };
 
 export default SearchOverlay;
+

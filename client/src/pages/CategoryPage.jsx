@@ -11,10 +11,10 @@ import NotFoundPage from './NotFoundPage';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const SUBCATEGORIES = [
-  'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse',
+  'Ink & Interval', 'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse',
   'The Celestial Frontier', 'The Ethereal Gaze', 'The Gaze of Power',
   'The Modern Legend', 'The Gilded Bloom', 'The Velocity Suite',
-  'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'Ink & Interval', 'The Wild Eccentrics'
+  'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'The Wild Eccentrics'
 ];
 
 const CategoryPage = () => {

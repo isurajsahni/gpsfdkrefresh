@@ -377,7 +377,7 @@ exports.createGuestOrder = async (req, res, next) => {
 exports.getOrders = async (req, res, next) => {
   try {
     let orders;
-    if (req.user.role === 'admin' || req.user.role === 'admin_marketing') {
+    if ((req.user.role === 'admin' || req.user.role === 'admin_marketing') && req.query.all === 'true') {
       orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt');
     } else {
       orders = await Order.find({ user: req.user._id, status: { $ne: 'payment_pending' } }).populate('items.product', 'slug').sort('-createdAt');

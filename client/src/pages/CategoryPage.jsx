@@ -146,14 +146,14 @@ const CategoryPage = () => {
           >
             <h3 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
             <div className="flex flex-wrap gap-x-3 gap-y-4">
-              <Link to={`/wall-canvas`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+              <Link to={`/wall-canvas`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                 All Products
               </Link>
               {SUBCATEGORIES.map(sub => {
                 const subSlug = generateSlug(sub);
                 const isActive = subcategorySlug === subSlug;
                 return (
-                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} className={`px-[15px] md:px-6 py-2.5 rounded-full text-[12px] font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                     {sub}
                   </Link>
                 );

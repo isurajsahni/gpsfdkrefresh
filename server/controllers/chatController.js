@@ -21,7 +21,7 @@ exports.handleChat = async (req, res) => {
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: {
         parts: [{ text: `You are the GPSFDK AI Assistant, a specialized expert in premium wall decor, canvases, and house nameplates. GPSFDK stands for quality and artistic excellence.
 

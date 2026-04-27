@@ -9,14 +9,28 @@ const Order = require('../models/Order');
 const sendEmail = require('../utils/sendEmail');
 const { orderShipped, orderDelivered } = require('../utils/orderEmailTemplates');
 
-// ─── Shiprocket numeric status → internal status map ───
-const STATUS_MAP = {
-  1: 'pending',
-  2: 'shipped',
-  3: 'in_transit',       // treated as "shipped" internally (order is still in transit)
-  4: 'out_for_delivery', // treated as "shipped" internally
-  5: 'delivered',
-  6: 'cancelled',
+// ─── Shiprocket status string → internal status map ───
+const STATUS_STRING_MAP = {
+  'delivered': 'delivered',
+  'canceled': 'cancelled',
+  'cancelled': 'cancelled',
+  'rto': 'cancelled',
+  'shipped': 'shipped',
+  'in transit': 'shipped',
+  'out for delivery': 'shipped',
+  'picked up': 'shipped',
+  'dispatched': 'shipped'
+};
+
+// ─── Shiprocket numeric status ID → internal status map ───
+const STATUS_ID_MAP = {
+  6: 'shipped',
+  7: 'delivered',
+  8: 'cancelled',
+  9: 'cancelled', // RTO
+  10: 'cancelled', // RTO Delivered
+  17: 'shipped', // Out For Delivery
+  18: 'shipped', // In Transit
 };
 
 // Map Shiprocket statuses to valid Order model enum values
@@ -24,8 +38,6 @@ const toOrderStatus = (mapped) => {
   const schemaMap = {
     pending: 'pending',
     shipped: 'shipped',
-    in_transit: 'shipped',
-    out_for_delivery: 'shipped',
     delivered: 'delivered',
     cancelled: 'cancelled',
   };
@@ -80,7 +92,7 @@ exports.handleTrackingUpdate = async (req, res) => {
     console.log('\n📦 [Shiprocket Webhook] Incoming payload:', JSON.stringify(req.body, null, 2));
 
     // 2. Extract fields
-    const { awb, shipment_id, current_status } = req.body || {};
+    const { awb, shipment_id, current_status, current_status_id } = req.body || {};
 
     // Handle Shiprocket test ping (empty body or missing required fields)
     if (!shipment_id) {
@@ -88,17 +100,25 @@ exports.handleTrackingUpdate = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Webhook received (test ping)' });
     }
 
-    // 3. Map numeric status
-    const statusCode = Number(current_status);
-    const mappedStatus = STATUS_MAP[statusCode];
-
-    if (!mappedStatus) {
-      console.warn(`[Shiprocket Webhook] Unknown status code: ${current_status}`);
-      return res.status(400).json({ success: false, message: `Unknown status code: ${current_status}` });
+    // 3. Map numeric status or string status
+    let mappedStatus = null;
+    
+    // First try by ID if available
+    if (current_status_id) {
+      mappedStatus = STATUS_ID_MAP[Number(current_status_id)];
+    }
+    
+    // If not mapped by ID, try by string
+    if (!mappedStatus && current_status) {
+      mappedStatus = STATUS_STRING_MAP[String(current_status).toLowerCase()];
     }
 
-    const orderStatus = toOrderStatus(mappedStatus);
-    console.log(`[Shiprocket Webhook] Status ${current_status} → ${mappedStatus} → Order status: ${orderStatus}`);
+    if (!mappedStatus) {
+      console.warn(`[Shiprocket Webhook] Unmapped status: ID=${current_status_id}, String=${current_status}. Keeping as pending/unchanged.`);
+    }
+
+    const orderStatus = mappedStatus ? toOrderStatus(mappedStatus) : null;
+    console.log(`[Shiprocket Webhook] Status ID: ${current_status_id}, String: ${current_status} → Mapped: ${mappedStatus} → Order status: ${orderStatus || 'unchanged'}`);
 
     // 4. Find order by shipmentId
     const order = await Order.findOne({ shipmentId: String(shipment_id) }).populate('items.product', 'slug');

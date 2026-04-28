@@ -120,11 +120,26 @@ exports.handleTrackingUpdate = async (req, res) => {
     const orderStatus = mappedStatus ? toOrderStatus(mappedStatus) : null;
     console.log(`[Shiprocket Webhook] Status ID: ${current_status_id}, String: ${current_status} → Mapped: ${mappedStatus} → Order status: ${orderStatus || 'unchanged'}`);
 
-    // 4. Find order by shipmentId
-    const order = await Order.findOne({ shipmentId: String(shipment_id) }).populate('items.product', 'slug');
+    // 4. Find order by shipmentId, awb, or orderNumber
+    let order = null;
+
+    if (shipment_id) {
+      order = await Order.findOne({ shipmentId: String(shipment_id) }).populate('items.product', 'slug');
+    }
+
+    if (!order && awb) {
+      order = await Order.findOne({ awbCode: String(awb) }).populate('items.product', 'slug');
+      if (!order) {
+        order = await Order.findOne({ trackingNumber: String(awb) }).populate('items.product', 'slug');
+      }
+    }
+
+    if (!order && req.body.order_id) {
+      order = await Order.findOne({ orderNumber: String(req.body.order_id) }).populate('items.product', 'slug');
+    }
 
     if (!order) {
-      console.warn(`[Shiprocket Webhook] No order found for shipment_id: ${shipment_id}`);
+      console.warn(`[Shiprocket Webhook] No order found for shipment_id: ${shipment_id}, awb: ${awb}, order_id: ${req.body.order_id}`);
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 

@@ -66,6 +66,8 @@ const orderSchema = new mongoose.Schema({
   trackingNumber: { type: String, default: '' },
   shipmentId: { type: String, default: '' },
   awbCode: { type: String, default: '' },
+  shiprocketOrderId: { type: String, default: '' },
+  awb: { type: String, default: '' },
   courierName: { type: String, default: '' },
   trackingUrl: { type: String, default: '' },
   deliveredAt: Date,

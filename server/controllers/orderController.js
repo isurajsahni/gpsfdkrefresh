@@ -105,6 +105,8 @@ const triggerNewOrderNotifications = async (order) => {
         if (shipData && shipData.shipment_id) {
           order.shipmentId = shipData.shipment_id;
           order.awbCode = shipData.awb_code || '';
+          order.shiprocketOrderId = shipData.order_id ? String(shipData.order_id) : '';
+          order.awb = shipData.awb_code ? String(shipData.awb_code) : '';
           order.courierName = shipData.courier_name || '';
           await order.save();
           console.log(`✅ [Shiprocket] Order created: ${order.orderNumber}, Shipment ID: ${order.shipmentId}, AWB: ${order.awbCode || 'pending'}`);

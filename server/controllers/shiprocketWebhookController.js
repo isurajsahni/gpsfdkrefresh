@@ -88,115 +88,82 @@ const sendTrackingEmail = async (order) => {
 // ─── Main Webhook Handler ───
 exports.handleTrackingUpdate = async (req, res) => {
   try {
-    // 1. Log incoming payload
-    console.log('\n📦 [Shiprocket Webhook] Incoming payload:', JSON.stringify(req.body, null, 2));
+    console.log("Webhook Hit:", JSON.stringify(req.body, null, 2));
 
-    // 2. Extract fields
-    const { awb, shipment_id, current_status, current_status_id } = req.body || {};
+    const statusRaw = req.body.current_status || req.body.shipment_status;
+    const status = statusRaw?.toUpperCase();
 
-    // Handle Shiprocket test ping (empty body or missing required fields)
-    if (!shipment_id) {
-      console.log('[Shiprocket Webhook] Test ping received (no shipment_id) — acknowledging');
-      return res.status(200).json({ success: true, message: 'Webhook received (test ping)' });
+    const awb = String(req.body.awb);
+    const shiprocketOrderId = req.body.order_id;
+
+    const statusMap = {
+      "NEW": "pending",
+      "READY TO SHIP": "processing",
+      "SHIPPED": "shipped",
+      "OUT FOR DELIVERY": "shipped",
+      "DELIVERED": "delivered",
+      "CANCELLED": "cancelled"
+    };
+
+    const newStatus = statusMap[status];
+
+    if (!newStatus) {
+      console.log("Unknown status:", status);
+      return res.status(200).json({ ignored: true });
     }
 
-    // 3. Map numeric status or string status
-    let mappedStatus = null;
-    
-    // First try by ID if available
-    if (current_status_id) {
-      mappedStatus = STATUS_ID_MAP[Number(current_status_id)];
-    }
-    
-    // If not mapped by ID, try by string
-    if (!mappedStatus && current_status) {
-      mappedStatus = STATUS_STRING_MAP[String(current_status).toLowerCase()];
-    }
-
-    if (!mappedStatus) {
-      console.warn(`[Shiprocket Webhook] Unmapped status: ID=${current_status_id}, String=${current_status}. Keeping as pending/unchanged.`);
-    }
-
-    const orderStatus = mappedStatus ? toOrderStatus(mappedStatus) : null;
-    console.log(`[Shiprocket Webhook] Status ID: ${current_status_id}, String: ${current_status} → Mapped: ${mappedStatus} → Order status: ${orderStatus || 'unchanged'}`);
-
-    // 4. Find order by shipmentId, awb, or orderNumber
-    let order = null;
-
-    if (shipment_id) {
-      order = await Order.findOne({ shipmentId: String(shipment_id) }).populate('items.product', 'slug');
-    }
-
-    if (!order && awb) {
-      order = await Order.findOne({ awbCode: String(awb) }).populate('items.product', 'slug');
-      if (!order) {
-        order = await Order.findOne({ trackingNumber: String(awb) }).populate('items.product', 'slug');
-      }
-    }
-
-    if (!order && req.body.order_id) {
-      order = await Order.findOne({ orderNumber: String(req.body.order_id) }).populate('items.product', 'slug');
-    }
+    const order = await Order.findOne({
+      $or: [
+        { shiprocketOrderId },
+        { awb }
+      ]
+    });
 
     if (!order) {
-      console.warn(`[Shiprocket Webhook] No order found for shipment_id: ${shipment_id}, awb: ${awb}, order_id: ${req.body.order_id}`);
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      console.log("Order not found:", shiprocketOrderId, awb);
+      return res.status(200).json({ notFound: true });
     }
 
-    // 5. Update order fields
-    if (orderStatus) {
-      order.status = orderStatus;
+    // 6. Tracking email on "shipped"
+    const shouldSendEmail = newStatus === 'shipped' && !order.trackingEmailSent;
+    if (shouldSendEmail) {
+      order.trackingEmailSent = true;
     }
-    if (awb) {
-      order.awbCode = awb;
-    }
-    if (orderStatus === 'delivered') {
+
+    if (newStatus === 'delivered') {
       order.deliveredAt = new Date();
     }
 
-    // 6. Tracking email on "shipped" (with duplicate protection)
-    const shouldSendEmail =
-      mappedStatus === 'shipped' &&
-      !order.trackingEmailSent;
+    if (order.status !== newStatus) {
+      order.status = newStatus;
+      await order.save();
+      console.log("Status updated →", newStatus);
 
-    if (shouldSendEmail) {
-      order.trackingEmailSent = true; // Mark BEFORE saving to prevent race conditions
-    }
-
-    await order.save();
-
-    // 7. Fire email after save (non-blocking to webhook response)
-    if (shouldSendEmail) {
-      // Re-fetch with populated items for email template
-      const populatedOrder = await Order.findById(order._id).populate('items.product', 'slug');
-      sendTrackingEmail(populatedOrder); // Intentionally not awaited — fire-and-forget
-    }
-
-    // 8. Also send delivered email if applicable
-    if (orderStatus === 'delivered') {
-      const email = await getCustomerEmail(order);
-      if (email) {
-        const customerName = getCustomerName(order);
+      // 7. Fire email after save
+      if (shouldSendEmail) {
         const populatedOrder = await Order.findById(order._id).populate('items.product', 'slug');
-        sendEmail({
-          email,
-          subject: `Order Delivered ✅ - ${order.orderNumber}`,
-          html: orderDelivered(populatedOrder, customerName),
-        }).catch(err => console.error(`❌ [Shiprocket Webhook] Delivered email failed:`, err.message));
+        sendTrackingEmail(populatedOrder);
+      }
+
+      // 8. Send delivered email
+      if (newStatus === 'delivered') {
+        const email = await getCustomerEmail(order);
+        if (email) {
+          const customerName = getCustomerName(order);
+          const populatedOrder = await Order.findById(order._id).populate('items.product', 'slug');
+          sendEmail({
+            email,
+            subject: `Order Delivered ✅ - ${order.orderNumber}`,
+            html: orderDelivered(populatedOrder, customerName),
+          }).catch(err => console.error(`❌ [Shiprocket Webhook] Delivered email failed:`, err.message));
+        }
       }
     }
 
-    console.log(`✅ [Shiprocket Webhook] Order ${order.orderNumber} updated → ${orderStatus} (AWB: ${order.awbCode})`);
+    res.status(200).json({ success: true });
 
-    return res.status(200).json({
-      success: true,
-      message: 'Tracking update processed',
-      orderNumber: order.orderNumber,
-      status: orderStatus,
-    });
-
-  } catch (error) {
-    console.error('❌ [Shiprocket Webhook] Processing error:', error.message, error.stack);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+  } catch (err) {
+    console.error("Webhook Error:", err);
+    res.status(200).json({ error: true });
   }
 };

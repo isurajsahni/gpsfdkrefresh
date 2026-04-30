@@ -14,8 +14,9 @@ exports.createRazorpayOrder = async (req, res, next) => {
     }
 
     const userId = req.user ? req.user._id : null;
+    const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
     const { calculateOrderPrices } = require('./orderController');
-    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId);
+    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
 
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -36,6 +37,9 @@ exports.createRazorpayOrder = async (req, res, next) => {
 
     res.json(order);
   } catch (error) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+      return res.status(400).json({ message: error.message });
+    }
     console.error('Razorpay Order Error:', error);
     next(error);
   }
@@ -59,8 +63,9 @@ exports.verifyRazorpay = async (req, res, next) => {
     if (expectedSign === razorpay_signature) {
       // 1. Verify exact price to prevent tampering
       const userId = req.user ? req.user._id : null;
+      const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
       const { calculateOrderPrices } = require('./orderController');
-      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId);
+      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
       
       const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
@@ -98,15 +103,24 @@ exports.verifyRazorpay = async (req, res, next) => {
       });
 
       // Handle coupon usage
-      if (orderData.couponCode && userId) {
+      if (orderData.couponCode) {
         const Coupon = require('../models/Coupon');
         const coupon = await Coupon.findOne({ code: orderData.couponCode.toUpperCase() });
         if (coupon) {
-          const userUsage = coupon.usageHistory.find(u => u.userId.toString() === userId.toString());
-          if (userUsage) {
-            userUsage.useCount += 1;
-          } else {
-            coupon.usageHistory.push({ userId: userId, useCount: 1 });
+          if (userId) {
+            const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === userId.toString());
+            if (userUsage) {
+              userUsage.useCount += 1;
+            } else {
+              coupon.usageHistory.push({ userId: userId, useCount: 1 });
+            }
+          } else if (guestIdentifier) {
+            const guestUsage = coupon.usageHistory.find(u => !u.userId && u.identifier && u.identifier.toLowerCase() === guestIdentifier.toLowerCase());
+            if (guestUsage) {
+              guestUsage.useCount += 1;
+            } else {
+              coupon.usageHistory.push({ userId: null, identifier: guestIdentifier, useCount: 1 });
+            }
           }
           await coupon.save();
         }
@@ -124,7 +138,7 @@ exports.verifyRazorpay = async (req, res, next) => {
       res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message, success: false });
     }
     console.error('Razorpay Verification Error:', error);

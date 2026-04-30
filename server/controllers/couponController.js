@@ -88,9 +88,9 @@ const validateCoupon = async (req, res) => {
       return res.status(400).json({ message: `Minimum order value of ₹${coupon.minOrderValue} required` });
     }
 
-    // Check usage limits only if it's a logged-in user
+    // Check usage limits
     if (userId) {
-      const userUsage = coupon.usageHistory.find(u => u.userId.toString() === userId.toString());
+      const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === userId.toString());
       const totalUniqueUsers = coupon.usageHistory.length;
 
       if (!userUsage && totalUniqueUsers >= coupon.maxUsers) {
@@ -99,6 +99,10 @@ const validateCoupon = async (req, res) => {
 
       if (userUsage && userUsage.useCount >= coupon.maxUsesPerUser) {
         return res.status(400).json({ message: 'You have reached the maximum usage limit for this coupon' });
+      }
+    } else {
+      if (coupon.usageHistory.length >= coupon.maxUsers) {
+        return res.status(400).json({ message: 'This coupon has reached its maximum user limit' });
       }
     }
 

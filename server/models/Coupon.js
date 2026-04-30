@@ -41,6 +41,11 @@ const couponSchema = new mongoose.Schema({
       userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
+        default: null,
+      },
+      identifier: {
+        type: String, // email or phone for guests
+        default: null,
       },
       useCount: {
         type: Number,

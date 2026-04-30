@@ -138,7 +138,7 @@ exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
 
 // ─── SERVER-SIDE PRICE CALCULATION ───
 // Recalculate all prices from the database to prevent price manipulation
-const calculateOrderPrices = async (items, couponCode, userId) => {
+const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null) => {
   let calculatedItemsPrice = 0;
   const verifiedItems = [];
 
@@ -210,6 +210,48 @@ const calculateOrderPrices = async (items, couponCode, userId) => {
   if (couponCode) {
     const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
     if (coupon && (!coupon.expiryDate || new Date() <= new Date(coupon.expiryDate))) {
+      
+      // Validate usage limits
+      let isLimitReached = false;
+      let limitMessage = 'Coupon is invalid';
+
+      if (userId) {
+        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === userId.toString());
+        if (userUsage) {
+          if (userUsage.useCount >= coupon.maxUsesPerUser) {
+            isLimitReached = true;
+            limitMessage = 'Coupon usage limit reached for your account';
+          }
+        } else {
+          if (coupon.usageHistory.length >= coupon.maxUsers) {
+            isLimitReached = true;
+            limitMessage = 'Coupon has reached its maximum users limit';
+          }
+        }
+      } else if (guestIdentifier) {
+        const guestUsage = coupon.usageHistory.find(u => !u.userId && u.identifier && u.identifier.toLowerCase() === guestIdentifier.toLowerCase());
+        if (guestUsage) {
+          if (guestUsage.useCount >= coupon.maxUsesPerUser) {
+            isLimitReached = true;
+            limitMessage = 'Coupon usage limit reached for this contact information';
+          }
+        } else {
+          if (coupon.usageHistory.length >= coupon.maxUsers) {
+            isLimitReached = true;
+            limitMessage = 'Coupon has reached its maximum users limit';
+          }
+        }
+      } else {
+        if (coupon.usageHistory.length >= coupon.maxUsers) {
+          isLimitReached = true;
+          limitMessage = 'Coupon has reached its maximum users limit';
+        }
+      }
+
+      if (isLimitReached) {
+        throw new Error(limitMessage);
+      }
+
       // Check min order value against itemsPrice
       if (calculatedItemsPrice >= coupon.minOrderValue) {
         if (coupon.discountType === 'percentage') {
@@ -305,7 +347,7 @@ exports.createOrder = async (req, res, next) => {
 
     res.status(201).json(order);
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message });
     }
     next(error);
@@ -321,7 +363,8 @@ exports.createGuestOrder = async (req, res, next) => {
 
     // Server-side price calculation — never trust client prices
     // Support coupons for guests too for production-ready feature
-    const prices = await calculateOrderPrices(items, couponCode, null);
+    const guestIdentifier = guestEmail || guestPhone || shippingAddress?.phone || null;
+    const prices = await calculateOrderPrices(items, couponCode, null, guestIdentifier);
 
 
     // If total price is 0, skip payment gateway
@@ -346,17 +389,30 @@ exports.createGuestOrder = async (req, res, next) => {
       paidAt: isPaid ? Date.now() : null,
     });
 
-    // Track coupon usage for marketing dashboard (guest orders)
+    // Track coupon usage for guests
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
-      if (coupon && coupon.assignedTo) {
-        CouponUsage.create({
-          couponId: coupon._id,
-          customerId: null,
-          orderId: order.orderNumber,
-          orderAmount: prices.itemsPrice,
-          discountAmount: prices.discountPrice,
-        }).catch(err => console.error('CouponUsage tracking failed:', err.message));
+      if (coupon) {
+        if (guestIdentifier) {
+          const guestUsage = coupon.usageHistory.find(u => !u.userId && u.identifier && u.identifier.toLowerCase() === guestIdentifier.toLowerCase());
+          if (guestUsage) {
+            guestUsage.useCount += 1;
+          } else {
+            coupon.usageHistory.push({ userId: null, identifier: guestIdentifier, useCount: 1 });
+          }
+          await coupon.save();
+        }
+
+        // Track usage for marketing dashboard (guest orders)
+        if (coupon.assignedTo) {
+          CouponUsage.create({
+            couponId: coupon._id,
+            customerId: null,
+            orderId: order.orderNumber,
+            orderAmount: prices.itemsPrice,
+            discountAmount: prices.discountPrice,
+          }).catch(err => console.error('CouponUsage tracking failed:', err.message));
+        }
       }
     }
 
@@ -368,7 +424,7 @@ exports.createGuestOrder = async (req, res, next) => {
 
     res.status(201).json(order);
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message });
     }
     next(error);

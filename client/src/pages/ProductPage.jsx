@@ -11,6 +11,7 @@ import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
 import { optimizeImage } from '../utils/imageOptimizer';
 import NotFoundPage from './NotFoundPage';
+import { useCurrency } from '../context/CurrencyContext';
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -42,6 +43,7 @@ const ProductPage = () => {
 
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
+  const { formatPrice, currency } = useCurrency();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -59,7 +61,7 @@ const ProductPage = () => {
             content_ids: [data._id],
             content_type: 'product',
             value: data.variations?.[0]?.price || data.basePrice,
-            currency: 'INR',
+            currency: 'INR', // Meta Pixel always uses base currency
           });
         }
       } catch (err) {
@@ -164,7 +166,7 @@ const ProductPage = () => {
     "offers": {
       "@type": "Offer",
       "url": `https://www.gpsfdk.com/product/${product.slug}`,
-      "priceCurrency": "INR",
+      "priceCurrency": currency,
       "price": selectedVariation?.price || product.basePrice,
       "itemCondition": "https://schema.org/NewCondition",
       "availability": "https://schema.org/InStock",
@@ -245,10 +247,10 @@ const ProductPage = () => {
 
             {/* Price — shown here briefly under name, updates on variation change */}
             <div className="mt-6">
-              <span className="text-4xl font-bold text-accent">₹{(selectedVariation.price * quantity)?.toLocaleString()}</span>
+              <span className="text-4xl font-bold text-accent">{formatPrice(selectedVariation.price * quantity)}</span>
               {selectedVariation.comparePrice > 0 && (
                 <>
-                  <span className="text-xl text-gray-400 line-through ml-3">₹{(selectedVariation.comparePrice * quantity).toLocaleString()}</span>
+                  <span className="text-xl text-gray-400 line-through ml-3">{formatPrice(selectedVariation.comparePrice * quantity)}</span>
                   <span className="ml-3 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
                     {Math.round((1 - selectedVariation.price / selectedVariation.comparePrice) * 100)}% OFF
                   </span>

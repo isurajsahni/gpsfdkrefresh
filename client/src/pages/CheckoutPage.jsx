@@ -7,6 +7,7 @@ import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
+import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const loadRazorpayScript = () => {
@@ -27,6 +28,7 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  const { formatPrice } = useCurrency();
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -648,7 +650,7 @@ const CheckoutPage = () => {
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                   <div className="flex items-start sm:items-center gap-3">
                     <span className="text-xl">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{999 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
                   </div>
                   <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
                     Add Items
@@ -672,7 +674,7 @@ const CheckoutPage = () => {
                         <p className="text-xs text-gray-500">{item.variation?.size} × {item.quantity}</p>
                       </div>
                     </div>
-                    <span className="font-bold text-accent">₹{(item.price * item.quantity).toLocaleString()}</span>
+                    <span className="font-bold text-accent">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
@@ -696,15 +698,15 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
-                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon '{appliedCoupon.code}' applied! (-₹{Math.round(appliedCoupon.calculatedDiscount).toLocaleString()})</p>}
+                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon '{appliedCoupon.code}' applied! (-{formatPrice(Math.round(appliedCoupon.calculatedDiscount))})</p>}
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
-                <div className="flex justify-between text-sm"><span>Subtotal</span><span>₹{cartTotal.toLocaleString()}</span></div>
+                <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatPrice(cartTotal)}</span></div>
                 <div className="flex justify-between text-sm mt-1">
                   <span>Shipping</span>
                   {shippingFee > 0 ? (
-                    <span className="text-secondary font-medium">+₹{shippingFee}</span>
+                    <span className="text-secondary font-medium">+{formatPrice(shippingFee)}</span>
                   ) : (
                     <span className="text-green-600 font-bold">FREE</span>
                   )}
@@ -712,10 +714,10 @@ const CheckoutPage = () => {
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
                     <span>Discount ({appliedCoupon.code})</span>
-                    <span>-₹{Math.round(appliedDiscount).toLocaleString()}</span>
+                    <span>-{formatPrice(Math.round(appliedDiscount))}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">₹{Math.round(finalTotal).toLocaleString()}</span></div>
+                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">{formatPrice(Math.round(finalTotal))}</span></div>
 
               </div>
               <div className="flex gap-3 items-center sm:gap-4">

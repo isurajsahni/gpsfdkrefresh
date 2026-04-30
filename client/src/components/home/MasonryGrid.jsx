@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import API from '../../utils/api';
+import { useCurrency } from '../../context/CurrencyContext';
 import { optimizeImage } from '../../utils/imageOptimizer';
 
 const MasonryGrid = () => {
   const [products, setProducts] = useState([]);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -61,7 +63,7 @@ const MasonryGrid = () => {
                       {products[0].name}
                     </h3>
                     <p className="text-[#E3543A] font-bold text-2xl md:text-3xl mb-6">
-                      ₹{products[0].basePrice?.toLocaleString() || products[0].variations?.[0]?.price?.toLocaleString()}
+                      {formatPrice(products[0].basePrice || products[0].variations?.[0]?.price)}
                     </p>
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center text-white font-bold text-lg md:text-xl">
                       <span className="bg-[#E3543A] px-8 py-3 rounded-full hover:bg-[#c93d25] transition-colors">
@@ -99,7 +101,7 @@ const MasonryGrid = () => {
                         {product.name}
                       </h3>
                       <p className="text-[#E3543A] font-bold text-xl mb-3">
-                        ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
+                        {formatPrice(product.basePrice || product.variations?.[0]?.price)}
                       </p>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                         <span className="text-white font-bold text-sm bg-[#E3543A] px-4 py-2 rounded-full">

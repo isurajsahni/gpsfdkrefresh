@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUI } from '../../context/UIContext';
 import { optimizeImage } from '../../utils/imageOptimizer';
 import API from '../../utils/api';
@@ -15,6 +16,7 @@ import 'swiper/css/navigation';
 const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
   const { setIsCartOpen } = useUI();
 
   useEffect(() => {
@@ -127,9 +129,9 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
                       <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
                       <p className="text-accent font-bold text-lg mt-1">
-                        ₹{product.basePrice?.toLocaleString() || product.variations?.[0]?.price?.toLocaleString()}
+                        {formatPrice(product.basePrice || product.variations?.[0]?.price)}
                         {product.variations?.[0]?.comparePrice > 0 && (
-                          <span className="text-white/50 text-sm line-through ml-2">₹{product.variations[0].comparePrice.toLocaleString()}</span>
+                          <span className="text-white/50 text-sm line-through ml-2">{formatPrice(product.variations[0].comparePrice)}</span>
                         )}
                       </p>
                       <button

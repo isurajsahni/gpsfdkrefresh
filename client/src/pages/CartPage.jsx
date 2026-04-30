@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiOutlineTrash, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const shippingFee = cartTotal > 0 && cartTotal < 499 ? 50 : 0;
   const finalTotal = cartTotal + shippingFee;
@@ -72,7 +74,7 @@ const CartPage = () => {
                         <HiPlus className="w-4 h-4" />
                       </button>
                     </div>
-                    <span className="font-bold text-accent text-lg">₹{(item.price * item.quantity).toLocaleString()}</span>
+                    <span className="font-bold text-accent text-lg">{formatPrice(item.price * item.quantity)}</span>
                   </div>
                 </div>
               </motion.div>
@@ -89,7 +91,7 @@ const CartPage = () => {
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col gap-3 shadow-sm">
                   <div className="flex items-start gap-2">
                     <span className="text-lg">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">₹{499 - cartTotal}</strong> away from <strong>Free Shipping!</strong></span>
+                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(499 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
                   </div>
                 </div>
               ) : (
@@ -100,18 +102,18 @@ const CartPage = () => {
               )}
 
               <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">₹{cartTotal.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-semibold">{formatPrice(cartTotal)}</span></div>
                 <div className="flex justify-between">
                   <span className="text-gray-500">Shipping</span>
                   {shippingFee > 0 ? (
-                    <span className="font-semibold text-secondary">+₹{shippingFee}</span>
+                    <span className="font-semibold text-secondary">+{formatPrice(shippingFee)}</span>
                   ) : (
                     <span className="text-green-600 font-semibold">FREE</span>
                   )}
                 </div>
                 <div className="border-t pt-3 mt-3 flex justify-between text-lg">
                   <span className="font-heading font-bold text-secondary">Total</span>
-                  <span className="font-bold text-accent">₹{finalTotal.toLocaleString()}</span>
+                  <span className="font-bold text-accent">{formatPrice(finalTotal)}</span>
                 </div>
               </div>
               <Link to="/checkout" className="btn-primary w-full text-center block mt-6 text-lg">

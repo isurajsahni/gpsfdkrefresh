@@ -103,6 +103,7 @@ app.use('/api/marketing', require('./routes/marketing'));
 app.use('/sitemap.xml', require('./routes/sitemap'));
 app.use('/webhook', require('./routes/webhook'));
 app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
+app.use('/api/pricing', require('./routes/pricing'));
 
 // Root route
 app.get('/', (req, res) => res.send('GPSFDK Ecommerce API is running 🚀'));

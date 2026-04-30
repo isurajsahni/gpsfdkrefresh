@@ -2,11 +2,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineX, HiMinus, HiPlus, HiOutlineTrash } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { useUI } from '../../context/UIContext';
 import { optimizeImage } from '../../utils/imageOptimizer';
 
 const CartDrawer = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
+  const { formatPrice } = useCurrency();
   const { isCartOpen, setIsCartOpen } = useUI();
   const navigate = useNavigate();
 
@@ -92,7 +94,7 @@ const CartDrawer = () => {
                               <HiPlus className="w-3 h-3" />
                             </button>
                           </div>
-                          <span className="font-bold text-accent text-sm">₹{(item.price * item.quantity).toLocaleString()}</span>
+                          <span className="font-bold text-accent text-sm">{formatPrice(item.price * item.quantity)}</span>
                         </div>
                       </div>
                     </div>
@@ -106,7 +108,7 @@ const CartDrawer = () => {
               <div className="bg-white border-t border-gray-100 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-500 font-medium">Subtotal</span>
-                  <span className="text-xl font-heading font-bold text-secondary">₹{cartTotal.toLocaleString()}</span>
+                  <span className="text-xl font-heading font-bold text-secondary">{formatPrice(cartTotal)}</span>
                 </div>
                 <div className="space-y-3">
                   <button 

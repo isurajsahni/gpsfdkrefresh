@@ -5,6 +5,7 @@ import { HiOutlineShoppingCart, HiChevronLeft, HiChevronRight } from 'react-icon
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
+import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const SearchPage = () => {
@@ -22,6 +23,7 @@ const SearchPage = () => {
 
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     if (!query) {
@@ -127,10 +129,10 @@ const SearchPage = () => {
                         <h3 className="font-heading text-lg font-bold text-secondary group-hover:text-accent transition-colors leading-tight mb-2">{product.name}</h3>
                         <div className="mt-auto pt-2">
                           <p className="text-accent font-bold text-lg">
-                            ₹{product.basePrice?.toLocaleString()}
+                            {formatPrice(product.basePrice)}
                             {product.variations?.[0]?.comparePrice > 0 && (
                               <span className="text-gray-400 text-sm line-through ml-2 font-medium">
-                                ₹{product.variations[0].comparePrice.toLocaleString()}
+                                {formatPrice(product.variations[0].comparePrice)}
                               </span>
                             )}
                           </p>

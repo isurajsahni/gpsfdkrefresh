@@ -8,6 +8,7 @@ import API from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
 import NotFoundPage from './NotFoundPage';
+import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const SUBCATEGORIES = [
@@ -34,6 +35,7 @@ const CategoryPage = () => {
   
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
+  const { formatPrice } = useCurrency();
 
   const generateSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') : '';
 
@@ -216,8 +218,8 @@ const CategoryPage = () => {
                       <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
                         <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
                         <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
-                          ₹{product.basePrice?.toLocaleString('en-IN')}
-                          {product.variations?.length > 1 && ` – ₹${Math.max(...product.variations.map(v => v.price)).toLocaleString('en-IN')}`}
+                          {formatPrice(product.basePrice)}
+                          {product.variations?.length > 1 && ` – ${formatPrice(Math.max(...product.variations.map(v => v.price)))}`}
                         </p>
                       </div>
                       <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
@@ -253,9 +255,9 @@ const CategoryPage = () => {
                         <h3 className="font-heading text-lg font-bold text-secondary group-hover:text-accent transition-colors leading-tight mb-2">{product.name}</h3>
                         <div className="mt-auto pt-2">
                           <p className="text-accent font-bold text-lg">
-                            ₹{product.basePrice?.toLocaleString()}
+                            {formatPrice(product.basePrice)}
                             {product.variations?.[0]?.comparePrice > 0 && (
-                              <span className="text-gray-400 text-sm line-through ml-2 font-medium">₹{product.variations[0].comparePrice.toLocaleString()}</span>
+                              <span className="text-gray-400 text-sm line-through ml-2 font-medium">{formatPrice(product.variations[0].comparePrice)}</span>
                             )}
                           </p>
                         </div>

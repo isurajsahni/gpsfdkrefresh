@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import ThumbnailImage from './ThumbnailImage';
+import { useCurrency } from '../../context/CurrencyContext';
 
 const ProductRow = ({ product, index }) => {
   const isEven = index % 2 === 0;
   const navigate = useNavigate();
+  const { formatPrice } = useCurrency();
 
   // Price range
   const prices = product.variations?.map(v => v.price) || [product.basePrice];
@@ -54,16 +56,16 @@ const ProductRow = ({ product, index }) => {
         {/* Price Range */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
           <span className="text-2xl md:text-3xl font-bold text-accent">
-            ₹{minPrice.toLocaleString('en-IN')}
+            {formatPrice(minPrice)}
           </span>
           {minPrice !== maxPrice && (
             <span className="text-2xl md:text-3xl font-bold text-accent">
-              {' '}– ₹{maxPrice.toLocaleString('en-IN')}
+              {' '}– {formatPrice(maxPrice)}
             </span>
           )}
           {comparePrice > 0 && minPrice < comparePrice && (
             <span className="text-base text-gray-400 line-through">
-              ₹{comparePrice.toLocaleString('en-IN')}
+              {formatPrice(comparePrice)}
             </span>
           )}
         </div>

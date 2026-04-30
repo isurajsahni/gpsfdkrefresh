@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import { UIProvider } from './context/UIContext';
+import { CurrencyProvider } from './context/CurrencyContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -143,6 +144,7 @@ function App() {
         <ScrollManager />
         <AuthProvider>
           <UIProvider>
+            <CurrencyProvider>
             <CartProvider>
               <Toaster position="top-center" toastOptions={{
                 style: { background: '#0B5D3B', color: '#fff', borderRadius: '12px', fontFamily: '"DM Sans", sans-serif' },
@@ -225,6 +227,7 @@ function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </CartProvider>
+            </CurrencyProvider>
         </UIProvider>
       </AuthProvider>
       </Router>

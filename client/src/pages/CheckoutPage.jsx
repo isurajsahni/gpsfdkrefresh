@@ -289,8 +289,8 @@ const CheckoutPage = () => {
         totalPrice: finalTotal,
       };
 
-      // CASE 1: Zero-Value Order (Fully Paid by Coupon) or Cash on Delivery
-      if (finalTotal === 0 || paymentMethod === 'cod') {
+      // CASE 1: Zero-Value Order (Fully Paid by Coupon)
+      if (finalTotal === 0) {
         const endpoint = user ? '/orders' : '/orders/guest';
         await API.post(endpoint, orderData);
         
@@ -323,7 +323,7 @@ const CheckoutPage = () => {
           const options = {
             key: import.meta.env.VITE_RAZORPAY_KEY_ID,
             amount: razorpayOrder.amount,
-            currency: 'INR',
+            currency: razorpayOrder.currency,
             name: 'GPSFDK',
             description: 'Order Payment',
             order_id: razorpayOrder.id,
@@ -618,7 +618,6 @@ const CheckoutPage = () => {
               <div className="space-y-3">
                 {[
                   { value: 'razorpay', label: 'Razorpay / Online Payment', icon: '💳', desc: 'Secure payment via UPI, Cards, Net Banking' },
-                  { value: 'cod', label: 'Cash on Delivery', icon: '💵', desc: 'Pay when you receive' }
                 ].map(method => (
                   <button
                     key={method.value}

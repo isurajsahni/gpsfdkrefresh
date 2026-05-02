@@ -5,7 +5,7 @@ const features = [
   { icon: HiOutlineFlag, title: 'Proudly Made in India', desc: 'Handcrafted with love and precision' },
   { icon: HiOutlineTruck, title: 'Free Fast Shipping', desc: 'Free delivery across India' },
   { icon: HiOutlineShieldCheck, title: '11,000+ Safe Deliveries', desc: 'Trusted by thousands of customers' },
-  { icon: HiOutlineLockClosed, title: 'Secure Payments', desc: 'Razorpay, Stripe & COD accepted' },
+  { icon: HiOutlineLockClosed, title: 'Secure Payments', desc: 'Razorpay, UPI, Cards & Net Banking' },
 ];
 
 const FeaturesSection = () => {

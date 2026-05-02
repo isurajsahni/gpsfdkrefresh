@@ -60,7 +60,7 @@ const guestOrderValidation = [
   body('shippingAddress.city').trim().notEmpty().withMessage('City is required'),
   body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
   body('shippingAddress.pincode').matches(/^\d{6}$/).withMessage('Invalid pincode'),
-  body('paymentMethod').isIn(['razorpay', 'stripe', 'cod']).withMessage('Invalid payment method'),
+  body('paymentMethod').isIn(['razorpay', 'stripe']).withMessage('Invalid payment method'),
   validate,
 ];
 

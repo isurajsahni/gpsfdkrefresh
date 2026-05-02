@@ -3,6 +3,7 @@ const stripe = require('stripe');
 const crypto = require('crypto');
 const Order = require('../models/Order');
 const orderController = require('./orderController');
+const { detectCountry, getCurrency, convertPrice, roundClean, CURRENCY_CONFIG, INR_EXCHANGE_RATES } = require('../utils/geoPricing');
 
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
@@ -18,15 +19,48 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const { calculateOrderPrices } = require('./orderController');
     const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
 
+    // ─── Geo-Pricing: Detect user's currency ───
+    const country = await detectCountry(req);
+    const currency = getCurrency(country);
+    const isIndia = country === 'IN';
+
+    let chargeAmount; // in smallest currency unit (paise/cents)
+    let chargeCurrency = currency;
+
+    if (isIndia || currency === 'INR') {
+      // Indian customer: charge base INR price
+      chargeAmount = Math.round(prices.totalPrice * 100); // paise
+      chargeCurrency = 'INR';
+    } else {
+      // International customer: apply 10x multiplier + currency conversion
+      const converted = convertPrice(prices.totalPrice, country);
+      const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.USD;
+      
+      // Handle zero-decimal currencies (JPY, KRW) vs standard 2-decimal
+      if (currency === 'JPY' || currency === 'KRW') {
+        chargeAmount = converted.price; // no sub-unit
+      } else if (currency === 'KWD' || currency === 'BHD' || currency === 'OMR') {
+        chargeAmount = Math.round(converted.price * 1000); // 3-decimal currencies
+      } else {
+        chargeAmount = Math.round(converted.price * 100); // cents/pence/etc
+      }
+      chargeCurrency = currency;
+    }
+
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET,
     });
 
     const options = {
-      amount: Math.round(prices.totalPrice * 100), // Convert to paise
-      currency: 'INR',
+      amount: chargeAmount,
+      currency: chargeCurrency,
       receipt: 'rcpt_' + Date.now().toString().slice(-8),
+      notes: {
+        inr_total: prices.totalPrice.toString(),
+        geo_country: country,
+        geo_currency: chargeCurrency,
+      },
     };
 
     const order = await instance.orders.create(options);
@@ -67,13 +101,18 @@ exports.verifyRazorpay = async (req, res, next) => {
       const { calculateOrderPrices } = require('./orderController');
       const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
       
+      // Verify the payment amount matches what we expect
+      // Fetch the Razorpay order to confirm the amount paid
       const instance = new Razorpay({
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
       const rzpOrder = await instance.orders.fetch(razorpay_order_id);
       
-      if (Math.round(prices.totalPrice * 100) !== rzpOrder.amount) {
+      // The Razorpay order was created with geo-pricing already applied.
+      // Verify the stored INR total from the order notes matches our recalculated price.
+      const storedInrTotal = parseFloat(rzpOrder.notes?.inr_total || '0');
+      if (storedInrTotal > 0 && Math.abs(storedInrTotal - prices.totalPrice) > 1) {
         return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
       }
 

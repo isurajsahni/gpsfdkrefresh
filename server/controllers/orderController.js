@@ -92,9 +92,9 @@ const triggerNewOrderNotifications = async (order) => {
     }).catch(err => console.error('Admin order notification failed:', err.message));
 
     // ─── Shiprocket Integration ───
-    // Automatically create shipment for Prepaid (isPaid: true) OR COD
+    // Automatically create shipment for Prepaid orders (isPaid: true)
     // IMPORTANT: Run Shiprocket BEFORE sending customer email so AWB is included
-    if (order.isPaid || order.paymentMethod === 'cod') {
+    if (order.isPaid) {
       try {
         console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
         // Weight & dimensions are auto-calculated from item variation size
@@ -309,7 +309,7 @@ exports.createOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') ? 'pending' : 'payment_pending',
+      status: finalPaymentMethod === 'free' ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
     });
@@ -339,8 +339,8 @@ exports.createOrder = async (req, res, next) => {
       }
     }
 
-    // Notify immediately for COD or FREE orders
-    if (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') {
+    // Notify immediately for FREE orders
+    if (finalPaymentMethod === 'free') {
       triggerNewOrderNotifications(order);
     }
 
@@ -384,7 +384,7 @@ exports.createGuestOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') ? 'pending' : 'payment_pending',
+      status: finalPaymentMethod === 'free' ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
     });
@@ -416,8 +416,8 @@ exports.createGuestOrder = async (req, res, next) => {
       }
     }
 
-    // Notify immediately for COD or FREE orders
-    if (finalPaymentMethod === 'cod' || finalPaymentMethod === 'free') {
+    // Notify immediately for FREE orders
+    if (finalPaymentMethod === 'free') {
       triggerNewOrderNotifications(order);
     }
 

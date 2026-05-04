@@ -171,9 +171,10 @@ const detectCountry = async (req) => {
 
 /**
  * Get currency code for a country.
+ * India uses INR, rest of the world uses USD.
  */
 const getCurrency = (countryCode) => {
-  return COUNTRY_CURRENCY_MAP[countryCode] || 'USD';
+  return countryCode === 'IN' ? 'INR' : 'USD';
 };
 
 /**

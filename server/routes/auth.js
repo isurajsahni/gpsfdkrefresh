@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, verifyFirebaseToken, completePasswordlessRegistration } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const {
@@ -38,5 +38,10 @@ router.delete('/addresses/:id', protect, deleteAddress);
 router.post('/send-email-update-otp', protect, sendEmailUpdateOtp);
 router.post('/verify-email-update-otp', protect, verifyEmailUpdateOtp);
 
-module.exports = router;
+// Passwordless Authentication Routes
+router.post('/passwordless/send-otp', authLimiter, sendPasswordlessOtp);
+router.post('/passwordless/verify-otp', otpLimiter, verifyPasswordlessOtp);
+router.post('/passwordless/verify-firebase', otpLimiter, verifyFirebaseToken);
+router.post('/passwordless/complete-registration', authLimiter, completePasswordlessRegistration);
 
+module.exports = router;

@@ -804,3 +804,53 @@ exports.updateAddress = async (req, res, next) => {
     next(error);
   }
 };
+
+// ─── Firebase Phone Login endpoint ──────────────────────────────────────────
+const admin = require('../utils/firebase');
+exports.phoneLogin = async (req, res, next) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(400).json({ message: 'Firebase ID token is required' });
+  }
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid, phone_number } = decodedToken;
+    
+    if (!phone_number) {
+      return res.status(400).json({ message: 'Phone number not present in token' });
+    }
+
+    let user = await User.findOne({ $or: [{ firebaseUid: uid }, { phone: phone_number }] });
+
+    if (!user) {
+      user = await User.create({
+        name: 'New User',
+        phone: phone_number,
+        firebaseUid: uid
+      });
+    } else {
+      if (!user.firebaseUid) {
+        user.firebaseUid = uid;
+        await user.save({ validateModifiedOnly: true });
+      }
+    }
+
+    // `generateToken` should be available since it's defined at the top of the file
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.status(200).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email || '',
+      phone: user.phone || '',
+      role: user.role,
+      avatar: user.avatar,
+      token,
+    });
+  } catch (error) {
+    console.error('Firebase Phone Login Error:', error);
+    res.status(401).json({ message: 'Invalid or expired Firebase token' });
+  }
+};

@@ -24,6 +24,13 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  const phoneLogin = async (idToken) => {
+    const { data } = await API.post('/auth/firebase-login', { idToken });
+    localStorage.setItem('user', JSON.stringify(data));
+    setUser(data);
+    return data;
+  };
+
   const register = async (name, email, password, phone) => {
     const { data } = await API.post('/auth/register', { name, email, password, phone });
     localStorage.setItem('user', JSON.stringify(data));
@@ -42,7 +49,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, phoneLogin, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -14,9 +14,10 @@ const addressSchema = new mongoose.Schema({
 });
 
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-  password: { type: String, required: true, minlength: 8 },
+  name: { type: String, required: false, trim: true },
+  email: { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
+  password: { type: String, required: false, minlength: 8 },
+  firebaseUid: { type: String, required: false, unique: true, sparse: true },
   role: { type: String, enum: ['user', 'admin', 'marketing', 'admin_marketing'], default: 'user' },
   phone: { type: String, default: '' },
   addresses: [addressSchema],
@@ -30,12 +31,13 @@ const userSchema = new mongoose.Schema({
 
 // Mongoose 7+ async hooks do NOT receive next() — just use async/await
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+  if (!this.isModified('password') || !this.password) return;
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 

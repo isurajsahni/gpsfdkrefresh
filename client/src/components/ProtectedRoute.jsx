@@ -13,8 +13,8 @@ const ProtectedRoute = ({ children, adminOnly = false, marketingOnly = false }) 
   }
 
   if (!user) return <Navigate to="/register" replace />;
-  if (adminOnly && user.role !== 'admin' && user.role !== 'admin_marketing') return <Navigate to="/" replace />;
-  if (marketingOnly && user.role !== 'marketing' && user.role !== 'admin' && user.role !== 'admin_marketing') return <Navigate to="/" replace />;
+  if (adminOnly && !['admin', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(user.role)) return <Navigate to="/" replace />;
+  if (marketingOnly && !['admin', 'admin_marketing', 'marketing'].includes(user.role)) return <Navigate to="/" replace />;
 
   return children;
 };

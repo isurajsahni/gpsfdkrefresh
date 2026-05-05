@@ -173,7 +173,7 @@ const PasswordlessAuth = ({ isRegister = false }) => {
 
   const redirectUser = (data) => {
     setTimeout(() => {
-      if (data.role === 'admin' || data.role === 'admin_marketing') {
+      if (['admin', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(data.role)) {
         navigate('/admin');
       } else if (data.role === 'marketing') {
         navigate('/marketing');

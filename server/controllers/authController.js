@@ -613,7 +613,7 @@ exports.updateUserRole = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     
     if (req.body.role) {
-      if (!['user', 'admin', 'marketing', 'admin_marketing'].includes(req.body.role)) {
+      if (!['user', 'admin', 'marketing', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(req.body.role)) {
         return res.status(400).json({ message: 'Invalid role' });
       }
       user.role = req.body.role;

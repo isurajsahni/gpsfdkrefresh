@@ -431,11 +431,11 @@ exports.createGuestOrder = async (req, res, next) => {
   }
 };
 
-// GET /api/orders (user's orders or all for admin)
+// GET /api/orders (user's orders or all for admin/managers)
 exports.getOrders = async (req, res, next) => {
   try {
     let orders;
-    if ((req.user.role === 'admin' || req.user.role === 'admin_marketing') && req.query.all === 'true') {
+    if (['admin', 'admin_marketing', 'order_manager'].includes(req.user.role) && req.query.all === 'true') {
       orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt');
     } else {
       orders = await Order.find({ user: req.user._id, status: { $ne: 'payment_pending' } }).populate('items.product', 'slug').sort('-createdAt');
@@ -451,7 +451,8 @@ exports.getOrderById = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email');
     if (!order) return res.status(404).json({ message: 'Order not found' });
-    if (req.user.role !== 'admin' && order.user?._id?.toString() !== req.user._id.toString()) {
+    const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
+    if (!isManagerOrAdmin && order.user?._id?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
     res.json(order);
@@ -517,8 +518,9 @@ exports.cancelOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('items.product', 'slug');
     if (!order) return res.status(404).json({ message: 'Order not found' });
     
-    // Check authorization: must be admin or order owner
-    if (req.user.role !== 'admin' && order.user?.toString() !== req.user._id.toString()) {
+    // Check authorization: must be admin/manager or order owner
+    const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
+    if (!isManagerOrAdmin && order.user?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to cancel this order' });
     }
 

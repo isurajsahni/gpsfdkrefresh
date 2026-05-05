@@ -6,16 +6,16 @@ const {
   deleteCoupon,
   validateCoupon
 } = require('../controllers/couponController');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin, authorizeRoles } = require('../middleware/auth');
 
 router.route('/')
-  .post(protect, admin, createCoupon)
-  .get(protect, admin, getCoupons);
+  .post(protect, authorizeRoles('coupon_manager'), createCoupon)
+  .get(protect, authorizeRoles('coupon_manager'), getCoupons);
 
 router.post('/validate', validateCoupon);
 
 
 router.route('/:id')
-  .delete(protect, admin, deleteCoupon);
+  .delete(protect, admin, deleteCoupon); // Only admin can delete
 
 module.exports = router;

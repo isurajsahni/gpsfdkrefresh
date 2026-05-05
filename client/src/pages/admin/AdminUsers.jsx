@@ -106,6 +106,8 @@ const AdminUsers = () => {
                             user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
                             user.role === 'admin_marketing' ? 'bg-indigo-100 text-indigo-700' :
                             user.role === 'marketing' ? 'bg-blue-100 text-blue-700' :
+                            user.role === 'order_manager' ? 'bg-orange-100 text-orange-700' :
+                            user.role === 'coupon_manager' ? 'bg-teal-100 text-teal-700' :
                             'bg-gray-100 text-gray-600'
                           }`}
                           style={{
@@ -117,6 +119,8 @@ const AdminUsers = () => {
                         >
                           <option value="user">USER</option>
                           <option value="marketing">MARKETING</option>
+                          <option value="order_manager">ORDER MANAGER</option>
+                          <option value="coupon_manager">COUPON MANAGER</option>
                           <option value="admin">ADMIN</option>
                           <option value="admin_marketing">ADMIN & MARKETING</option>
                         </select>

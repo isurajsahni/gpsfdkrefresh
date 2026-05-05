@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminCoupons = () => {
+  const { user } = useAuth();
   const [coupons, setCoupons] = useState([]);
   const [marketingUsers, setMarketingUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,9 +158,11 @@ const AdminCoupons = () => {
                 )}
               </div>
               <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                <button onClick={() => handleDelete(coupon._id)} className="text-red-400 hover:text-red-600 text-sm font-medium flex items-center gap-1">
-                  <HiOutlineTrash className="w-4 h-4"/> Delete
-                </button>
+                {(user?.role === 'admin' || user?.role === 'admin_marketing') && (
+                  <button onClick={() => handleDelete(coupon._id)} className="text-red-400 hover:text-red-600 text-sm font-medium flex items-center gap-1">
+                    <HiOutlineTrash className="w-4 h-4"/> Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}

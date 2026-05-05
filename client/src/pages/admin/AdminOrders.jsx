@@ -4,6 +4,7 @@ import { HiOutlineChevronDown, HiOutlineChevronUp, HiOutlinePhone, HiOutlineMail
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
+import { useAuth } from '../../context/AuthContext';
 
 const statusColors = {
   payment_pending: 'bg-orange-100 text-orange-700',
@@ -15,6 +16,7 @@ const statusColors = {
 };
 
 const AdminOrders = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -139,14 +141,16 @@ const AdminOrders = () => {
                       </select>
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>
                       
-                      {/* Delete Button */}
-                      <button 
-                        onClick={(e) => deleteOrder(order._id, e)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete Order"
-                      >
-                        <HiOutlineTrash className="w-5 h-5" />
-                      </button>
+                      {/* Delete Button - Admin Only */}
+                      {(user?.role === 'admin' || user?.role === 'admin_marketing') && (
+                        <button 
+                          onClick={(e) => deleteOrder(order._id, e)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Order"
+                        >
+                          <HiOutlineTrash className="w-5 h-5" />
+                        </button>
+                      )}
 
                       {isExpanded ? <HiOutlineChevronUp className="w-5 h-5 text-gray-400" /> : <HiOutlineChevronDown className="w-5 h-5 text-gray-400" />}
                     </div>

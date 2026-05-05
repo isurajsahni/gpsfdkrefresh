@@ -37,7 +37,13 @@ const AdminLayout = () => {
             <p className="text-sm text-gray-400 mt-1">{user?.email}</p>
           </div>
           <nav className="px-3 space-y-1">
-            {navItems.map(item => (
+            {navItems.filter(item => {
+              if (!user) return false;
+              if (user.role === 'admin' || user.role === 'admin_marketing') return true;
+              if (user.role === 'order_manager') return ['/admin', '/admin/orders'].includes(item.path);
+              if (user.role === 'coupon_manager') return ['/admin', '/admin/coupons'].includes(item.path);
+              return false;
+            }).map(item => (
               <Link
                 key={item.path}
                 to={item.path}

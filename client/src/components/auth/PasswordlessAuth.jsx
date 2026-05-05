@@ -8,10 +8,6 @@ import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { HiOutlineMail, HiOutlineShieldCheck, HiOutlineChatAlt2 } from 'react-icons/hi';
 import { IoLogoWhatsapp } from 'react-icons/io5';
-import { IoMdPhonePortrait } from 'react-icons/io';
-import { auth } from '../../utils/firebase';
-import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-
 const PasswordlessAuth = ({ isRegister = false }) => {
   const [step, setStep] = useState('identifier'); // 'identifier' | 'channel' | 'otp' | 'complete'
   const [identifier, setIdentifier] = useState('');
@@ -34,13 +30,7 @@ const PasswordlessAuth = ({ isRegister = false }) => {
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  useEffect(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible'
-      });
-    }
-  }, []);
+
 
   const handleIdentifierSubmit = (e) => {
     e.preventDefault();
@@ -65,7 +55,8 @@ const PasswordlessAuth = ({ isRegister = false }) => {
         toast.error('Please enter a valid phone number');
         return;
       }
-      setStep('channel');
+      setChannel('whatsapp');
+      sendBackendOtp('whatsapp');
     }
   };
 
@@ -85,26 +76,7 @@ const PasswordlessAuth = ({ isRegister = false }) => {
     setLoading(false);
   };
 
-  const sendFirebaseOtp = async () => {
-    setLoading(true);
-    try {
-      const appVerifier = window.recaptchaVerifier;
-      // Ensure phone has country code. Defaulting to +91 if not present.
-      let phoneStr = identifier.startsWith('+') ? identifier : `+91${identifier.replace(/\D/g, '')}`;
-      const confirmationResult = await signInWithPhoneNumber(auth, phoneStr, appVerifier);
-      window.confirmationResult = confirmationResult;
-      toast.success('SMS OTP sent via Firebase');
-      setChannel('sms');
-      setStep('otp');
-      setCooldown(30);
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to send SMS OTP. Too many attempts or invalid number.');
-      // Reset recaptcha on error
-      if (window.recaptchaVerifier) window.recaptchaVerifier.render().then(id => grecaptcha.reset(id));
-    }
-    setLoading(false);
-  };
+
 
   const handleOtpChange = (index, val) => {
     if (!/^[0-9]*$/.test(val)) return;
@@ -138,18 +110,8 @@ const PasswordlessAuth = ({ isRegister = false }) => {
     setLoading(true);
 
     try {
-      let data;
-      if (channel === 'sms') {
-        const result = await window.confirmationResult.confirm(code);
-        const idToken = await result.user.getIdToken();
-        const res = await API.post('/auth/passwordless/verify-firebase', { idToken });
-        data = res.data;
-      } else {
-        const res = await API.post('/auth/passwordless/verify-otp', { identifier, otp: code });
-        data = res.data;
-      }
-
-      handleAuthSuccess(data);
+      const res = await API.post('/auth/passwordless/verify-otp', { identifier, otp: code });
+      handleAuthSuccess(res.data);
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || 'Invalid OTP');
@@ -225,7 +187,6 @@ const PasswordlessAuth = ({ isRegister = false }) => {
 
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center px-4 pt-32 pb-24">
-      <div id="recaptcha-container"></div>
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="glass-card p-8 md:p-10">
           <AnimatePresence mode="wait">
@@ -252,25 +213,7 @@ const PasswordlessAuth = ({ isRegister = false }) => {
               </motion.div>
             )}
 
-            {step === 'channel' && (
-              <motion.div key="channel" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-secondary">Verify Your Number</h2>
-                  <p className="text-gray-500 mt-1">How would you like to receive your OTP?</p>
-                </div>
-                <div className="space-y-4">
-                  <button onClick={() => { setChannel('whatsapp'); sendBackendOtp('whatsapp'); }} className="w-full flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-green-500 bg-green-50 text-green-700 font-bold hover:bg-green-100 transition-colors">
-                    <IoLogoWhatsapp className="w-6 h-6" /> Get OTP via WhatsApp
-                  </button>
-                  <button onClick={() => { sendFirebaseOtp(); }} className="w-full flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors">
-                    <IoMdPhonePortrait className="w-6 h-6" /> Get OTP via SMS
-                  </button>
-                  <button onClick={() => setStep('identifier')} className="w-full mt-4 text-sm text-gray-500 hover:text-secondary">
-                    ← Back
-                  </button>
-                </div>
-              </motion.div>
-            )}
+
 
             {step === 'otp' && (
               <motion.div key="otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -314,7 +257,7 @@ const PasswordlessAuth = ({ isRegister = false }) => {
 
                 <div className="text-center mt-5">
                   <button
-                    onClick={() => channel === 'sms' ? sendFirebaseOtp() : sendBackendOtp(channel)}
+                    onClick={() => sendBackendOtp(channel)}
                     disabled={cooldown > 0 || loading}
                     className="text-sm text-accent font-medium hover:underline disabled:text-gray-400 disabled:no-underline"
                   >

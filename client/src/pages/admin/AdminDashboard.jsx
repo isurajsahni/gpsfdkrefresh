@@ -13,9 +13,9 @@ const AdminDashboard = () => {
     const fetchStats = async () => {
       try {
         const [orderStats, productData, userData, analyticsData] = await Promise.all([
-          API.get('/orders/stats'),
-          API.get('/products?limit=1'),
-          API.get('/auth/users'),
+          API.get('/orders/stats').catch(() => ({ data: { totalOrders: 0, totalRevenue: 0, pendingOrders: 0, deliveredOrders: 0 } })),
+          API.get('/products?limit=1').catch(() => ({ data: { total: 0 } })),
+          API.get('/auth/users').catch(() => ({ data: [] })),
           API.get('/analytics/stats').catch(() => ({ data: { stats: { today: 0, past7Days: 0, total: 0 } } }))
         ]);
         setStats(orderStats.data);

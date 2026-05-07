@@ -164,15 +164,14 @@ exports.sendRegistrationOtp = async (req, res, next) => {
             to: whatsappPhone,
             type: 'template',
             template: {
-              name: 'opt_code_template',
-              language: { code: 'en_US' },
+              name: 'otp_verification',
+              language: { code: 'en' },
               components: [
                 {
                   type: 'body',
                   parameters: [
                     { type: 'text', text: otp },
-                    { type: 'text', text: otp },
-                    { type: 'text', text: otp }
+                    { type: 'text', text: '+916280310103' }
                   ]
                 },
                 {
@@ -832,24 +831,29 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
       if (channel === 'whatsapp' && process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID) {
         const whatsappPhone = normalizedId.replace(/\D/g, '');
         const axios = require('axios');
-        await axios.post(
-          `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
-          {
-            messaging_product: 'whatsapp',
-            to: whatsappPhone,
-            type: 'template',
-            template: {
-              name: 'opt_code_template',
-              language: { code: 'en_US' },
-              components: [
-                { type: 'body', parameters: [{ type: 'text', text: otp }, { type: 'text', text: otp }, { type: 'text', text: otp }] },
-                { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: otp }] }
-              ]
-            }
-          },
-          { headers: { 'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' } }
-        );
-        return res.json({ success: true, message: 'OTP sent via WhatsApp' });
+        try {
+          await axios.post(
+            `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
+            {
+              messaging_product: 'whatsapp',
+              to: whatsappPhone,
+              type: 'template',
+              template: {
+                name: 'otp_verification',
+                language: { code: 'en' },
+                components: [
+                  { type: 'body', parameters: [{ type: 'text', text: otp }, { type: 'text', text: '+916280310103' }] },
+                  { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: otp }] }
+                ]
+              }
+            },
+            { headers: { 'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' } }
+          );
+          return res.json({ success: true, message: 'OTP sent via WhatsApp' });
+        } catch (fbError) {
+          console.error('WhatsApp Error:', fbError.response?.data || fbError.message);
+          return res.status(400).json({ message: 'Failed to send WhatsApp message. Please try Email instead.' });
+        }
       }
       return res.status(400).json({ message: 'Invalid channel or missing WhatsApp configuration.' });
     }

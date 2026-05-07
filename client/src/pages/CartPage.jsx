@@ -7,7 +7,7 @@ import { optimizeImage } from '../utils/imageOptimizer';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
 
   const shippingFee = cartTotal > 0 && cartTotal < 499 ? 50 : 0;
   const finalTotal = cartTotal + shippingFee;
@@ -87,18 +87,20 @@ const CartPage = () => {
               <h3 className="text-xl font-heading font-bold text-secondary mb-6">Order Summary</h3>
               
               {/* Shipping Banner */}
-              {shippingFee > 0 ? (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col gap-3 shadow-sm">
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(499 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+              {currency === 'INR' && (
+                shippingFee > 0 ? (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col gap-3 shadow-sm">
+                    <div className="flex items-start gap-2">
+                      <span className="text-lg">🚚</span>
+                      <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(499 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
-                  <span className="text-lg">✨</span>
-                  <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
-                </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
+                    <span className="text-lg">✨</span>
+                    <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
+                  </div>
+                )
               )}
 
               <div className="space-y-3 text-sm">

@@ -645,21 +645,23 @@ const CheckoutPage = () => {
               <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Review Your Order</h2>
               
               {/* Shipping Banner - Based on cartTotal (Subtotal) */}
-              {shippingFee > 0 ? (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-                  <div className="flex items-start sm:items-center gap-3">
-                    <span className="text-xl">🚚</span>
-                    <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+              {currency === 'INR' && (
+                shippingFee > 0 ? (
+                  <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                    <div className="flex items-start sm:items-center gap-3">
+                      <span className="text-xl">🚚</span>
+                      <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+                    </div>
+                    <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
+                      Add Items
+                    </Link>
                   </div>
-                  <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
-                    Add Items
-                  </Link>
-                </div>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
-                  <span className="text-xl">✨</span>
-                  <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
-                </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
+                    <span className="text-xl">✨</span>
+                    <span className="leading-relaxed"><strong>Congratulations!</strong> Your order qualifies for <strong>Free Shipping</strong>.</span>
+                  </div>
+                )
               )}
 
 

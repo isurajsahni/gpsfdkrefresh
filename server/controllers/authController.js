@@ -2,8 +2,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const welcomeEmail = require('../utils/welcomeEmailTemplate');
-const otpEmailTemplate = require('../utils/otpEmailTemplate');
-const emailUpdateOtpTemplate = require('../utils/emailUpdateOtpTemplate');
+const { getAuthEmail } = require('../utils/emailTemplates');
 const { cloudinary } = require('../middleware/upload');
 
 // ─── In-memory email-update OTP store ────────────────────────────────────────
@@ -147,8 +146,7 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     // Channel 1: Email (always sent)
     const emailPromise = sendEmail({
       email: normalizedEmail,
-      subject: 'Verify Your Email - GPSFDK',
-      html: otpEmailTemplate(name.trim() || 'there', otp, true),
+      ...getAuthEmail('email-verification', name.trim(), otp),
     })
     .then(() => { channels.push('email'); console.log(`✅ Registration OTP emailed to ${normalizedEmail}`); })
     .catch(err => console.error(`❌ Registration OTP email failed:`, err.message));
@@ -512,8 +510,7 @@ exports.sendEmailUpdateOtp = async (req, res, next) => {
     // Send OTP email to the NEW email address
     await sendEmail({
       email: newEmail.trim().toLowerCase(),
-      subject: 'Verify Your New Email - GPSFDK',
-      html: emailUpdateOtpTemplate(user.name || 'there', otp),
+      ...getAuthEmail('email-update', user.name, otp),
     });
 
     res.json({
@@ -648,8 +645,7 @@ exports.forgotPassword = async (req, res, next) => {
     // Send email
     await sendEmail({
       email: user.email,
-      subject: 'Password Reset Code - GPSFDK',
-      html: otpEmailTemplate(user.name, otp, false),
+      ...getAuthEmail('reset-password', user.name, otp),
     });
 
     res.json({ message: 'If that email exists, we have sent a reset code.' });

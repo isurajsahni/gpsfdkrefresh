@@ -29,7 +29,9 @@ const emailUpdateEmail = require('./emailUpdateEmail');
  */
 function getAuthEmail(type, userName, otp) {
   const name = userName || 'there';
-
+  
+  console.log("EMAIL TYPE:", type);
+  console.log("TEMPLATE USED:", type);
   switch (type) {
     case 'reset-password':
       return resetPasswordEmail(name, otp);

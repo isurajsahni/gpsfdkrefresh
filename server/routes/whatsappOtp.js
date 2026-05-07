@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const Otp = require('../models/Otp');
 const sendEmail = require('../utils/sendEmail');
-const otpEmailTemplate = require('../utils/otpEmailTemplate');
+const { getAuthEmail } = require('../utils/emailTemplates');
 
 /**
  * WhatsApp + Email Dual OTP System
@@ -105,8 +105,7 @@ router.post('/send', async (req, res) => {
       sendPromises.push(
         sendEmail({
           email,
-          subject: 'Your GPSFDK Verification Code',
-          html: otpEmailTemplate('Customer', generatedOtp, true)
+          ...getAuthEmail('login-otp', 'Customer', generatedOtp)
         })
         .then(() => {
           console.log(`✅ Email OTP sent to ${email}`);

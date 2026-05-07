@@ -8,7 +8,7 @@
 
 const { baseLayout, BRAND_COLOR } = require('./baseLayout');
 
-const SUBJECT = 'Your Login Verification Code - GPSFDK';
+const SUBJECT = 'Your Login Code - GPSFDK';
 
 const loginOtpEmail = (userName, otp) => {
   const greeting = userName && userName !== 'there' ? userName : 'there';

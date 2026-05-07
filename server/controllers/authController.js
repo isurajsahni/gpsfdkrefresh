@@ -823,8 +823,7 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
     if (isEmail) {
       await sendEmail({
         email: normalizedId,
-        subject: 'Your Login Code - GPSFDK',
-        html: otpEmailTemplate('User', otp, false)
+        ...getAuthEmail('login-otp', 'User', otp)
       });
       return res.json({ success: true, message: 'OTP sent via Email' });
     } else {

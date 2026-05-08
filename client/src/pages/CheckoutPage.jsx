@@ -28,7 +28,7 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');

@@ -17,6 +17,8 @@ import API from './utils/api';
 import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
 
+// Isolated Testing Pages
+import InvoicePreview from './pages/InvoicePreview';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -132,10 +134,34 @@ function ScrollManager() {
   return null;
 }
 
+const GlobalUI = () => {
+  const location = useLocation();
+  const hideGlobalUI = location.pathname.startsWith('/invoice-preview') || location.pathname.startsWith('/generate-invoice-view');
+  
+  if (hideGlobalUI) return null;
+
+  return (
+    <>
+      <Navbar />
+      <CartDrawer />
+      <SearchOverlay />
+      <ChatBot />
+      {/* Spacer for fixed top promotional banner */}
+      <div className="h-[36px] w-full shrink-0" />
+    </>
+  );
+};
+
 function App() {
   useEffect(() => {
     captureUTMOnce();
   }, []);
+
+  // --- ISOLATED PREVIEW ROUTE ---
+  // Completely bypasses all providers, routers, and API calls to guarantee no reload loops
+  if (window.location.pathname.startsWith('/invoice-preview')) {
+    return <InvoicePreview />;
+  }
 
   return (
     <HelmetProvider>
@@ -150,14 +176,8 @@ function App() {
                 style: { background: '#0B5D3B', color: '#fff', borderRadius: '12px', fontFamily: '"DM Sans", sans-serif' },
                 success: { iconTheme: { primary: '#F15A29', secondary: '#fff' } },
               }} />
-              <Navbar />
-              <CartDrawer />
-              <SearchOverlay />
-              <ChatBot />
-
               
-              {/* Spacer for fixed top promotional banner */}
-              <div className="h-[36px] w-full shrink-0" />
+              <GlobalUI />
 
               <Routes>
                 {/* Public */}

@@ -90,8 +90,10 @@ const AdminCategories = () => {
               <p className="text-sm text-gray-500 mt-1">{cat.description}</p>
               <p className="text-xs text-gray-400 mt-2">Slug: {cat.slug}</p>
               <div className="flex gap-2 mt-4">
-                <button onClick={() => { handleEdit(cat); }} className="text-blue-500 hover:text-blue-700 text-sm font-medium"
-                  {...{ onClick: () => { setForm({ name: cat.name, description: cat.description }); setEditing(cat._id); setShowForm(true); } }}>
+                <button 
+                  onClick={() => { setForm({ name: cat.name, description: cat.description }); setEditing(cat._id); setShowForm(true); }} 
+                  className="text-blue-500 hover:text-blue-700 text-sm font-medium"
+                >
                   Edit
                 </button>
                 <button onClick={() => handleDelete(cat._id)} className="text-red-400 hover:text-red-600 text-sm font-medium">Delete</button>

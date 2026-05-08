@@ -11,14 +11,6 @@ const NotFoundPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [logged, setLogged] = useState(false);
 
-  useEffect(() => {
-    // Prevent infinite loops or redundant logs by tracking state
-    if (!logged) {
-      log404Error(location.pathname);
-      setLogged(true);
-    }
-  }, [location.pathname, logged]);
-
   const log404Error = async (path) => {
     try {
       await API.post('/analytics/log-404', {
@@ -30,6 +22,14 @@ const NotFoundPage = () => {
       console.error('Failed to log 404 error', error);
     }
   };
+
+  useEffect(() => {
+    // Prevent infinite loops or redundant logs by tracking state
+    if (!logged) {
+      log404Error(location.pathname);
+      setLogged(true);
+    }
+  }, [location.pathname, logged]);
 
   const handleSearch = (e) => {
     e.preventDefault();

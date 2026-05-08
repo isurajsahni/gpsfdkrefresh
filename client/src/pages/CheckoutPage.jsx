@@ -650,7 +650,7 @@ const CheckoutPage = () => {
                   <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                     <div className="flex items-start sm:items-center gap-3">
                       <span className="text-xl">🚚</span>
-                      <span className="leading-relaxed">You're only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+                      <span className="leading-relaxed">You&apos;re only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
                     </div>
                     <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
                       Add Items
@@ -699,7 +699,7 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
-                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon '{appliedCoupon.code}' applied! (-{formatPrice(Math.round(appliedCoupon.calculatedDiscount))})</p>}
+                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{formatPrice(Math.round(appliedCoupon.calculatedDiscount))})</p>}
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">

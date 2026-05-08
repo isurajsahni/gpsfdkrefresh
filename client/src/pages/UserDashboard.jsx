@@ -62,10 +62,6 @@ const UserDashboard = () => {
     city: '', state: '', pincode: '', country: 'India',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       const [ordersRes, profileRes] = await Promise.all([
@@ -79,6 +75,10 @@ const UserDashboard = () => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const enterEditMode = () => {
     setEditName(profile?.name || user?.name || '');

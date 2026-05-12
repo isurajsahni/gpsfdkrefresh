@@ -73,11 +73,14 @@ const AdminCoupons = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = { ...form };
+      if (payload.assignedTo === '') payload.assignedTo = null;
+
       if (editingCoupon) {
-        await API.put(`/coupons/${editingCoupon._id}`, form);
+        await API.put(`/coupons/${editingCoupon._id}`, payload);
         toast.success('Coupon updated');
       } else {
-        await API.post('/coupons', form);
+        await API.post('/coupons', payload);
         toast.success('Coupon created');
       }
       setShowForm(false);

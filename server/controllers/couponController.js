@@ -167,7 +167,7 @@ const updateCoupon = async (req, res) => {
     if (maxUsesPerUser !== undefined) coupon.maxUsesPerUser = maxUsesPerUser;
     if (expiryDate !== undefined) coupon.expiryDate = expiryDate;
     if (isActive !== undefined) coupon.isActive = isActive;
-    if (assignedTo !== undefined) coupon.assignedTo = assignedTo;
+    if (assignedTo !== undefined) coupon.assignedTo = assignedTo === '' ? null : assignedTo;
 
     const updatedCoupon = await coupon.save();
     res.json(updatedCoupon);

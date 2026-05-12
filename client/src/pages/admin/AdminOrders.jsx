@@ -260,6 +260,29 @@ const AdminOrders = () => {
                                 </a>
                               )}
                             </div>
+
+                            {/* Coupon & Discount Info */}
+                            {(order.couponCode || order.discountPrice > 0) && (
+                              <>
+                                <h4 className="text-sm font-semibold text-secondary mt-5 mb-2">Coupon & Discount</h4>
+                                <div className="bg-green-50 rounded-xl p-4 text-sm border border-green-100 space-y-1.5">
+                                  {order.couponCode && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Coupon Used:</span>
+                                      <span className="font-bold text-green-700 bg-green-200 px-2 py-0.5 rounded-md uppercase text-xs">
+                                        {order.couponCode}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {order.discountPrice > 0 && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-600">Discount Amount:</span>
+                                      <span className="font-bold text-green-700">-₹{order.discountPrice.toLocaleString()}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

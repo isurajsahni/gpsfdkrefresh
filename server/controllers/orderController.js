@@ -326,16 +326,14 @@ exports.createOrder = async (req, res, next) => {
         }
         await coupon.save();
 
-        // Track usage for marketing dashboard
-        if (coupon.assignedTo) {
-          CouponUsage.create({
-            couponId: coupon._id,
-            customerId: req.user._id,
-            orderId: order.orderNumber,
-            orderAmount: prices.itemsPrice,
-            discountAmount: prices.discountPrice,
-          }).catch(err => console.error('CouponUsage tracking failed:', err.message));
-        }
+        // Track usage for analytics and reporting
+        CouponUsage.create({
+          couponId: coupon._id,
+          customerId: req.user._id,
+          orderId: order.orderNumber,
+          orderAmount: prices.itemsPrice,
+          discountAmount: prices.discountPrice,
+        }).catch(err => console.error('CouponUsage tracking failed:', err.message));
       }
     }
 
@@ -403,16 +401,14 @@ exports.createGuestOrder = async (req, res, next) => {
           await coupon.save();
         }
 
-        // Track usage for marketing dashboard (guest orders)
-        if (coupon.assignedTo) {
-          CouponUsage.create({
-            couponId: coupon._id,
-            customerId: null,
-            orderId: order.orderNumber,
-            orderAmount: prices.itemsPrice,
-            discountAmount: prices.discountPrice,
-          }).catch(err => console.error('CouponUsage tracking failed:', err.message));
-        }
+        // Track usage for analytics and reporting (guest orders)
+        CouponUsage.create({
+          couponId: coupon._id,
+          customerId: null,
+          orderId: order.orderNumber,
+          orderAmount: prices.itemsPrice,
+          discountAmount: prices.discountPrice,
+        }).catch(err => console.error('CouponUsage tracking failed:', err.message));
       }
     }
 

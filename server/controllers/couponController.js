@@ -135,9 +135,69 @@ const validateCoupon = async (req, res) => {
   }
 };
 
+// @desc    Update a coupon
+// @route   PUT /api/coupons/:id
+// @access  Private/Admin/CouponManager
+const updateCoupon = async (req, res) => {
+  try {
+    const coupon = await Coupon.findById(req.params.id);
+    if (!coupon) {
+      return res.status(404).json({ message: 'Coupon not found' });
+    }
+
+    const { 
+      code, 
+      discountType, 
+      discountValue, 
+      minOrderValue, 
+      maxDiscountAmount, 
+      maxUsers, 
+      maxUsesPerUser, 
+      expiryDate, 
+      isActive, 
+      assignedTo 
+    } = req.body;
+
+    if (code) coupon.code = code.toUpperCase();
+    if (discountType) coupon.discountType = discountType;
+    if (discountValue !== undefined) coupon.discountValue = discountValue;
+    if (minOrderValue !== undefined) coupon.minOrderValue = minOrderValue;
+    if (maxDiscountAmount !== undefined) coupon.maxDiscountAmount = maxDiscountAmount;
+    if (maxUsers !== undefined) coupon.maxUsers = maxUsers;
+    if (maxUsesPerUser !== undefined) coupon.maxUsesPerUser = maxUsesPerUser;
+    if (expiryDate !== undefined) coupon.expiryDate = expiryDate;
+    if (isActive !== undefined) coupon.isActive = isActive;
+    if (assignedTo !== undefined) coupon.assignedTo = assignedTo;
+
+    const updatedCoupon = await coupon.save();
+    res.json(updatedCoupon);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get all coupon usage details
+// @route   GET /api/coupons/usage
+// @access  Private/Admin/CouponManager
+const getAllCouponUsage = async (req, res) => {
+  try {
+    const CouponUsage = require('../models/CouponUsage');
+    const usages = await CouponUsage.find({})
+      .populate('couponId', 'code')
+      .populate('customerId', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.json(usages);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   createCoupon,
   getCoupons,
+  updateCoupon,
   deleteCoupon,
   validateCoupon,
+  getAllCouponUsage,
 };

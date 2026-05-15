@@ -265,12 +265,42 @@ const CheckoutPage = () => {
 
   // 1. Calculate Shipping based on ORIGINAL Subtotal
   const shippingFee = cartTotal >= 999 ? 0 : 50;
-  
-  // 2. Apply Discount (never more than subtotal)
-  const appliedDiscount = appliedCoupon ? Math.min(appliedCoupon.calculatedDiscount, cartTotal) : 0;
-  
+
+  // 2. Recompute the discount LIVE from the current cart — mirrors the
+  // server's calculateOrderPrices logic so the UI never shows a stale snapshot
+  // (e.g., when the user adds/removes items from the cart drawer after applying).
+  const computeDiscount = (coupon, total) => {
+    if (!coupon || total <= 0) return 0;
+    // If the cart no longer meets the coupon's minimum, the coupon doesn't apply.
+    if (coupon.minOrderValue && total < coupon.minOrderValue) return 0;
+    let discount;
+    if (coupon.discountType === 'percentage') {
+      discount = (total * coupon.discountValue) / 100;
+      if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) {
+        discount = coupon.maxDiscountAmount;
+      }
+    } else {
+      discount = coupon.discountValue;
+    }
+    return Math.min(discount, total);
+  };
+  const appliedDiscount = computeDiscount(appliedCoupon, cartTotal);
+
   // 3. Final Total (never negative)
   const finalTotal = Math.max(cartTotal + shippingFee - appliedDiscount, 0);
+
+  // If cart drops below the coupon's minimum, surface the issue and drop the coupon
+  // so the user isn't confused by a "Coupon applied" badge with zero effect.
+  useEffect(() => {
+    if (
+      appliedCoupon?.minOrderValue &&
+      cartTotal > 0 &&
+      cartTotal < appliedCoupon.minOrderValue
+    ) {
+      toast.error(`Coupon ${appliedCoupon.code} needs a minimum order of ₹${appliedCoupon.minOrderValue}. Removed.`);
+      setAppliedCoupon(null);
+    }
+  }, [cartTotal, appliedCoupon]);
 
 
   const handlePlaceOrder = async () => {
@@ -294,7 +324,7 @@ const CheckoutPage = () => {
         itemsPrice: cartTotal,
         shippingPrice: shippingFee,
         taxPrice: 0,
-        discountPrice: appliedCoupon ? appliedCoupon.calculatedDiscount : 0,
+        discountPrice: appliedDiscount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         totalPrice: finalTotal,
       };
@@ -709,7 +739,7 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
-                {appliedCoupon && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{formatPrice(Math.round(appliedCoupon.calculatedDiscount))})</p>}
+                {appliedCoupon && appliedDiscount > 0 && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{formatPrice(Math.round(appliedDiscount))})</p>}
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">

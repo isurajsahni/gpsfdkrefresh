@@ -127,6 +127,7 @@ const validateCoupon = async (req, res) => {
       discountType: coupon.discountType,
       discountValue: coupon.discountValue,
       maxDiscountAmount: coupon.maxDiscountAmount,
+      minOrderValue: coupon.minOrderValue,
       calculatedDiscount,
     });
 

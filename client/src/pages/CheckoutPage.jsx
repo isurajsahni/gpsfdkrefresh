@@ -98,20 +98,30 @@ const CheckoutPage = () => {
       });
     }
 
-    const fetchAddresses = async () => {
-      try {
-        const { data } = await API.get('/auth/me');
-        const addrs = data.addresses || [];
-        setSavedAddresses(addrs);
-        if (addrs.length > 0) {
-          const defaultAddr = addrs.find(a => a.isDefault) || addrs[0];
-          setSelectedAddressId(defaultAddr._id);
-          setShowNewForm(false);
-        } else {
-          setShowNewForm(true);
-        }
-      } catch {
+    const applyAddresses = (addrs) => {
+      setSavedAddresses(addrs);
+      if (addrs.length > 0) {
+        const defaultAddr = addrs.find(a => a.isDefault) || addrs[0];
+        setSelectedAddressId(defaultAddr._id);
+        setShowNewForm(false);
+      } else {
         setShowNewForm(true);
+      }
+    };
+
+    const fetchAddresses = async () => {
+      // Render immediately from the cached user — never make the user stare at
+      // a blank page if the network call to refresh addresses is slow or fails.
+      if (user?.addresses?.length) {
+        applyAddresses(user.addresses);
+      }
+      try {
+        // `silent: true` tells the API interceptor not to force-logout on 401 —
+        // a transient blip here must not interrupt an in-progress checkout.
+        const { data } = await API.get('/auth/me', { silent: true });
+        applyAddresses(data.addresses || []);
+      } catch {
+        if (!user?.addresses?.length) setShowNewForm(true);
       }
     };
     fetchAddresses();

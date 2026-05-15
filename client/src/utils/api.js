@@ -32,12 +32,44 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Endpoints that should NEVER trigger an auto-logout when they 401.
+// These are fire-and-forget / background calls — failure must not interrupt the user.
+const SILENT_401_PATHS = [
+  '/analytics/',
+  '/abandoned-carts',
+  '/auth/me',
+];
+
+// Pages where a 401 should soft-redirect the user to /login.
+// On public pages we just clear the stale session — no redirect, no reload.
+const PROTECTED_ROUTE_PREFIXES = ['/admin', '/marketing', '/dashboard', '/checkout', '/thank-you'];
+
 API.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const url = error.config?.url || '';
+      const isSilent =
+        error.config?.silent === true ||
+        SILENT_401_PATHS.some((p) => url.includes(p));
+
+      // Only react if the user actually had a stored session — guests browsing
+      // public pages must never get bounced just because an optional call 401'd.
+      const stored = localStorage.getItem('user');
+      if (stored && !isSilent) {
+        localStorage.removeItem('user');
+        // Notify the app (AuthContext listens) — avoids a hard window.location reload
+        // that wipes in-flight state and forces the user to re-enter everything.
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+
+        const onProtectedPage = PROTECTED_ROUTE_PREFIXES.some((p) =>
+          window.location.pathname.startsWith(p)
+        );
+        if (onProtectedPage) {
+          // Soft redirect via replace — preserves history sanity
+          window.location.replace('/login');
+        }
+      }
     }
     return Promise.reject(error);
   }

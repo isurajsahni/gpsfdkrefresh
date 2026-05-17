@@ -68,7 +68,7 @@ The auth middleware explicitly allows requests with no `x-api-key` header ("test
 #### C8. Hard-coded Firebase Web API key in source
 **File:** `server/controllers/authController.js:919`
 ```js
-const apiKey = "AIzaSyB0L41Eycq725nZf5GLMaKr6xZE2WYAqSk"; // User provided
+const apiKey = "AIza...REDACTED..."; // hard-coded — flagged by GitHub secret scanning
 ```
 Committed in plaintext, bypasses your env-var convention, cannot be rotated without a code change.
 **Fix:** Move to `process.env.FIREBASE_WEB_API_KEY`; rotate the key.

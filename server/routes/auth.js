@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, verifyFirebaseToken, completePasswordlessRegistration } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, getUsers, getUsersCount, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, verifyFirebaseToken, completePasswordlessRegistration } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const {
@@ -23,6 +23,7 @@ router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.post('/upload-avatar', protect, avatarUpload.single('avatar'), uploadAvatar);
 router.get('/users', protect, admin, getUsers);
+router.get('/users/count', protect, admin, getUsersCount);
 router.delete('/users/:id', protect, admin, deleteUser);
 router.put('/users/:id/role', protect, admin, updateUserRole);
 

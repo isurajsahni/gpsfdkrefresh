@@ -9,6 +9,7 @@ import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress }
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
+import { calculateShipping } from '../utils/shipping';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -28,6 +29,10 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  // Once the order is successfully placed we navigate to /thank-you. If clearCart
+  // flushes before navigate, the cartItems.length===0 redirect below would otherwise
+  // bounce us to /cart. `orderPlaced` short-circuits that race.
+  const [orderPlaced, setOrderPlaced] = useState(false);
   const { formatPrice, currency } = useCurrency();
 
   // Coupon state
@@ -43,6 +48,9 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState({
     fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
+  // Guest checkout email. Required when no user is logged in so we can send
+  // order confirmation + tracking. Auto-filled from user.email if available.
+  const [guestEmail, setGuestEmail] = useState(user?.email || '');
   const [addressErrors, setAddressErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
@@ -263,8 +271,8 @@ const CheckoutPage = () => {
     setLoading(false);
   };
 
-  // 1. Calculate Shipping based on ORIGINAL Subtotal
-  const shippingFee = cartTotal >= 999 ? 0 : 50;
+  // 1. Calculate Shipping based on ORIGINAL Subtotal (uses shared helper — mirrors server)
+  const shippingFee = calculateShipping(cartTotal);
 
   // 2. Recompute the discount LIVE from the current cart — mirrors the
   // server's calculateOrderPrices logic so the UI never shows a stale snapshot
@@ -307,6 +315,16 @@ const CheckoutPage = () => {
     setLoading(true);
     const shippingAddress = getSelectedAddress();
     try {
+      // Guest checkout requires an email for order confirmation/tracking.
+      if (!user) {
+        const trimmedEmail = (guestEmail || '').trim();
+        if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+          toast.error('Please enter a valid email address');
+          setLoading(false);
+          return;
+        }
+      }
+
       const orderData = {
         items: cartItems.map(item => ({
           product: item.productId,
@@ -327,13 +345,15 @@ const CheckoutPage = () => {
         discountPrice: appliedDiscount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         totalPrice: finalTotal,
+        // Guest contact details — server only reads these when no auth token is sent.
+        ...(user ? {} : { guestEmail: guestEmail.trim(), guestPhone: shippingAddress.phone }),
       };
 
       // CASE 1: Zero-Value Order (Fully Paid by Coupon)
       if (finalTotal === 0) {
         const endpoint = user ? '/orders' : '/orders/guest';
-        await API.post(endpoint, orderData);
-        
+        const { data: zeroOrder } = await API.post(endpoint, orderData);
+
         API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
         // Meta Pixel: Purchase conversion
         if (typeof window.fbq === 'function') {
@@ -345,10 +365,12 @@ const CheckoutPage = () => {
             currency: 'INR',
           });
         }
+        setOrderPlaced(true); // prevents cart-empty redirect race after clearCart
         clearCart();
-        toast.success(finalTotal === 0 ? 'Order placed successfully (100% Discounted)!' : 'Order placed successfully!');
-        navigate('/thank-you');
-      } 
+        toast.success('Order placed successfully (100% Discounted)!');
+        const orderRef = zeroOrder?.orderNumber || zeroOrder?._id || '';
+        navigate(`/thank-you?order=${encodeURIComponent(orderRef)}`);
+      }
       // CASE 2: Razorpay
       else if (paymentMethod === 'razorpay') {
         try {
@@ -368,13 +390,28 @@ const CheckoutPage = () => {
             description: 'Order Payment',
             order_id: razorpayOrder.id,
             handler: async (response) => {
+              // Persist the IDs immediately so that — even if verify fails or the
+              // browser crashes — support can reconcile the payment to an order.
               try {
-                await API.post('/verify-payment', { 
+                localStorage.setItem('gpsfdk_last_payment', JSON.stringify({
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  orderData: orderData 
+                  email: user?.email || shippingAddress?.email,
+                  total: finalTotal,
+                  at: new Date().toISOString(),
+                }));
+              } catch (_) { /* localStorage full / disabled — ignore */ }
+
+              try {
+                const { data: verifiedOrder } = await API.post('/verify-payment', {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: orderData
                 });
+                // Verified successfully — drop the recovery marker.
+                try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) {}
                 API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
                 // Meta Pixel: Purchase conversion
                 if (typeof window.fbq === 'function') {
@@ -386,14 +423,26 @@ const CheckoutPage = () => {
                     currency: 'INR',
                   });
                 }
+                setOrderPlaced(true); // prevents cart-empty redirect race
                 clearCart();
                 toast.success('Payment successful!');
-                navigate('/thank-you');
+                const orderRef = verifiedOrder?.orderNumber || verifiedOrder?._id || '';
+                navigate(`/thank-you?order=${encodeURIComponent(orderRef)}`);
               } catch (verifyErr) {
-                toast.error(verifyErr.response?.data?.message || 'Payment verification failed');
+                // CRITICAL: money was captured by Razorpay but order verification
+                // failed. We keep the localStorage marker and surface a clear
+                // recovery message rather than letting the user think it failed.
+                toast.error(
+                  (verifyErr.response?.data?.message || 'Payment verification failed') +
+                  ' — your payment is safe, please contact support with reference ' +
+                  (response.razorpay_payment_id || ''),
+                  { duration: 12000 }
+                );
+              } finally {
+                setLoading(false);
               }
             },
-            prefill: { name: shippingAddress.fullName, email: user?.email, contact: shippingAddress.phone },
+            prefill: { name: shippingAddress.fullName, email: user?.email || guestEmail, contact: shippingAddress.phone },
             theme: { color: '#0B5D3B' },
             modal: {
               ondismiss: function() {
@@ -403,19 +452,31 @@ const CheckoutPage = () => {
           };
           const rzp = new window.Razorpay(options);
           rzp.open();
+          // IMPORTANT: do NOT setLoading(false) here. The Razorpay modal is now
+          // open; the user must not be able to click "Place Order" again until
+          // either handler() or modal.ondismiss() fires (both call setLoading(false)).
+          return;
         } catch (err) {
           console.error('Razorpay Error:', err);
           toast.error('Payment initialization failed');
         }
-      } 
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Order failed');
     }
     setLoading(false);
   };
 
-  if (cartItems.length === 0) {
-    navigate('/cart');
+  // If the cart is empty AND we haven't just placed an order, bounce to /cart.
+  // (We defer the navigate to an effect so we never call navigate during render —
+  // that would warn and could cause infinite re-render loops.)
+  useEffect(() => {
+    if (cartItems.length === 0 && !orderPlaced) {
+      navigate('/cart');
+    }
+  }, [cartItems.length, orderPlaced, navigate]);
+
+  if (cartItems.length === 0 && !orderPlaced) {
     return null;
   }
 
@@ -548,6 +609,24 @@ const CheckoutPage = () => {
                         />
                         {addressErrors.fullName && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.fullName}</p>}
                       </div>
+
+                      {/* Guest email — only shown for unauthenticated buyers */}
+                      {!user && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-secondary mb-1">Email *</label>
+                          <input
+                            type="email"
+                            value={guestEmail}
+                            onChange={(e) => setGuestEmail(e.target.value)}
+                            className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
+                            placeholder="you@example.com — for order confirmation & tracking"
+                            required
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Already a customer? <Link to="/login" className="text-accent font-semibold">Log in</Link> for faster checkout.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Phone */}
                       <div>
@@ -727,7 +806,10 @@ const CheckoutPage = () => {
                   <input
                     type="text"
                     value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value.toUpperCase());
+                      if (couponError) setCouponError('');
+                    }}
                     placeholder="Enter code"
                     className="flex-1 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-accent uppercase text-sm"
                     disabled={appliedCoupon}

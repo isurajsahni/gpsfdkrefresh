@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
@@ -16,61 +16,79 @@ import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
 import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
-// Isolated Testing Pages
+// Isolated Testing Pages (eager — bypasses Router entirely)
 import InvoicePreview from './pages/InvoicePreview';
 
-// Pages
+// ─── Eager (above-the-fold / very common routes) ───
 import HomePage from './pages/HomePage';
 import CategoryPage from './pages/CategoryPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import UserDashboard from './pages/UserDashboard';
-import SearchPage from './pages/SearchPage';
-import ThankYouPage from './pages/ThankYouPage';
-import AboutUs from './pages/info/AboutUs';
-import Contact from './pages/info/Contact';
-import FAQ from './pages/info/FAQ';
-import ShippingPolicy from './pages/support/ShippingPolicy';
-import ReturnsRefunds from './pages/support/ReturnsRefunds';
-import PrivacyPolicy from './pages/info/PrivacyPolicy';
-import CEOPage from './pages/info/CEOPage';
-import TermsConditions from './pages/support/TermsConditions';
-import LocationPage from './pages/LocationPage';
-import BlogList from './pages/BlogList';
-import BlogPost from './pages/BlogPost';
-import TrackOrderPage from './pages/TrackOrderPage';
-import CustomizeCanvasPage from './pages/CustomizeCanvasPage';
-import SEO_PremiumWallCanvasIndia from './pages/SEO_PremiumWallCanvasIndia';
 import NotFoundPage from './pages/NotFoundPage';
-import WhatsAppLogin from './pages/WhatsAppLogin';
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminProducts from './pages/admin/AdminProducts';
-import AdminOrders from './pages/admin/AdminOrders';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminCategories from './pages/admin/AdminCategories';
-import AdminCoupons from './pages/admin/AdminCoupons';
-import AdminAbandonedCarts from './pages/admin/AdminAbandonedCarts';
-import AdminLeads from './pages/admin/AdminLeads';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
-import AdminMarketingPerformance from './pages/admin/AdminMarketingPerformance';
+// ─── Code-split (everything else loads on demand) ───
+// Each lazy() call becomes its own chunk, so guests on the homepage no longer
+// download admin + marketing + invoice bundles.
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const SearchPage = lazy(() => import('./pages/SearchPage'));
+const AboutUs = lazy(() => import('./pages/info/AboutUs'));
+const Contact = lazy(() => import('./pages/info/Contact'));
+const FAQ = lazy(() => import('./pages/info/FAQ'));
+const ShippingPolicy = lazy(() => import('./pages/support/ShippingPolicy'));
+const ReturnsRefunds = lazy(() => import('./pages/support/ReturnsRefunds'));
+const PrivacyPolicy = lazy(() => import('./pages/info/PrivacyPolicy'));
+const CEOPage = lazy(() => import('./pages/info/CEOPage'));
+const TermsConditions = lazy(() => import('./pages/support/TermsConditions'));
+const LocationPage = lazy(() => import('./pages/LocationPage'));
+const BlogList = lazy(() => import('./pages/BlogList'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
+const CustomizeCanvasPage = lazy(() => import('./pages/CustomizeCanvasPage'));
+const SEO_PremiumWallCanvasIndia = lazy(() => import('./pages/SEO_PremiumWallCanvasIndia'));
+const WhatsAppLogin = lazy(() => import('./pages/WhatsAppLogin'));
+
+// Admin Pages (heavy — never need to ship to anonymous visitors)
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
+const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
+const AdminAbandonedCarts = lazy(() => import('./pages/admin/AdminAbandonedCarts'));
+const AdminLeads = lazy(() => import('./pages/admin/AdminLeads'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminMarketingPerformance = lazy(() => import('./pages/admin/AdminMarketingPerformance'));
 
 // Marketing Pages
-import MarketingLayout from './components/marketing/MarketingLayout';
-import MarketingDashboard from './pages/marketing/MarketingDashboard';
-import MarketingUsageHistory from './pages/marketing/MarketingUsageHistory';
+const MarketingLayout = lazy(() => import('./components/marketing/MarketingLayout'));
+const MarketingDashboard = lazy(() => import('./pages/marketing/MarketingDashboard'));
+const MarketingUsageHistory = lazy(() => import('./pages/marketing/MarketingUsageHistory'));
+
+// Lightweight inline fallback shown while a chunk is downloading.
+const SuspenseFallback = () => (
+  <div className="min-h-[60vh] flex items-center justify-center">
+    <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 // ─── Visitor ID + UTM Capture ───
 const getVisitorId = () => {
   let id = localStorage.getItem('gpsfdk_visitor_id');
   if (!id) {
-    id = 'v_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    // Prefer crypto.randomUUID (122 bits of entropy, collision-resistant).
+    // Fallback to the legacy generator for browsers without crypto.randomUUID.
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      id = 'v_' + crypto.randomUUID();
+    } else {
+      id = 'v_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    }
     localStorage.setItem('gpsfdk_visitor_id', id);
   }
   return id;
@@ -164,6 +182,7 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <HelmetProvider>
       <Router>
         <PageLoader />
@@ -179,6 +198,7 @@ function App() {
               
               <GlobalUI />
 
+              <Suspense fallback={<SuspenseFallback />}>
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<><HomePage /><Footer /></>} />
@@ -208,9 +228,12 @@ function App() {
                 <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
                 <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
 
-              {/* Protected */}
-              <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /><Footer /></ProtectedRoute>} />
-              <Route path="/thank-you" element={<ProtectedRoute><ThankYouPage /><Footer /></ProtectedRoute>} />
+              {/* Checkout & ThankYou are guest-accessible — the server-side guest
+                  order endpoint (/orders/guest) handles unauthenticated buyers.
+                  Gating these behind ProtectedRoute forced every buyer to register,
+                  killing conversions. */}
+              <Route path="/checkout" element={<><CheckoutPage /><Footer /></>} />
+              <Route path="/thank-you" element={<><ThankYouPage /><Footer /></>} />
               <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
 
               {/* Admin */}
@@ -246,6 +269,7 @@ function App() {
               {/* 404 Fallback */}
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
+              </Suspense>
           </CartProvider>
             </CurrencyProvider>
         </UIProvider>
@@ -253,6 +277,7 @@ function App() {
       </Router>
       <Analytics />
     </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 

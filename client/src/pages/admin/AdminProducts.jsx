@@ -13,6 +13,10 @@ const AdminProducts = () => {
   const [editing, setEditing] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const PAGE_SIZE = 50;
   const [form, setForm] = useState({
     name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
@@ -20,30 +24,40 @@ const AdminProducts = () => {
     thumbnailImage: null,
   });
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (signal) => {
+    setLoading(true);
     try {
-      const { data } = await API.get('/products?limit=1000&all=true');
-      setProducts(data.products);
+      // Server-side pagination + search — no more "load all 1000 and filter in JS".
+      const params = new URLSearchParams({
+        all: 'true',
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      const { data } = await API.get(`/products?${params.toString()}`, { signal });
+      setProducts(Array.isArray(data?.products) ? data.products : []);
+      setTotal(data?.total || 0);
+      setTotalPages(data?.pages || 1);
     } catch (err) {
-      console.error(err);
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        console.error(err);
+        setProducts([]);
+      }
     }
     setLoading(false);
   };
 
-  // Client-side search filtering
-  const filteredProducts = useMemo(() => {
-    if (!searchQuery.trim()) return products;
-    const q = searchQuery.toLowerCase();
-    return products.filter(p =>
-      p.name?.toLowerCase().includes(q) ||
-      p.category?.name?.toLowerCase().includes(q) ||
-      p.subCategory?.toLowerCase().includes(q) ||
-      p.slug?.toLowerCase().includes(q)
-    );
-  }, [products, searchQuery]);
+  // With server-side pagination/search, the rendered list is just `products`.
+  const filteredProducts = products;
 
   useEffect(() => {
-    fetchProducts();
+    const controller = new AbortController();
+    fetchProducts(controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchQuery]);
+
+  useEffect(() => {
     API.get('/categories').then(res => setCategories(res.data)).catch(() => {});
   }, []);
 
@@ -224,7 +238,7 @@ const AdminProducts = () => {
   return (
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
-        <h1 className="text-2xl font-heading font-bold text-secondary">Products <span className="text-base font-normal text-gray-400">({filteredProducts.length}{searchQuery ? ` of ${products.length}` : ''})</span></h1>
+        <h1 className="text-2xl font-heading font-bold text-secondary">Products <span className="text-base font-normal text-gray-400">({total} total)</span></h1>
         <div className="flex flex-wrap gap-3">
 
           <label className="btn-secondary text-sm flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
@@ -248,13 +262,13 @@ const AdminProducts = () => {
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
           placeholder="Search products by name, category, subcategory..."
           className="w-full pl-12 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/20 transition-all shadow-sm"
         />
         {searchQuery && (
           <button
-            onClick={() => setSearchQuery('')}
+            onClick={() => { setSearchQuery(''); setPage(1); }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
           >
             <HiOutlineX className="w-4 h-4" />
@@ -428,6 +442,25 @@ const AdminProducts = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            ← Prev
+          </button>
+          <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            Next →
+          </button>
         </div>
       )}
     </div>

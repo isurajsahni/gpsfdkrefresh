@@ -1,13 +1,14 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
-const SEO = ({ 
-  title = "Premium Wall Canvas & Name Plates in India | GPSFDK", 
+const SEO = ({
+  title = "Premium Wall Canvas & Name Plates in India | GPSFDK",
   description = "Buy custom wall canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing.",
   name = "GPSFDK",
   type = "website",
   image = "/logo.webp", // You can change this to your standard OG image
-  schema = null
+  schema = null,
+  noindex = false
 }) => {
   const { pathname } = useLocation();
   const url = `https://www.gpsfdk.com${pathname}`;
@@ -17,6 +18,8 @@ const SEO = ({
       {/* Standard metadata tags */}
       <title>{title}</title>
       <meta name="description" content={description} />
+      {/* Tell crawlers not to index this page (soft-404 / private pages) */}
+      {noindex && <meta name="robots" content="noindex, follow" />}
       <link rel="canonical" href={url} />
 
       {/* Open Graph / Facebook */}

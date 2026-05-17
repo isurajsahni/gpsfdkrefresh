@@ -29,34 +29,46 @@ const AdminAnalytics = () => {
   const [locations, setLocations] = useState({ countries: [], regions: [], cities: [] });
   const [activeMetric, setActiveMetric] = useState('views');
 
-  const fetchData = async (selectedRange) => {
-    setLoading(true);
-    try {
-      const [dailyRes, dashboardRes] = await Promise.all([
-        API.get(`/analytics/daily?range=${selectedRange}`).catch(() => ({ data: { daily: [], summary: {} } })),
-        API.get(`/analytics/dashboard?range=${selectedRange}`).catch(() => ({ data: {} })),
-      ]);
-
-      setDailyData(dailyRes.data?.daily || []);
-      if (dailyRes.data?.summary) {
-        setSummary(dailyRes.data.summary);
-      }
-      if (dashboardRes.data) {
-        setSources(dashboardRes.data.sources || []);
-        setTopPages(dashboardRes.data.topPages || []);
-        setCampaigns(dashboardRes.data.campaigns || []);
-        setReferrers(dashboardRes.data.referrers || []);
-        setLocations(dashboardRes.data.locations || { countries: [], regions: [], cities: [] });
-      }
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const controller = new AbortController();
+    const fetchData = async (selectedRange) => {
+      setLoading(true);
+      try {
+        const [dailyRes, dashboardRes] = await Promise.all([
+          API.get(`/analytics/daily?range=${selectedRange}`, { signal: controller.signal }).catch((err) => {
+            if (err.name === 'CanceledError' || err.name === 'AbortError') throw err;
+            return { data: { daily: [], summary: {} } };
+          }),
+          API.get(`/analytics/dashboard?range=${selectedRange}`, { signal: controller.signal }).catch((err) => {
+            if (err.name === 'CanceledError' || err.name === 'AbortError') throw err;
+            return { data: {} };
+          }),
+        ]);
+
+        setDailyData(dailyRes.data?.daily || []);
+        if (dailyRes.data?.summary) {
+          setSummary(dailyRes.data.summary);
+        }
+        if (dashboardRes.data) {
+          setSources(dashboardRes.data.sources || []);
+          setTopPages(dashboardRes.data.topPages || []);
+          setCampaigns(dashboardRes.data.campaigns || []);
+          setReferrers(dashboardRes.data.referrers || []);
+          setLocations(dashboardRes.data.locations || { countries: [], regions: [], cities: [] });
+        }
+      } catch (err) {
+        // Ignore cancellations — they happen on every unmount and re-render.
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          console.error('Failed to fetch analytics:', err);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
     fetchData(range);
+    return () => controller.abort();
   }, [range]);
 
   const sourceColors = {

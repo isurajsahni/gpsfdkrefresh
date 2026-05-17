@@ -95,6 +95,21 @@ exports.verifyRazorpay = async (req, res, next) => {
       .digest('hex');
     
     if (expectedSign === razorpay_signature) {
+      // 0. IDEMPOTENCY — if this payment has already been recorded as an order
+      // (e.g., the user double-clicked, the network retried, or Razorpay redelivered
+      // a webhook), short-circuit and return the existing order. This prevents
+      // duplicate orders, duplicate Shiprocket shipments, and duplicate emails.
+      const existing = await Order.findOne({ 'paymentResult.id': razorpay_payment_id });
+      if (existing) {
+        return res.json({
+          message: 'Payment already verified',
+          success: true,
+          orderId: existing._id,
+          orderNumber: existing.orderNumber,
+          duplicate: true,
+        });
+      }
+
       // 1. Verify exact price to prevent tampering
       const userId = req.user ? req.user._id : null;
       const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
@@ -165,6 +180,13 @@ exports.verifyRazorpay = async (req, res, next) => {
         }
       }
 
+      // Decrement stock atomically now that payment is captured.
+      try {
+        await orderController.decrementStockForOrder(newOrder);
+      } catch (stockErr) {
+        console.error('Stock Decrement Error (Silently handled):', stockErr);
+      }
+
       // Trigger notifications now that it's paid
       try {
         await orderController.triggerNewOrderNotifications(newOrder);
@@ -172,7 +194,7 @@ exports.verifyRazorpay = async (req, res, next) => {
         console.error('Notification Error (Silently handled):', notifErr);
       }
 
-      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id });
+      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id, orderNumber: newOrder.orderNumber });
     } else {
       res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }

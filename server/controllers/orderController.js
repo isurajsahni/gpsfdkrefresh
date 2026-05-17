@@ -137,10 +137,13 @@ const triggerNewOrderNotifications = async (order) => {
 exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
 
 // ─── SERVER-SIDE PRICE CALCULATION ───
-// Recalculate all prices from the database to prevent price manipulation
+// Recalculate all prices from the database to prevent price manipulation.
+// Also returns `stockOps` — the atomic stock-decrement instructions that the
+// caller should apply once the order is confirmed (via decrementStockForOrder).
 const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null) => {
   let calculatedItemsPrice = 0;
   const verifiedItems = [];
+  const stockOps = []; // [{ productId, variationId, qty }] — applied post-order
 
   for (const item of items) {
     let product = await Product.findById(item.product).catch(() => null);
@@ -180,10 +183,22 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     const serverPrice = variation.price;
     calculatedItemsPrice += serverPrice * item.quantity;
 
+    // Record the stock-decrement op the caller must run AFTER the order is
+    // confirmed. Custom-print uploads are made-to-order (no inventory).
+    if (!item.uploadedImageUrl && variation._id) {
+      stockOps.push({
+        productId: product._id,
+        variationId: variation._id,
+        qty: item.quantity,
+      });
+    }
+
     verifiedItems.push({
       product: product._id,
       name: item.uploadedImageUrl ? `Custom ${item.variation?.material || 'Canvas'}` : product.name,
       image: item.uploadedImageUrl || item.image,
+      // Persist variationId so we can target the exact sub-doc on cancel/restock.
+      variationId: variation._id,
       variation: {
         material: item.variation?.material || variation.material,
         frame: item.variation?.frame || variation.frame,
@@ -275,6 +290,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
 
   return {
     verifiedItems,
+    stockOps,
     itemsPrice: calculatedItemsPrice,
     shippingPrice,
     taxPrice,
@@ -282,6 +298,61 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     totalPrice,
   };
 };
+
+// ─── STOCK MOVEMENT HELPERS ───
+// Apply stock decrements after an order is confirmed. Atomic per-variation:
+// only succeeds when stock is still >= qty. If a concurrent buyer drained it,
+// we log loudly but don't throw — the customer's order is already created.
+async function decrementStockForOrder(order) {
+  if (!order || order.stockDecremented) return; // idempotent
+  for (const item of order.items) {
+    if (item.uploadedImageUrl) continue; // custom prints, no inventory
+    const variationId = item.variationId;
+    if (!variationId) continue;
+    try {
+      const result = await Product.updateOne(
+        {
+          _id: item.product,
+          'variations._id': variationId,
+          'variations.stock': { $gte: item.quantity },
+        },
+        { $inc: { 'variations.$.stock': -item.quantity } }
+      );
+      if (result.modifiedCount === 0) {
+        console.warn(`[stock] Could not decrement product=${item.product} variation=${variationId} qty=${item.quantity} (stock too low or row gone)`);
+      }
+    } catch (err) {
+      console.error('[stock] decrement error:', err.message);
+    }
+  }
+  order.stockDecremented = true;
+  try { await order.save(); } catch (err) { console.error('[stock] failed marking decremented:', err.message); }
+}
+
+// Restore stock when an order is cancelled. Only runs once per order.
+async function restoreStockForOrder(order) {
+  if (!order) return;
+  if (!order.stockDecremented) return; // never decremented, nothing to restore
+  if (order.stockRestored) return; // idempotent
+  for (const item of order.items) {
+    if (item.uploadedImageUrl) continue;
+    const variationId = item.variationId;
+    if (!variationId) continue;
+    try {
+      await Product.updateOne(
+        { _id: item.product, 'variations._id': variationId },
+        { $inc: { 'variations.$.stock': item.quantity } }
+      );
+    } catch (err) {
+      console.error('[stock] restore error:', err.message);
+    }
+  }
+  order.stockRestored = true;
+  try { await order.save(); } catch (err) { console.error('[stock] failed marking restored:', err.message); }
+}
+
+exports.decrementStockForOrder = decrementStockForOrder;
+exports.restoreStockForOrder = restoreStockForOrder;
 
 
 // POST /api/orders (logged-in users)
@@ -318,7 +389,7 @@ exports.createOrder = async (req, res, next) => {
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
       if (coupon) {
-        const userUsage = coupon.usageHistory.find(u => u.userId.toString() === req.user._id.toString());
+        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === req.user._id.toString());
         if (userUsage) {
           userUsage.useCount += 1;
         } else {
@@ -337,8 +408,10 @@ exports.createOrder = async (req, res, next) => {
       }
     }
 
-    // Notify immediately for FREE orders
+    // Decrement stock atomically once order exists (FREE / zero-value path only —
+    // paid orders decrement in paymentController.verifyRazorpay after capture).
     if (finalPaymentMethod === 'free') {
+      await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
     }
 
@@ -412,8 +485,10 @@ exports.createGuestOrder = async (req, res, next) => {
       }
     }
 
-    // Notify immediately for FREE orders
+    // Decrement stock atomically once order exists (FREE / zero-value path only —
+    // paid orders decrement in paymentController.verifyRazorpay after capture).
     if (finalPaymentMethod === 'free') {
+      await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
     }
 
@@ -428,14 +503,57 @@ exports.createGuestOrder = async (req, res, next) => {
 };
 
 // GET /api/orders (user's orders or all for admin/managers)
+// Admin path now supports pagination + status filter so the dashboard doesn't
+// blow up when there are thousands of orders. Pass ?paginate=true to opt in;
+// without it the legacy unbounded shape is returned for compatibility.
 exports.getOrders = async (req, res, next) => {
   try {
-    let orders;
-    if (['admin', 'admin_marketing', 'order_manager'].includes(req.user.role) && req.query.all === 'true') {
-      orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt');
-    } else {
-      orders = await Order.find({ user: req.user._id, status: { $ne: 'payment_pending' } }).populate('items.product', 'slug').sort('-createdAt');
+    const isAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
+    const wantsAll = req.query.all === 'true' && isAdmin;
+
+    if (wantsAll && req.query.paginate === 'true') {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+      const filter = {};
+      if (req.query.status && req.query.status !== 'all') filter.status = req.query.status;
+      if (req.query.search) {
+        // Search by orderNumber, guestEmail, or guestPhone (case-insensitive).
+        // Escape regex meta-chars to prevent ReDoS / accidental wildcards.
+        const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = new RegExp(escape(String(req.query.search)), 'i');
+        filter.$or = [
+          { orderNumber: rx },
+          { guestEmail: rx },
+          { guestPhone: rx },
+        ];
+      }
+      const [orders, total] = await Promise.all([
+        Order.find(filter)
+          .populate('user', 'name email')
+          .populate('items.product', 'slug')
+          .sort('-createdAt')
+          .skip((page - 1) * limit)
+          .limit(limit),
+        Order.countDocuments(filter),
+      ]);
+      return res.json({
+        orders,
+        total,
+        page,
+        pageSize: limit,
+        totalPages: Math.ceil(total / limit) || 1,
+      });
     }
+
+    if (wantsAll) {
+      // Legacy: cap at 500 so we don't OOM by accident.
+      const orders = await Order.find({}).populate('user', 'name email').populate('items.product', 'slug').sort('-createdAt').limit(500);
+      return res.json(orders);
+    }
+
+    const orders = await Order.find({ user: req.user._id, status: { $ne: 'payment_pending' } })
+      .populate('items.product', 'slug')
+      .sort('-createdAt');
     res.json(orders);
   } catch (error) {
     next(error);
@@ -445,7 +563,13 @@ exports.getOrders = async (req, res, next) => {
 // GET /api/orders/:id
 exports.getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    // Accept either a Mongo ObjectId OR a human-readable orderNumber (e.g. "GPS-XXX").
+    // The ThankYou page uses orderNumber in the URL because it's nicer for sharing
+    // and doesn't expose the internal _id.
+    const id = req.params.id;
+    const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
+    const query = isObjectId ? { _id: id } : { orderNumber: id };
+    const order = await Order.findOne(query).populate('user', 'name email');
     if (!order) return res.status(404).json({ message: 'Order not found' });
     const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
     if (!isManagerOrAdmin && order.user?._id?.toString() !== req.user._id.toString()) {
@@ -464,7 +588,7 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const previousStatus = order.status;
-    
+
     if (req.body.status) order.status = req.body.status;
     if (req.body.trackingNumber) order.trackingNumber = req.body.trackingNumber;
     if (req.body.status === 'delivered') order.deliveredAt = Date.now();
@@ -472,8 +596,13 @@ exports.updateOrderStatus = async (req, res, next) => {
       order.isPaid = req.body.isPaid;
       if (req.body.isPaid) order.paidAt = Date.now();
     }
-    
+
     await order.save();
+
+    // If transitioning to 'cancelled' from a non-cancelled state, restore stock.
+    if (req.body.status === 'cancelled' && previousStatus !== 'cancelled') {
+      await restoreStockForOrder(order);
+    }
 
     // Send email if status changed
     if (req.body.status && req.body.status !== previousStatus) {
@@ -526,6 +655,9 @@ exports.cancelOrder = async (req, res, next) => {
 
     order.status = 'cancelled';
     await order.save();
+
+    // Restore stock atomically (idempotent — only runs if not already restored).
+    await restoreStockForOrder(order);
 
     // Send cancellation email
     sendOrderEmail(order, 'cancelled');

@@ -12,6 +12,13 @@ dotenv.config();
 
 const app = express();
 
+// ─── Trust proxy ───
+// Render (and most PaaS) terminate TLS at a proxy. Without this, req.ip is the
+// proxy's IP for every visitor, so express-rate-limit throttles ALL users as
+// a single IP, and analytics/geo-pricing read the wrong source IP.
+// `1` = trust the first proxy hop (Render's edge).
+app.set('trust proxy', 1);
+
 // ─── Security: Helmet (sets secure HTTP headers, API-friendly) ───
 app.use(helmet({
   contentSecurityPolicy: false,            // Not needed for JSON APIs
@@ -32,8 +39,11 @@ const globalLimiter = rateLimit({
     // Skip rate limiting for admin product upload routes
     // These routes are already protected by auth + admin middleware
     if (req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method)) return true;
-    if (req.path.startsWith('/api/upload') && req.method === 'POST') return true;
-    // Skip rate limiting for webhook routes (Shiprocket fires rapid status updates)
+    // Admin-only single-image upload: keep skipped (admin auth already gates abuse).
+    // Public canvas upload is NOT skipped — it has its own per-IP route limiter.
+    if (req.path === '/api/upload/' && req.method === 'POST') return true;
+    if (req.path === '/api/upload' && req.method === 'POST') return true;
+    // Skip rate limiting for Shiprocket webhook routes (now header-authenticated)
     if (req.path.startsWith('/api/webhook')) return true;
     return false;
   },

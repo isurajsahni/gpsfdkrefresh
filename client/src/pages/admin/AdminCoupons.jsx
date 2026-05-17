@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineEye } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineEye, HiOutlineTicket } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -28,19 +28,29 @@ const AdminCoupons = () => {
     isActive: true,
   });
 
-  const fetchInitialData = async () => {
+  const fetchInitialData = async (signal) => {
     try {
+      const options = signal ? { signal } : undefined;
       const [couponsRes, usersRes] = await Promise.all([
-        API.get('/coupons'),
-        API.get('/marketing/admin/users').catch(() => ({ data: [] }))
+        API.get('/coupons', options),
+        API.get('/marketing/admin/users', options).catch(() => ({ data: [] }))
       ]);
       setCoupons(couponsRes.data);
       setMarketingUsers(usersRes.data);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // Ignore cancellations — they happen on every unmount and re-render.
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        console.error(err);
+      }
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchInitialData(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchInitialData(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const handleEdit = (coupon) => {
     setEditingCoupon(coupon);

@@ -45,13 +45,11 @@ const NotFoundPage = () => {
         Adding noindex meta tag ensures search engines don't index this non-existent content 
         even if the edge server returned a 200 OK.
       */}
-      <SEO 
-        title="404 - Page Not Found | GPSFDK" 
-        description="The page you are looking for does not exist. It might have been moved or deleted." 
+      <SEO
+        title="404 - Page Not Found | GPSFDK"
+        description="The page you are looking for does not exist. It might have been moved or deleted."
+        noindex
       />
-      <div className="hidden">
-        <meta name="robots" content="noindex, follow" />
-      </div>
 
       <div className="max-w-3xl w-full text-center space-y-8">
         <motion.div

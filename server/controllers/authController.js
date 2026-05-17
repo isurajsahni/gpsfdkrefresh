@@ -4,38 +4,20 @@ const sendEmail = require('../utils/sendEmail');
 const welcomeEmail = require('../utils/welcomeEmailTemplate');
 const { getAuthEmail } = require('../utils/emailTemplates');
 const { cloudinary } = require('../middleware/upload');
+const { createOtpStore } = require('../utils/otpSessionStore');
 
-// ─── In-memory email-update OTP store ────────────────────────────────────────
-// Maps userId -> { otp, newEmail, attempts, sentAt }
-const emailOtpSessions = new Map();
-const EMAIL_OTP_EXPIRY_MS = 10 * 60 * 1000; // 10 minutes
+// ─── OTP / verification session stores (Mongo-backed, TTL-purged) ─────────────
+// These used to be in-memory Maps. That made every OTP session non-recoverable
+// across deploys/restarts, didn't work with multi-instance autoscaling, and
+// kept plaintext registration passwords in process RAM. The new store persists
+// sessions in Mongo with TTL — same Map-like API, just async.
+const EMAIL_OTP_EXPIRY_MS = 10 * 60 * 1000;
 const EMAIL_OTP_MAX_ATTEMPTS = 5;
-
-// Cleanup expired email OTP sessions every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, session] of emailOtpSessions.entries()) {
-    if (now - session.sentAt > EMAIL_OTP_EXPIRY_MS) {
-      emailOtpSessions.delete(key);
-    }
-  }
-}, 15 * 60 * 1000);
-
-// ─── In-memory registration OTP store ────────────────────────────────────────
-// Maps email -> { otp, name, email, password, phone, attempts, sentAt }
-const registrationOtpSessions = new Map();
 const REG_OTP_EXPIRY_MS = 10 * 60 * 1000;
 const REG_OTP_MAX_ATTEMPTS = 5;
 
-// Cleanup expired registration OTP sessions every 15 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, session] of registrationOtpSessions.entries()) {
-    if (now - session.sentAt > REG_OTP_EXPIRY_MS) {
-      registrationOtpSessions.delete(key);
-    }
-  }
-}, 15 * 60 * 1000);
+const emailOtpSessions = createOtpStore('emailUpdate', EMAIL_OTP_EXPIRY_MS);
+const registrationOtpSessions = createOtpStore('registration', REG_OTP_EXPIRY_MS);
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -114,7 +96,7 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     }
 
     // 30-second cooldown
-    const existing = registrationOtpSessions.get(normalizedEmail);
+    const existing = await registrationOtpSessions.get(normalizedEmail);
     if (existing) {
       const elapsed = Date.now() - existing.sentAt;
       if (elapsed < 30 * 1000) {
@@ -130,7 +112,7 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Store pending registration + OTP
-    registrationOtpSessions.set(normalizedEmail, {
+    await registrationOtpSessions.set(normalizedEmail, {
       otp,
       name: name.trim(),
       email: normalizedEmail,
@@ -227,7 +209,7 @@ exports.verifyRegistrationOtp = async (req, res, next) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const session = registrationOtpSessions.get(normalizedEmail);
+    const session = await registrationOtpSessions.get(normalizedEmail);
 
     if (!session) {
       return res.status(400).json({ message: 'No verification session found. Please register again.' });
@@ -235,13 +217,13 @@ exports.verifyRegistrationOtp = async (req, res, next) => {
 
     // Check expiry
     if (Date.now() - session.sentAt > REG_OTP_EXPIRY_MS) {
-      registrationOtpSessions.delete(normalizedEmail);
+      await registrationOtpSessions.delete(normalizedEmail);
       return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
     }
 
     // Check attempts
     if (session.attempts >= REG_OTP_MAX_ATTEMPTS) {
-      registrationOtpSessions.delete(normalizedEmail);
+      await registrationOtpSessions.delete(normalizedEmail);
       return res.status(400).json({ message: 'Too many incorrect attempts. Please register again.', locked: true });
     }
 
@@ -249,6 +231,8 @@ exports.verifyRegistrationOtp = async (req, res, next) => {
 
     if (session.otp !== otp) {
       const remaining = REG_OTP_MAX_ATTEMPTS - session.attempts;
+      // Persist incremented attempts back to Mongo (Map mutation no longer works).
+      await registrationOtpSessions.set(normalizedEmail, session);
       return res.status(400).json({
         message: 'Invalid verification code.',
         attemptsRemaining: remaining,
@@ -257,7 +241,7 @@ exports.verifyRegistrationOtp = async (req, res, next) => {
     }
 
     // OTP is correct — create the user
-    registrationOtpSessions.delete(normalizedEmail);
+    await registrationOtpSessions.delete(normalizedEmail);
 
     // Double-check user doesn't exist (race condition guard)
     const userExists = await User.findOne({ email: normalizedEmail });
@@ -481,7 +465,7 @@ exports.sendEmailUpdateOtp = async (req, res, next) => {
     }
 
     // 30-second cooldown
-    const existing = emailOtpSessions.get(userId);
+    const existing = await emailOtpSessions.get(userId);
     if (existing) {
       const elapsed = Date.now() - existing.sentAt;
       if (elapsed < 30 * 1000) {
@@ -497,7 +481,7 @@ exports.sendEmailUpdateOtp = async (req, res, next) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Store session
-    emailOtpSessions.set(userId, {
+    await emailOtpSessions.set(userId, {
       otp,
       newEmail: newEmail.trim().toLowerCase(),
       attempts: 0,
@@ -531,7 +515,7 @@ exports.verifyEmailUpdateOtp = async (req, res, next) => {
       return res.status(400).json({ message: 'OTP must be exactly 6 digits.' });
     }
 
-    const session = emailOtpSessions.get(userId);
+    const session = await emailOtpSessions.get(userId);
 
     if (!session) {
       return res.status(400).json({ message: 'No email verification session found. Please request a new code.' });
@@ -539,13 +523,13 @@ exports.verifyEmailUpdateOtp = async (req, res, next) => {
 
     // Check expiry
     if (Date.now() - session.sentAt > EMAIL_OTP_EXPIRY_MS) {
-      emailOtpSessions.delete(userId);
+      await emailOtpSessions.delete(userId);
       return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
     }
 
     // Check attempts
     if (session.attempts >= EMAIL_OTP_MAX_ATTEMPTS) {
-      emailOtpSessions.delete(userId);
+      await emailOtpSessions.delete(userId);
       return res.status(400).json({ message: 'Too many incorrect attempts. Please request a new code.', locked: true });
     }
 
@@ -553,6 +537,8 @@ exports.verifyEmailUpdateOtp = async (req, res, next) => {
 
     if (session.otp !== otp) {
       const remaining = EMAIL_OTP_MAX_ATTEMPTS - session.attempts;
+      // Persist incremented attempts
+      await emailOtpSessions.set(userId, session);
       return res.status(400).json({
         message: 'Invalid verification code.',
         attemptsRemaining: remaining,
@@ -561,7 +547,7 @@ exports.verifyEmailUpdateOtp = async (req, res, next) => {
     }
 
     // OTP correct — clean up and issue token
-    emailOtpSessions.delete(userId);
+    await emailOtpSessions.delete(userId);
 
     const emailVerifiedToken = jwt.sign(
       { userId, newEmail: session.newEmail, emailVerified: true },
@@ -583,8 +569,37 @@ exports.verifyEmailUpdateOtp = async (req, res, next) => {
 // GET /api/auth/users (admin)
 exports.getUsers = async (req, res, next) => {
   try {
-    const users = await User.find({}).select('-password').sort('-createdAt');
+    // Optional pagination + search — when admin opts in with ?paginate=true
+    // returns an envelope; otherwise the legacy flat array (capped at 500
+    // so we don't OOM by accident on a large user table).
+    if (req.query.paginate === 'true') {
+      const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+      const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+      const filter = {};
+      if (req.query.search) {
+        const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = new RegExp(escape(String(req.query.search)), 'i');
+        filter.$or = [{ name: rx }, { email: rx }, { phone: rx }];
+      }
+      if (req.query.role && req.query.role !== 'all') filter.role = req.query.role;
+      const [users, total] = await Promise.all([
+        User.find(filter).select('-password').sort('-createdAt').skip((page - 1) * limit).limit(limit),
+        User.countDocuments(filter),
+      ]);
+      return res.json({ users, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) || 1 });
+    }
+    const users = await User.find({}).select('-password').sort('-createdAt').limit(500);
     res.json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/auth/users/count — lightweight count for dashboards.
+exports.getUsersCount = async (req, res, next) => {
+  try {
+    const count = await User.countDocuments();
+    res.json({ count });
   } catch (error) {
     next(error);
   }
@@ -802,7 +817,8 @@ exports.updateAddress = async (req, res, next) => {
 
 
 // ─── PASSWORDLESS AUTHENTICATION ─────────────────────────────────────────────
-const passwordlessOtpSessions = new Map();
+// Same migration as the other OTP stores — see top of file. 10-min TTL.
+const passwordlessOtpSessions = createOtpStore('passwordless', 10 * 60 * 1000);
 
 exports.sendPasswordlessOtp = async (req, res, next) => {
   try {
@@ -812,13 +828,13 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
     const isEmail = identifier.includes('@');
     const normalizedId = identifier.trim().toLowerCase();
 
-    const existing = passwordlessOtpSessions.get(normalizedId);
+    const existing = await passwordlessOtpSessions.get(normalizedId);
     if (existing && Date.now() - existing.sentAt < 30000) {
       return res.status(429).json({ message: 'Please wait 30 seconds before requesting again.' });
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    passwordlessOtpSessions.set(normalizedId, { otp, attempts: 0, sentAt: Date.now() });
+    await passwordlessOtpSessions.set(normalizedId, { otp, attempts: 0, sentAt: Date.now() });
 
     if (isEmail) {
       await sendEmail({
@@ -867,21 +883,26 @@ exports.verifyPasswordlessOtp = async (req, res, next) => {
     if (!identifier || !otp) return res.status(400).json({ message: 'Identifier and OTP required.' });
 
     const normalizedId = identifier.trim().toLowerCase();
-    const session = passwordlessOtpSessions.get(normalizedId);
+    const session = await passwordlessOtpSessions.get(normalizedId);
 
     if (!session) return res.status(400).json({ message: 'OTP session not found or expired.' });
     if (Date.now() - session.sentAt > 10 * 60 * 1000) {
-      passwordlessOtpSessions.delete(normalizedId);
+      await passwordlessOtpSessions.delete(normalizedId);
       return res.status(400).json({ message: 'OTP expired.' });
     }
 
     if (session.otp !== otp) {
-      session.attempts++;
-      if (session.attempts >= 5) passwordlessOtpSessions.delete(normalizedId);
+      session.attempts = (session.attempts || 0) + 1;
+      if (session.attempts >= 5) {
+        await passwordlessOtpSessions.delete(normalizedId);
+      } else {
+        // Persist incremented attempts so the next try sees the new count.
+        await passwordlessOtpSessions.set(normalizedId, session);
+      }
       return res.status(400).json({ message: 'Invalid OTP.' });
     }
 
-    passwordlessOtpSessions.delete(normalizedId);
+    await passwordlessOtpSessions.delete(normalizedId);
 
     // Find User
     const isEmail = normalizedId.includes('@');
@@ -916,7 +937,14 @@ exports.verifyFirebaseToken = async (req, res, next) => {
     if (!idToken) return res.status(400).json({ message: 'Firebase token required.' });
 
     const axios = require('axios');
-    const apiKey = "AIzaSyB0L41Eycq725nZf5GLMaKr6xZE2WYAqSk"; // User provided
+    // Firebase Web API key — MUST be set in env. Hard-coding bypasses rotation
+    // and disclosure controls. Rotate the previously-committed key in the
+    // Firebase console; do NOT reuse it here.
+    const apiKey = process.env.FIREBASE_WEB_API_KEY;
+    if (!apiKey) {
+      console.error('FIREBASE_WEB_API_KEY env var is not set');
+      return res.status(500).json({ message: 'Authentication service misconfigured' });
+    }
     const response = await axios.post(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
       { idToken }

@@ -4,6 +4,7 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const slugify = require('slugify');
 const { cloudinary } = require('../middleware/upload');
+const { sanitizeRichText } = require('../utils/sanitizeHtml');
 
 /**
  * Retry a Cloudinary upload with exponential backoff
@@ -123,7 +124,9 @@ exports.getProducts = async (req, res, next) => {
       .limit(safeLimit)
       .lean();
     
-    res.json({ products, total, pages: Math.ceil(total / limit), page: parseInt(page) });
+    // Use safeLimit (not the raw query param) so an admin sending ?limit=foo
+    // doesn't end up with NaN in the paging math.
+    res.json({ products, total, pages: Math.ceil(total / safeLimit) || 1, page: parseInt(page) || 1, pageSize: safeLimit });
   } catch (error) {
     next(error);
   }
@@ -225,7 +228,9 @@ exports.createProduct = async (req, res, next) => {
 
     const productData = {
       name: req.body.name,
-      description: req.body.description || '',
+      // Sanitize HTML now (stored XSS defence). The product description is
+      // rendered with dangerouslySetInnerHTML on the client.
+      description: sanitizeRichText(req.body.description || ''),
       category: req.body.category,
       subCategory: req.body.subCategory || '',
       customizable: parseBool(req.body.customizable),
@@ -254,7 +259,7 @@ exports.updateProduct = async (req, res, next) => {
     const parseBool = (val) => val === 'true' || val === true;
 
     if (req.body.name !== undefined) product.name = req.body.name;
-    if (req.body.description !== undefined) product.description = req.body.description;
+    if (req.body.description !== undefined) product.description = sanitizeRichText(req.body.description);
     if (req.body.category !== undefined) product.category = req.body.category;
     if (req.body.subCategory !== undefined) product.subCategory = req.body.subCategory;
     if (req.body.customizable !== undefined) product.customizable = parseBool(req.body.customizable);
@@ -418,29 +423,43 @@ exports.importProducts = async (req, res, next) => {
             return '';
           };
 
+          const rowErrors = []; // [{ row, name, reason }]
+
           for (const [index, rawRow] of results.entries()) {
             const row = normalizeRow(rawRow);
 
             // Map WooCommerce or Standard fields
-            const name = getField(row, 'name', 'post title');
-            if (!name) {
-              console.log(`Row ${index + 1}: Skipped – no product name found. Keys:`, Object.keys(rawRow).join(', '));
+            const rawName = getField(row, 'name', 'post title');
+            if (!rawName) {
+              rowErrors.push({ row: index + 1, name: '', reason: 'No product name found' });
               continue;
             }
+            const name = rawName.trim();
+            // Map key normalization: same product with different whitespace/case
+            // collapses into one entry instead of creating duplicate products.
+            const mapKey = name.toLowerCase();
 
             const description = getField(row, 'description', 'post content');
             const categoryName = getField(row, 'category', 'categories') || 'General';
             const sku = getField(row, 'sku');
             const type = getField(row, 'type') || 'simple';
-            
+
             // Images (WooCommerce images are often comma-separated URLs)
             const imageUrlsStr = getField(row, 'images');
             const imageUrls = imageUrlsStr ? imageUrlsStr.split(',').map(u => u.trim()).filter(u => u.startsWith('http')) : [];
 
             // Variation Data
+            const price = parseNum(row['regular price'] || row['price'], 0);
+            // Reject rows with no real price — silently importing them as ₹0 was
+            // creating "free" products that wrecked the catalogue.
+            if (!Number.isFinite(price) || price <= 0) {
+              rowErrors.push({ row: index + 1, name, reason: 'Missing or non-positive price' });
+              continue;
+            }
+
             const variation = {
               sku: sku,
-              price: parseNum(row['regular price'] || row['price'], 0),
+              price,
               comparePrice: parseNum(row['sale price'] || row['compareprice'], 0),
               stock: parseNum(row['stock'], 100),
               size: getField(row, 'size', 'attribute 1 value(s)', 'attribute 1 value') || 'Standard',
@@ -449,10 +468,10 @@ exports.importProducts = async (req, res, next) => {
               color: getField(row, 'color', 'attribute 4 value(s)', 'attribute 4 value')
             };
 
-            if (!productsMap.has(name)) {
-              productsMap.set(name, {
+            if (!productsMap.has(mapKey)) {
+              productsMap.set(mapKey, {
                 name,
-                description,
+                description: sanitizeRichText(description || ''),
                 categoryName,
                 imageUrls,
                 featured: ['true', '1'].includes((row['featured'] || row['isfeatured'] || '').toLowerCase()),
@@ -462,7 +481,7 @@ exports.importProducts = async (req, res, next) => {
               });
             } else if (type.toLowerCase().includes('variation')) {
               // Add to existing product's variations
-              productsMap.get(name).variations.push(variation);
+              productsMap.get(mapKey).variations.push(variation);
             }
           }
 
@@ -470,7 +489,8 @@ exports.importProducts = async (req, res, next) => {
           let errorCount = 0;
           const Category = require('../models/Category');
 
-          for (const [name, pData] of productsMap.entries()) {
+          for (const [mapKey, pData] of productsMap.entries()) {
+            const name = pData.name;
             try {
               // Find or Create Category
               let category = await Category.findOne({ 
@@ -504,10 +524,17 @@ exports.importProducts = async (req, res, next) => {
               if (product) {
                 // Update existing product: merge variations and images
                 console.log(`Updating existing product: ${name}`);
-                
-                // Only add new variations (simple check by size/material)
+
+                // Compare FULL variation tuple (size + material + frame + color)
+                // so distinct variations don't collapse into one and lose data.
+                const sameVariation = (a, b) =>
+                  (a.size || '') === (b.size || '') &&
+                  (a.material || '') === (b.material || '') &&
+                  (a.frame || '') === (b.frame || '') &&
+                  (a.color || '') === (b.color || '');
+
                 for (const newVar of pData.variations) {
-                  const exists = product.variations.find(v => v.size === newVar.size && v.material === newVar.material);
+                  const exists = product.variations.find(v => sameVariation(v, newVar));
                   if (!exists) {
                     product.variations.push(newVar);
                   } else {
@@ -544,6 +571,7 @@ exports.importProducts = async (req, res, next) => {
               importedCount++;
             } catch (productError) {
               console.error(`Failed to import product "${name}":`, productError.message);
+              rowErrors.push({ row: null, name, reason: productError.message });
               errorCount++;
             }
           }
@@ -552,14 +580,17 @@ exports.importProducts = async (req, res, next) => {
           try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
 
           const message = importedCount > 0
-            ? `Successfully imported ${importedCount} product(s) with their variations`
+            ? `Imported ${importedCount} product(s). ${rowErrors.length > 0 ? `${rowErrors.length} row(s) had errors — see errors array.` : ''}`
             : 'No products were imported. Please check your CSV column headers (expected: Name, Regular price, Categories, etc.)';
 
-          res.status(importedCount > 0 ? 201 : 200).json({ 
+          res.status(importedCount > 0 ? 201 : 200).json({
             message,
             count: importedCount,
-            skippedRows: results.length - [...productsMap.values()].reduce((sum, p) => sum + p.variations.length, 0),
-            errors: errorCount
+            errors: errorCount,
+            // First 50 row-level errors so the admin can see exactly which CSV
+            // lines were rejected and why (capped to keep response small).
+            errorDetails: rowErrors.slice(0, 50),
+            errorTotal: rowErrors.length,
           });
         } catch (innerError) {
           console.error('Import Error:', innerError);

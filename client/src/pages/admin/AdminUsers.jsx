@@ -21,18 +21,41 @@ const AdminUsers = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedUserId, setExpandedUserId] = useState(null);
+  // Pagination + search + role filter (server-side)
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const PAGE_SIZE = 50;
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (signal) => {
+    setLoading(true);
     try {
-      const { data } = await API.get('/auth/users');
-      setUsers(data);
+      const params = new URLSearchParams({
+        paginate: 'true',
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (search.trim()) params.set('search', search.trim());
+      if (roleFilter !== 'all') params.set('role', roleFilter);
+      const { data } = await API.get(`/auth/users?${params.toString()}`, { signal });
+      const list = Array.isArray(data) ? data : (data?.users || []);
+      setUsers(list);
+      setTotal(Array.isArray(data) ? list.length : (data?.total || 0));
+      setTotalPages(Array.isArray(data) ? 1 : (data?.totalPages || 1));
     } catch (err) {
-      console.error(err);
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') console.error(err);
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchUsers(controller.signal);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search, roleFilter]);
 
   const handleDelete = async (id, e) => {
     e.stopPropagation();
@@ -64,7 +87,31 @@ const AdminUsers = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-heading font-bold text-secondary mb-8">Users</h1>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <h1 className="text-2xl font-heading font-bold text-secondary">Users {total > 0 && <span className="text-sm font-normal text-gray-500 ml-2">({total} total)</span>}</h1>
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search name, email, phone…"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm w-64 max-w-full focus:outline-none focus:border-accent"
+          />
+          <select
+            value={roleFilter}
+            onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent"
+          >
+            <option value="all">All roles</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="admin_marketing">Admin (Marketing)</option>
+            <option value="order_manager">Order Manager</option>
+            <option value="coupon_manager">Coupon Manager</option>
+            <option value="marketing">Marketing</option>
+          </select>
+        </div>
+      </div>
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" /></div>
       ) : (
@@ -205,6 +252,25 @@ const AdminUsers = () => {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            ← Prev
+          </button>
+          <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            Next →
+          </button>
         </div>
       )}
     </div>

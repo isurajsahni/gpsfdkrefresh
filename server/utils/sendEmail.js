@@ -6,8 +6,14 @@ const getApiKey = () => (process.env.RESEND_API_KEY || process.env.EMAIL_PASS ||
 const sendEmail = async (options) => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    console.warn('Resend API key missing (set RESEND_API_KEY or EMAIL_PASS), skipping email.');
-    return; // Silent fail gracefully in dev if no key
+    // Previously this returned silently — callers like the OTP route would then
+    // record a `success: true` even though nothing was sent. Throw instead so
+    // failures are loud and visible to the user (and to the route's error path).
+    const msg = 'Email service not configured: set RESEND_API_KEY (and EMAIL_FROM) in env.';
+    console.warn(`📭 ${msg}`);
+    const err = new Error(msg);
+    err.status = 503;
+    throw err;
   }
 
   const resend = new Resend(apiKey);

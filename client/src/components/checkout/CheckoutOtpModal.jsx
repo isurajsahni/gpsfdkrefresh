@@ -23,10 +23,11 @@ const RESEND_COOLDOWN = 60;
 const OTP_LENGTH = 6;
 
 const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
-  const [step, setStep] = useState('sending'); // 'sending' | 'enter' | 'verifying' | 'done'
+  const [step, setStep] = useState('sending'); // 'sending' | 'enter' | 'verifying' | 'done' | 'failed'
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState('');
-  const [channels, setChannels] = useState([]); // ['whatsapp','email']
+  const [channels, setChannels] = useState([]); // ['whatsapp','email'] — succeeded
+  const [failures, setFailures] = useState([]); // [{channel,reason}] — failed channels
   const [resendCooldown, setResendCooldown] = useState(0);
   const otpRefs = useRef([]);
   const timerRef = useRef(null);
@@ -58,17 +59,28 @@ const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
         email: email || undefined,
       });
       setChannels(data.channels || []);
+      // Partial failures: e.g., WhatsApp worked but email did not, or vice-versa.
+      setFailures(Array.isArray(data.failures) ? data.failures : []);
       setStep('enter');
       startCooldown();
       // Focus first input
       setTimeout(() => otpRefs.current[0]?.focus(), 80);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Could not send verification code. Please try again.';
+      const status = err.response?.status;
+      const data = err.response?.data || {};
+      const msg = data.message || 'Could not send verification code. Please try again.';
       setError(msg);
-      setStep('enter');
-      if (err.response?.status === 429) {
-        // Server is rate-limiting — show a long-ish cooldown so the resend button stays disabled.
-        startCooldown();
+      // Server returns 502 when ALL channels failed and includes per-channel reasons.
+      // Switch to a dedicated failure state so the user sees why and how to recover.
+      if (status === 502 && Array.isArray(data.channels)) {
+        setFailures(data.channels);
+        setStep('failed');
+      } else if (status === 503) {
+        // OTP service not configured server-side.
+        setStep('failed');
+      } else {
+        setStep('enter');
+        if (status === 429) startCooldown();
       }
     }
   }, [cleanedPhone, email, startCooldown]);
@@ -153,13 +165,14 @@ const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
 
   if (!isOpen) return null;
 
-  // What we show under the title — "WhatsApp & Email" or just one of them.
+  // What we show under the title — list the channels that actually succeeded.
+  // Before /send completes we just say "We're sending…"; after, we show the
+  // channels the server reports as successfully delivered.
   const channelLabel = (() => {
-    const list = channels.length ? channels : ['whatsapp', email ? 'email' : null].filter(Boolean);
-    if (list.length >= 2) return 'WhatsApp & Email';
-    if (list[0] === 'whatsapp') return 'WhatsApp';
-    if (list[0] === 'email') return 'Email';
-    return 'WhatsApp';
+    if (channels.length >= 2) return 'WhatsApp & Email';
+    if (channels[0] === 'whatsapp') return 'WhatsApp';
+    if (channels[0] === 'email') return 'Email';
+    return null;
   })();
 
   // Mask the phone (e.g. +91 79733•••875) for display
@@ -203,12 +216,23 @@ const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
             </div>
             <h2 className="text-lg font-bold text-white mb-1">Confirm it's really you</h2>
             <p className="text-white/80 text-xs">
-              We sent a 6-digit code via <span className="font-semibold">{channelLabel}</span>
+              {channelLabel
+                ? <>We sent a 6-digit code via <span className="font-semibold">{channelLabel}</span></>
+                : step === 'sending'
+                  ? 'Sending a 6-digit code…'
+                  : 'Enter the 6-digit code we sent you'}
             </p>
             <div className="mt-2 text-[11px] text-white/70 leading-relaxed">
               {maskedPhone && <div>📱 {maskedPhone}</div>}
               {maskedEmail && <div>✉️ {maskedEmail}</div>}
             </div>
+            {/* If the server reported partial delivery (e.g. WhatsApp failed,
+                email worked), nudge the user where to look. */}
+            {step === 'enter' && failures.length > 0 && channels.length > 0 && (
+              <p className="mt-2 text-[10px] text-white/90 bg-black/20 rounded px-2 py-1 inline-block">
+                Heads up: {failures.map(f => f.channel).join(', ')} didn't deliver — please check {channels.join(' / ')}.
+              </p>
+            )}
           </div>
 
           {/* Body */}
@@ -220,6 +244,40 @@ const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 Sending code…
+              </div>
+            ) : step === 'failed' ? (
+              <div className="text-center py-2">
+                <div className="text-4xl mb-2">⚠️</div>
+                <p className="text-sm font-semibold text-red-600 mb-2">
+                  We couldn't send your verification code.
+                </p>
+                <p className="text-xs text-gray-500 mb-4">{error}</p>
+                {failures.length > 0 && (
+                  <ul className="text-[11px] text-left text-gray-500 bg-gray-50 rounded-lg p-3 mb-4 space-y-1">
+                    {failures.map((f, i) => (
+                      <li key={i}>
+                        <span className="font-semibold capitalize">{f.channel}:</span>{' '}
+                        <span className="text-gray-600">{f.reason || 'unknown error'}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={sendOtp}
+                    className="flex-1 h-10 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                  >
+                    Try again
+                  </button>
+                  <a
+                    href="https://wa.me/916280310103"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 h-10 rounded-xl bg-accent text-white text-sm font-semibold flex items-center justify-center"
+                  >
+                    Contact support
+                  </a>
+                </div>
               </div>
             ) : (
               <>

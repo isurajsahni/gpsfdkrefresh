@@ -35,6 +35,34 @@ const verifyOtpLimiter = rateLimit({
  * 4. Single OTP record in DB — no duplication
  */
 
+// GET /api/whatsapp-otp/diagnose
+// Returns which OTP channels are configured WITHOUT exposing secrets.
+// Useful for debugging "OTP not arriving" reports — you can curl this from
+// a browser/Postman and immediately see which env vars Render is missing.
+router.get('/diagnose', (req, res) => {
+  const status = {
+    email: {
+      configured: Boolean(process.env.RESEND_API_KEY || process.env.EMAIL_PASS),
+      sender: process.env.EMAIL_FROM || '(falls back to onboarding@resend.dev — sandbox only)',
+      hint: process.env.RESEND_API_KEY ? null : 'Set RESEND_API_KEY in Render env',
+    },
+    whatsapp: {
+      configured: Boolean(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID),
+      phoneNumberId: process.env.PHONE_NUMBER_ID ? '✓ set' : '✗ missing',
+      token: process.env.WHATSAPP_TOKEN ? '✓ set' : '✗ missing',
+      template: 'otp_verification (must exist & be APPROVED in Meta Business Manager)',
+      hint: (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID)
+        ? 'Set WHATSAPP_TOKEN and PHONE_NUMBER_ID in Render env'
+        : null,
+    },
+  };
+  res.json({
+    ok: status.email.configured || status.whatsapp.configured,
+    ...status,
+    note: 'Both channels must work AT LEAST ONE to send OTPs. If both are unconfigured, OTPs will fail.',
+  });
+});
+
 // POST /api/whatsapp-otp/send
 router.post('/send', sendOtpLimiter, async (req, res) => {
   try {
@@ -48,6 +76,17 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     // Basic email validation if provided
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // ─── Early config check ──────────────────────────────────────────────
+    const hasWhatsappConfig = Boolean(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID);
+    const hasEmailConfig = Boolean(process.env.RESEND_API_KEY || process.env.EMAIL_PASS);
+    if (!hasWhatsappConfig && !hasEmailConfig) {
+      console.error('🚫 OTP send aborted: NO OTP channels configured on the server.');
+      return res.status(503).json({
+        message: 'OTP service is not configured. Please contact support.',
+        hint: 'Server admin: set WHATSAPP_TOKEN + PHONE_NUMBER_ID, and/or RESEND_API_KEY + EMAIL_FROM',
+      });
     }
 
     // 1. Cooldown Check: Prevent sending OTP if one was sent in the last 60 seconds
@@ -70,58 +109,69 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     // 4. Send OTP via BOTH channels simultaneously
     const sendPromises = [];
 
-    // 4a. WhatsApp Channel
-    const whatsappUrl = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
-    
-    // Support phone number to be passed as {{2}}
-    const supportPhoneNumber = "+916280310103";
-    
-    const whatsappPayload = {
-      messaging_product: "whatsapp",
-      to: phoneNumber,
-      type: "template",
-      template: {
-        name: "otp_verification",
-        language: { code: "en" },
-        components: [
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: generatedOtp },
-              { type: "text", text: supportPhoneNumber }
-            ]
-          },
-          {
-            type: "button",
-            sub_type: "url",
-            index: "0",
-            parameters: [
-              { type: "text", text: generatedOtp }
-            ]
-          }
-        ]
-      }
-    };
+    // 4a. WhatsApp Channel — only when configured. Skipping cleanly when not
+    // configured beats sending undefined as a Bearer token (Meta returns 401).
+    if (hasWhatsappConfig) {
+      const whatsappUrl = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
+      const supportPhoneNumber = "+916280310103";
 
-    sendPromises.push(
-      axios.post(whatsappUrl, whatsappPayload, {
-        headers: {
-          'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
-          'Content-Type': 'application/json'
+      const whatsappPayload = {
+        messaging_product: "whatsapp",
+        to: phoneNumber,
+        type: "template",
+        template: {
+          name: "otp_verification",
+          language: { code: "en" },
+          components: [
+            {
+              type: "body",
+              parameters: [
+                { type: "text", text: generatedOtp },
+                { type: "text", text: supportPhoneNumber }
+              ]
+            },
+            {
+              type: "button",
+              sub_type: "url",
+              index: "0",
+              parameters: [
+                { type: "text", text: generatedOtp }
+              ]
+            }
+          ]
         }
-      })
-      .then(() => {
-        console.log(`✅ WhatsApp OTP sent to ${phoneNumber}`);
-        return { channel: 'whatsapp', success: true };
-      })
-      .catch((err) => {
-        console.error(`❌ WhatsApp OTP failed for ${phoneNumber}:`, err.response?.data?.error?.message || err.message);
-        return { channel: 'whatsapp', success: false };
-      })
-    );
+      };
 
-    // 4b. Email Channel (if email provided)
-    if (email) {
+      sendPromises.push(
+        axios.post(whatsappUrl, whatsappPayload, {
+          headers: {
+            'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        .then(() => {
+          console.log(`✅ WhatsApp OTP sent to ${phoneNumber}`);
+          return { channel: 'whatsapp', success: true };
+        })
+        .catch((err) => {
+          // Surface the real Meta error so the operator can fix it
+          // (typical: "Template name does not exist", "Phone number not in business
+          // account", "Access token expired", or "(#131030) Recipient not in WhatsApp").
+          const reason = err.response?.data?.error?.message
+            || err.response?.data?.error?.error_user_msg
+            || err.message
+            || 'WhatsApp send failed';
+          const code = err.response?.data?.error?.code;
+          console.error(`❌ WhatsApp OTP failed for ${phoneNumber}: ${reason}${code ? ` (code ${code})` : ''}`);
+          return { channel: 'whatsapp', success: false, reason };
+        })
+      );
+    } else {
+      sendPromises.push(Promise.resolve({ channel: 'whatsapp', success: false, reason: 'WhatsApp not configured on server' }));
+    }
+
+    // 4b. Email Channel — only when an email was supplied AND server is configured
+    if (email && hasEmailConfig) {
       sendPromises.push(
         sendEmail({
           email,
@@ -132,10 +182,14 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
           return { channel: 'email', success: true };
         })
         .catch((err) => {
-          console.error(`❌ Email OTP failed for ${email}:`, err.message);
-          return { channel: 'email', success: false };
+          // Typical: "Domain not verified", "Sender address rejected".
+          const reason = err.message || 'Email send failed';
+          console.error(`❌ Email OTP failed for ${email}: ${reason}`);
+          return { channel: 'email', success: false, reason };
         })
       );
+    } else if (email && !hasEmailConfig) {
+      sendPromises.push(Promise.resolve({ channel: 'email', success: false, reason: 'Email not configured on server' }));
     }
 
     // Wait for both channels to finish
@@ -145,18 +199,27 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     const anySuccess = results.some(r => r.success);
 
     if (!anySuccess) {
-      return res.status(500).json({ message: 'Failed to send OTP on all channels. Please try again.' });
+      // Surface the actual reasons so the client can show something useful
+      // instead of a generic "please try again".
+      const reasons = results.map(r => `${r.channel}: ${r.reason || 'unknown'}`).join('; ');
+      console.error(`🚫 All OTP channels failed: ${reasons}`);
+      return res.status(502).json({
+        message: 'We could not send your verification code on any channel. Please contact support.',
+        reasons,
+        channels: results, // includes per-channel reason for client display / debugging
+      });
     }
 
-    // Build response showing which channels succeeded
     const channels = results.filter(r => r.success).map(r => r.channel);
-
     console.log(`📤 OTP sent successfully via: ${channels.join(', ')}`);
 
     res.status(200).json({
       success: true,
       message: `OTP sent via ${channels.join(' & ')}`,
-      channels
+      channels,
+      // Include any partial failure so the UI can hint "we couldn't reach WhatsApp,
+      // please check your email" without misleading the user.
+      failures: results.filter(r => !r.success).map(r => ({ channel: r.channel, reason: r.reason })),
     });
 
   } catch (error) {

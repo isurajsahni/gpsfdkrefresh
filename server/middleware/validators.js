@@ -98,6 +98,18 @@ const publicEndpointLimiter = rateLimit({
   message: { message: 'Too many requests. Please slow down.' },
 });
 
+// Analytics endpoints (pageview, 404-log) fire on every SPA route change.
+// A normal browsing session easily exceeds 10/min, so we use a far higher
+// ceiling here. Pure logging endpoints — abuse risk is low; we just don't
+// want them unbounded.
+const analyticsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many tracking requests.' },
+});
+
 module.exports = {
   validate,
   registerValidation,
@@ -111,4 +123,5 @@ module.exports = {
   otpLimiter,
   guestOrderLimiter,
   publicEndpointLimiter,
+  analyticsLimiter,
 };

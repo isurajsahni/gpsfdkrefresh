@@ -4,12 +4,13 @@ import { HiOutlineTrash, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
+import { calculateShipping } from '../utils/shipping';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
   const { formatPrice, currency } = useCurrency();
 
-  const shippingFee = cartTotal > 0 && cartTotal < 499 ? 50 : 0;
+  const shippingFee = calculateShipping(cartTotal);
   const finalTotal = cartTotal + shippingFee;
 
   if (cartItems.length === 0) {

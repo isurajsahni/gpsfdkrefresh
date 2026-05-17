@@ -16,6 +16,7 @@ import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
 import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Isolated Testing Pages
 import InvoicePreview from './pages/InvoicePreview';
@@ -70,7 +71,13 @@ import MarketingUsageHistory from './pages/marketing/MarketingUsageHistory';
 const getVisitorId = () => {
   let id = localStorage.getItem('gpsfdk_visitor_id');
   if (!id) {
-    id = 'v_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    // Prefer crypto.randomUUID (122 bits of entropy, collision-resistant).
+    // Fallback to the legacy generator for browsers without crypto.randomUUID.
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      id = 'v_' + crypto.randomUUID();
+    } else {
+      id = 'v_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+    }
     localStorage.setItem('gpsfdk_visitor_id', id);
   }
   return id;
@@ -164,6 +171,7 @@ function App() {
   }
 
   return (
+    <ErrorBoundary>
     <HelmetProvider>
       <Router>
         <PageLoader />
@@ -253,6 +261,7 @@ function App() {
       </Router>
       <Analytics />
     </HelmetProvider>
+    </ErrorBoundary>
   );
 }
 

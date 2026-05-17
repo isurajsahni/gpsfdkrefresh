@@ -1,7 +1,19 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const { protect, admin } = require('../middleware/auth');
 const { upload } = require('../middleware/upload');
+
+// Guest-accessible canvas upload — must be rate-limited per IP so an
+// anonymous attacker can't drain Cloudinary credits. 10 uploads / 10 min
+// is plenty for any real shopper customising a canvas; abusers get a 429.
+const canvasUploadLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many uploads. Please wait a few minutes and try again.' },
+});
 
 // Handle single image upload
 router.post('/', protect, admin, upload.single('image'), (req, res) => {
@@ -20,8 +32,9 @@ router.post('/', protect, admin, upload.single('image'), (req, res) => {
   }
 });
 
-// Handle canvas image upload (public)
-router.post('/canvas', upload.single('image'), (req, res) => {
+// Handle canvas image upload (public — guests use this in CustomizeCanvasPage).
+// Rate-limited above to protect Cloudinary quota.
+router.post('/canvas', canvasUploadLimiter, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image provided' });

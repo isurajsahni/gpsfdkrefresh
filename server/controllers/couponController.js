@@ -68,23 +68,38 @@ const validateCoupon = async (req, res) => {
   try {
     const { code, orderTotal } = req.body;
     const userId = req.user ? req.user._id : null;
-    
-    const coupon = await Coupon.findOne({ code: code.toUpperCase() });
 
+    // Input validation — previously `code.toUpperCase()` would throw 500 on
+    // missing or non-string input. Reject early with a clean 400.
+    if (typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({ message: 'Invalid coupon code' });
+    }
+    const normalizedCode = code.trim().toUpperCase();
+    if (normalizedCode.length > 64) {
+      return res.status(400).json({ message: 'Invalid coupon code' });
+    }
+    const total = Number(orderTotal);
+    if (!Number.isFinite(total) || total < 0) {
+      return res.status(400).json({ message: 'Invalid order total' });
+    }
 
+    const coupon = await Coupon.findOne({ code: normalizedCode });
+
+    // Generic message on the "discoverability" failures so attackers can't
+    // distinguish "wrong code" from "expired" from "inactive" (otherwise the
+    // endpoint becomes a code-enumeration oracle).
+    const GENERIC = 'Invalid or expired coupon';
     if (!coupon) {
-      return res.status(404).json({ message: 'Invalid coupon code' });
+      return res.status(404).json({ message: GENERIC });
     }
-
     if (!coupon.isActive) {
-      return res.status(400).json({ message: 'Coupon is no longer active' });
+      return res.status(400).json({ message: GENERIC });
     }
-
     if (coupon.expiryDate && new Date() > new Date(coupon.expiryDate)) {
-      return res.status(400).json({ message: 'Coupon has expired' });
+      return res.status(400).json({ message: GENERIC });
     }
 
-    if (orderTotal < coupon.minOrderValue) {
+    if (total < coupon.minOrderValue) {
       return res.status(400).json({ message: `Minimum order value of ₹${coupon.minOrderValue} required` });
     }
 

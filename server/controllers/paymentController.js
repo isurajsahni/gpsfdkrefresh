@@ -95,6 +95,21 @@ exports.verifyRazorpay = async (req, res, next) => {
       .digest('hex');
     
     if (expectedSign === razorpay_signature) {
+      // 0. IDEMPOTENCY — if this payment has already been recorded as an order
+      // (e.g., the user double-clicked, the network retried, or Razorpay redelivered
+      // a webhook), short-circuit and return the existing order. This prevents
+      // duplicate orders, duplicate Shiprocket shipments, and duplicate emails.
+      const existing = await Order.findOne({ 'paymentResult.id': razorpay_payment_id });
+      if (existing) {
+        return res.json({
+          message: 'Payment already verified',
+          success: true,
+          orderId: existing._id,
+          orderNumber: existing.orderNumber,
+          duplicate: true,
+        });
+      }
+
       // 1. Verify exact price to prevent tampering
       const userId = req.user ? req.user._id : null;
       const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;

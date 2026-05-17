@@ -318,7 +318,7 @@ exports.createOrder = async (req, res, next) => {
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
       if (coupon) {
-        const userUsage = coupon.usageHistory.find(u => u.userId.toString() === req.user._id.toString());
+        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === req.user._id.toString());
         if (userUsage) {
           userUsage.useCount += 1;
         } else {
@@ -445,7 +445,13 @@ exports.getOrders = async (req, res, next) => {
 // GET /api/orders/:id
 exports.getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    // Accept either a Mongo ObjectId OR a human-readable orderNumber (e.g. "GPS-XXX").
+    // The ThankYou page uses orderNumber in the URL because it's nicer for sharing
+    // and doesn't expose the internal _id.
+    const id = req.params.id;
+    const isObjectId = /^[a-fA-F0-9]{24}$/.test(id);
+    const query = isObjectId ? { _id: id } : { orderNumber: id };
+    const order = await Order.findOne(query).populate('user', 'name email');
     if (!order) return res.status(404).json({ message: 'Order not found' });
     const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
     if (!isManagerOrAdmin && order.user?._id?.toString() !== req.user._id.toString()) {

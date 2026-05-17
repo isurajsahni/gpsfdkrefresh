@@ -916,7 +916,14 @@ exports.verifyFirebaseToken = async (req, res, next) => {
     if (!idToken) return res.status(400).json({ message: 'Firebase token required.' });
 
     const axios = require('axios');
-    const apiKey = "AIzaSyB0L41Eycq725nZf5GLMaKr6xZE2WYAqSk"; // User provided
+    // Firebase Web API key — MUST be set in env. Hard-coding bypasses rotation
+    // and disclosure controls. Rotate the previously-committed key in the
+    // Firebase console; do NOT reuse it here.
+    const apiKey = process.env.FIREBASE_WEB_API_KEY;
+    if (!apiKey) {
+      console.error('FIREBASE_WEB_API_KEY env var is not set');
+      return res.status(500).json({ message: 'Authentication service misconfigured' });
+    }
     const response = await axios.post(
       `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
       { idToken }

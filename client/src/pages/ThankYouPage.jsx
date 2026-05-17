@@ -5,10 +5,12 @@ import { HiCheckCircle } from 'react-icons/hi';
 import SEO from '../components/seo/SEO';
 import API from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
+import { useAuth } from '../context/AuthContext';
 
 const ThankYouPage = () => {
     const location = useLocation();
     const { formatPrice } = useCurrency();
+    const { user } = useAuth();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -18,7 +20,9 @@ const ThankYouPage = () => {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        if (!orderRef) return;
+        // Only logged-in users can fetch order details — the endpoint is protected.
+        // Guests still see the order reference + "check your email" message below.
+        if (!orderRef || !user) return;
         let cancelled = false;
         setLoading(true);
         API.get(`/orders/${encodeURIComponent(orderRef)}`)
@@ -29,7 +33,7 @@ const ThankYouPage = () => {
             })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
-    }, [orderRef]);
+    }, [orderRef, user]);
 
     return (
         <div className="min-h-screen bg-primary pt-32 pb-20 flex flex-col items-center justify-center">
@@ -103,12 +107,21 @@ const ThankYouPage = () => {
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            to="/dashboard"
-                            className="w-full sm:w-auto px-8 py-3 border-2 border-gray-200 text-secondary font-bold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors"
-                        >
-                            View Order Details
-                        </Link>
+                        {user ? (
+                            <Link
+                                to="/dashboard"
+                                className="w-full sm:w-auto px-8 py-3 border-2 border-gray-200 text-secondary font-bold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                            >
+                                View Order Details
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/track-order"
+                                className="w-full sm:w-auto px-8 py-3 border-2 border-gray-200 text-secondary font-bold rounded-xl hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                            >
+                                Track Order
+                            </Link>
+                        )}
                         <Link
                             to="/"
                             className="w-full sm:w-auto px-8 py-3 bg-accent text-white font-bold rounded-xl hover:bg-accent/90 transition-colors shadow-lg shadow-accent/30"

@@ -20,18 +20,45 @@ const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  // Pagination + filters
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [search, setSearch] = useState('');
+  const PAGE_SIZE = 50;
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (signal) => {
+    setLoading(true);
     try {
-      const { data } = await API.get('/orders?all=true');
-      setOrders(data);
+      const params = new URLSearchParams({
+        all: 'true',
+        paginate: 'true',
+        page: String(page),
+        limit: String(PAGE_SIZE),
+      });
+      if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+      if (search.trim()) params.set('search', search.trim());
+      const { data } = await API.get(`/orders?${params.toString()}`, { signal });
+      // Defensive: server returns {orders,total,page,...} on paginate=true;
+      // fall back to array if a legacy proxy ever strips the envelope.
+      const list = Array.isArray(data) ? data : (data?.orders || []);
+      setOrders(list);
+      setTotal(Array.isArray(data) ? list.length : (data?.total || 0));
+      setTotalPages(Array.isArray(data) ? 1 : (data?.totalPages || 1));
     } catch (err) {
-      console.error(err);
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') console.error(err);
     }
     setLoading(false);
   };
 
-  useEffect(() => { fetchOrders(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchOrders(controller.signal);
+    return () => controller.abort();
+    // Re-fetch on page/filter/search change (search is debounced by user inertia).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, statusFilter, search]);
 
   const updateStatus = async (id, status) => {
     try {
@@ -80,11 +107,33 @@ const AdminOrders = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-heading font-bold text-secondary mb-8">Orders</h1>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <h1 className="text-2xl font-heading font-bold text-secondary">Orders {total > 0 && <span className="text-sm font-normal text-gray-500 ml-2">({total} total)</span>}</h1>
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            placeholder="Search order #, email, phone…"
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm w-64 max-w-full focus:outline-none focus:border-accent"
+          />
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-accent"
+          >
+            <option value="all">All statuses</option>
+            {['payment_pending', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
+              <option key={s} value={s}>{s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+            ))}
+          </select>
+        </div>
+      </div>
       {loading ? (
         <div className="flex justify-center py-20"><div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" /></div>
       ) : orders.length === 0 ? (
-        <p className="text-gray-500 text-center py-20">No orders yet</p>
+        <p className="text-gray-500 text-center py-20">No orders match the current filters.</p>
       ) : (
         <div className="space-y-4">
           {orders.map((order, i) => {
@@ -292,6 +341,25 @@ const AdminOrders = () => {
               </motion.div>
             );
           })}
+        </div>
+      )}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-8">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            ← Prev
+          </button>
+          <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+          >
+            Next →
+          </button>
         </div>
       )}
     </div>

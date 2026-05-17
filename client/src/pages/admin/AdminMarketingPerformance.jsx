@@ -9,16 +9,21 @@ const AdminMarketingPerformance = () => {
   const [sortBy, setSortBy] = useState('revenue');
 
   useEffect(() => {
-    const fetch = async () => {
+    const controller = new AbortController();
+    const fetchData = async () => {
       try {
-        const { data } = await API.get('/marketing/admin/performance');
+        const { data } = await API.get('/marketing/admin/performance', { signal: controller.signal });
         setPerformance(data.performance || []);
       } catch (err) {
-        console.error('Failed to load performance:', err);
+        // Ignore cancellations — they happen on every unmount and re-render.
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          console.error('Failed to load performance:', err);
+        }
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
+    return () => controller.abort();
   }, []);
 
   const sorted = [...performance].sort((a, b) => {

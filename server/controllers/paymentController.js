@@ -180,6 +180,13 @@ exports.verifyRazorpay = async (req, res, next) => {
         }
       }
 
+      // Decrement stock atomically now that payment is captured.
+      try {
+        await orderController.decrementStockForOrder(newOrder);
+      } catch (stockErr) {
+        console.error('Stock Decrement Error (Silently handled):', stockErr);
+      }
+
       // Trigger notifications now that it's paid
       try {
         await orderController.triggerNewOrderNotifications(newOrder);
@@ -187,7 +194,7 @@ exports.verifyRazorpay = async (req, res, next) => {
         console.error('Notification Error (Silently handled):', notifErr);
       }
 
-      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id });
+      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id, orderNumber: newOrder.orderNumber });
     } else {
       res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }

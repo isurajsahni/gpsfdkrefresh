@@ -11,15 +11,24 @@ const AdminCategories = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '' });
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (signal) => {
     try {
-      const { data } = await API.get('/categories');
+      const { data } = await API.get('/categories', signal ? { signal } : undefined);
       setCategories(data);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // Ignore cancellations — they happen on every unmount and re-render.
+      if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+        console.error(err);
+      }
+    }
     setLoading(false);
   };
 
-  useEffect(() => { fetchCategories(); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchCategories(controller.signal);
+    return () => controller.abort();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

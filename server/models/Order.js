@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
   product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  // Pointer to the exact variation sub-doc — used for atomic stock movement
+  // on order confirmation and on cancellation. Optional so legacy orders
+  // (created before this field existed) still load.
+  variationId: { type: mongoose.Schema.Types.ObjectId },
   name: String,
   image: String,
   variation: {
@@ -73,12 +77,34 @@ const orderSchema = new mongoose.Schema({
   deliveredAt: Date,
   notes: { type: String, default: '' },
   trackingEmailSent: { type: Boolean, default: false },
+  // Idempotency flags for stock movements — never decrement or restore twice
+  // for the same order even if a webhook retries or admin double-clicks status.
+  stockDecremented: { type: Boolean, default: false },
+  stockRestored: { type: Boolean, default: false },
 }, { timestamps: true });
 
 orderSchema.pre('save', function() {
   if (!this.orderNumber) {
-    this.orderNumber = 'GPS-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase();
+    // Use crypto for stronger entropy (was Math.random — only 3 base-36 chars
+    // of randomness, prone to E11000 collisions under burst load on a sale day).
+    const crypto = require('crypto');
+    this.orderNumber = 'GPS-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(3).toString('hex').toUpperCase();
   }
 });
+
+// ─── Indexes ───
+// User dashboard: list a user's orders, newest first.
+orderSchema.index({ user: 1, createdAt: -1 });
+// Admin filters / status counts.
+orderSchema.index({ status: 1 });
+// Admin / customer tracking lookup by orderNumber.
+orderSchema.index({ orderNumber: 1 });
+// Payment-idempotency check (verifyRazorpay deduplicates by paymentResult.id).
+orderSchema.index({ 'paymentResult.id': 1 });
+// Shiprocket webhook lookups by AWB / shiprocket id.
+orderSchema.index({ awb: 1 });
+orderSchema.index({ shiprocketOrderId: 1 });
+// Guest dashboard / abandoned-cart matching.
+orderSchema.index({ guestEmail: 1 });
 
 module.exports = mongoose.model('Order', orderSchema);

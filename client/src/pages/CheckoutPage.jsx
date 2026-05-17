@@ -48,6 +48,9 @@ const CheckoutPage = () => {
   const [address, setAddress] = useState({
     fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India'
   });
+  // Guest checkout email. Required when no user is logged in so we can send
+  // order confirmation + tracking. Auto-filled from user.email if available.
+  const [guestEmail, setGuestEmail] = useState(user?.email || '');
   const [addressErrors, setAddressErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
@@ -312,6 +315,16 @@ const CheckoutPage = () => {
     setLoading(true);
     const shippingAddress = getSelectedAddress();
     try {
+      // Guest checkout requires an email for order confirmation/tracking.
+      if (!user) {
+        const trimmedEmail = (guestEmail || '').trim();
+        if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+          toast.error('Please enter a valid email address');
+          setLoading(false);
+          return;
+        }
+      }
+
       const orderData = {
         items: cartItems.map(item => ({
           product: item.productId,
@@ -332,6 +345,8 @@ const CheckoutPage = () => {
         discountPrice: appliedDiscount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         totalPrice: finalTotal,
+        // Guest contact details — server only reads these when no auth token is sent.
+        ...(user ? {} : { guestEmail: guestEmail.trim(), guestPhone: shippingAddress.phone }),
       };
 
       // CASE 1: Zero-Value Order (Fully Paid by Coupon)
@@ -427,7 +442,7 @@ const CheckoutPage = () => {
                 setLoading(false);
               }
             },
-            prefill: { name: shippingAddress.fullName, email: user?.email, contact: shippingAddress.phone },
+            prefill: { name: shippingAddress.fullName, email: user?.email || guestEmail, contact: shippingAddress.phone },
             theme: { color: '#0B5D3B' },
             modal: {
               ondismiss: function() {
@@ -594,6 +609,24 @@ const CheckoutPage = () => {
                         />
                         {addressErrors.fullName && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.fullName}</p>}
                       </div>
+
+                      {/* Guest email — only shown for unauthenticated buyers */}
+                      {!user && (
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-semibold text-secondary mb-1">Email *</label>
+                          <input
+                            type="email"
+                            value={guestEmail}
+                            onChange={(e) => setGuestEmail(e.target.value)}
+                            className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
+                            placeholder="you@example.com — for order confirmation & tracking"
+                            required
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Already a customer? <Link to="/login" className="text-accent font-semibold">Log in</Link> for faster checkout.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Phone */}
                       <div>

@@ -10,23 +10,27 @@ const AdminDashboard = () => {
   const [siteStats, setSiteStats] = useState({ today: 0, past7Days: 0, total: 0 });
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchStats = async () => {
       try {
-        const [orderStats, productData, userData, analyticsData] = await Promise.all([
-          API.get('/orders/stats').catch(() => ({ data: { totalOrders: 0, totalRevenue: 0, pendingOrders: 0, deliveredOrders: 0 } })),
-          API.get('/products?limit=1').catch(() => ({ data: { total: 0 } })),
-          API.get('/auth/users').catch(() => ({ data: [] })),
-          API.get('/analytics/stats').catch(() => ({ data: { stats: { today: 0, past7Days: 0, total: 0 } } }))
+        const [orderStats, productData, userCount, analyticsData] = await Promise.all([
+          API.get('/orders/stats', { signal: controller.signal }).catch(() => ({ data: { totalOrders: 0, totalRevenue: 0, pendingOrders: 0, deliveredOrders: 0 } })),
+          API.get('/products?limit=1', { signal: controller.signal }).catch(() => ({ data: { total: 0 } })),
+          // Lightweight count endpoint — was previously fetching every user row
+          // just to compute `.length`, which became ~50 MB JSON at scale.
+          API.get('/auth/users/count', { signal: controller.signal }).catch(() => ({ data: { count: 0 } })),
+          API.get('/analytics/stats', { signal: controller.signal }).catch(() => ({ data: { stats: { today: 0, past7Days: 0, total: 0 } } })),
         ]);
         setStats(orderStats.data);
         setProducts(productData.data.total || 0);
-        setUsers(userData.data?.length || 0);
+        setUsers(userCount.data?.count || 0);
         setSiteStats(analyticsData.data?.stats || { today: 0, past7Days: 0, total: 0 });
       } catch (err) {
-        console.error(err);
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') console.error(err);
       }
     };
     fetchStats();
+    return () => controller.abort();
   }, []);
 
   const cards = [

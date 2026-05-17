@@ -7,14 +7,21 @@ const AdminLeads = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchLeads = async () => {
       try {
-        const { data } = await API.get('/leads');
+        const { data } = await API.get('/leads', { signal: controller.signal });
         setLeads(data);
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        // Ignore cancellations — they happen on every unmount and re-render.
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          console.error(err);
+        }
+      }
       setLoading(false);
     };
     fetchLeads();
+    return () => controller.abort();
   }, []);
 
   return (

@@ -9,19 +9,25 @@ const AdminAbandonedCarts = () => {
   const [carts, setCarts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCarts = async () => {
-    try {
-      const { data } = await API.get('/abandoned-carts');
-      setCarts(data);
-    } catch (err) {
-      toast.error('Failed to load abandoned carts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const controller = new AbortController();
+    const fetchCarts = async () => {
+      try {
+        const { data } = await API.get('/abandoned-carts', { signal: controller.signal });
+        setCarts(data);
+      } catch (err) {
+        // Ignore cancellations — they happen on every unmount and re-render.
+        if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
+          toast.error('Failed to load abandoned carts');
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
     fetchCarts();
+    return () => controller.abort();
   }, []);
 
   const handleDelete = async (id) => {

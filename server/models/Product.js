@@ -57,8 +57,18 @@ productSchema.pre('save', async function () {
   }
 });
 
+// ─── Indexes ───
+// Most catalogue queries filter by isActive + sort by createdAt; this is the
+// hottest path (`getProducts`), so a compound index covers both.
+productSchema.index({ isActive: 1, createdAt: -1 });
 productSchema.index({ category: 1 });
+productSchema.index({ subCategory: 1 });
 productSchema.index({ featured: 1 });
+productSchema.index({ isMasonry: 1 });
+productSchema.index({ basePrice: 1 });
 productSchema.index({ tags: 1 });
+// Text index for name+description search (currently uses regex collection scans).
+// Switch the controller to `$text` once content is verified.
+productSchema.index({ name: 'text', description: 'text' });
 
 module.exports = mongoose.model('Product', productSchema);

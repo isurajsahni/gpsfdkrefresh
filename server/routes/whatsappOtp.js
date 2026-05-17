@@ -48,9 +48,16 @@ router.get('/diagnose', (req, res) => {
     },
     whatsapp: {
       configured: Boolean(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID),
-      phoneNumberId: process.env.PHONE_NUMBER_ID ? '✓ set' : '✗ missing',
-      token: process.env.WHATSAPP_TOKEN ? '✓ set' : '✗ missing',
-      template: 'otp_verification (must exist & be APPROVED in Meta Business Manager)',
+      phoneNumberId: process.env.PHONE_NUMBER_ID
+        ? `✓ set (…${String(process.env.PHONE_NUMBER_ID).slice(-4)})`
+        : '✗ missing',
+      tokenLength: process.env.WHATSAPP_TOKEN
+        ? `✓ set (${String(process.env.WHATSAPP_TOKEN).length} chars)`
+        : '✗ missing',
+      apiVersion: process.env.WHATSAPP_API_VERSION || 'v22.0',
+      templateName: process.env.WHATSAPP_OTP_TEMPLATE || 'otp_verification',
+      templateLang: process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en',
+      templateNote: 'Template must exist & be APPROVED in Meta Business Manager. Override the name / language via WHATSAPP_OTP_TEMPLATE / WHATSAPP_OTP_TEMPLATE_LANG.',
       hint: (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID)
         ? 'Set WHATSAPP_TOKEN and PHONE_NUMBER_ID in Render env'
         : null,
@@ -112,16 +119,23 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     // 4a. WhatsApp Channel — only when configured. Skipping cleanly when not
     // configured beats sending undefined as a Bearer token (Meta returns 401).
     if (hasWhatsappConfig) {
-      const whatsappUrl = `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`;
-      const supportPhoneNumber = "+916280310103";
+      // Graph API version, template name, and language are all overridable via env
+      // so you can swap them without a redeploy when Meta deprecates v19, or when
+      // you create a differently-named template (e.g. gpsfdk_otp / en_US).
+      const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
+      const templateName = process.env.WHATSAPP_OTP_TEMPLATE || 'otp_verification';
+      const templateLang = process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en';
+      const supportPhoneNumber = process.env.SUPPORT_PHONE_NUMBER || '+916280310103';
+
+      const whatsappUrl = `https://graph.facebook.com/${apiVersion}/${process.env.PHONE_NUMBER_ID}/messages`;
 
       const whatsappPayload = {
         messaging_product: "whatsapp",
         to: phoneNumber,
         type: "template",
         template: {
-          name: "otp_verification",
-          language: { code: "en" },
+          name: templateName,
+          language: { code: templateLang },
           components: [
             {
               type: "body",

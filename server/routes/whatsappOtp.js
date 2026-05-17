@@ -1,9 +1,29 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const axios = require('axios');
 const Otp = require('../models/Otp');
 const sendEmail = require('../utils/sendEmail');
 const { getAuthEmail } = require('../utils/emailTemplates');
+
+// Aggressive per-IP limits — OTP send/verify is a common abuse vector
+// (SMS pumping on WhatsApp template costs, spamming inboxes). The 60-second
+// per-phone cooldown is enforced inside /send too, but that uses the phone
+// number; per-IP catches the case where attackers rotate numbers.
+const sendOtpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many OTP requests from this network. Try again later.' },
+});
+const verifyOtpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many verification attempts. Try again later.' },
+});
 
 /**
  * WhatsApp + Email Dual OTP System
@@ -16,7 +36,7 @@ const { getAuthEmail } = require('../utils/emailTemplates');
  */
 
 // POST /api/whatsapp-otp/send
-router.post('/send', async (req, res) => {
+router.post('/send', sendOtpLimiter, async (req, res) => {
   try {
     const { phoneNumber, email } = req.body;
 
@@ -149,7 +169,7 @@ router.post('/send', async (req, res) => {
 });
 
 // POST /api/whatsapp-otp/verify
-router.post('/verify', async (req, res) => {
+router.post('/verify', verifyOtpLimiter, async (req, res) => {
   try {
     const { phoneNumber, otp } = req.body;
 

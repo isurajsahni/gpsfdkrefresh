@@ -10,6 +10,7 @@ import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
+import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -51,6 +52,11 @@ const CheckoutPage = () => {
   // Guest checkout email. Required when no user is logged in so we can send
   // order confirmation + tracking. Auto-filled from user.email if available.
   const [guestEmail, setGuestEmail] = useState(user?.email || '');
+
+  // OTP verification gate. Logged-in users are already verified by their account;
+  // guests must confirm phone+email with a code so we don't get fake orders.
+  const [otpVerified, setOtpVerified] = useState(Boolean(user));
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [addressErrors, setAddressErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
 
@@ -118,9 +124,15 @@ const CheckoutPage = () => {
     };
 
     const fetchAddresses = async () => {
+      // Guests never have a saved-address book — skip the protected /auth/me
+      // call entirely so we don't 401. Just open the new-address form.
+      if (!user) {
+        setShowNewForm(true);
+        return;
+      }
       // Render immediately from the cached user — never make the user stare at
       // a blank page if the network call to refresh addresses is slow or fails.
-      if (user?.addresses?.length) {
+      if (user.addresses?.length) {
         applyAddresses(user.addresses);
       }
       try {
@@ -129,11 +141,12 @@ const CheckoutPage = () => {
         const { data } = await API.get('/auth/me', { silent: true });
         applyAddresses(data.addresses || []);
       } catch {
-        if (!user?.addresses?.length) setShowNewForm(true);
+        if (!user.addresses?.length) setShowNewForm(true);
       }
     };
     fetchAddresses();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const getSelectedAddress = useCallback(() => {
     if (showNewForm) return address;
@@ -184,6 +197,16 @@ const CheckoutPage = () => {
       ...address,
     };
 
+    // GUEST CHECKOUT: no account = no saved-address book. Just keep the
+    // address in local state — it'll be sent as `shippingAddress` on the
+    // order payload. Calling /auth/addresses here would hit the protected
+    // route and 401 with "Not authorized, no token".
+    if (!user) {
+      setShowNewForm(false);
+      setIsEditing(null);
+      return true;
+    }
+
     setLoading(true);
     try {
       let updatedAddresses;
@@ -194,16 +217,14 @@ const CheckoutPage = () => {
         const { data } = await API.post('/auth/addresses', payloadAddress);
         updatedAddresses = data;
       }
-      
+
       setSavedAddresses(updatedAddresses);
       const newAddr = isEditing ? updatedAddresses.find(a => a._id === isEditing) : updatedAddresses[updatedAddresses.length - 1];
       setSelectedAddressId(newAddr?._id || updatedAddresses[0]?._id);
       setShowNewForm(false);
       setIsEditing(null);
 
-      if (user) {
-        updateUser({ ...user, addresses: updatedAddresses });
-      }
+      updateUser({ ...user, addresses: updatedAddresses });
       toast.success(isEditing ? 'Address updated!' : 'Address saved!');
       setLoading(false);
       return true;
@@ -239,7 +260,7 @@ const CheckoutPage = () => {
       const saved = await handleSaveNewAddress();
       if (!saved) return;
     }
-    
+
     // Final check for selected address
     const currentAddress = getSelectedAddress();
     const finalErrors = validateAddress(currentAddress);
@@ -247,6 +268,23 @@ const CheckoutPage = () => {
       toast.error('The selected address is incomplete or invalid. Please edit it.');
       setShowNewForm(true);
       setAddressErrors(finalErrors);
+      return;
+    }
+
+    // Guest checkout — require OTP verification of the contact details to
+    // prevent fake/spam orders. Logged-in users skip this (account = verified).
+    if (!user && !otpVerified) {
+      // Need an email AND a phone to send the dual-channel code.
+      const trimmedEmail = (guestEmail || '').trim();
+      if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+      if (!currentAddress.phone || currentAddress.phone.replace(/\D/g, '').length < 10) {
+        toast.error('Please enter a valid phone number');
+        return;
+      }
+      setOtpModalOpen(true);
       return;
     }
 
@@ -733,7 +771,14 @@ const CheckoutPage = () => {
           {/* Step 2: Payment */}
           {step === 2 && (
             <div>
-              <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Payment Method</h2>
+              <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
+                <h2 className="text-xl font-heading font-semibold text-secondary">Payment Method</h2>
+                {!user && otpVerified && (
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Contact verified
+                  </span>
+                )}
+              </div>
               <div className="space-y-3">
                 {[
                   { value: 'razorpay', label: 'Razorpay / Online Payment', icon: '💳', desc: 'Secure payment via UPI, Cards, Net Banking' },
@@ -868,6 +913,18 @@ const CheckoutPage = () => {
         </motion.div>
       </div>
 
+      {/* OTP verification modal — only used for guest checkout. */}
+      <CheckoutOtpModal
+        isOpen={otpModalOpen}
+        onClose={() => setOtpModalOpen(false)}
+        onVerified={() => {
+          setOtpVerified(true);
+          setOtpModalOpen(false);
+          setStep(2);
+        }}
+        phone={getSelectedAddress()?.phone}
+        email={guestEmail}
+      />
 
     </div>
   );

@@ -5,6 +5,43 @@ const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
 const shiprocket = require('../utils/shiprocket');
+const metaCapi = require('../utils/metaCapi');
+
+// Helper: send Meta CAPI Purchase event. Fire-and-forget so it never blocks
+// the order response. The browser pixel fires the same event with the same
+// event_id; Meta dedupes them.
+const sendMetaPurchaseEvent = (req, order, prices, eventId) => {
+  try {
+    const ctx = metaCapi.extractClientContext(req);
+    const shipping = order.shippingAddress || {};
+    metaCapi.sendEvent({
+      eventName: 'Purchase',
+      eventId,
+      eventSourceUrl: req.headers.referer || req.headers.referrer,
+      userData: {
+        email: order.guestEmail || req.user?.email,
+        phone: order.guestPhone || shipping.phone || req.user?.phone,
+        firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
+        lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
+        city: shipping.city,
+        state: shipping.state,
+        zip: shipping.pincode,
+        country: shipping.country || 'India',
+        externalId: (req.user?._id || order._id).toString(),
+        ...ctx,
+      },
+      customData: {
+        value: prices.totalPrice,
+        currency: 'INR',
+        num_items: prices.verifiedItems.length,
+        content_ids: prices.verifiedItems.map((i) => String(i.product)),
+        content_type: 'product',
+        contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
+        order_id: order.orderNumber,
+      },
+    }).catch(() => {});
+  } catch (_) { /* never block the order */ }
+};
 
 // Helper: get customer email and name from order
 const getCustomerInfo = async (order) => {
@@ -358,7 +395,7 @@ exports.restoreStockForOrder = restoreStockForOrder;
 // POST /api/orders (logged-in users)
 exports.createOrder = async (req, res, next) => {
   try {
-    const { items, shippingAddress, billingAddress, paymentMethod, couponCode } = req.body;
+    const { items, shippingAddress, billingAddress, paymentMethod, couponCode, eventIdPurchase } = req.body;
     if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
 
     // Server-side price calculation — never trust client prices
@@ -413,6 +450,7 @@ exports.createOrder = async (req, res, next) => {
     if (finalPaymentMethod === 'free') {
       await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
+      sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);
     }
 
 
@@ -428,7 +466,7 @@ exports.createOrder = async (req, res, next) => {
 // POST /api/orders/guest (guest checkout — no login required)
 exports.createGuestOrder = async (req, res, next) => {
   try {
-    const { items, shippingAddress, billingAddress, paymentMethod, couponCode, guestEmail, guestPhone } = req.body;
+    const { items, shippingAddress, billingAddress, paymentMethod, couponCode, guestEmail, guestPhone, eventIdPurchase } = req.body;
     if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
     if (!guestEmail && !guestPhone) return res.status(400).json({ message: 'Please provide email or phone number' });
 
@@ -490,6 +528,7 @@ exports.createGuestOrder = async (req, res, next) => {
     if (finalPaymentMethod === 'free') {
       await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
+      sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);
     }
 
 

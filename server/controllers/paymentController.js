@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 const orderController = require('./orderController');
 const { detectCountry, getCurrency, convertPrice, roundClean, CURRENCY_CONFIG, INR_EXCHANGE_RATES } = require('../utils/geoPricing');
+const metaCapi = require('../utils/metaCapi');
 
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
@@ -64,10 +65,42 @@ exports.createRazorpayOrder = async (req, res, next) => {
     };
 
     const order = await instance.orders.create(options);
-    
+
     if (!order) {
       return res.status(500).json({ message: 'Failed to create Razorpay order' });
     }
+
+    // Server-side InitiateCheckout — dedupes with the browser pixel via eventId.
+    // Fire-and-forget: never block the order on Meta's API.
+    try {
+      const ctx = metaCapi.extractClientContext(req);
+      const shipping = orderData.shippingAddress || {};
+      metaCapi.sendEvent({
+        eventName: 'InitiateCheckout',
+        eventId: orderData.eventIdInitiateCheckout,
+        eventSourceUrl: req.headers.referer || req.headers.referrer,
+        userData: {
+          email: orderData.guestEmail || req.user?.email,
+          phone: orderData.guestPhone || shipping.phone || req.user?.phone,
+          firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
+          lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
+          city: shipping.city,
+          state: shipping.state,
+          zip: shipping.pincode,
+          country: shipping.country || 'India',
+          externalId: req.user?._id?.toString(),
+          ...ctx,
+        },
+        customData: {
+          value: prices.totalPrice,
+          currency: 'INR',
+          num_items: orderData.items.length,
+          content_ids: orderData.items.map((i) => i.product),
+          content_type: 'product',
+          contents: orderData.items.map((i) => ({ id: i.product, quantity: i.quantity, item_price: i.price })),
+        },
+      }).catch(() => {});
+    } catch (_) { /* never block order creation */ }
 
     res.json(order);
   } catch (error) {
@@ -193,6 +226,41 @@ exports.verifyRazorpay = async (req, res, next) => {
       } catch (notifErr) {
         console.error('Notification Error (Silently handled):', notifErr);
       }
+
+      // Meta Conversions API — server-side Purchase event. This is the
+      // authoritative signal: it fires only after the DB write succeeds, so
+      // Meta's reported revenue stays in sync with real orders. The browser
+      // pixel fires the same event with the same event_id; Meta dedupes.
+      try {
+        const ctx = metaCapi.extractClientContext(req);
+        const shipping = orderData.shippingAddress || {};
+        metaCapi.sendEvent({
+          eventName: 'Purchase',
+          eventId: orderData.eventIdPurchase,
+          eventSourceUrl: req.headers.referer || req.headers.referrer,
+          userData: {
+            email: newOrder.guestEmail || req.user?.email,
+            phone: newOrder.guestPhone || shipping.phone || req.user?.phone,
+            firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
+            lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
+            city: shipping.city,
+            state: shipping.state,
+            zip: shipping.pincode,
+            country: shipping.country || 'India',
+            externalId: (req.user?._id || newOrder._id).toString(),
+            ...ctx,
+          },
+          customData: {
+            value: prices.totalPrice,
+            currency: 'INR',
+            num_items: prices.verifiedItems.length,
+            content_ids: prices.verifiedItems.map((i) => String(i.product)),
+            content_type: 'product',
+            contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
+            order_id: newOrder.orderNumber,
+          },
+        }).catch(() => {});
+      } catch (_) { /* never block the order response */ }
 
       res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id, orderNumber: newOrder.orderNumber });
     } else {

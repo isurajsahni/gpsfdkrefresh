@@ -21,6 +21,7 @@ export const CartProvider = ({ children }) => {
         content_name: product.name,
         content_ids: [product._id],
         content_type: 'product',
+        contents: [{ id: product._id, quantity, item_price: variation.price }],
         value: variation.price * quantity,
         currency: 'INR',
       });

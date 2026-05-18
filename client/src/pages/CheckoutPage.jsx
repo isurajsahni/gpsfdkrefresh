@@ -11,6 +11,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
+import { newEventId, getFbCookies } from '../utils/metaPixel';
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -99,17 +100,23 @@ const CheckoutPage = () => {
     }
   };
 
+  // Event IDs shared with the server so Meta can dedupe browser pixel + CAPI.
+  // Generated once per checkout session — the SAME id flows to both fbq() and
+  // the server, which uses it when posting to Meta's Conversions API.
+  const [eventIdInitiateCheckout] = useState(() => newEventId());
+
   // Fetch saved addresses on mount + fire InitiateCheckout pixel event
   useEffect(() => {
-    // Meta Pixel: InitiateCheckout
+    // Meta Pixel: InitiateCheckout (event_id used to dedupe with server CAPI)
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'InitiateCheckout', {
         content_type: 'product',
-        contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+        content_ids: cartItems.map(item => item.productId),
+        contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
         num_items: cartItems.length,
         value: cartTotal,
         currency: 'INR',
-      });
+      }, { eventID: eventIdInitiateCheckout });
     }
 
     const applyAddresses = (addrs) => {
@@ -363,6 +370,12 @@ const CheckoutPage = () => {
         }
       }
 
+      // Generate one Purchase event_id for this attempt. Sent to BOTH the
+      // server (used in CAPI) and the browser pixel after success — Meta
+      // dedupes the pair so the conversion is counted once.
+      const eventIdPurchase = newEventId();
+      const { fbp, fbc } = getFbCookies();
+
       const orderData = {
         items: cartItems.map(item => ({
           product: item.productId,
@@ -383,6 +396,11 @@ const CheckoutPage = () => {
         discountPrice: appliedDiscount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
         totalPrice: finalTotal,
+        // Meta CAPI: event IDs for dedup + first-party Meta identifiers.
+        eventIdPurchase,
+        eventIdInitiateCheckout,
+        fbp,
+        fbc,
         // Guest contact details — server only reads these when no auth token is sent.
         ...(user ? {} : { guestEmail: guestEmail.trim(), guestPhone: shippingAddress.phone }),
       };
@@ -393,15 +411,17 @@ const CheckoutPage = () => {
         const { data: zeroOrder } = await API.post(endpoint, orderData);
 
         API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
-        // Meta Pixel: Purchase conversion
+        // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
         if (typeof window.fbq === 'function') {
           window.fbq('track', 'Purchase', {
             content_type: 'product',
-            contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+            content_ids: cartItems.map(item => item.productId),
+            contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
             num_items: cartItems.length,
             value: finalTotal,
             currency: 'INR',
-          });
+            order_id: zeroOrder?.orderNumber || zeroOrder?._id,
+          }, { eventID: eventIdPurchase });
         }
         setOrderPlaced(true); // prevents cart-empty redirect race after clearCart
         clearCart();
@@ -451,15 +471,17 @@ const CheckoutPage = () => {
                 // Verified successfully — drop the recovery marker.
                 try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) {}
                 API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
-                // Meta Pixel: Purchase conversion
+                // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
                 if (typeof window.fbq === 'function') {
                   window.fbq('track', 'Purchase', {
                     content_type: 'product',
-                    contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity })),
+                    content_ids: cartItems.map(item => item.productId),
+                    contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
                     num_items: cartItems.length,
                     value: finalTotal,
                     currency: 'INR',
-                  });
+                    order_id: verifiedOrder?.orderNumber || verifiedOrder?._id,
+                  }, { eventID: eventIdPurchase });
                 }
                 setOrderPlaced(true); // prevents cart-empty redirect race
                 clearCart();

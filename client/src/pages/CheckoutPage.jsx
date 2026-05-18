@@ -432,15 +432,6 @@ const CheckoutPage = () => {
       // CASE 2: Razorpay
       else if (paymentMethod === 'razorpay') {
         try {
-          // Fail fast with a clear message if the client build is missing the
-          // public Razorpay key (otherwise the SDK throws an opaque "no key" error).
-          const razorpayPublicKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
-          if (!razorpayPublicKey) {
-            toast.error('Payment not configured. Please contact support.');
-            setLoading(false);
-            return;
-          }
-
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {
             toast.error('Razorpay SDK failed to load. Please check your connection.');
@@ -449,6 +440,17 @@ const CheckoutPage = () => {
           }
 
           const { data: razorpayOrder } = await API.post('/create-order', { orderData });
+
+          // Prefer the key from the server response so we don't depend on a
+          // VITE_RAZORPAY_KEY_ID baked into the client build. Fall back to the
+          // build-time env if the server didn't include it (older deploys).
+          const razorpayPublicKey = razorpayOrder.key || import.meta.env.VITE_RAZORPAY_KEY_ID;
+          if (!razorpayPublicKey) {
+            toast.error('Payment not configured. Please contact support.');
+            setLoading(false);
+            return;
+          }
+
           const options = {
             key: razorpayPublicKey,
             amount: razorpayOrder.amount,

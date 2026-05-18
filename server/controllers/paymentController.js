@@ -128,7 +128,11 @@ exports.createRazorpayOrder = async (req, res, next) => {
       }).catch(() => {});
     } catch (_) { /* never block order creation */ }
 
-    res.json(order);
+    // Return the Razorpay PUBLIC key alongside the order so the client can
+    // open the checkout modal without needing VITE_RAZORPAY_KEY_ID in its
+    // own build env. The key_id is a public identifier — safe to expose to
+    // the browser (only the secret must stay server-side).
+    res.json({ ...order, key: keyId });
   } catch (error) {
     if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message });

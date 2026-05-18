@@ -1,6 +1,10 @@
 const router = require('express').Router();
-const { createRazorpayOrder, verifyRazorpay, createStripeSession } = require('../controllers/paymentController');
+const { createRazorpayOrder, verifyRazorpay, createStripeSession, getRazorpayConfig } = require('../controllers/paymentController');
 const { protect, optionalAuth } = require('../middleware/auth');
+
+// Returns the public Razorpay key ID to the frontend at runtime.
+// Eliminates the need for VITE_RAZORPAY_KEY_ID in Vercel build env.
+router.get('/payment-config', getRazorpayConfig);
 
 // Legacy routes (maintained for backwards compatibility)
 router.post('/payments/razorpay', optionalAuth, createRazorpayOrder);

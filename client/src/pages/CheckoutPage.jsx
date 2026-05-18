@@ -432,6 +432,20 @@ const CheckoutPage = () => {
       // CASE 2: Razorpay
       else if (paymentMethod === 'razorpay') {
         try {
+          // Fetch the public key from the server at runtime — avoids baking
+          // VITE_RAZORPAY_KEY_ID into the Vercel build (which silently breaks
+          // when the env var is absent from Vercel's build settings).
+          let razorpayKeyId;
+          try {
+            const { data: paymentConfig } = await API.get('/payment-config');
+            razorpayKeyId = paymentConfig.keyId;
+          } catch (configErr) {
+            const msg = configErr?.response?.data?.message || 'Payment gateway is not configured. Please contact support.';
+            toast.error(msg);
+            setLoading(false);
+            return;
+          }
+
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {
             toast.error('Razorpay SDK failed to load. Please check your connection.');
@@ -441,18 +455,8 @@ const CheckoutPage = () => {
 
           const { data: razorpayOrder } = await API.post('/create-order', { orderData });
 
-          // Prefer the key from the server response so we don't depend on a
-          // VITE_RAZORPAY_KEY_ID baked into the client build. Fall back to the
-          // build-time env if the server didn't include it (older deploys).
-          const razorpayPublicKey = razorpayOrder.key || import.meta.env.VITE_RAZORPAY_KEY_ID;
-          if (!razorpayPublicKey) {
-            toast.error('Payment not configured. Please contact support.');
-            setLoading(false);
-            return;
-          }
-
           const options = {
-            key: razorpayPublicKey,
+            key: razorpayKeyId || razorpayOrder.key,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             name: 'GPSFDK',
@@ -528,20 +532,10 @@ const CheckoutPage = () => {
           // either handler() or modal.ondismiss() fires (both call setLoading(false)).
           return;
         } catch (err) {
-          // Surface the actual cause instead of the generic "init failed" — the
-          // server returns specific, actionable messages (e.g. "Insufficient
-          // stock", "Invalid variation", "Coupon usage limit reached",
-          // "Payment gateway not configured"). Hiding those left customers
-          // stuck with no idea what to fix and us with no diagnostic signal.
-          console.error('Razorpay Error:', err?.response?.status, err?.response?.data || err);
+          console.error('[Razorpay] init error:', err?.response?.status, err?.response?.data || err?.message || err);
           const serverMsg = err?.response?.data?.message;
-          toast.error(
-            serverMsg
-              ? `Payment failed: ${serverMsg}`
-              : 'Payment initialization failed. Please check your connection and try again.'
-          );
+          toast.error(serverMsg || 'Payment initialization failed. Please try again.');
           setLoading(false);
-          return;
         }
       }
     } catch (err) {

@@ -6,6 +6,22 @@ const orderController = require('./orderController');
 const { detectCountry, getCurrency, convertPrice, roundClean, CURRENCY_CONFIG, INR_EXCHANGE_RATES } = require('../utils/geoPricing');
 const metaCapi = require('../utils/metaCapi');
 
+const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
+
+const isPlaceholder = (val) =>
+  !val || PLACEHOLDER_PATTERNS.some((p) => val.includes(p));
+
+// Returns the public Razorpay key to the frontend — avoids baking VITE_* into
+// the Vercel build. The key ID is public (safe to expose); the secret never leaves.
+exports.getRazorpayConfig = (req, res) => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  if (isPlaceholder(keyId)) {
+    console.error('[Razorpay] getRazorpayConfig: RAZORPAY_KEY_ID not set or is placeholder');
+    return res.status(503).json({ message: 'Payment gateway is not configured. Contact support.' });
+  }
+  res.json({ keyId });
+};
+
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
@@ -15,17 +31,11 @@ exports.createRazorpayOrder = async (req, res, next) => {
       return res.status(400).json({ message: 'Order data is required' });
     }
 
-    // Fail fast with a clear message if the gateway isn't configured. Without
-    // this guard, `new Razorpay({key_id: undefined})` throws a Razorpay-internal
-    // error that the global handler turns into "Internal Server Error" in prod
-    // — which the client used to render as the opaque "Payment initialization
-    // failed" toast. Same goes for placeholder values left over from
-    // .env.example.
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keyId || !keySecret || keyId.includes('your_razorpay') || keySecret.includes('your_razorpay')) {
-      console.error('[Razorpay] Missing/placeholder RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET');
-      return res.status(503).json({ message: 'Payment gateway is not configured. Please contact support.' });
+    if (isPlaceholder(keyId) || isPlaceholder(keySecret)) {
+      console.error('[Razorpay] createRazorpayOrder: credentials missing or placeholder');
+      return res.status(503).json({ message: 'Payment gateway is not configured. Contact support.' });
     }
 
     const userId = req.user ? req.user._id : null;
@@ -38,33 +48,25 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const currency = getCurrency(country);
     const isIndia = country === 'IN';
 
-    let chargeAmount; // in smallest currency unit (paise/cents)
+    let chargeAmount;
     let chargeCurrency = currency;
 
     if (isIndia || currency === 'INR') {
-      // Indian customer: charge base INR price
-      chargeAmount = Math.round(prices.totalPrice * 100); // paise
+      chargeAmount = Math.round(prices.totalPrice * 100);
       chargeCurrency = 'INR';
     } else {
-      // International customer: apply 10x multiplier + currency conversion
       const converted = convertPrice(prices.totalPrice, country);
-      const config = CURRENCY_CONFIG[currency] || CURRENCY_CONFIG.USD;
-      
-      // Handle zero-decimal currencies (JPY, KRW) vs standard 2-decimal
       if (currency === 'JPY' || currency === 'KRW') {
-        chargeAmount = converted.price; // no sub-unit
+        chargeAmount = converted.price;
       } else if (currency === 'KWD' || currency === 'BHD' || currency === 'OMR') {
-        chargeAmount = Math.round(converted.price * 1000); // 3-decimal currencies
+        chargeAmount = Math.round(converted.price * 1000);
       } else {
-        chargeAmount = Math.round(converted.price * 100); // cents/pence/etc
+        chargeAmount = Math.round(converted.price * 100);
       }
       chargeCurrency = currency;
     }
 
-    const instance = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
+    const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
     const options = {
       amount: chargeAmount,
@@ -77,19 +79,13 @@ exports.createRazorpayOrder = async (req, res, next) => {
       },
     };
 
-    // Razorpay SDK throws a structured error on auth/validation failures.
-    // Translate them into a clean 4xx with the gateway's own message so the
-    // client toast shows something diagnostic ("Authentication failed",
-    // "Currency not enabled", etc.) instead of a generic 500.
     let order;
     try {
       order = await instance.orders.create(options);
     } catch (rzpErr) {
-      const status = rzpErr?.statusCode || rzpErr?.error?.statusCode;
       const description = rzpErr?.error?.description || rzpErr?.message || 'Payment gateway error';
-      console.error('[Razorpay] orders.create failed:', status, rzpErr?.error || rzpErr);
-      const clientStatus = status === 401 || status === 400 ? 502 : 502;
-      return res.status(clientStatus).json({ message: `Payment gateway: ${description}` });
+      console.error('[Razorpay] orders.create failed:', rzpErr?.error || rzpErr);
+      return res.status(502).json({ message: description });
     }
 
     if (!order) {
@@ -134,10 +130,16 @@ exports.createRazorpayOrder = async (req, res, next) => {
     // the browser (only the secret must stay server-side).
     res.json({ ...order, key: keyId });
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+    if (
+      error.message.includes('not found') ||
+      error.message.includes('not available') ||
+      error.message.includes('Invalid variation') ||
+      error.message.includes('Insufficient stock') ||
+      error.message.includes('Coupon')
+    ) {
       return res.status(400).json({ message: error.message });
     }
-    console.error('Razorpay Order Error:', error);
+    console.error('[Razorpay] createRazorpayOrder unexpected error:', error);
     next(error);
   }
 };

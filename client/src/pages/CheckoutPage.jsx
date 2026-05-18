@@ -432,6 +432,15 @@ const CheckoutPage = () => {
       // CASE 2: Razorpay
       else if (paymentMethod === 'razorpay') {
         try {
+          // Fail fast with a clear message if the client build is missing the
+          // public Razorpay key (otherwise the SDK throws an opaque "no key" error).
+          const razorpayPublicKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+          if (!razorpayPublicKey) {
+            toast.error('Payment not configured. Please contact support.');
+            setLoading(false);
+            return;
+          }
+
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {
             toast.error('Razorpay SDK failed to load. Please check your connection.');
@@ -441,7 +450,7 @@ const CheckoutPage = () => {
 
           const { data: razorpayOrder } = await API.post('/create-order', { orderData });
           const options = {
-            key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+            key: razorpayPublicKey,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
             name: 'GPSFDK',
@@ -517,8 +526,20 @@ const CheckoutPage = () => {
           // either handler() or modal.ondismiss() fires (both call setLoading(false)).
           return;
         } catch (err) {
-          console.error('Razorpay Error:', err);
-          toast.error('Payment initialization failed');
+          // Surface the actual cause instead of the generic "init failed" — the
+          // server returns specific, actionable messages (e.g. "Insufficient
+          // stock", "Invalid variation", "Coupon usage limit reached",
+          // "Payment gateway not configured"). Hiding those left customers
+          // stuck with no idea what to fix and us with no diagnostic signal.
+          console.error('Razorpay Error:', err?.response?.status, err?.response?.data || err);
+          const serverMsg = err?.response?.data?.message;
+          toast.error(
+            serverMsg
+              ? `Payment failed: ${serverMsg}`
+              : 'Payment initialization failed. Please check your connection and try again.'
+          );
+          setLoading(false);
+          return;
         }
       }
     } catch (err) {

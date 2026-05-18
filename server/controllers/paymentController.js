@@ -10,9 +10,22 @@ const metaCapi = require('../utils/metaCapi');
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
     const { orderData } = req.body;
-    
+
     if (!orderData || !orderData.items || orderData.items.length === 0) {
       return res.status(400).json({ message: 'Order data is required' });
+    }
+
+    // Fail fast with a clear message if the gateway isn't configured. Without
+    // this guard, `new Razorpay({key_id: undefined})` throws a Razorpay-internal
+    // error that the global handler turns into "Internal Server Error" in prod
+    // — which the client used to render as the opaque "Payment initialization
+    // failed" toast. Same goes for placeholder values left over from
+    // .env.example.
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    if (!keyId || !keySecret || keyId.includes('your_razorpay') || keySecret.includes('your_razorpay')) {
+      console.error('[Razorpay] Missing/placeholder RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET');
+      return res.status(503).json({ message: 'Payment gateway is not configured. Please contact support.' });
     }
 
     const userId = req.user ? req.user._id : null;
@@ -49,8 +62,8 @@ exports.createRazorpayOrder = async (req, res, next) => {
     }
 
     const instance = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: keyId,
+      key_secret: keySecret,
     });
 
     const options = {
@@ -64,10 +77,23 @@ exports.createRazorpayOrder = async (req, res, next) => {
       },
     };
 
-    const order = await instance.orders.create(options);
+    // Razorpay SDK throws a structured error on auth/validation failures.
+    // Translate them into a clean 4xx with the gateway's own message so the
+    // client toast shows something diagnostic ("Authentication failed",
+    // "Currency not enabled", etc.) instead of a generic 500.
+    let order;
+    try {
+      order = await instance.orders.create(options);
+    } catch (rzpErr) {
+      const status = rzpErr?.statusCode || rzpErr?.error?.statusCode;
+      const description = rzpErr?.error?.description || rzpErr?.message || 'Payment gateway error';
+      console.error('[Razorpay] orders.create failed:', status, rzpErr?.error || rzpErr);
+      const clientStatus = status === 401 || status === 400 ? 502 : 502;
+      return res.status(clientStatus).json({ message: `Payment gateway: ${description}` });
+    }
 
     if (!order) {
-      return res.status(500).json({ message: 'Failed to create Razorpay order' });
+      return res.status(502).json({ message: 'Failed to create Razorpay order' });
     }
 
     // Server-side InitiateCheckout — dedupes with the browser pixel via eventId.

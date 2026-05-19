@@ -15,14 +15,18 @@ import toast from 'react-hot-toast';
  * Props:
  *   isOpen     — boolean
  *   onClose    — () => void
- *   onVerified — () => void  (called once verify succeeds; caller advances flow)
+ *   onVerified — (loginData) => void  (called once verify succeeds; if the
+ *                server upserted an account, loginData has { token, _id, ... })
  *   phone      — string (full E.164 / digits-only is fine; we strip non-digits)
  *   email      — optional string
+ *   userData   — optional { name, email, address } — when provided, the server
+ *                auto-creates a user account on successful verification so the
+ *                rest of checkout runs logged in.
  */
 const RESEND_COOLDOWN = 60;
 const OTP_LENGTH = 6;
 
-const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
+const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email, userData }) => {
   const [step, setStep] = useState('sending'); // 'sending' | 'enter' | 'verifying' | 'done' | 'failed'
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''));
   const [error, setError] = useState('');
@@ -144,15 +148,20 @@ const CheckoutOtpModal = ({ isOpen, onClose, onVerified, phone, email }) => {
     setStep('verifying');
     setError('');
     try {
-      await API.post('/whatsapp-otp/verify', {
+      const { data } = await API.post('/whatsapp-otp/verify', {
         phoneNumber: cleanedPhone,
         otp: code,
+        // When userData is provided the server upserts a user account and
+        // returns a JWT — that turns the guest into a logged-in user for the
+        // rest of the checkout flow.
+        userData: userData || undefined,
       });
       setStep('done');
-      toast.success('Verified — taking you to payment');
-      // Small delay so the user sees the success state
+      // If the server logged the buyer in (token returned), tell them — otherwise
+      // keep the original "taking you to payment" message.
+      toast.success(data?.token ? 'Verified — you\'re signed in' : 'Verified — taking you to payment');
       setTimeout(() => {
-        onVerified();
+        onVerified(data?.token ? data : null);
       }, 400);
     } catch (err) {
       const msg = err.response?.data?.message || 'Invalid or expired code.';

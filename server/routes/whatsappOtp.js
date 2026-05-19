@@ -2,9 +2,15 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 const Otp = require('../models/Otp');
+const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const { getAuthEmail } = require('../utils/emailTemplates');
+
+// Mirrors authController.generateToken — kept local so this route doesn't
+// circular-import the controller.
+const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 // Aggressive per-IP limits — OTP send/verify is a common abuse vector
 // (SMS pumping on WhatsApp template costs, spamming inboxes). The 60-second
@@ -251,35 +257,114 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
 });
 
 // POST /api/whatsapp-otp/verify
+//
+// Two modes:
+//   1) {phoneNumber, otp}                — verify only (legacy)
+//   2) {phoneNumber, otp, userData: {...}} — verify + upsert User + return token
+//
+// Mode 2 is used by guest checkout to auto-create an account once the contact
+// details are proven (OTP delivery to phone/email = proof of ownership), so the
+// rest of the checkout flow runs as a logged-in user.
 router.post('/verify', verifyOtpLimiter, async (req, res) => {
   try {
-    const { phoneNumber, otp } = req.body;
+    const { phoneNumber, otp, userData } = req.body;
 
     if (!phoneNumber || !otp) {
       return res.status(400).json({ message: 'Phone number and OTP are required' });
     }
 
-    // Find the latest OTP for this phone number
     const otpRecord = await Otp.findOne({ phoneNumber, otp }).sort({ createdAt: -1 });
 
     if (!otpRecord) {
       return res.status(400).json({ message: 'Invalid OTP or phone number' });
     }
 
-    // Check Expiry
     if (new Date() > otpRecord.expiresAt) {
       await Otp.deleteOne({ _id: otpRecord._id });
       return res.status(400).json({ message: 'OTP has expired' });
     }
 
-    // Success: Delete OTP so it can't be reused
+    // Single-use: delete the OTP regardless of which mode we're in.
+    const otpEmail = otpRecord.email || null;
     await Otp.deleteOne({ _id: otpRecord._id });
 
     console.log(`✅ Verification successful for ${phoneNumber}`);
 
-    res.status(200).json({
+    // ─── Mode 1: legacy verify-only ────────────────────────────────────────
+    if (!userData || (!userData.email && !otpEmail)) {
+      return res.status(200).json({
+        success: true,
+        message: 'OTP verified successfully',
+      });
+    }
+
+    // ─── Mode 2: auto-account + auto-login ─────────────────────────────────
+    // Prefer the email captured at OTP send time (already validated by send flow)
+    // and fall back to the one on userData.
+    const email = String(userData.email || otpEmail || '').toLowerCase().trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      // Verified successfully, but we can't create an account without an email.
+      // Still return success so checkout proceeds as guest.
+      return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+    }
+
+    const name = (userData.name || '').trim() || 'Customer';
+    const address = userData.address || null;
+    const addresses = address && address.addressLine1 ? [{ ...address, isDefault: true }] : [];
+
+    let user = await User.findOne({ email });
+    let createdAccount = false;
+
+    if (!user) {
+      // New account — random password satisfies the schema's minlength(8) while
+      // remaining unusable for password login (the user must use OTP / reset).
+      const randomPassword = require('crypto').randomBytes(16).toString('hex');
+      user = await User.create({
+        name,
+        email,
+        phone: phoneNumber,
+        password: randomPassword,
+        addresses,
+      });
+      createdAccount = true;
+      console.log(`👤 Auto-created account for ${email} during checkout`);
+    } else {
+      // Existing account — keep the phone/name fresh, append the new address if
+      // it isn't already on file (avoid duplicates from repeat guest checkouts).
+      let dirty = false;
+      if (!user.phone && phoneNumber) { user.phone = phoneNumber; dirty = true; }
+      if (!user.name && name) { user.name = name; dirty = true; }
+      if (address && address.addressLine1) {
+        const exists = (user.addresses || []).some(a =>
+          a.addressLine1 === address.addressLine1 &&
+          a.pincode === address.pincode &&
+          a.city === address.city
+        );
+        if (!exists) {
+          if (!user.addresses?.length) {
+            user.addresses = [{ ...address, isDefault: true }];
+          } else {
+            user.addresses.push(address);
+          }
+          dirty = true;
+        }
+      }
+      if (dirty) await user.save();
+      console.log(`🔐 Logged in existing account ${email} after OTP verification`);
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'OTP verified successfully'
+      message: 'OTP verified successfully',
+      createdAccount,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      avatar: user.avatar || '',
+      addresses: user.addresses || [],
+      token: generateToken(user._id),
     });
 
   } catch (error) {

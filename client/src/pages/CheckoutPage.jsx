@@ -669,9 +669,16 @@ const CheckoutPage = () => {
                         ← {isEditing ? 'Cancel editing' : 'Use saved address instead'}
                       </button>
                     )}
-                    <h3 className="text-lg font-heading font-bold text-secondary mb-4">
-                      {isEditing ? 'Edit Address' : 'New Shipping Address'}
-                    </h3>
+                    {/* Only show the inner heading when the user is editing or
+                        choosing "Add new" from a saved-address list. On the
+                        empty-state flow (no saved addresses) the parent
+                        "Shipping Address" h2 already labels the form, so a
+                        second "New Shipping Address" is redundant. */}
+                    {(isEditing || savedAddresses.length > 0) && (
+                      <h3 className="text-lg font-heading font-bold text-secondary mb-4">
+                        {isEditing ? 'Edit Address' : 'New Shipping Address'}
+                      </h3>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Full Name */}
                       <div className="md:col-span-2">
@@ -952,17 +959,37 @@ const CheckoutPage = () => {
         </motion.div>
       </div>
 
-      {/* OTP verification modal — only used for guest checkout. */}
+      {/* OTP verification modal — only used for guest checkout.
+          On verify success the server upserts a User account from the
+          shipping address + email + phone and returns a JWT so the rest of
+          checkout runs as a logged-in user (and the buyer keeps the account
+          afterwards). */}
       <CheckoutOtpModal
         isOpen={otpModalOpen}
         onClose={() => setOtpModalOpen(false)}
-        onVerified={() => {
+        onVerified={(loginData) => {
           setOtpVerified(true);
           setOtpModalOpen(false);
+          if (loginData?.token) {
+            // updateUser writes to localStorage and sets the AuthContext user,
+            // which is what API.js reads on each request → subsequent calls
+            // (incl. /orders) go out authenticated automatically.
+            updateUser(loginData);
+            toast.success(
+              loginData.createdAccount
+                ? 'Account created — you are now signed in.'
+                : 'Welcome back — you are now signed in.'
+            );
+          }
           setStep(2);
         }}
         phone={getSelectedAddress()?.phone}
         email={guestEmail}
+        userData={!user ? {
+          name: getSelectedAddress()?.fullName || '',
+          email: guestEmail,
+          address: getSelectedAddress(),
+        } : undefined}
       />
 
     </div>

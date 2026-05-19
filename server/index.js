@@ -92,6 +92,11 @@ const sanitize = (obj) => {
   return obj;
 };
 app.use((req, res, next) => {
+  // Skip sanitization for Meta WhatsApp webhook — Meta sends dotted query keys
+  // (hub.mode, hub.verify_token, hub.challenge) that the sanitizer would strip,
+  // causing verification to fail. Webhook handlers never feed query into Mongo,
+  // so the NoSQL-injection risk doesn't apply here.
+  if (req.path.startsWith('/webhook')) return next();
   if (req.body) sanitize(req.body);
   if (req.query) sanitize(req.query);
   next();

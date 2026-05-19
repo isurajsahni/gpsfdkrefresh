@@ -56,8 +56,8 @@ router.get('/diagnose', (req, res) => {
         : '✗ missing',
       apiVersion: process.env.WHATSAPP_API_VERSION || 'v22.0',
       templateName: process.env.WHATSAPP_OTP_TEMPLATE || 'new_login_template',
-      templateLang: process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en',
-      templateNote: 'Authentication template (1 body param = OTP, 1 button param = OTP). Override the name / language via WHATSAPP_OTP_TEMPLATE / WHATSAPP_OTP_TEMPLATE_LANG.',
+      templateLang: process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en_US',
+      templateNote: 'Authentication template (1 body param = OTP, 1 button param = OTP). Language must match exactly what Meta shows for the template — "English" = en, "English (US)" = en_US.',
       hint: (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID)
         ? 'Set WHATSAPP_TOKEN and PHONE_NUMBER_ID in Render env'
         : null,
@@ -124,7 +124,10 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
       // you create a differently-named template.
       const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
       const templateName = process.env.WHATSAPP_OTP_TEMPLATE || 'new_login_template';
-      const templateLang = process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en';
+      // Must match the template's language EXACTLY as shown in Meta —
+      // "English" = en, "English (US)" = en_US. Mismatch causes #132001
+      // ("Template name does not exist in <language>").
+      const templateLang = process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en_US';
 
       const whatsappUrl = `https://graph.facebook.com/${apiVersion}/${process.env.PHONE_NUMBER_ID}/messages`;
 

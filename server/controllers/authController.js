@@ -5,6 +5,7 @@ const welcomeEmail = require('../utils/welcomeEmailTemplate');
 const { getAuthEmail } = require('../utils/emailTemplates');
 const { cloudinary } = require('../middleware/upload');
 const { createOtpStore } = require('../utils/otpSessionStore');
+const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
 
 // ─── OTP / verification session stores (Mongo-backed, TTL-purged) ─────────────
 // These used to be in-memory Maps. That made every OTP session non-recoverable
@@ -138,42 +139,9 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     if (phone && process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID) {
       const whatsappPhone = phone.replace(/\D/g, ''); // strip non-digits
       if (whatsappPhone.length >= 10) {
-        const axios = require('axios');
-        whatsappPromise = axios.post(
-          `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
-          {
-            messaging_product: 'whatsapp',
-            to: whatsappPhone,
-            type: 'template',
-            template: {
-              name: 'otp_verification',
-              language: { code: 'en' },
-              components: [
-                {
-                  type: 'body',
-                  parameters: [
-                    { type: 'text', text: otp },
-                    { type: 'text', text: '+916280310103' }
-                  ]
-                },
-                {
-                  type: 'button',
-                  sub_type: 'url',
-                  index: '0',
-                  parameters: [{ type: 'text', text: otp }]
-                }
-              ]
-            }
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        )
-        .then(() => { channels.push('whatsapp'); console.log(`✅ Registration OTP WhatsApp sent to ${whatsappPhone}`); })
-        .catch(err => console.error(`❌ Registration OTP WhatsApp failed:`, err.response?.data?.error?.message || err.message));
+        whatsappPromise = sendWhatsappOtpTemplate(whatsappPhone, otp)
+          .then(() => { channels.push('whatsapp'); console.log(`✅ Registration OTP WhatsApp sent to ${whatsappPhone}`); })
+          .catch(err => console.error(`❌ Registration OTP WhatsApp failed:`, err.response?.data?.error?.message || err.message));
       }
     }
 
@@ -845,29 +813,21 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
     } else {
       if (channel === 'whatsapp' && process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID) {
         const whatsappPhone = normalizedId.replace(/\D/g, '');
-        const axios = require('axios');
         try {
-          await axios.post(
-            `https://graph.facebook.com/v19.0/${process.env.PHONE_NUMBER_ID}/messages`,
-            {
-              messaging_product: 'whatsapp',
-              to: whatsappPhone,
-              type: 'template',
-              template: {
-                name: 'otp_verification',
-                language: { code: 'en' },
-                components: [
-                  { type: 'body', parameters: [{ type: 'text', text: otp }, { type: 'text', text: '+916280310103' }] },
-                  { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: otp }] }
-                ]
-              }
-            },
-            { headers: { 'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' } }
-          );
+          await sendWhatsappOtpTemplate(whatsappPhone, otp);
           return res.json({ success: true, message: 'OTP sent via WhatsApp' });
         } catch (fbError) {
+          // Surface the real Meta error so we can fix template / language /
+          // recipient issues without redeploying. Typical culprits:
+          //   (#132001) Template name does not exist
+          //   (#131030) Recipient phone number not in allowed list (dev mode)
+          //   (#132000) Number of parameters does not match
+          const reason = fbError.response?.data?.error?.message || fbError.message || 'WhatsApp send failed';
           console.error('WhatsApp Error:', fbError.response?.data || fbError.message);
-          return res.status(400).json({ message: 'Failed to send WhatsApp message. Please try Email instead.' });
+          return res.status(400).json({
+            message: 'Failed to send WhatsApp message. Please try Email instead.',
+            reason,
+          });
         }
       }
       return res.status(400).json({ message: 'Invalid channel or missing WhatsApp configuration.' });

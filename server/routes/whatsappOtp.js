@@ -1,12 +1,12 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
-const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const Otp = require('../models/Otp');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const { getAuthEmail } = require('../utils/emailTemplates');
+const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
 
 // Mirrors authController.generateToken — kept local so this route doesn't
 // circular-import the controller.
@@ -125,71 +125,24 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     // 4a. WhatsApp Channel — only when configured. Skipping cleanly when not
     // configured beats sending undefined as a Bearer token (Meta returns 401).
     if (hasWhatsappConfig) {
-      // Graph API version, template name, and language are all overridable via env
-      // so you can swap them without a redeploy when Meta deprecates v22, or when
-      // you create a differently-named template.
-      const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
-      const templateName = process.env.WHATSAPP_OTP_TEMPLATE || 'new_login_template';
-      // Must match the template's language EXACTLY as shown in Meta —
-      // "English" = en, "English (US)" = en_US. Mismatch causes #132001
-      // ("Template name does not exist in <language>").
-      const templateLang = process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en_US';
-
-      const whatsappUrl = `https://graph.facebook.com/${apiVersion}/${process.env.PHONE_NUMBER_ID}/messages`;
-
-      // Meta Authentication template: 1 body param (the OTP) + 1 button param
-      // (same OTP — populates the copy-code / one-tap button). Sending extra
-      // params here triggers Meta error #132000 ("number of parameters does
-      // not match the expected number for that template").
-      const whatsappPayload = {
-        messaging_product: "whatsapp",
-        to: phoneNumber,
-        type: "template",
-        template: {
-          name: templateName,
-          language: { code: templateLang },
-          components: [
-            {
-              type: "body",
-              parameters: [
-                { type: "text", text: generatedOtp }
-              ]
-            },
-            {
-              type: "button",
-              sub_type: "url",
-              index: "0",
-              parameters: [
-                { type: "text", text: generatedOtp }
-              ]
-            }
-          ]
-        }
-      };
-
       sendPromises.push(
-        axios.post(whatsappUrl, whatsappPayload, {
-          headers: {
-            'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        })
-        .then(() => {
-          console.log(`✅ WhatsApp OTP sent to ${phoneNumber}`);
-          return { channel: 'whatsapp', success: true };
-        })
-        .catch((err) => {
-          // Surface the real Meta error so the operator can fix it
-          // (typical: "Template name does not exist", "Phone number not in business
-          // account", "Access token expired", or "(#131030) Recipient not in WhatsApp").
-          const reason = err.response?.data?.error?.message
-            || err.response?.data?.error?.error_user_msg
-            || err.message
-            || 'WhatsApp send failed';
-          const code = err.response?.data?.error?.code;
-          console.error(`❌ WhatsApp OTP failed for ${phoneNumber}: ${reason}${code ? ` (code ${code})` : ''}`);
-          return { channel: 'whatsapp', success: false, reason };
-        })
+        sendWhatsappOtpTemplate(phoneNumber, generatedOtp)
+          .then(() => {
+            console.log(`✅ WhatsApp OTP sent to ${phoneNumber}`);
+            return { channel: 'whatsapp', success: true };
+          })
+          .catch((err) => {
+            // Surface the real Meta error so the operator can fix it
+            // (typical: "Template name does not exist", "Phone number not in business
+            // account", "Access token expired", or "(#131030) Recipient not in WhatsApp").
+            const reason = err.response?.data?.error?.message
+              || err.response?.data?.error?.error_user_msg
+              || err.message
+              || 'WhatsApp send failed';
+            const code = err.response?.data?.error?.code;
+            console.error(`❌ WhatsApp OTP failed for ${phoneNumber}: ${reason}${code ? ` (code ${code})` : ''}`);
+            return { channel: 'whatsapp', success: false, reason };
+          })
       );
     } else {
       sendPromises.push(Promise.resolve({ channel: 'whatsapp', success: false, reason: 'WhatsApp not configured on server' }));

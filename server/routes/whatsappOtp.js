@@ -55,9 +55,9 @@ router.get('/diagnose', (req, res) => {
         ? `✓ set (${String(process.env.WHATSAPP_TOKEN).length} chars)`
         : '✗ missing',
       apiVersion: process.env.WHATSAPP_API_VERSION || 'v22.0',
-      templateName: process.env.WHATSAPP_OTP_TEMPLATE || 'otp_verification',
+      templateName: process.env.WHATSAPP_OTP_TEMPLATE || 'new_login_template',
       templateLang: process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en',
-      templateNote: 'Template must exist & be APPROVED in Meta Business Manager. Override the name / language via WHATSAPP_OTP_TEMPLATE / WHATSAPP_OTP_TEMPLATE_LANG.',
+      templateNote: 'Authentication template (1 body param = OTP, 1 button param = OTP). Override the name / language via WHATSAPP_OTP_TEMPLATE / WHATSAPP_OTP_TEMPLATE_LANG.',
       hint: (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID)
         ? 'Set WHATSAPP_TOKEN and PHONE_NUMBER_ID in Render env'
         : null,
@@ -120,15 +120,18 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     // configured beats sending undefined as a Bearer token (Meta returns 401).
     if (hasWhatsappConfig) {
       // Graph API version, template name, and language are all overridable via env
-      // so you can swap them without a redeploy when Meta deprecates v19, or when
-      // you create a differently-named template (e.g. gpsfdk_otp / en_US).
+      // so you can swap them without a redeploy when Meta deprecates v22, or when
+      // you create a differently-named template.
       const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
-      const templateName = process.env.WHATSAPP_OTP_TEMPLATE || 'otp_verification';
+      const templateName = process.env.WHATSAPP_OTP_TEMPLATE || 'new_login_template';
       const templateLang = process.env.WHATSAPP_OTP_TEMPLATE_LANG || 'en';
-      const supportPhoneNumber = process.env.SUPPORT_PHONE_NUMBER || '+916280310103';
 
       const whatsappUrl = `https://graph.facebook.com/${apiVersion}/${process.env.PHONE_NUMBER_ID}/messages`;
 
+      // Meta Authentication template: 1 body param (the OTP) + 1 button param
+      // (same OTP — populates the copy-code / one-tap button). Sending extra
+      // params here triggers Meta error #132000 ("number of parameters does
+      // not match the expected number for that template").
       const whatsappPayload = {
         messaging_product: "whatsapp",
         to: phoneNumber,
@@ -140,8 +143,7 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
             {
               type: "body",
               parameters: [
-                { type: "text", text: generatedOtp },
-                { type: "text", text: supportPhoneNumber }
+                { type: "text", text: generatedOtp }
               ]
             },
             {

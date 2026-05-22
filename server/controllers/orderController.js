@@ -6,6 +6,7 @@ const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
+const { detectCountry } = require('../utils/geoPricing');
 
 // Helper: send Meta CAPI Purchase event. Fire-and-forget so it never blocks
 // the order response. The browser pixel fires the same event with the same
@@ -129,9 +130,9 @@ const triggerNewOrderNotifications = async (order) => {
     }).catch(err => console.error('Admin order notification failed:', err.message));
 
     // ─── Shiprocket Integration ───
-    // Automatically create shipment for Prepaid orders (isPaid: true)
+    // Automatically create shipment for Prepaid orders (isPaid: true) or COD orders
     // IMPORTANT: Run Shiprocket BEFORE sending customer email so AWB is included
-    if (order.isPaid) {
+    if (order.isPaid || order.paymentMethod === 'cod') {
       try {
         console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
         // Weight & dimensions are auto-calculated from item variation size
@@ -401,6 +402,15 @@ exports.createOrder = async (req, res, next) => {
     // Server-side price calculation — never trust client prices
     const prices = await calculateOrderPrices(items, couponCode, req.user._id);
 
+    // Enforce region check for Cash on Delivery (COD)
+    if (paymentMethod === 'cod') {
+      const country = await detectCountry(req);
+      const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
+      if (country !== 'IN' && !isShippingToIndia) {
+        return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
+      }
+    }
+
     // If total price is 0 (after coupons), skip payment gateway logic
     const finalPaymentMethod = prices.totalPrice === 0 ? 'free' : paymentMethod;
     const isPaid = prices.totalPrice === 0;
@@ -417,7 +427,7 @@ exports.createOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: finalPaymentMethod === 'free' ? 'pending' : 'payment_pending',
+      status: (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
     });
@@ -445,9 +455,9 @@ exports.createOrder = async (req, res, next) => {
       }
     }
 
-    // Decrement stock atomically once order exists (FREE / zero-value path only —
+    // Decrement stock atomically once order exists (FREE / zero-value path or COD only —
     // paid orders decrement in paymentController.verifyRazorpay after capture).
-    if (finalPaymentMethod === 'free') {
+    if (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') {
       await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
       sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);
@@ -475,6 +485,14 @@ exports.createGuestOrder = async (req, res, next) => {
     const guestIdentifier = guestEmail || guestPhone || shippingAddress?.phone || null;
     const prices = await calculateOrderPrices(items, couponCode, null, guestIdentifier);
 
+    // Enforce region check for Cash on Delivery (COD)
+    if (paymentMethod === 'cod') {
+      const country = await detectCountry(req);
+      const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
+      if (country !== 'IN' && !isShippingToIndia) {
+        return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
+      }
+    }
 
     // If total price is 0, skip payment gateway
     const finalPaymentMethod = prices.totalPrice === 0 ? 'free' : paymentMethod;
@@ -493,7 +511,7 @@ exports.createGuestOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
-      status: finalPaymentMethod === 'free' ? 'pending' : 'payment_pending',
+      status: (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
     });
@@ -523,9 +541,9 @@ exports.createGuestOrder = async (req, res, next) => {
       }
     }
 
-    // Decrement stock atomically once order exists (FREE / zero-value path only —
+    // Decrement stock atomically once order exists (FREE / zero-value path or COD only —
     // paid orders decrement in paymentController.verifyRazorpay after capture).
-    if (finalPaymentMethod === 'free') {
+    if (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') {
       await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
       sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);

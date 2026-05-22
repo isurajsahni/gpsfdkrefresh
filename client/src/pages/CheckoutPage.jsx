@@ -35,7 +35,7 @@ const CheckoutPage = () => {
   // flushes before navigate, the cartItems.length===0 redirect below would otherwise
   // bounce us to /cart. `orderPlaced` short-circuits that race.
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice, currency, country } = useCurrency();
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -538,6 +538,30 @@ const CheckoutPage = () => {
           setLoading(false);
         }
       }
+      // CASE 3: Cash on Delivery (COD)
+      else if (paymentMethod === 'cod') {
+        const endpoint = user ? '/orders' : '/orders/guest';
+        const { data: codOrder } = await API.post(endpoint, orderData);
+
+        API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+        // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
+        if (typeof window.fbq === 'function') {
+          window.fbq('track', 'Purchase', {
+            content_type: 'product',
+            content_ids: cartItems.map(item => item.productId),
+            contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
+            num_items: cartItems.length,
+            value: finalTotal,
+            currency: 'INR',
+            order_id: codOrder?.orderNumber || codOrder?._id,
+          }, { eventID: eventIdPurchase });
+        }
+        setOrderPlaced(true); // prevents cart-empty redirect race after clearCart
+        clearCart();
+        toast.success('Order placed successfully via Cash on Delivery!');
+        const orderRef = codOrder?.orderNumber || codOrder?._id || '';
+        navigate(`/thank-you?order=${encodeURIComponent(orderRef)}`);
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Order failed');
     }
@@ -828,6 +852,9 @@ const CheckoutPage = () => {
               <div className="space-y-3">
                 {[
                   { value: 'razorpay', label: 'Razorpay / Online Payment', icon: '💳', desc: 'Secure payment via UPI, Cards, Net Banking' },
+                  ...(country === 'IN' || currency === 'INR' ? [
+                    { value: 'cod', label: 'Cash on Delivery (COD)', icon: '💵', desc: 'Pay with cash upon delivery' }
+                  ] : [])
                 ].map(method => (
                   <button
                     key={method.value}

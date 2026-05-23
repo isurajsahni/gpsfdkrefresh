@@ -115,36 +115,46 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             }}
             className="product-slider relative"
           >
-            {products.map((product, i) => (
-              <SwiperSlide key={product._id || i}>
-                <Link to={`/product/${product.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                    <img
-                      src={optimizeImage(product.images?.[0]?.url, 500) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                      <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
-                      <p className="text-accent font-bold text-lg mt-1">
-                        {formatPrice(product.basePrice || product.variations?.[0]?.price)}
-                        {product.variations?.[0]?.comparePrice > 0 && (
-                          <span className="text-white/50 text-sm line-through ml-2">{formatPrice(product.variations[0].comparePrice)}</span>
-                        )}
-                      </p>
-                      <button
-                        onClick={(e) => handleQuickAdd(e, product)}
-                        className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
-                      >
-                        <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
-                      </button>
+            {products.map((product, i) => {
+              const prices = [
+                product.basePrice,
+                ...(product.variations || []).map(v => v.price)
+              ].filter(p => typeof p === 'number');
+              const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
+              const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
+
+              return (
+                <SwiperSlide key={product._id || i}>
+                  <Link to={`/product/${product.slug}`} className="group block">
+                    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                      <img
+                        src={optimizeImage(product.images?.[0]?.url, 500) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+                        <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
+                        <p className="text-accent font-bold text-lg mt-1">
+                          {formatPrice(minPrice)}
+                          {minPrice !== maxPrice && ` - ${formatPrice(maxPrice)}`}
+                          {product.variations?.[0]?.comparePrice > 0 && (
+                            <span className="text-white/50 text-sm line-through ml-2">{formatPrice(product.variations[0].comparePrice)}</span>
+                          )}
+                        </p>
+                        <button
+                          onClick={(e) => handleQuickAdd(e, product)}
+                          className="mt-3 bg-accent hover:bg-accent-dark text-white py-2.5 px-5 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all duration-300 hover:scale-105"
+                        >
+                          <HiOutlineShoppingCart className="w-4 h-4" /> Add To Cart
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              </SwiperSlide>
-            ))}
+                  </Link>
+                </SwiperSlide>
+              );
+            })}
           </Swiper>
 
           {/* Custom Navigation Buttons to the bottom right */}

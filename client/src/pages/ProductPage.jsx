@@ -169,7 +169,7 @@ const ProductPage = () => {
       "priceCurrency": currency,
       "price": selectedVariation?.price || product.basePrice,
       "itemCondition": "https://schema.org/NewCondition",
-      "availability": "https://schema.org/InStock",
+      "availability": product.variations?.some(v => v.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     }
   } : null;
 

@@ -18,8 +18,8 @@ import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
-// Isolated Testing Pages (eager — bypasses Router entirely)
-import InvoicePreview from './pages/InvoicePreview';
+// Isolated Testing Pages (lazy — bypasses Router entirely)
+const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
 
 // ─── Eager (above-the-fold / very common routes) ───
 import HomePage from './pages/HomePage';
@@ -164,8 +164,6 @@ const GlobalUI = () => {
       <CartDrawer />
       <SearchOverlay />
       <ChatBot />
-      {/* Spacer for fixed top promotional banner */}
-      <div className="h-[36px] w-full shrink-0" />
     </>
   );
 };
@@ -178,7 +176,11 @@ function App() {
   // --- ISOLATED PREVIEW ROUTE ---
   // Completely bypasses all providers, routers, and API calls to guarantee no reload loops
   if (window.location.pathname.startsWith('/invoice-preview')) {
-    return <InvoicePreview />;
+    return (
+      <Suspense fallback={<SuspenseFallback />}>
+        <InvoicePreview />
+      </Suspense>
+    );
   }
 
   return (

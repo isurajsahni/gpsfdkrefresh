@@ -76,20 +76,6 @@ const Navbar = () => {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
-        <div 
-          className={`bg-secondary text-white flex items-center justify-center overflow-hidden px-2 transition-all duration-500 ease-in-out ${scrolled ? 'h-0 opacity-0' : 'h-[36px] opacity-100'}`}
-        >
-          <div className="w-full flex md:justify-center overflow-hidden">
-            <div className="text-[10px] font-semibold tracking-widest font-heading whitespace-nowrap animate-marquee md:animate-none flex items-center min-w-max md:w-auto hover:[animation-play-state:paused]">
-              <span className="mr-8 md:mr-0 flex items-center">
-                USE COUPON CODE: <button onClick={() => { navigator.clipboard.writeText('THE-R2L-SUMMER'); toast.success('Coupon code copied!'); }} className="text-secondary font-bold bg-white px-2 py-0.5 rounded shadow-md hover:bg-gray-200 transition-colors mx-1">THE-R2L-SUMMER</button> &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
-              </span>
-              <span className="md:hidden flex items-center">
-                USE COUPON CODE: <button onClick={() => { navigator.clipboard.writeText('THE-R2L-SUMMER'); toast.success('Coupon code copied!'); }} className="text-secondary font-bold bg-white px-2 py-0.5 rounded shadow-md hover:bg-gray-200 transition-colors mx-1">THE-R2L-SUMMER</button> &amp; GET A CHANCE TO WIN AN INTERNATIONAL TRIP + FLAT 10% OFF *T&amp;C APPLY
-              </span>
-            </div>
-          </div>
-        </div>
         <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
           <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
           <div className="flex items-center justify-between h-16 md:h-20">

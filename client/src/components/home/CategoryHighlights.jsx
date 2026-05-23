@@ -39,6 +39,7 @@ const CategoryCard = ({ number, title, description, image, isReverse, link, bgCo
               src={image} 
               alt={title} 
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 md:group-hover:scale-110"
+              loading="lazy"
             />
           </div>
 

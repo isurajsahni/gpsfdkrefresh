@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
@@ -36,6 +36,14 @@ const CheckoutPage = () => {
   // bounce us to /cart. `orderPlaced` short-circuits that race.
   const [orderPlaced, setOrderPlaced] = useState(false);
   const { formatPrice, currency, country } = useCurrency();
+  const headingRef = useRef(null);
+
+  useEffect(() => {
+    if (headingRef.current) {
+      headingRef.current.focus();
+    }
+  }, [step]);
+
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -589,23 +597,23 @@ const CheckoutPage = () => {
         </motion.h1>
 
         {/* Steps — responsive */}
-        <div className="flex items-center gap-2 sm:gap-4 mb-10">
+        <nav aria-label="Checkout Steps" className="flex items-center gap-2 sm:gap-4 mb-10">
           {['Shipping', 'Payment', 'Confirm'].map((s, i) => (
-            <div key={s} className="flex items-center gap-1 sm:gap-2">
-              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all ${step > i ? 'bg-green-500 text-white' : step === i + 1 ? 'bg-accent text-white' : 'bg-gray-200 text-gray-500'}`}>
+            <div key={s} className="flex items-center gap-1 sm:gap-2" aria-current={step === i + 1 ? 'step' : undefined}>
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all ${step > i ? 'bg-green-500 text-white' : step === i + 1 ? 'bg-accent text-white' : 'bg-gray-200 text-gray-500'}`} aria-hidden="true">
                 {step > i ? '✓' : i + 1}
               </div>
               <span className={`text-xs sm:text-sm font-medium ${step === i + 1 ? 'text-secondary' : 'text-gray-400'}`}>{s}</span>
-              {i < 2 && <div className="w-6 sm:w-12 h-0.5 bg-gray-200 mx-0.5 sm:mx-1" />}
+              {i < 2 && <div className="w-6 sm:w-12 h-0.5 bg-gray-200 mx-0.5 sm:mx-1" role="presentation" />}
             </div>
           ))}
-        </div>
+        </nav>
 
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-5 sm:p-8">
           {/* Step 1: Shipping */}
           {step === 1 && (
             <div>
-              <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Shipping Address</h2>
+              <h2 ref={headingRef} tabIndex={-1} className="text-xl font-heading font-semibold text-secondary mb-6 focus:outline-none">Shipping Address</h2>
 
               {/* Saved addresses */}
               {savedAddresses.length > 0 && !showNewForm && (
@@ -842,7 +850,7 @@ const CheckoutPage = () => {
           {step === 2 && (
             <div>
               <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
-                <h2 className="text-xl font-heading font-semibold text-secondary">Payment Method</h2>
+                <h2 ref={headingRef} tabIndex={-1} className="text-xl font-heading font-semibold text-secondary focus:outline-none">Payment Method</h2>
                 {!user && otpVerified && (
                   <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Contact verified
@@ -879,7 +887,7 @@ const CheckoutPage = () => {
           {/* Step 3: Confirm */}
           {step === 3 && (
             <div>
-              <h2 className="text-xl font-heading font-semibold text-secondary mb-6">Review Your Order</h2>
+              <h2 ref={headingRef} tabIndex={-1} className="text-xl font-heading font-semibold text-secondary mb-6 focus:outline-none">Review Your Order</h2>
               
               {/* Shipping Banner - Based on cartTotal (Subtotal) */}
               {currency === 'INR' && (

@@ -52,6 +52,23 @@ const AdminCoupons = () => {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    if (!showForm && !showUsage) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (showForm) {
+          setShowForm(false);
+          setEditingCoupon(null);
+        }
+        if (showUsage) {
+          setShowUsage(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showForm, showUsage]);
+
   const handleEdit = (coupon) => {
     setEditingCoupon(coupon);
     setForm({
@@ -133,8 +150,8 @@ const AdminCoupons = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 my-8 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto" onClick={() => { setShowForm(false); setEditingCoupon(null); }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8 my-8 relative" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-2xl font-heading font-bold text-secondary">{editingCoupon ? 'Edit Coupon' : 'Create New Coupon'}</h2>
               <button onClick={() => { setShowForm(false); setEditingCoupon(null); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><HiOutlineX className="w-6 h-6 text-gray-400" /></button>
@@ -203,8 +220,8 @@ const AdminCoupons = () => {
       )}
 
       {showUsage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col p-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4" onClick={() => setShowUsage(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col p-8" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-heading font-bold text-secondary">Coupon Usage History</h2>

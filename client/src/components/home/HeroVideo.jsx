@@ -10,6 +10,7 @@ const HeroVideo = () => {
         className="absolute inset-0 w-full h-full object-cover"
         src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920"
         alt="Premium Home Decor"
+        fetchpriority="high"
       />
 
       {/* Dark Overlay */}

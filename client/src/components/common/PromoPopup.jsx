@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineX, HiOutlineClipboardCopy, HiOutlineCheck, HiOutlineSparkles } from 'react-icons/hi';
 
-const COUPON_CODE = 'THE-R2L-SUMMER';
+const COUPON_CODE = '';
 const NEVER_SHOW_KEY = 'coupon_popup_never';
 const LAST_SHOWN_KEY = 'coupon_popup_timestamp';
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineTrendingUp } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 
@@ -44,16 +44,17 @@ const AdminLayout = () => {
               if (user.role === 'coupon_manager') return ['/admin', '/admin/coupons'].includes(item.path);
               return false;
             }).map(item => (
-              <Link
+              <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.path === '/admin'}
                 onClick={() => setSidebarOpen(false)}
+                aria-current={location.pathname === item.path ? 'page' : undefined}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${location.pathname === item.path ? 'bg-secondary text-white' : 'text-gray-600 hover:bg-cream hover:text-secondary'}`}
               >
                 <item.icon className="w-5 h-5" />
                 {item.label}
-              </Link>
+              </NavLink>
             ))}
           </nav>
           <div className="absolute bottom-6 left-0 right-0 px-3">

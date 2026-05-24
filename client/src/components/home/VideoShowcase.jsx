@@ -28,14 +28,14 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle, videoRefs }) =
     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/10 opacity-80 transition-opacity duration-300 group-hover:opacity-95" />
 
     {/* Text & Buy Button Content Overlay */}
-    <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end">
+    <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end items-center text-center">
       {/* Product Title */}
-      <h3 className="text-white font-heading text-sm md:text-lg font-bold mb-3 tracking-wide drop-shadow-md pr-6 line-clamp-2">
+      <h3 className="text-white font-heading text-sm md:text-lg font-bold mb-3 tracking-wide drop-shadow-md line-clamp-2">
         {video.name}
       </h3>
 
       {/* Buy Button */}
-      <div className="pr-10 md:pr-12">
+      <div className="w-full">
         <span className="inline-block w-full text-center bg-[#E3543A] text-white font-bold text-[10px] md:text-xs py-2 md:py-2.5 px-2 rounded-full transition-all duration-300 hover:bg-[#c93d25] shadow-md uppercase tracking-wider">
           Buy Now
         </span>

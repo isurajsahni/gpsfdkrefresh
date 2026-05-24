@@ -66,7 +66,7 @@ const VideoShowcase = () => {
         </div>
 
         {/* Responsive Grid Layout */}
-        <div className="grid grid-cols-2 min-[786px]:grid-cols-4 gap-4 min-[786px]:gap-6">
+        <div className="grid grid-cols-1 min-[370px]:grid-cols-2 min-[786px]:grid-cols-4 gap-4 min-[786px]:gap-6">
           {videosData.map((video, index) => (
             <a
               key={video.id}

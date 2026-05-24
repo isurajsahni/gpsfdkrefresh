@@ -71,8 +71,6 @@ const VideoShowcase = () => {
             <a
               key={video.id}
               href={video.buyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
               className="group block relative w-full aspect-[9/16] rounded-[2rem] overflow-hidden shadow-lg bg-black transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-gray-100/50"
             >
               {/* Autoplaying looping video */}

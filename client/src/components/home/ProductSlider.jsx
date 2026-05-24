@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
@@ -18,6 +17,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
   const { addToCart } = useCart();
   const { formatPrice } = useCurrency();
   const { setIsCartOpen } = useUI();
+  const swiperRef = useRef(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -62,23 +62,22 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
     fetchProducts();
   }, [categorySlug, featured, hotSelling]);
 
-  const handleQuickAdd = (e, product) => {
+  const handleQuickAdd = useCallback((e, product) => {
     e.preventDefault();
     e.stopPropagation();
     if (product.variations?.length > 0) {
       addToCart(product, product.variations[0]);
       setIsCartOpen(true);
     }
-  };
+  }, [addToCart, setIsCartOpen]);
+
+  // Unique ID for this slider instance to avoid selector collisions
+  const sliderId = categorySlug || 'default';
 
   return (
     <section className="section-padding section-spacing bg-primary">
       <div className="max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 1, y: 0 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-10"
-        >
+        <div className="flex items-center justify-between mb-10">
           <div>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary">{title}</h2>
             <div className="w-20 h-1 bg-accent mt-3 rounded-full" />
@@ -88,7 +87,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
               View All
             </WebflowButton>
           )}
-        </motion.div>
+        </div>
 
         <div className="relative pb-24">
           <Swiper
@@ -96,16 +95,24 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             spaceBetween={24}
             slidesPerView={1.2}
             loop={products.length > 4}
-            speed={800}
+            speed={400}
+            grabCursor={true}
+            cssMode={false}
+            touchRatio={1.2}
+            touchAngle={45}
+            resistance={true}
+            resistanceRatio={0.85}
+            followFinger={true}
             autoplay={{
               delay: 3000,
               disableOnInteraction: false,
-              pauseOnMouseEnter: true
+              pauseOnMouseEnter: true,
             }}
             navigation={{
-              nextEl: `.swiper-button-next-${categorySlug || 'default'}`,
-              prevEl: `.swiper-button-prev-${categorySlug || 'default'}`,
+              nextEl: `.swiper-button-next-${sliderId}`,
+              prevEl: `.swiper-button-prev-${sliderId}`,
             }}
+            onSwiper={(swiper) => { swiperRef.current = swiper; }}
             breakpoints={{
               480: { slidesPerView: 1.5 },
               640: { slidesPerView: 2 },
@@ -113,7 +120,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
               1024: { slidesPerView: 3 },
               1280: { slidesPerView: 4 },
             }}
-            className="product-slider relative"
+            className={`product-slider product-slider-${sliderId} relative`}
           >
             {products.map((product, i) => {
               const prices = [
@@ -164,12 +171,12 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             </WebflowButton>
 
             <div className="flex gap-3 pb-2 ml-auto">
-              <button className={`swiper-button-prev-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+              <button className={`swiper-button-prev-${sliderId} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                 </svg>
               </button>
-              <button className={`swiper-button-next-${categorySlug || 'default'} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+              <button className={`swiper-button-next-${sliderId} w-11 h-11 rounded-full bg-[#dcc6a8] text-white flex items-center justify-center hover:bg-[#c9b293] active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed`}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
@@ -184,6 +191,10 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
         .product-slider .swiper-button-next,
         .product-slider .swiper-button-prev {
           display: none !important;
+        }
+        /* Smoother, faster transition curve for all product sliders */
+        .product-slider .swiper-wrapper {
+          transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
         }
       `}</style>
     </section>

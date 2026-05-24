@@ -10,6 +10,7 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://gpsfdkrefresh.onrender.com/sitemap.xml" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -23,7 +24,7 @@
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://js.stripe.com https://connect.facebook.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com https://www.facebook.com; connect-src 'self' https://gpsfdkrefresh.onrender.com https://api.razorpay.com https://lumberjack.razorpay.com https://api.stripe.com https://api.postalpincode.in https://www.facebook.com https://*.facebook.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://js.stripe.com; child-src 'self' https://checkout.razorpay.com https://api.razorpay.com; frame-ancestors 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdn.razorpay.com https://js.stripe.com https://connect.facebook.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com https://www.facebook.com; connect-src 'self' https://gpsfdkrefresh.onrender.com https://api.razorpay.com https://lumberjack.razorpay.com https://api.stripe.com https://api.postalpincode.in https://www.facebook.com https://*.facebook.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com https://*.on.aws https://*.run.app; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://js.stripe.com; child-src 'self' https://checkout.razorpay.com https://api.razorpay.com; frame-ancestors 'self';"
         }
 
       ]

@@ -95,7 +95,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             modules={[Navigation, Autoplay]}
             spaceBetween={24}
             slidesPerView={1.2}
-            loop={true}
+            loop={products.length > 4}
             speed={800}
             autoplay={{
               delay: 3000,

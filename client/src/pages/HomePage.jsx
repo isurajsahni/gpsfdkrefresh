@@ -2,6 +2,7 @@ import SEO from '../components/seo/SEO';
 import HeroVideo from '../components/home/HeroVideo';
 import ProductSlider from '../components/home/ProductSlider';
 import MasonryGrid from '../components/home/MasonryGrid';
+import VideoShowcase from '../components/home/VideoShowcase';
 import CategoryHighlights from '../components/home/CategoryHighlights';
 
 import FeaturesSection from '../components/home/FeaturesSection';
@@ -39,6 +40,7 @@ const HomePage = () => {
       <HeroVideo />
       <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" hotSelling={true} />
       <MasonryGrid />
+      <VideoShowcase />
       <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
       <CategoryHighlights />
 

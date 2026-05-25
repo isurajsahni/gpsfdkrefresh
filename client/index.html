@@ -22,7 +22,9 @@
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
       fbq('init', '953916107234506');
-      fbq('track', 'PageView');
+      // NOTE: PageView is fired by the SPA router (ScrollManager in App.jsx)
+      // on every route change including initial mount. Do NOT fire it here too
+      // — that causes double-counted PageViews in Meta.
     </script>
 
     <!-- End Meta Pixel Code -->

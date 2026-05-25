@@ -114,17 +114,23 @@ const CheckoutPage = () => {
   const [eventIdInitiateCheckout] = useState(() => newEventId());
 
   // Fetch saved addresses on mount + fire InitiateCheckout pixel event
+  const hasInitiatedCheckout = useRef(false);
   useEffect(() => {
-    // Meta Pixel: InitiateCheckout (event_id used to dedupe with server CAPI)
-    if (typeof window.fbq === 'function') {
-      window.fbq('track', 'InitiateCheckout', {
-        content_type: 'product',
-        content_ids: cartItems.map(item => item.productId),
-        contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
-        num_items: cartItems.length,
-        value: cartTotal,
-        currency: 'INR',
-      }, { eventID: eventIdInitiateCheckout });
+    // Meta Pixel: InitiateCheckout — fire ONCE per checkout session only.
+    // The old [user] dep caused this to re-fire whenever user state changed
+    // (e.g. after saving an address), inflating Meta's funnel metrics.
+    if (!hasInitiatedCheckout.current) {
+      hasInitiatedCheckout.current = true;
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'InitiateCheckout', {
+          content_type: 'product',
+          content_ids: cartItems.map(item => item.productId),
+          contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
+          num_items: cartItems.length,
+          value: cartTotal,
+          currency: 'INR',
+        }, { eventID: eventIdInitiateCheckout });
+      }
     }
 
     const applyAddresses = (addrs) => {

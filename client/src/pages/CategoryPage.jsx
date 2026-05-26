@@ -202,71 +202,85 @@ const CategoryPage = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product, i) => (
-                <motion.div
-                  key={`${product._id}-${i}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (i % 12) * 0.05 }}
-                >
-                  <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
-                  {slug === 'wall-canvas' ? (
-                    <div className="bg-[#fff7e7] rounded-xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-                      <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden mb-5 bg-white shadow-sm">
-                        <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
-                      </div>
-                      <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
-                        <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
-                        <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
-                          {formatPrice(product.basePrice)}
-                          {product.variations?.length > 1 && ` – ${formatPrice(Math.max(...product.variations.map(v => v.price)))}`}
-                        </p>
-                      </div>
-                      <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
-                        Full details
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md">
-                      <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-cream-dark mb-4">
-                        <img
-                          src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)}
-                          alt={product.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              if (product.variations?.length > 0) {
-                                addToCart(product, product.variations[0]);
-                                setIsCartOpen(true);
-                              }
-                            }}
-                            className="bg-accent hover:bg-accent-dark text-white py-2 px-4 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all shadow-lg"
-                          >
-                            <HiOutlineShoppingCart className="w-4 h-4" /> Quick Add
-                          </button>
+              {products.map((product, i) => {
+                const prices = [
+                  product.basePrice,
+                  ...(product.variations || []).map(v => v.price)
+                ].filter(p => typeof p === 'number' && p > 0);
+                const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
+                const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
+                const hasPriceRange = minPrice !== maxPrice;
+
+                return (
+                  <motion.div
+                    key={`${product._id}-${i}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (i % 12) * 0.05 }}
+                  >
+                    <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
+                    {slug === 'wall-canvas' ? (
+                      <div className="bg-[#fff7e7] rounded-xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                        <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden mb-5 bg-white shadow-sm">
+                          <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                         </div>
-                      </div>
-                      <div className="px-1 flex-grow flex flex-col">
-                        <h3 className="font-heading text-lg font-bold text-secondary group-hover:text-accent transition-colors leading-tight mb-2">{product.name}</h3>
-                        <div className="mt-auto pt-2">
-                          <p className="text-accent font-bold text-lg">
-                            {formatPrice(product.basePrice)}
-                            {product.variations?.[0]?.comparePrice > 0 && (
-                              <span className="text-gray-400 text-sm line-through ml-2 font-medium">{formatPrice(product.variations[0].comparePrice)}</span>
-                            )}
+                        <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
+                          <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
+                          <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
+                            {hasPriceRange ? `Starting from ${formatPrice(minPrice)}` : formatPrice(product.basePrice)}
                           </p>
                         </div>
+                        <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
+                          Full details
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </Link>
-              </motion.div>
-              ))}
+                    ) : (
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md">
+                        <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-cream-dark mb-4">
+                          <img
+                            src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (product.variations?.length > 0) {
+                                  addToCart(product, product.variations[0]);
+                                  setIsCartOpen(true);
+                                }
+                              }}
+                              className="bg-accent hover:bg-accent-dark text-white py-2 px-4 rounded-full text-sm font-semibold flex items-center gap-2 w-fit transition-all shadow-lg"
+                            >
+                              <HiOutlineShoppingCart className="w-4 h-4" /> Quick Add
+                            </button>
+                          </div>
+                        </div>
+                        <div className="px-1 flex-grow flex flex-col">
+                          <h3 className="font-heading text-lg font-bold text-secondary group-hover:text-accent transition-colors leading-tight mb-2">{product.name}</h3>
+                          <div className="mb-2">
+                            <span className="font-heading text-base font-bold text-[#1A1A1A]">
+                              {hasPriceRange ? `Starting from ${formatPrice(minPrice)}` : formatPrice(product.basePrice)}
+                            </span>
+                          </div>
+                          <div className="mt-auto pt-2">
+                            <p className="text-accent font-bold text-lg">
+                              {formatPrice(product.basePrice)}
+                              {product.variations?.[0]?.comparePrice > 0 && (
+                                <span className="text-gray-400 text-sm line-through ml-2 font-medium">{formatPrice(product.variations[0].comparePrice)}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
             </div>
 
             {/* Traditional Pagination */}

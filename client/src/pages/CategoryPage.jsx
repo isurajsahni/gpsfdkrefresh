@@ -211,6 +211,30 @@ const CategoryPage = () => {
                 const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
                 const hasPriceRange = minPrice !== maxPrice;
 
+                // Determine badge type
+                let badgeType = "";
+                const variations = product.variations || [];
+                const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
+                if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
+                  badgeType = "lowstock";
+                } else if (product.featured) {
+                  badgeType = "bestseller";
+                } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+                  badgeType = "new";
+                }
+
+                const badgeColors = {
+                  bestseller: 'bg-[#F5A623]',
+                  new: 'bg-[#27AE60]',
+                  lowstock: 'bg-[#E74C3C]'
+                };
+
+                const badgeLabels = {
+                  bestseller: 'Bestseller',
+                  new: 'New Arrival',
+                  lowstock: 'Low Stock'
+                };
+
                 return (
                   <motion.div
                     key={`${product._id}-${i}`}
@@ -220,8 +244,14 @@ const CategoryPage = () => {
                   >
                     <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
                     {slug === 'wall-canvas' ? (
-                      <div className="bg-[#fff7e7] rounded-xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                      <div className="bg-[#fff7e7] rounded-xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]" data-badge={badgeType}>
                         <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden mb-5 bg-white shadow-sm">
+                          <div 
+                            className={`absolute top-2 left-2 z-10 text-[10px] px-2 py-1 rounded font-semibold text-white uppercase tracking-wider ${badgeColors[badgeType] || ''}`}
+                            style={{ display: badgeType ? 'block' : 'none' }}
+                          >
+                            {badgeLabels[badgeType] || ''}
+                          </div>
                           <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                         </div>
                         <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
@@ -235,8 +265,14 @@ const CategoryPage = () => {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md" data-badge={badgeType}>
                         <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-cream-dark mb-4">
+                          <div 
+                            className={`absolute top-2 left-2 z-10 text-[10px] px-2 py-1 rounded font-semibold text-white uppercase tracking-wider ${badgeColors[badgeType] || ''}`}
+                            style={{ display: badgeType ? 'block' : 'none' }}
+                          >
+                            {badgeLabels[badgeType] || ''}
+                          </div>
                           <img
                             src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)}
                             alt={product.name}

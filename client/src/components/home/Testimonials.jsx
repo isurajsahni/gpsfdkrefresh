@@ -10,25 +10,32 @@ const row1 = [
     text: "The canvas quality is absolutely stunning! The colors are so vibrant and it matches my living room perfectly. Delivery was super fast across Delhi."
   },
   {
-    name: 'Nicole Kosoff',
-    initial: 'N',
+    name: 'Priyanka Patel',
+    initial: 'P',
     rating: '5.0',
     bgClass: 'bg-[#5D4037]', // Elegant warm brown
     text: "Outstanding printing quality. The canvas material is premium, and the details are very sharp. Packaging was very secure and arrived without any damage."
   },
   {
-    name: 'Kathryn Barron',
-    initial: 'K',
+    name: 'Ananya Iyer',
+    initial: 'A',
     rating: '5.0',
     bgClass: 'bg-accent', // Brand Orange Accent
     text: "I ordered some canvas panels for my office lobby, and they have transformed the space completely. Everyone who walks in compliments them! Outstanding!"
   },
   {
-    name: 'Brittney Rodriguez',
-    initial: 'B',
+    name: 'Diya Sharma',
+    initial: 'D',
     rating: '5.0',
     bgClass: 'bg-[#8D6E63]', // Elegant muted brown
     text: "I've now ordered from GPSFDK twice and will continue to have them as my first choice. Their custom nameplates are exceptionally high quality and elegant."
+  },
+  {
+    name: 'Meera Nair',
+    initial: 'M',
+    rating: '5.0',
+    bgClass: 'bg-indigo-700',
+    text: "The custom photo collage canvas we ordered for our anniversary is beautiful. The colors are so warm, and the frame is solid. Exceptional customer service!"
   }
 ];
 
@@ -41,25 +48,32 @@ const row2 = [
     text: "Ordered a custom acrylic nameplate for our new house. The design process was seamless, and the final product is so elegant. Best place in India for nameplates."
   },
   {
-    name: 'Jeff Boone',
-    initial: 'J',
+    name: 'Vikram Malhotra',
+    initial: 'V',
     rating: '5.0',
     bgClass: 'bg-[#D81B60]', // Premium ruby pink
     text: "Best place in India for custom wall prints. The wooden framing is highly durable and looks extremely premium. Highly recommended for home decor!"
   },
   {
-    name: 'Katherine Soares',
-    initial: 'K',
+    name: 'Sneha Reddy',
+    initial: 'S',
     rating: '5.0',
     bgClass: 'bg-accent', // Brand Orange Accent
     text: "We used GPSFDK for custom gifting canvases at our corporate retreat. They delivered right on time, and every single print was flawless. Highly recommend!"
   },
   {
-    name: 'Jennifer Weeks',
-    initial: 'J',
+    name: 'Isha Gupta',
+    initial: 'I',
     rating: '5.0',
     bgClass: 'bg-secondary', // Brand Forest Green Secondary
     text: "They did an incredible job customizing the size and font for our family nameplate. It looks beautiful under the outdoor lighting. Worth every rupee!"
+  },
+  {
+    name: 'Kavitha Krishnan',
+    initial: 'K',
+    rating: '5.0',
+    bgClass: 'bg-[#8D6E63]', // Elegant muted brown
+    text: "Extremely pleased with the split-canvas landscape print. It's a gorgeous centerpiece for our dining room. The texture of the canvas is top-notch."
   }
 ];
 

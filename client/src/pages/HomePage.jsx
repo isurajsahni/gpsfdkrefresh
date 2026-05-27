@@ -40,8 +40,8 @@ const HomePage = () => {
         schema={orgSchema}
       />
       <HeroVideo />
-      <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" hotSelling={true} />
       <VideoShowcase />
+      <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" hotSelling={true} />
       <MasonryGrid />
       <BeforeAfterSection />
       <ProductSlider title="House Nameplates" categorySlug="house-nameplates" showBadges={false} />

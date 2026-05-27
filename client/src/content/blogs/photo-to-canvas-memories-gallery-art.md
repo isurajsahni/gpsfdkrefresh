@@ -79,4 +79,4 @@ Custom photo canvas pricing depends on size, material, and finish. Here's a gene
 
 Turning your favourite photographs into canvas art is one of the most meaningful ways to decorate your home. Every glance at that canvas brings back the emotion of the original moment — and that's priceless.
 
-Ready to transform your memories? [Upload Your Photo & Order Now →](/category/wall-canvas)
+Ready to transform your memories? **[Upload Your High-Resolution Photo & Customize Your Canvas Now →](/customize-canvas)**

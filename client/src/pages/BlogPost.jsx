@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -5,10 +6,39 @@ import remarkGfm from 'remark-gfm';
 import SEO from '../components/seo/SEO';
 import blogs from '../content/blogs/index';
 import { optimizeImage } from '../utils/imageOptimizer';
+import API from '../utils/api';
+import { useCurrency } from '../context/CurrencyContext';
 
 const BlogPost = () => {
   const { slug } = useParams();
   const blog = blogs.find(b => b.slug === slug);
+  const [products, setProducts] = useState([]);
+  const { formatPrice } = useCurrency();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const contentLower = ((blog?.title || '') + ' ' + (blog?.content || '')).toLowerCase();
+        const isNameplate = contentLower.includes('nameplate') || 
+                            contentLower.includes('ganesha') || 
+                            contentLower.includes('naman') || 
+                            contentLower.includes('naam') || 
+                            contentLower.includes('trishula');
+        const categorySlug = isNameplate ? 'house-nameplates' : 'wall-canvas';
+        
+        const { data } = await API.get('/products', {
+          params: {
+            limit: 3,
+            categorySlug: categorySlug
+          }
+        });
+        setProducts(data.products || []);
+      } catch (err) {
+        // silent fail
+      }
+    };
+    if (blog) fetchProducts();
+  }, [slug, blog]);
 
   if (!blog) {
     return (
@@ -125,7 +155,21 @@ const BlogPost = () => {
             prose-th:bg-secondary prose-th:text-white prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:text-sm prose-th:font-semibold
             prose-td:px-4 prose-td:py-3 prose-td:text-sm prose-td:border-b prose-td:border-gray-200
           ">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{blog.content}</ReactMarkdown>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ href, children, ...props }) => {
+                  const isInternal = href && (href.startsWith('/') || href.startsWith('https://www.gpsfdk.com') || href.startsWith('https://gpsfdk.com'));
+                  const cleanHref = isInternal ? href.replace(/https?:\/\/(www\.)?gpsfdk\.com/, '') : href;
+                  if (isInternal) {
+                    return <Link to={cleanHref} className="text-accent font-semibold hover:underline" {...props}>{children}</Link>;
+                  }
+                  return <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent font-semibold hover:underline" {...props}>{children}</a>;
+                }
+              }}
+            >
+              {blog.content}
+            </ReactMarkdown>
           </div>
 
           {/* Keywords / Tags */}
@@ -142,6 +186,60 @@ const BlogPost = () => {
                     {keyword}
                   </Link>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommended Products (Shop This Look Section) */}
+          {products && products.length > 0 && (
+            <div className="mt-16 pt-12 border-t border-gray-200 text-left">
+              <h3 className="text-2xl font-heading font-bold text-secondary text-center mb-2 uppercase tracking-wide">
+                Shop This Look
+              </h3>
+              <p className="text-gray-500 text-center font-body text-sm sm:text-base mb-8">
+                Transform your home with these premium, high-quality recommendations.
+              </p>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {products.map(product => {
+                  const prices = [
+                    product.basePrice,
+                    ...(product.variations || []).map(v => v.price)
+                  ].filter(p => typeof p === 'number');
+                  const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
+
+                  return (
+                    <Link 
+                      key={product._id} 
+                      to={`/product/${product.slug}`} 
+                      className="group bg-white rounded-2xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+                    >
+                      <div className="relative aspect-[3/4] overflow-hidden bg-cream-dark">
+                        <img
+                          src={optimizeImage(product.images?.[0]?.url, 400) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500'}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <span className="absolute top-3 left-3 bg-accent text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow">
+                          Shop
+                        </span>
+                      </div>
+                      <div className="p-4 flex flex-col flex-grow justify-between">
+                        <h4 className="font-heading font-bold text-secondary text-sm group-hover:text-accent transition-colors line-clamp-2 leading-tight">
+                          {product.name}
+                        </h4>
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
+                          <span className="text-accent font-bold text-sm">
+                            {formatPrice(minPrice)}
+                          </span>
+                          <span className="text-secondary font-heading font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1 group-hover:underline">
+                            View Details →
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}

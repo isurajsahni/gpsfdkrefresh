@@ -95,10 +95,16 @@ We predict that by 2027:
 - **Hemp canvas** will become a mainstream alternative to cotton.
 - **Carbon-neutral canvas printing** (offset emissions through tree planting) will become the industry norm.
 
+## Our Top Eco-Friendly Selections
+
+Support sustainable craftsmanship with our certified eco-decor options:
+- **[Azure Gaze Canvas](/product/azure-gaze)**: Features water-based, toxic-free latex pigments printed on sustainable linen blends.
+- **[The Social Outcast Canvas](/product/the-social-outcast)**: Crafted on 100% organic cotton fabrics over locally sourced FSC-certified pinewood stretchers.
+
 ## Conclusion
 
 Choosing eco-friendly canvas prints is one of the simplest ways to reduce your environmental footprint without compromising on style. As India's home decor market matures, sustainable options are becoming more accessible, more affordable, and more beautiful than ever.
 
 Your walls deserve art that's good for your home AND good for the planet.
 
-[Explore Our Eco-Friendly Canvas Collection →](/category/wall-canvas)
+[Explore Our Eco-Friendly Canvas Collection →](/wall-canvas)

@@ -113,8 +113,14 @@ Before drilling any holes:
 | Hexagonal Canvas | Multiple hexagonal-shaped canvases | Modern, geometric accent walls |
 | Grid Canvas | Image split into equal squares | Instagram-style, clean aesthetic |
 
+## Our Recommended Panoramic Designs
+
+These high-resolution bestsellers are specifically optimized for multi-panel split presentation:
+- **[Celestial Frontier Canvas](/product/celestial-frontier)**: A stunning, vast cosmic landscape that looks exceptionally spectacular when split across 3 or 5 horizontal panels.
+- **[Dreaming in Colors Canvas](/product/dreaming-in-colors)**: Energetic abstract splashes that gain incredible dimension and style when divided into modern vertical panels.
+
 ## Conclusion
 
 Split canvas prints are one of the most impactful ways to decorate a large wall. They combine the drama of oversized art with the elegance of gallery presentation. Whether you choose a classic triptych or a dramatic five-panel spread, the result will be a wall that stops people in their tracks.
 
-[Shop Split Canvas Prints →](/category/wall-canvas)
+[Shop Split Canvas Prints →](/wall-canvas)

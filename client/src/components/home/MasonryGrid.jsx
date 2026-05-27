@@ -31,10 +31,10 @@ const MasonryGrid = () => {
     <section className="py-20 md:py-28 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div
-          className="text-center mb-16"
+          className="text-center mb-10 md:mb-16"
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Series of the Month</h2>
-          <div className="w-20 h-[3px] bg-[#E3543A] mt-6 mx-auto" />
+          <div className="w-20 h-[3px] bg-[#E3543A] mt-[15px] mx-auto" />
         </div>
 
         {/* Masonry Layout: Left 50% (1 big card) | Right 50% (2 stacked cards) */}

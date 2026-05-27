@@ -74,10 +74,16 @@ You don't have to commit to just one trend. Here's how to blend them:
 2. **Neo-Traditional + Textured:** A modern Madhubani design with gold leaf accents.
 3. **Maximalist + Nature:** A gallery wall mixing large forest canvases with small botanical prints and trailing pothos plants.
 
+## Shop the 2026 Decor Trends
+
+Bring these modern styling trends into your own space with our handpicked selections:
+- **[The Gilded Bloom Canvas](/product/the-gilded-bloom)**: Tap into the rich Neo-Traditional trend with these premium golden florals over an opulent, dark textured backdrop.
+- **[Azure Gaze Canvas](/product/azure-gaze)**: The ultimate minimalist and calm statement piece, drawing inspiration from ocean gradients and organic forms.
+
 ## Conclusion
 
 Indian wall art is no longer an afterthought — it's a statement. Whether you gravitate towards serene minimalism or bold maximalism, there's a trend here that can transform your space.
 
 The most important rule? Choose art that makes **you** feel something every time you walk into the room.
 
-[Discover Trending Wall Art →](/category/wall-canvas)
+[Discover Trending Wall Art →](/wall-canvas)

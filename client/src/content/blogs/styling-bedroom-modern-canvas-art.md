@@ -124,8 +124,14 @@ Free-spirited, globally inspired, and effortlessly layered.
 3. **Consider lighting** — install a dim-able picture light above your canvas for nighttime ambiance.
 4. **Test before you commit** — tape paper cutouts to the wall for a few days before drilling.
 
+## Top Picks for Bedroom Sanctuaries
+
+To help you curate the perfect bedroom atmosphere, here are our top-recommended pieces:
+- **[Noir Petal Sweep Canvas](/product/noir-petal-sweep)**: Indulge in moody hotel-suite luxury with this stunning dark floral masterpiece featuring golden leaf detailing.
+- **[Azure Gaze Canvas](/product/azure-gaze)**: Enjoy maximum relaxation and calm with this beautiful abstract minimalist blue canvas, perfect for the serene bedroom.
+
 ## Conclusion
 
 Your bedroom canvas is the first thing you see when you wake up and the last thing you see before you fall asleep. Whether you choose one serene minimalist piece or build an exuberant maximalist gallery, make sure it brings you joy.
 
-[Find Your Perfect Bedroom Canvas →](/category/wall-canvas)
+[Find Your Perfect Bedroom Canvas →](/wall-canvas)

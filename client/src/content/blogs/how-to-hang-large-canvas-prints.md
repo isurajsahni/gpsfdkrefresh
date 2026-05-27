@@ -96,8 +96,14 @@ Stick small felt pads to the bottom back corners of your canvas. This prevents t
 3. **Using inadequate hardware:** A canvas might look light, but a large stretched canvas can weigh 3-5kg. Use appropriate wall hardware.
 4. **Rushing the process:** Take your time measuring. A crooked canvas is worse than no canvas at all.
 
+## Make a Statement with Large Format Art
+
+To test your new hanging skills, look at these incredible large-format statement pieces:
+- **[The Wolf of Wall Street Canvas](/product/the-wolf-of-wall-street)**: A massive, highly motivating cinematic statement piece that commands complete attention in any executive office or workspace.
+- **[Celestial Frontier Canvas](/product/celestial-frontier)**: A breathtaking cosmic panorama that looks spectacular in oversized single or split-panel layouts.
+
 ## Conclusion
 
 Hanging a large canvas print is a 15-minute job that transforms your room for years to come. With the right measurements, appropriate hardware, and a bit of patience, you'll have a professionally hung masterpiece that makes your walls come alive.
 
-[Shop Large Canvas Prints →](/category/wall-canvas)
+[Shop Large Canvas Prints →](/wall-canvas)

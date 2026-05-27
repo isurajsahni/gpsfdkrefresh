@@ -22,3 +22,10 @@ If you have a massive empty wall, you have two brilliant options:
 If you have a narrow, tall wall (like beside a doorway), use a vertical (portrait) canvas. If you are decorating the wide space above a television console or sofa, stick to horizontal (landscape) or panoramic orientations.
 
 **Expert Tip:** Always cut a piece of cardboard or craft paper to the exact dimensions of the canvas you want to buy. Tape it to the wall using painter's tape to visualize the fit before checking out!
+
+## Large-Scale Statement Canvases
+
+Ready to find the perfect focal point for your large walls?
+- **[The Wolf of Wall Street Canvas](/product/the-wolf-of-wall-street)**: Available in various high-impact oversized layout dimensions, perfect for commanding attention above executive office desks or large living room sofas.
+
+[Shop Sized Canvases Now →](/wall-canvas)

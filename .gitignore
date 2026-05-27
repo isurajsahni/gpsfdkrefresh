@@ -17,3 +17,8 @@ Thumbs.db
 # Scratch / one-off test scripts
 scratch_*.js
 *.scratch.js
+
+# Agent temp/config dirs
+.claude/
+.gemini/
+

@@ -94,10 +94,15 @@ A canvas gift deserves a memorable presentation:
 | Premium Quality | 40x60 to 60x90 cm | ₹1,299 – ₹2,999 |
 | Luxury (Framed Canvas) | 60x90 cm+ | ₹2,999 – ₹6,999 |
 
+## Design a Custom Gift Today
+
+Ready to surprise your partner with the ultimate custom anniversary gift? 
+- **[Personalized Custom Canvas Studio](/customize-canvas)**: Use our direct design customizer tool to upload your wedding photos, add custom text overlay (like your wedding date or coordinates), select museum-grade canvas frame options, and preview the final look in real-time.
+
 ## Conclusion
 
 An anniversary canvas print isn't just a gift — it's a permanent declaration of love that becomes a part of your home. Years from now, when you walk past it every day, it'll remind you of the moment you chose to celebrate your love in such a meaningful way.
 
 Don't just give a gift. Give a memory that lasts a lifetime.
 
-[Create Your Custom Anniversary Canvas →](/category/wall-canvas)
+[Create Your Custom Anniversary Canvas →](/customize-canvas)

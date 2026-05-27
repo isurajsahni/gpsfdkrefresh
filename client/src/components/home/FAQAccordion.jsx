@@ -21,11 +21,11 @@ const FAQAccordion = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-10 md:mb-12"
         >
           <span className="text-accent font-body text-sm tracking-[0.3em] uppercase">Support</span>
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-white mt-3">Frequently Asked Questions</h2>
-          <div className="w-20 h-1 bg-accent mt-4 rounded-full mx-auto" />
+          <div className="w-20 h-1 bg-accent mt-[15px] rounded-full mx-auto" />
         </motion.div>
 
         <div className="space-y-3">

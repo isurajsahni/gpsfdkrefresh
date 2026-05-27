@@ -20,5 +20,12 @@ UV-resistant inks (specifically eco-solvent types) provide a secondary, incredib
 ## 4. Preserving Your Legacy (Custom Canvas)
 This is most crucial when ordering a **custom wall canvas india**. If you are printing a cherished wedding photo, an anniversary memory, or a family portrait, it is heartbreaking to watch those faces fade into ghosts over a few years. Always insist on UV protection for customized family heirlooms.
 
+## Featured UV-Protected Masterpieces
+
+Bring worry-free, long-lasting vibrancy to your sun-drenched rooms:
+- **[Volcanic Core Canvas](/product/volcanic-core)**: A highly vibrant, intensely colorful piece that showcases the unmatched stability of our premium UV-resistant pigments under any lighting conditions.
+
 ## Conclusion
 Before you buy **large wall art for bedroom india** or living room aesthetics, check the fine print. UV-resistant canvases might cost slightly more upfront, but they are the singular difference between temporary posters and true, lifelong luxury art investments.
+
+[Explore Our UV-Resistant Collection →](/wall-canvas)

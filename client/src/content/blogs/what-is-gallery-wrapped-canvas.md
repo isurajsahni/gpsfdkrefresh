@@ -76,8 +76,14 @@ At GPSFDK, we default to **mirrored wrap** — this preserves your full image on
 3. **Keep away from moisture** — don't hang canvas in bathrooms or directly above cooking areas.
 4. **Never use chemical cleaners** — water and a soft cloth are sufficient for spot cleaning.
 
+## Featured Gallery-Wrapped Designs
+
+Experience the three-dimensional depth of gallery wrapping with these premium pieces:
+- **[Dreaming in Colors Canvas](/product/dreaming-in-colors)**: A lively abstract explosion that benefits massively from mirrored edge gallery wrapping, bringing the colors to life from every angle.
+- **[Noir Petal Sweep Canvas](/product/noir-petal-sweep)**: Deep midnight and golden hues that wrap seamlessly, creating an elegant, borderless transition on any bedroom or study wall.
+
 ## Conclusion
 
 Gallery-wrapped canvas is the gold standard of wall art mounting. It offers a clean, professional, ready-to-hang solution that looks incredible in any room of your home. When shopping for canvas prints, always look for gallery-wrapped options to get the best value and visual impact.
 
-[Browse Our Gallery-Wrapped Canvas Collection →](/category/wall-canvas)
+[Browse Our Premium Gallery-Wrapped Canvas Collection →](/wall-canvas)

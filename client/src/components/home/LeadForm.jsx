@@ -40,11 +40,11 @@ const LeadForm = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-12"
+          className="mb-10 md:mb-12"
         >
           <span className="text-accent font-body text-sm tracking-[0.3em] uppercase">Connect With Us</span>
           <h2 className="text-3xl md:text-5xl font-heading font-bold text-secondary mt-3">Ready to Start Your Story?</h2>
-          <div className="w-20 h-1 bg-accent mt-4 rounded-full" />
+          <div className="w-20 h-1 bg-accent mt-[15px] rounded-full" />
         </motion.div>
 
         <form onSubmit={handleSubmit} className="mt-10">

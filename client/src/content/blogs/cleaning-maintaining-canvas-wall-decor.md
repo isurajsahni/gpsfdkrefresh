@@ -117,8 +117,14 @@ Some situations require a professional art conservator or restorer:
 - **Mould growth** that has penetrated the canvas fibres.
 - **Significant fading** that you want corrected.
 
+## Our Most Durable UV-Protected Designs
+
+If you want worry-free maintenance, these museum-grade designs are pre-coated with our premium UV-resistant varnish:
+- **[Azure Gaze Canvas](/product/azure-gaze)**: Renowned for its stable ocean pigments that stand up to humid coastal climates without fading.
+- **[The Concrete Jungle Canvas](/product/the-concrete-jungle)**: Exceptionally robust ink layers wrapped around kiln-dried pine wood frame backing.
+
 ## Conclusion
 
 A little routine care goes a long way. With monthly dusting, smart placement, and basic precautions against India's humidity and sun, your canvas wall art will remain as vibrant as the day you hung it — for decades to come.
 
-[Browse Our Premium Canvas Collection →](/category/wall-canvas)
+[Browse Our Premium Canvas Collection →](/wall-canvas)

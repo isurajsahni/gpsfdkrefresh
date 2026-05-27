@@ -85,8 +85,14 @@ There's no single "best" option — it depends on your space, style, and priorit
 | Budget-friendly | Canvas |
 | Maximum longevity | Either (with quality materials) |
 
+## Our Recommended Canvas Pieces
+
+Ready to invest in high-fidelity wall canvas art? Here are two highly rated options:
+- **[Obsidian Ember Canvas](/product/obsidian-ember)**: Deep charcoal and smouldering amber hues, perfect for displaying the detailed texture unique to premium canvases.
+- **[Noir Petal Sweep Canvas](/product/noir-petal-sweep)**: Deep midnight and golden leaf patterns that showcase unmatched detail and premium depth.
+
 ## Conclusion
 
 Both canvas and framed prints have their place in Indian homes. For most modern homeowners looking for a stylish, affordable, and hassle-free wall decor option, **canvas prints offer the best overall value**. But if you crave the timeless elegance of a beautifully framed photograph, don't let anyone talk you out of it.
 
-[Explore Both Options at GPSFDK →](/category/wall-canvas)
+[Explore Our Premium Wall Canvas Collection →](/wall-canvas)

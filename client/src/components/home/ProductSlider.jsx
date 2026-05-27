@@ -80,7 +80,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
         <div className="flex items-center justify-between mb-10">
           <div>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-secondary">{title}</h2>
-            <div className="w-20 h-1 bg-accent mt-3 rounded-full" />
+            <div className="w-20 h-1 bg-accent mt-[15px] rounded-full" />
           </div>
           {categorySlug && (
             <WebflowButton to={`/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">

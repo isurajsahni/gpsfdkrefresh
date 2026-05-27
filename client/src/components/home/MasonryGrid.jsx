@@ -49,31 +49,7 @@ const MasonryGrid = () => {
   }, []);
 
   const getBadgeInfo = (product) => {
-    if (!product) return null;
-    let badgeType = "";
-    const variations = product.variations || [];
-    const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
-    if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
-      badgeType = "lowstock";
-    } else if (product.featured) {
-      badgeType = "bestseller";
-    } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-      badgeType = "new";
-    }
-
-    const badgeColors = {
-      bestseller: 'bg-[#F5A623]',
-      new: 'bg-[#27AE60]',
-      lowstock: 'bg-[#E74C3C]'
-    };
-
-    const badgeLabels = {
-      bestseller: 'Bestseller',
-      new: 'New Arrival',
-      lowstock: 'Low Stock'
-    };
-
-    return badgeType ? { label: badgeLabels[badgeType], color: badgeColors[badgeType], type: badgeType } : null;
+    return null;
   };
 
   return (

@@ -33,7 +33,7 @@ const getBestsellerLabel = (id) => {
   return BESTSELLER_LABELS[Math.abs(hash) % BESTSELLER_LABELS.length];
 };
 
-const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId }) => {
+const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId, showBadges = true }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
   const { formatPrice } = useCurrency();
@@ -153,14 +153,16 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
 
               // Determine badge type
               let badgeType = "";
-              const variations = product.variations || [];
-              const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
-              if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
-                badgeType = "lowstock";
-              } else if (product.featured || hotSelling) {
-                badgeType = "bestseller";
-              } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-                badgeType = "new";
+              if (showBadges) {
+                const variations = product.variations || [];
+                const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
+                if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
+                  badgeType = "lowstock";
+                } else if (product.featured || hotSelling) {
+                  badgeType = "bestseller";
+                } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+                  badgeType = "new";
+                }
               }
 
               const badgeColors = {

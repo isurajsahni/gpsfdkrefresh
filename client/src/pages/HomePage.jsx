@@ -44,7 +44,7 @@ const HomePage = () => {
       <VideoShowcase />
       <MasonryGrid />
       <BeforeAfterSection />
-      <ProductSlider title="House Nameplates" categorySlug="house-nameplates" />
+      <ProductSlider title="House Nameplates" categorySlug="house-nameplates" showBadges={false} />
       <CategoryHighlights />
 
       <FeaturesSection />

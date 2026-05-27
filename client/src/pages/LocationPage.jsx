@@ -8,6 +8,27 @@ import API from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 
+const BESTSELLER_LABELS = [
+  'Best Seller',
+  'Most Sold',
+  'Top Choice',
+  'Hot Seller',
+  'Most Loved',
+  'Top Seller',
+  'Best Selling',
+  'Customer Favorite'
+];
+
+const getBestsellerLabel = (id) => {
+  if (!id) return 'Best Seller';
+  let hash = 0;
+  const str = String(id);
+  for (let idx = 0; idx < str.length; idx++) {
+    hash = str.charCodeAt(idx) + ((hash << 5) - hash);
+  }
+  return BESTSELLER_LABELS[Math.abs(hash) % BESTSELLER_LABELS.length];
+};
+
 const LOCATION_DATA = {
   'delhi': {
     delivery: 'Delivered to Delhi in 3-4 days',
@@ -283,7 +304,7 @@ const LocationPage = () => {
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white animate-pulse">
                             <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                           </svg>
-                          <span>Bestseller</span>
+                          <span>{getBestsellerLabel(product._id)}</span>
                         </div>
                       ) : (
                         <span className={`absolute top-3 left-3 z-10 text-[9px] font-bold px-2.5 py-1 rounded uppercase tracking-wider text-white shadow-sm ${badgeColors[badgeType]}`}>

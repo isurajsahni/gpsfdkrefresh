@@ -12,6 +12,27 @@ import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+const BESTSELLER_LABELS = [
+  'Best Seller',
+  'Most Sold',
+  'Top Choice',
+  'Hot Seller',
+  'Most Loved',
+  'Top Seller',
+  'Best Selling',
+  'Customer Favorite'
+];
+
+const getBestsellerLabel = (id) => {
+  if (!id) return 'Best Seller';
+  let hash = 0;
+  const str = String(id);
+  for (let idx = 0; idx < str.length; idx++) {
+    hash = str.charCodeAt(idx) + ((hash << 5) - hash);
+  }
+  return BESTSELLER_LABELS[Math.abs(hash) % BESTSELLER_LABELS.length];
+};
+
 const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
@@ -136,7 +157,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
               const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
               if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
                 badgeType = "lowstock";
-              } else if (product.featured) {
+              } else if (product.featured || hotSelling) {
                 badgeType = "bestseller";
               } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
                 badgeType = "new";
@@ -164,7 +185,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white animate-pulse">
                               <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
                             </svg>
-                            <span>Bestseller</span>
+                            <span>{getBestsellerLabel(product._id)}</span>
                           </div>
                         ) : (
                           <div className={`absolute top-3 left-3 z-10 text-[9px] px-2.5 py-1 rounded font-semibold text-white uppercase tracking-wider shadow ${badgeColors[badgeType]}`}>

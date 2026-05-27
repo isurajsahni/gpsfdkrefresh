@@ -9,8 +9,24 @@ import SEO from '../components/seo/SEO';
 import BeforeAfterSection from '../components/home/BeforeAfterSection';
 
 const MATERIALS = [
-  { id: 'canvas', label: 'Canvas', icon: '🎨' },
-  { id: 'poster', label: 'Poster', icon: '📄' },
+  { 
+    id: 'canvas', 
+    label: 'Canvas', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'poster', 
+    label: 'Poster', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+      </svg>
+    )
+  },
 ];
 
 const CANVAS_SIZES = [
@@ -27,13 +43,48 @@ const POSTER_SIZES = [
 ];
 
 const CANVAS_FRAMES = [
-  { id: 'rolled', label: 'Rolled', icon: '🕳️' },
-  { id: 'stretched', label: 'Stretched', icon: '⬜' },
+  { 
+    id: 'rolled', 
+    label: 'Rolled', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18c0 1.657 2.686 3 6 3s6-1.343 6-3M6 18V6c0-1.657 2.686-3 6-3s6 1.343 6 3v12M6 18c0-1.657 2.686-3 6-3s6 1.343 6 3M6 6c0 1.657 2.686 3 6 3s6-1.343 6-3" />
+      </svg>
+    )
+  },
+  { 
+    id: 'stretched', 
+    label: 'Stretched', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth={1.5} />
+        <rect x="6" y="6" width="12" height="12" rx="1" strokeWidth={1} />
+      </svg>
+    )
+  },
 ];
 
 const POSTER_FRAMES = [
-  { id: 'sticker', label: 'Sticker', icon: '🏷️' },
-  { id: 'softboard', label: 'Soft Board', icon: '🧱' },
+  { 
+    id: 'sticker', 
+    label: 'Sticker', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.125 1.125 0 001.591 0l4.318-4.318a1.125 1.125 0 000-1.591L9.568 3.659A2.25 2.25 0 008.97 3z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
+      </svg>
+    )
+  },
+  { 
+    id: 'softboard', 
+    label: 'Soft Board', 
+    icon: (props) => (
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+        <rect x="3" y="5" width="18" height="14" rx="2" strokeWidth={1.5} />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M8 5v14M16 5v14" />
+      </svg>
+    )
+  },
 ];
 
 const CustomizeCanvasPage = () => {
@@ -279,7 +330,7 @@ const CustomizeCanvasPage = () => {
                         : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'
                       }`}
                     >
-                      <span>{m.icon}</span> {m.label}
+                      <m.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${selectedMaterial.id === m.id ? 'text-white' : 'text-accent'}`} /> {m.label}
                     </button>
                   ))}
                 </div>
@@ -315,12 +366,12 @@ const CustomizeCanvasPage = () => {
                       onClick={() => setSelectedFrame(f)}
                       className="group flex flex-col items-center gap-2 sm:gap-3"
                     >
-                      <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-[2rem] border-2 flex items-center justify-center text-2xl sm:text-3xl transition-all ${
+                      <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-[2rem] border-2 flex items-center justify-center transition-all ${
                         selectedFrame?.id === f.id
                         ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
                         : 'border-white bg-white text-secondary group-hover:border-accent/30 shadow-sm'
                       }`}>
-                        {f.icon}
+                        <f.icon className={`w-8 h-8 sm:w-10 sm:h-10 ${selectedFrame?.id === f.id ? 'text-white' : 'text-accent'}`} />
                       </div>
                       <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-center leading-tight transition-colors ${
                         selectedFrame?.id === f.id ? 'text-secondary font-extrabold' : 'text-gray-400'

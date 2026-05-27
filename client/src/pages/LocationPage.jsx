@@ -278,9 +278,18 @@ const LocationPage = () => {
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-cream-dark">
                     {badgeType && (
-                      <span className={`absolute top-3 left-3 z-10 text-[9px] font-bold px-2.5 py-1 rounded uppercase tracking-wider text-white shadow-sm ${badgeColors[badgeType]}`}>
-                        {badgeLabels[badgeType]}
-                      </span>
+                      badgeType === 'bestseller' ? (
+                        <div className="absolute top-3 left-3 z-10 text-[9px] px-3 py-1.5 rounded-full font-bold text-white uppercase tracking-widest bg-gradient-to-r from-[#F15A29] to-[#F5A623] shadow-[0_0_12px_rgba(241,90,41,0.6)] border border-white/20 flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white animate-pulse">
+                            <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
+                          </svg>
+                          <span>Bestseller</span>
+                        </div>
+                      ) : (
+                        <span className={`absolute top-3 left-3 z-10 text-[9px] font-bold px-2.5 py-1 rounded uppercase tracking-wider text-white shadow-sm ${badgeColors[badgeType]}`}>
+                          {badgeLabels[badgeType]}
+                        </span>
+                      )
                     )}
                     <img
                       src={optimizeImage(product.images?.[0]?.url, 400) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500'}

@@ -207,6 +207,30 @@ const BlogPost = () => {
                   ].filter(p => typeof p === 'number');
                   const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
 
+                  // Determine badge type
+                  let badgeType = "";
+                  const variations = product.variations || [];
+                  const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
+                  if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
+                    badgeType = "lowstock";
+                  } else if (product.featured) {
+                    badgeType = "bestseller";
+                  } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+                    badgeType = "new";
+                  }
+
+                  const badgeColors = {
+                    bestseller: 'bg-[#F5A623]',
+                    new: 'bg-[#27AE60]',
+                    lowstock: 'bg-[#E74C3C]'
+                  };
+
+                  const badgeLabels = {
+                    bestseller: 'Bestseller',
+                    new: 'New Arrival',
+                    lowstock: 'Low Stock'
+                  };
+
                   return (
                     <Link 
                       key={product._id} 
@@ -214,15 +238,17 @@ const BlogPost = () => {
                       className="group bg-white rounded-2xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
                     >
                       <div className="relative aspect-[3/4] overflow-hidden bg-cream-dark">
+                        {badgeType && (
+                          <div className={`absolute top-3 left-3 z-10 text-[9px] px-2.5 py-1 rounded font-semibold text-white uppercase tracking-wider shadow ${badgeColors[badgeType]}`}>
+                            {badgeLabels[badgeType]}
+                          </div>
+                        )}
                         <img
                           src={optimizeImage(product.images?.[0]?.url, 400) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500'}
                           alt={product.name}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                           loading="lazy"
                         />
-                        <span className="absolute top-3 left-3 bg-accent text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow">
-                          Shop
-                        </span>
                       </div>
                       <div className="p-4 flex flex-col flex-grow justify-between">
                         <h4 className="font-heading font-bold text-secondary text-sm group-hover:text-accent transition-colors line-clamp-2 leading-tight">

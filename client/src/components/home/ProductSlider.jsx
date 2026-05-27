@@ -130,10 +130,39 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
               const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
               const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
 
+              // Determine badge type
+              let badgeType = "";
+              const variations = product.variations || [];
+              const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
+              if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
+                badgeType = "lowstock";
+              } else if (product.featured) {
+                badgeType = "bestseller";
+              } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
+                badgeType = "new";
+              }
+
+              const badgeColors = {
+                bestseller: 'bg-[#F5A623]',
+                new: 'bg-[#27AE60]',
+                lowstock: 'bg-[#E74C3C]'
+              };
+
+              const badgeLabels = {
+                bestseller: 'Bestseller',
+                new: 'New Arrival',
+                lowstock: 'Low Stock'
+              };
+
               return (
                 <SwiperSlide key={product._id || i}>
                   <Link to={`/product/${product.slug}`} className="group block">
                     <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                      {badgeType && (
+                        <div className={`absolute top-3 left-3 z-10 text-[9px] px-2.5 py-1 rounded font-semibold text-white uppercase tracking-wider shadow ${badgeColors[badgeType]}`}>
+                          {badgeLabels[badgeType]}
+                        </div>
+                      )}
                       <img
                         src={optimizeImage(product.images?.[0]?.url, 500) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600'}
                         alt={product.name}

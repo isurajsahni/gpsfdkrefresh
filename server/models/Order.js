@@ -77,6 +77,16 @@ const orderSchema = new mongoose.Schema({
   deliveredAt: Date,
   notes: { type: String, default: '' },
   trackingEmailSent: { type: Boolean, default: false },
+  // Shiprocket webhook tracking timeline — persisted in DB so frontend
+  // can display history even when the live Shiprocket API is unavailable.
+  trackingHistory: [{
+    status:    { type: String },           // App status: 'processing', 'shipped', etc.
+    srStatus:  { type: String },           // Raw Shiprocket status e.g. 'IN_TRANSIT'
+    message:   { type: String },           // Human-readable description
+    location:  { type: String, default: '' },
+    timestamp: { type: Date, default: Date.now },
+  }],
+  lastTrackingUpdate: { type: Date },      // Timestamp of latest webhook event
   // Idempotency flags for stock movements — never decrement or restore twice
   // for the same order even if a webhook retries or admin double-clicks status.
   stockDecremented: { type: Boolean, default: false },
@@ -101,9 +111,10 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ orderNumber: 1 });
 // Payment-idempotency check (verifyRazorpay deduplicates by paymentResult.id).
 orderSchema.index({ 'paymentResult.id': 1 });
-// Shiprocket webhook lookups by AWB / shiprocket id.
+// Shiprocket webhook lookups by AWB / shiprocket id / shipment id.
 orderSchema.index({ awb: 1 });
 orderSchema.index({ shiprocketOrderId: 1 });
+orderSchema.index({ shipmentId: 1 });
 // Guest dashboard / abandoned-cart matching.
 orderSchema.index({ guestEmail: 1 });
 

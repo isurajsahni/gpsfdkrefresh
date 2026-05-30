@@ -817,7 +817,9 @@ exports.trackOrder = async (req, res, next) => {
       courierName: order.courierName,
       trackingUrl: order.trackingUrl,
       deliveredAt: order.deliveredAt,
-      paymentMethod: order.paymentMethod
+      paymentMethod: order.paymentMethod,
+      trackingHistory: order.trackingHistory || [],
+      lastTrackingUpdate: order.lastTrackingUpdate || null,
     });
 
   } catch (error) {

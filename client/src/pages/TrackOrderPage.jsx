@@ -252,63 +252,122 @@ const TrackOrderPage = () => {
                     </a>
                   )}
                 </div>
+              </div>
+            )}
 
-                {/* Real-time status from Shiprocket */}
-                {shiprocketData?.tracking_data && (
-                  <div className="mt-6 pt-6 border-t border-secondary/5">
-                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-4">Detailed Tracking History</p>
-                    
-                    {(() => {
-                      const trackObj = shiprocketData.tracking_data.shipment_track?.[0] || {};
-                      const activities = shiprocketData.tracking_data.shipment_track_activities || trackObj.activities || [];
-                      
-                      if (activities.length > 0) {
-                        return (
-                          <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
-                            {activities.map((activity, index) => (
-                              <div key={index} className="relative pl-6">
-                                {/* Dot for timeline */}
-                                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? 'bg-accent animate-pulse' : 'bg-secondary/40'}`}></div>
-                                
-                                <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
-                                  {activity.activity || activity.status || 'Status Updated'}
-                                </p>
-                                
-                                <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
-                                  {activity.date && (
-                                    <span className="flex items-center gap-1">
-                                      <FaCheckCircle className="w-3 h-3 opacity-50" />
-                                      {new Date(activity.date).toLocaleString()}
-                                    </span>
-                                  )}
-                                  {activity.location && (
-                                    <span className="flex items-center gap-1">
-                                      <FaMapMarkerAlt className="w-3 h-3 opacity-50" />
-                                      {activity.location}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
+            {/* DB-persisted Tracking Timeline (primary — always available once webhook fires) */}
+            {orderData.trackingHistory && orderData.trackingHistory.length > 0 && (
+              <div className="mt-8 bg-primary/50 rounded-xl p-6 border border-secondary/10">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold">Tracking Timeline</p>
+                  {orderData.lastTrackingUpdate && (
+                    <p className="text-secondary/40 text-xs">
+                      Last updated: {new Date(orderData.lastTrackingUpdate).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+                <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
+                  {[...orderData.trackingHistory].reverse().map((entry, index) => {
+                    const statusColors = {
+                      processing: 'bg-amber-500',
+                      shipped:    'bg-blue-500',
+                      delivered:  'bg-green-500',
+                      cancelled:  'bg-red-500',
+                    };
+                    const dotColor = statusColors[entry.status] || 'bg-secondary/40';
+
+                    return (
+                      <div key={index} className="relative pl-6">
+                        <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? `${dotColor} animate-pulse` : dotColor} opacity-${index === 0 ? '100' : '70'}`}></div>
+                        
+                        <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
+                          {entry.message || entry.srStatus || 'Status Updated'}
+                        </p>
+                        
+                        <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
+                          {entry.timestamp && (
+                            <span className="flex items-center gap-1">
+                              <FaCheckCircle className="w-3 h-3 opacity-50" />
+                              {new Date(entry.timestamp).toLocaleString()}
+                            </span>
+                          )}
+                          {entry.location && (
+                            <span className="flex items-center gap-1">
+                              <FaMapMarkerAlt className="w-3 h-3 opacity-50" />
+                              {entry.location}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className={`inline-block mt-1.5 text-xs font-medium px-2 py-0.5 rounded-full capitalize
+                          ${entry.status === 'delivered' ? 'bg-green-500/10 text-green-600' :
+                            entry.status === 'shipped' ? 'bg-blue-500/10 text-blue-600' :
+                            entry.status === 'cancelled' ? 'bg-red-500/10 text-red-600' :
+                            'bg-amber-500/10 text-amber-600'}`}
+                        >
+                          {entry.status}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Live Courier Updates from Shiprocket API (secondary enrichment) */}
+            {shiprocketData?.tracking_data && (
+              <div className="mt-6 bg-primary/50 rounded-xl p-6 border border-secondary/10">
+                <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-4">Live Courier Updates</p>
+                
+                {(() => {
+                  const trackObj = shiprocketData.tracking_data.shipment_track?.[0] || {};
+                  const activities = shiprocketData.tracking_data.shipment_track_activities || trackObj.activities || [];
+                  
+                  if (activities.length > 0) {
+                    return (
+                      <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
+                        {activities.map((activity, index) => (
+                          <div key={index} className="relative pl-6">
+                            {/* Dot for timeline */}
+                            <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? 'bg-accent animate-pulse' : 'bg-secondary/40'}`}></div>
+                            
+                            <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
+                              {activity.activity || activity.status || 'Status Updated'}
+                            </p>
+                            
+                            <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
+                              {activity.date && (
+                                <span className="flex items-center gap-1">
+                                  <FaCheckCircle className="w-3 h-3 opacity-50" />
+                                  {new Date(activity.date).toLocaleString()}
+                                </span>
+                              )}
+                              {activity.location && (
+                                <span className="flex items-center gap-1">
+                                  <FaMapMarkerAlt className="w-3 h-3 opacity-50" />
+                                  {activity.location}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        );
-                      } else {
-                        // Fallback if no activities array but we have current status
-                        return trackObj.current_status ? (
-                          <div className="flex items-center gap-3 text-secondary">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <p className="font-medium">{trackObj.current_status}</p>
-                            {trackObj.last_location && (
-                              <span className="text-secondary/50 text-sm ml-2">({trackObj.last_location})</span>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-secondary/60 text-sm italic py-2">Tracking details will update once the courier scans your package.</p>
-                        );
-                      }
-                    })()}
-                  </div>
-                )}
+                        ))}
+                      </div>
+                    );
+                  } else {
+                    // Fallback if no activities array but we have current status
+                    return trackObj.current_status ? (
+                      <div className="flex items-center gap-3 text-secondary">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <p className="font-medium">{trackObj.current_status}</p>
+                        {trackObj.last_location && (
+                          <span className="text-secondary/50 text-sm ml-2">({trackObj.last_location})</span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-secondary/60 text-sm italic py-2">Tracking details will update once the courier scans your package.</p>
+                    );
+                  }
+                })()}
               </div>
             )}
 

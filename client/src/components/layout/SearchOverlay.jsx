@@ -13,7 +13,7 @@ const MOCK_DATA = [
     name: 'Premium Wall Canvas',
     category: 'Wall Art',
     price: '₹2,499',
-    logoUrl: '/favicon.svg',
+    logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
     slug: 'wall-canvas',
     description: 'Elevate your space with our premium quality matte canvas prints.'
   },
@@ -22,7 +22,7 @@ const MOCK_DATA = [
     name: 'Acrylic House Nameplate',
     category: 'House Nameplates',
     price: '₹1,299',
-    logoUrl: '/favicon.svg',
+    logoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop',
     slug: 'house-nameplates',
     description: 'Weatherproof, elegant acrylic nameplates for your modern home.'
   },
@@ -31,7 +31,7 @@ const MOCK_DATA = [
     name: 'Millionaire Art Series',
     category: 'Wall Art',
     price: '₹4,999',
-    logoUrl: '/favicon.svg',
+    logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
     slug: 'wall-canvas/millionaire-art',
     description: 'Exclusive, limited edition art pieces for the ambitious.'
   },
@@ -40,7 +40,7 @@ const MOCK_DATA = [
     name: 'Custom Canvas Print',
     category: 'Customize Canvas',
     price: '₹1,999',
-    logoUrl: '/favicon.svg',
+    logoUrl: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?q=80&w=600&auto=format&fit=crop',
     slug: 'customize-canvas',
     description: 'Turn your favorite memories into beautiful custom wall art.'
   },
@@ -49,7 +49,7 @@ const MOCK_DATA = [
     name: 'The Botanical Muse',
     category: 'Wall Art',
     price: '₹3,499',
-    logoUrl: '/favicon.svg',
+    logoUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop',
     slug: 'wall-canvas/the-botanical-muse',
     description: 'Nature-inspired art that brings life and color to any room.'
   }
@@ -209,11 +209,11 @@ const SearchOverlay = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full max-w-sm flex flex-col items-center text-center"
                   >
-                    <div className="w-32 h-32 bg-gray-800/50 rounded-2xl p-6 flex items-center justify-center shadow-lg border border-gray-700/50 mb-6 group hover:bg-gray-800 transition-colors">
+                    <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-gray-700/50 mb-6 group bg-gray-800/50">
                       <img 
                         src={hoveredItem.logoUrl} 
                         alt={hoveredItem.name} 
-                        className="max-w-full max-h-full object-contain filter drop-shadow-md group-hover:scale-110 transition-transform duration-300" 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" 
                       />
                     </div>
                     

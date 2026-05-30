@@ -154,8 +154,8 @@ const PasswordlessAuth = ({ isRegister = false }) => {
       const { data } = await API.post('/auth/passwordless/complete-registration', {
         tempToken,
         name: newUserDetails.name,
-        email: newUserDetails.email,
-        phone: identifier // If they started with phone
+        email: isEmail ? identifier : newUserDetails.email,
+        phone: isEmail ? '' : identifier
       });
       localStorage.setItem('user', JSON.stringify(data));
       updateUser(data);

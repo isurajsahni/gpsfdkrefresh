@@ -5,7 +5,7 @@ export default function injectStaticSitemap() {
     async transformIndexHtml(html) {
       try {
         console.log('\n[SEO Injection] Fetching live sitemap for static HTML injection...');
-        const res = await fetch('https://gpsfdkrefresh.onrender.com/sitemap.xml');
+        const res = await fetch('https://gpsfdk-api.onrender.com/sitemap.xml');
         
         if (!res.ok) {
           throw new Error(`Failed to fetch sitemap. Status: ${res.status}`);

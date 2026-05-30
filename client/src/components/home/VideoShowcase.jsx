@@ -132,7 +132,7 @@ const VideoShowcase = () => {
             spaceBetween={16}
             slidesPerView={1.15}
             centeredSlides={true}
-            loop={true}
+            loop={videosData.length >= 5}
             speed={400}
             grabCursor={true}
             autoplay={{

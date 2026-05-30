@@ -118,13 +118,19 @@ const CustomizeCanvasPage = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      if (selectedFile.size < 3 * 1024 * 1024) {
-        toast.error('Please upload a high-resolution image (minimum 3MB required)');
+      if (selectedFile.size < 500 * 1024) {
+        toast.error('Please upload an image of at least 500KB');
         return;
       }
       if (selectedFile.size > 10 * 1024 * 1024) {
         toast.error('File size exceeds 10MB limit');
         return;
+      }
+      if (selectedFile.size < 3 * 1024 * 1024) {
+        toast("Low resolution warning: We recommend images larger than 3MB for the best print quality, but you can still proceed!", {
+          icon: '⚠️',
+          duration: 5000
+        });
       }
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
@@ -256,7 +262,7 @@ const CustomizeCanvasPage = () => {
                     </div>
                     <h3 className="text-xl sm:text-2xl font-heading font-bold text-secondary">Upload your photo</h3>
                     <p className="text-gray-500 text-sm sm:text-base font-body">or drag & drop here</p>
-                    <p className="text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest mt-3 sm:mt-4">JPG, PNG or WEBP · 3 MB TO 10 MB</p>
+                    <p className="text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest mt-3 sm:mt-4">JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)</p>
                   </div>
                 )}
               </div>

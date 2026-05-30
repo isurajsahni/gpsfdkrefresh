@@ -55,7 +55,16 @@ exports.getProducts = async (req, res, next) => {
     
     if (categorySlug) {
       const Category = require('../models/Category');
-      const cat = await Category.findOne({ slug: categorySlug });
+      let cat = await Category.findOne({ slug: categorySlug });
+      if (!cat) {
+        // Try normalized, case-insensitive, hyphen-agnostic lookup (e.g. housenameplates -> house-nameplates)
+        const allCats = await Category.find({});
+        const normalizedInput = categorySlug.toLowerCase().replace(/[^a-z0-9]/g, '');
+        cat = allCats.find(c => {
+          const normalizedSlug = (c.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return normalizedSlug === normalizedInput;
+        });
+      }
       if (cat) {
         andConditions.push({ category: cat._id });
       } else {

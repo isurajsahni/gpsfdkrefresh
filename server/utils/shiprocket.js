@@ -204,6 +204,33 @@ class ShiprocketService {
       throw error;
     }
   }
+
+  /**
+   * Cancel an order in Shiprocket
+   * Endpoint: POST /v1/external/orders/cancel
+   */
+  async cancelOrder(shiprocketOrderId) {
+    try {
+      const token = await this.getToken();
+      console.log(`[Shiprocket] Cancelling SR Order ID: ${shiprocketOrderId}`);
+      
+      const response = await axios.post(
+        `${this.baseUrl}/orders/cancel`,
+        { ids: [Number(shiprocketOrderId)] },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log(`✅ [Shiprocket] Order Cancellation API Response for ID ${shiprocketOrderId}:`, JSON.stringify(response.data, null, 2));
+      return response.data;
+    } catch (error) {
+      if (error.response) {
+        console.error(`❌ [Shiprocket] Order Cancellation Error (HTTP ${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
+        throw new Error(`Shiprocket API error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+      }
+      console.error('❌ [Shiprocket] Order Cancellation Error:', error.message);
+      throw error;
+    }
+  }
 }
 
 module.exports = new ShiprocketService();

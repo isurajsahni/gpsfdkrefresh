@@ -716,6 +716,18 @@ exports.cancelOrder = async (req, res, next) => {
     // Restore stock atomically (idempotent — only runs if not already restored).
     await restoreStockForOrder(order);
 
+    // ─── Shiprocket Order Cancellation ───
+    if (order.shiprocketOrderId) {
+      try {
+        console.log(`[Shiprocket] Attempting to cancel order ${order.orderNumber} on Shiprocket (SR Order ID: ${order.shiprocketOrderId})`);
+        const cancelResult = await shiprocket.cancelOrder(order.shiprocketOrderId);
+        console.log(`✅ [Shiprocket] Successfully requested cancellation for order ${order.orderNumber} in Shiprocket. Response:`, JSON.stringify(cancelResult));
+      } catch (shipErr) {
+        console.error(`❌ [Shiprocket] Cancellation FAILED for order ${order.orderNumber} in Shiprocket:`, shipErr.message);
+        // We do not crash/block the internal order cancellation if Shiprocket API fails.
+      }
+    }
+
     // Send cancellation email
     sendOrderEmail(order, 'cancelled');
 

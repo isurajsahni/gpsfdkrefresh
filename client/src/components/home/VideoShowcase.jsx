@@ -128,18 +128,13 @@ const VideoShowcase = () => {
         {/* Mobile Swiper Slider (visible below 786px) */}
         <div className="block min-[786px]:hidden relative pb-20">
           <Swiper
-            modules={[Navigation, Autoplay]}
+            modules={[Navigation]}
             spaceBetween={16}
             slidesPerView={1.15}
             centeredSlides={true}
             loop={videosData.length >= 5}
             speed={400}
             grabCursor={true}
-            autoplay={{
-              delay: 4000,
-              disableOnInteraction: false,
-              pauseOnMouseEnter: true,
-            }}
             navigation={{
               nextEl: '.video-swiper-next',
               prevEl: '.video-swiper-prev',

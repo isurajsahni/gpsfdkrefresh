@@ -148,7 +148,9 @@ const CustomizeCanvasPage = () => {
     formData.append('image', file);
 
     try {
-      const { data } = await API.post('/upload/canvas', formData);
+      const { data } = await API.post('/upload/canvas', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setUploadedUrl(data.url);
       setStep(2);
       window.scrollTo(0, 0);

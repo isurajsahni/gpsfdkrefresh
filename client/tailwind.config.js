@@ -16,7 +16,7 @@ export default {
         'cream-dark': '#f5edd8',
       },
       fontFamily: {
-        heading: ['Cinzel', 'serif'],
+        heading: ['"Bricolage Grotesque"', 'sans-serif'],
         body: ['"DM Sans"', 'sans-serif'],
       },
       animation: {

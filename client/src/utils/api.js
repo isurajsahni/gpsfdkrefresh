@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-let baseURL = import.meta.env.VITE_API_URL || 'https://gpsfdk-api.onrender.com/api';
+let baseURL = import.meta.env.VITE_API_URL || 'https://gpsfdkrefresh.onrender.com/api';
 // Remove trailing slash if it exists
 if (baseURL.endsWith('/')) {
   baseURL = baseURL.slice(0, -1);

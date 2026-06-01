@@ -11,7 +11,11 @@ const categorySchema = new mongoose.Schema({
 }, { timestamps: true });
 
 categorySchema.pre('save', function () {
-  if (this.isModified('name')) {
+  // Generate slug on insert (isNew) OR on rename (isModified('name')).
+  // Without the isNew guard, edge-case insert paths that pre-fill `slug`
+  // could skip slugify and leave a mismatched/missing slug, which breaks
+  // /api/categories/:slug lookups in the frontend.
+  if (this.isNew || this.isModified('name')) {
     this.slug = slugify(this.name, { lower: true, strict: true });
   }
 });

@@ -154,15 +154,26 @@ export const formatters = {
 };
 
 // ─── Pincode → City/State autofill (India Post API) ───
+// The upstream API (api.postalpincode.in) periodically lets its SSL cert
+// expire, which causes the browser to reject the request with
+// ERR_CERT_DATE_INVALID. Without a timeout, that rejection can take ~30s
+// to surface — long enough that the checkout pincode spinner looks frozen
+// and users assume the form is broken. We hard-cap the wait at 4s and
+// return null on any failure so the caller falls back to manual entry.
 export const lookupPincode = async (pincode) => {
   if (!/^\d{6}$/.test(pincode)) return null;
   try {
-    const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+    // AbortSignal.timeout works in all modern browsers (Chrome 103+,
+    // Firefox 100+, Safari 16+) — every browser our checkout supports.
+    const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+      ? AbortSignal.timeout(4000)
+      : undefined;
+    const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`, { signal });
     const data = await res.json();
     if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.length > 0) {
       const po = data[0].PostOffice[0];
       return { city: po.District, state: po.State };
     }
-  } catch { /* silent */ }
+  } catch { /* silent — caller shows toast and unblocks manual entry */ }
   return null;
 };

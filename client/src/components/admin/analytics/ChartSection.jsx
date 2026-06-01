@@ -86,8 +86,26 @@ const ChartSection = ({ data = [], showViews = true, showVisitors = true }) => {
       </div>
 
       {/* Chart */}
-      <div className="w-full" style={{ height: 280 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      {/*
+        Recharts logs `width(-1) and height(-1) of chart should be greater than 0`
+        when ResponsiveContainer's parent has zero/unknown dimensions on first
+        layout (common with `height="100%"` percentage chaining + animated
+        parents like motion.div). Fix:
+         - Give the wrapper an explicit minHeight so it has a non-zero size
+           even before the ResizeObserver fires.
+         - Pass an explicit pixel `height` to ResponsiveContainer instead of
+           "100%" so it doesn't depend on the parent's measured height.
+         - Add `minWidth={0}` so flex/grid ancestors can't collapse it to -1.
+         - Skip rendering entirely until data is available — Recharts will
+           also warn on empty datasets.
+      */}
+      <div className="w-full" style={{ minHeight: 300, height: 280 }}>
+        {data.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+            No chart data for this range yet
+          </div>
+        ) : (
+        <ResponsiveContainer width="100%" height={280} minWidth={0}>
           <Chart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
@@ -124,6 +142,7 @@ const ChartSection = ({ data = [], showViews = true, showVisitors = true }) => {
             )}
           </Chart>
         </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

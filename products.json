@@ -1,0 +1,2210 @@
+[
+  {
+    "_id": "6a1c53c2011bc8973eff4985",
+    "name": "The Wolf of Wall Street",
+    "description": "Iconic cinematic art for the ambitious soul. A bold statement piece for your workspace.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=800",
+        "public_id": "",
+        "alt": "The Wolf of Wall Street",
+        "_id": "6a1c53c2011bc8973eff4986"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4987"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4988"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4989"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff498a"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff498b"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff498c"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff498d"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff498e"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "cinema",
+      "motivation",
+      "office"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.336Z",
+    "updatedAt": "2026-05-31T15:29:06.336Z",
+    "slug": "the-wolf-of-wall-street",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff4992",
+    "name": "The Social Outcast",
+    "description": "Abstract rebellion meets modern art. Perfect for those who dare to stand apart.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800",
+        "public_id": "",
+        "alt": "The Social Outcast",
+        "_id": "6a1c53c2011bc8973eff4993"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4994"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4995"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4996"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4997"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4998"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff4999"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff499a"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff499b"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "abstract",
+      "modern",
+      "living-room"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.416Z",
+    "updatedAt": "2026-05-31T15:29:06.416Z",
+    "slug": "the-social-outcast",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff499e",
+    "name": "Noir Petal Sweep",
+    "description": "Dark botanical elegance captured in sweeping strokes of midnight and gold.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?w=800",
+        "public_id": "",
+        "alt": "Noir Petal Sweep",
+        "_id": "6a1c53c2011bc8973eff499f"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a0"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a1"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a2"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a3"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a4"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a5"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a6"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49a7"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "botanical",
+      "dark",
+      "bedroom"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.499Z",
+    "updatedAt": "2026-05-31T15:29:06.499Z",
+    "slug": "noir-petal-sweep",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49aa",
+    "name": "Azure Gaze",
+    "description": "Mesmerizing blue tones that evoke the calm of the endless ocean.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1578301978693-85fa9c0320b9?w=800",
+        "public_id": "",
+        "alt": "Azure Gaze",
+        "_id": "6a1c53c2011bc8973eff49ab"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ac"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ad"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ae"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49af"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b0"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b1"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b2"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b3"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "blue",
+      "calm",
+      "minimal"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.575Z",
+    "updatedAt": "2026-05-31T15:29:06.575Z",
+    "slug": "azure-gaze",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49b6",
+    "name": "Dreaming in Colors",
+    "description": "A kaleidoscope of imagination brought to canvas. Vibrant and utterly captivating.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800",
+        "public_id": "",
+        "alt": "Dreaming in Colors",
+        "_id": "6a1c53c2011bc8973eff49b7"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b8"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49b9"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ba"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49bb"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49bc"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49bd"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49be"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49bf"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": true,
+    "tags": [
+      "colorful",
+      "vibrant",
+      "living-room"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.648Z",
+    "updatedAt": "2026-05-31T15:29:06.648Z",
+    "slug": "dreaming-in-colors",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49c2",
+    "name": "Volcanic Core",
+    "description": "Raw energy captured in molten hues. A piece that commands attention.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1574182245530-967d9b3831af?w=800",
+        "public_id": "",
+        "alt": "Volcanic Core",
+        "_id": "6a1c53c2011bc8973eff49c3"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c4"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c5"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c6"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c7"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c8"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49c9"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ca"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49cb"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": true,
+    "isMasonry": true,
+    "tags": [
+      "bold",
+      "red",
+      "office"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.720Z",
+    "updatedAt": "2026-05-31T15:29:06.720Z",
+    "slug": "volcanic-core",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49ce",
+    "name": "Obsidian Ember",
+    "description": "Deep charcoal meets smouldering amber in this sophisticated composition.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1577720580479-7d839d829c73?w=800",
+        "public_id": "",
+        "alt": "Obsidian Ember",
+        "_id": "6a1c53c2011bc8973eff49cf"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d0"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d1"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d2"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d3"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d4"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d5"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d6"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49d7"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "dark",
+      "sophisticated",
+      "office"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.792Z",
+    "updatedAt": "2026-05-31T15:29:06.792Z",
+    "slug": "obsidian-ember",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49da",
+    "name": "The Noir Executive",
+    "description": "Monochrome elegance for the modern executive. Timeless confidence on canvas.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=800",
+        "public_id": "",
+        "alt": "The Noir Executive",
+        "_id": "6a1c53c2011bc8973eff49db"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49dc"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49dd"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49de"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49df"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e0"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e1"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e2"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e3"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "monochrome",
+      "executive",
+      "office"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.863Z",
+    "updatedAt": "2026-05-31T15:29:06.863Z",
+    "slug": "the-noir-executive",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c2011bc8973eff49e6",
+    "name": "The Concrete Jungle",
+    "description": "Urban architecture meets artistic vision. The city as you have never seen it.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1514539079130-25950c84af65?w=800",
+        "public_id": "",
+        "alt": "The Concrete Jungle",
+        "_id": "6a1c53c2011bc8973eff49e7"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e8"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49e9"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ea"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49eb"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ec"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ed"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ee"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c2011bc8973eff49ef"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "urban",
+      "architecture",
+      "modern"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:06.948Z",
+    "updatedAt": "2026-05-31T15:29:06.948Z",
+    "slug": "the-concrete-jungle",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff49f2",
+    "name": "Neon Nostalgia",
+    "description": "Retro-futuristic vibes painted in electric neon. A conversation starter.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800",
+        "public_id": "",
+        "alt": "Neon Nostalgia",
+        "_id": "6a1c53c3011bc8973eff49f3"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f4"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f5"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f6"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f7"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f8"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49f9"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49fa"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff49fb"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "neon",
+      "retro",
+      "living-room"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.025Z",
+    "updatedAt": "2026-05-31T15:29:07.025Z",
+    "slug": "neon-nostalgia",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff49fe",
+    "name": "The Gilded Bloom",
+    "description": "Luxurious golden florals on a rich dark background. Pure opulence for your walls.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=800",
+        "public_id": "",
+        "alt": "The Gilded Bloom",
+        "_id": "6a1c53c3011bc8973eff49ff"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a00"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a01"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a02"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a03"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a04"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a05"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a06"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a07"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": false,
+    "tags": [
+      "floral",
+      "gold",
+      "luxury"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.110Z",
+    "updatedAt": "2026-05-31T15:29:07.110Z",
+    "slug": "the-gilded-bloom",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a0a",
+    "name": "Celestial Frontier",
+    "description": "Journey through the cosmos with this stunning interstellar art piece.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff497f",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800",
+        "public_id": "",
+        "alt": "Celestial Frontier",
+        "_id": "6a1c53c3011bc8973eff4a0b"
+      }
+    ],
+    "variations": [
+      {
+        "material": "Poster",
+        "frame": "Soft Board",
+        "size": "A4",
+        "color": "",
+        "price": 99,
+        "comparePrice": 199,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a0c"
+      },
+      {
+        "material": "Poster",
+        "frame": "Sticker",
+        "size": "A3",
+        "color": "",
+        "price": 149,
+        "comparePrice": 299,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a0d"
+      },
+      {
+        "material": "Poster",
+        "frame": "Paper",
+        "size": "12x18",
+        "color": "",
+        "price": 199,
+        "comparePrice": 399,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a0e"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "18x24",
+        "color": "",
+        "price": 999,
+        "comparePrice": 1999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a0f"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Rolled",
+        "size": "24x36",
+        "color": "",
+        "price": 1999,
+        "comparePrice": 3999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a10"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "24x36",
+        "color": "",
+        "price": 3499,
+        "comparePrice": 5999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a11"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "30x48",
+        "color": "",
+        "price": 4999,
+        "comparePrice": 6999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a12"
+      },
+      {
+        "material": "Canvas",
+        "frame": "Stretched",
+        "size": "36x60",
+        "color": "",
+        "price": 7999,
+        "comparePrice": 9999,
+        "stock": 100,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a13"
+      }
+    ],
+    "basePrice": 99,
+    "customizable": false,
+    "customizationLabel": "Custom Text",
+    "featured": false,
+    "isMasonry": false,
+    "tags": [
+      "space",
+      "cosmic",
+      "bedroom"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.181Z",
+    "updatedAt": "2026-05-31T15:29:07.181Z",
+    "slug": "celestial-frontier",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a16",
+    "name": "Lord Ganesha",
+    "description": "Traditional Lord Ganesha design with modern metallic finish. Brings blessings to your doorstep.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=800",
+        "public_id": "",
+        "alt": "Lord Ganesha",
+        "_id": "6a1c53c3011bc8973eff4a17"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Gold",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a18"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Gold",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a19"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Silver",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a1a"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Silver",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a1b"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.250Z",
+    "updatedAt": "2026-05-31T15:29:07.250Z",
+    "slug": "lord-ganesha",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a1e",
+    "name": "Modern House",
+    "description": "Sleek geometric lines with a contemporary feel. Perfect for modern homes.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=800",
+        "public_id": "",
+        "alt": "Modern House",
+        "_id": "6a1c53c3011bc8973eff4a1f"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Gold",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a20"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Gold",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a21"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Silver",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a22"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Silver",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a23"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": true,
+    "isMasonry": false,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.318Z",
+    "updatedAt": "2026-05-31T15:29:07.318Z",
+    "slug": "modern-house",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a26",
+    "name": "Silver Ganesha",
+    "description": "Elegant silver-toned Ganesha motif. A spiritual welcome to your abode.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
+        "public_id": "",
+        "alt": "Silver Ganesha",
+        "_id": "6a1c53c3011bc8973eff4a27"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Silver & White",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a28"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Silver & White",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a29"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Silver & Black",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a2a"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Silver & Black",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a2b"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": true,
+    "isMasonry": true,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.389Z",
+    "updatedAt": "2026-05-31T15:29:07.389Z",
+    "slug": "silver-ganesha",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a2e",
+    "name": "Sunehra Naam",
+    "description": "Golden lettering on premium acrylic. Your name in pure luxury.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800",
+        "public_id": "",
+        "alt": "Sunehra Naam",
+        "_id": "6a1c53c3011bc8973eff4a2f"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Gold & Black",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a30"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Gold & Black",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a31"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Gold & Maroon",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a32"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Gold & Maroon",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a33"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": true,
+    "isMasonry": true,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.459Z",
+    "updatedAt": "2026-05-31T15:29:07.459Z",
+    "slug": "sunehra-naam",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a36",
+    "name": "Just Right",
+    "description": "Minimalist perfection. Clean lines, bold presence.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600573472592-401b489a3cdc?w=800",
+        "public_id": "",
+        "alt": "Just Right",
+        "_id": "6a1c53c3011bc8973eff4a37"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Gold",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a38"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Gold",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a39"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "White & Gold",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a3a"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "White & Gold",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a3b"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.528Z",
+    "updatedAt": "2026-05-31T15:29:07.528Z",
+    "slug": "just-right",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a3e",
+    "name": "House Of Gold",
+    "description": "Full gold treatment for the ultimate luxury statement at your entrance.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800",
+        "public_id": "",
+        "alt": "House Of Gold",
+        "_id": "6a1c53c3011bc8973eff4a3f"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Gold & Black",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a40"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Gold & Black",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a41"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Gold & Brown",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a42"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Gold & Brown",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a43"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": false,
+    "isMasonry": true,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.600Z",
+    "updatedAt": "2026-05-31T15:29:07.600Z",
+    "slug": "house-of-gold",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a46",
+    "name": "Silver Circle",
+    "description": "Circular design with silver accents. Modern meets elegance.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800",
+        "public_id": "",
+        "alt": "Silver Circle",
+        "_id": "6a1c53c3011bc8973eff4a47"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Silver & Black",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a48"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Silver & Black",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a49"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Silver & White",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a4a"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Silver & White",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a4b"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": false,
+    "isMasonry": false,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.668Z",
+    "updatedAt": "2026-05-31T15:29:07.668Z",
+    "slug": "silver-circle",
+    "__v": 0
+  },
+  {
+    "_id": "6a1c53c3011bc8973eff4a4e",
+    "name": "Trishula",
+    "description": "Sacred trident design symbolizing power and protection.",
+    "metaTitle": "",
+    "metaDescription": "",
+    "category": "6a1c53c2011bc8973eff4982",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800",
+        "public_id": "",
+        "alt": "Trishula",
+        "_id": "6a1c53c3011bc8973eff4a4f"
+      }
+    ],
+    "variations": [
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Gold",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a50"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Gold",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a51"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "15 inch",
+        "color": "Black & Silver",
+        "price": 1999,
+        "comparePrice": 2999,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a52"
+      },
+      {
+        "material": "",
+        "frame": "",
+        "size": "18 inch",
+        "color": "Black & Silver",
+        "price": 2499,
+        "comparePrice": 3499,
+        "stock": 50,
+        "sku": "",
+        "_id": "6a1c53c3011bc8973eff4a53"
+      }
+    ],
+    "basePrice": 1999,
+    "customizable": true,
+    "customizationLabel": "Enter your family name",
+    "featured": false,
+    "isMasonry": false,
+    "tags": [
+      "nameplate",
+      "custom",
+      "home-decor"
+    ],
+    "rating": 0,
+    "numReviews": 0,
+    "weight": 0.5,
+    "length": 10,
+    "breadth": 10,
+    "height": 10,
+    "isActive": true,
+    "videos": [],
+    "createdAt": "2026-05-31T15:29:07.735Z",
+    "updatedAt": "2026-05-31T15:29:07.735Z",
+    "slug": "trishula",
+    "__v": 0
+  }
+]

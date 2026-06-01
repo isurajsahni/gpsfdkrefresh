@@ -44,7 +44,9 @@ const HomePage = () => {
       <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" hotSelling={true} />
       <MasonryGrid />
       <BeforeAfterSection />
-      <ProductSlider title="House Nameplates" categorySlug="house-nameplates" showBadges={false} />
+      {/* Temporarily hidden until the House Nameplates catalog is restocked.
+          To re-enable, uncomment the line below. */}
+      {/* <ProductSlider title="House Nameplates" categorySlug="house-nameplates" showBadges={false} /> */}
       <CategoryHighlights />
 
       <FeaturesSection />

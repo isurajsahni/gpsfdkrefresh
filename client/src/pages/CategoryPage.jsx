@@ -196,8 +196,11 @@ const CategoryPage = () => {
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-lg">No products found.</p>
-            <Link to="/" className="btn-primary mt-4 inline-block">Back to Home</Link>
+            <h3 className="text-2xl font-heading font-semibold text-secondary mb-2">Coming Soon</h3>
+            <p className="text-gray-500 text-lg max-w-md mx-auto">
+              We're crafting something special for this collection. Check back shortly &mdash; new designs drop here first.
+            </p>
+            <Link to="/" className="btn-primary mt-6 inline-block">Explore Other Collections</Link>
           </div>
         ) : (
           <>

@@ -107,8 +107,9 @@ orderSchema.pre('save', function() {
 orderSchema.index({ user: 1, createdAt: -1 });
 // Admin filters / status counts.
 orderSchema.index({ status: 1 });
-// Admin / customer tracking lookup by orderNumber.
-orderSchema.index({ orderNumber: 1 });
+// orderNumber lookup is already covered by the unique index declared via
+// `unique: true` on the field definition above — declaring it again here
+// triggers Mongoose's duplicate-index warning at startup.
 // Payment-idempotency check (verifyRazorpay deduplicates by paymentResult.id).
 orderSchema.index({ 'paymentResult.id': 1 });
 // Shiprocket webhook lookups by AWB / shiprocket id / shipment id.

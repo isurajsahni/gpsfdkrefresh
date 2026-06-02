@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
-// Direct standard connection string using resolved Atlas replica set hosts
-const MONGO_URI = "mongodb://suraj:surajdb@ac-yzpqvqo-shard-00-00.bmctuyz.mongodb.net:27017,ac-yzpqvqo-shard-00-01.bmctuyz.mongodb.net:27017,ac-yzpqvqo-shard-00-02.bmctuyz.mongodb.net:27017/ecommerce?ssl=true&replicaSet=atlas-t0g9r1-shard-0&authSource=admin&retryWrites=true&w=majority";
+dotenv.config();
 
 const ProductSchema = new mongoose.Schema({
   name: String,
@@ -18,8 +18,8 @@ const Category = mongoose.model('Category', CategorySchema);
 
 async function run() {
   try {
-    console.log('Connecting to MongoDB Atlas directly...');
-    await mongoose.connect(MONGO_URI);
+    console.log('Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected! Fetching wall canvas products...');
     
     // Find Wall Canvas category

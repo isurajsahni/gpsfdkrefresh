@@ -41,7 +41,7 @@ const HomePage = () => {
       />
       <HeroVideo />
       <VideoShowcase />
-      <ProductSlider title="HOT SELLING" categorySlug="wall-canvas" hotSelling={true} />
+      <ProductSlider title="Hot Selling" categorySlug="wall-canvas" hotSelling={true} />
       <MasonryGrid />
       <BeforeAfterSection />
       {/* Temporarily hidden until the House Nameplates catalog is restocked.

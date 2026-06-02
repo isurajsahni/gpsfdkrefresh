@@ -35,7 +35,10 @@ const MasonryGrid = () => {
       try {
         const { data } = await API.get('/products', {
           params: {
-            masonry: true,
+            // Series of the Month — currently Millionaire Art.
+            // Swap this to a different subCategory value to feature
+            // another series next month.
+            subCategoryExact: 'Millionaire Art',
             limit: 3,
             sort: '-createdAt'
           }
@@ -58,7 +61,7 @@ const MasonryGrid = () => {
         <div
           className="text-center mb-10 md:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] uppercase tracking-tight">Series of the Month</h2>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] capitalize tracking-tight">Series of the Month</h2>
           <div className="w-20 h-[3px] bg-[#E3543A] mt-[15px] mx-auto" />
         </div>
 

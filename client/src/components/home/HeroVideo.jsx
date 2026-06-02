@@ -33,7 +33,7 @@ const HeroVideo = () => {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white max-w-4xl leading-tight"
         >
-          <span className="text-accent">Right to luxury</span>
+          Right to <span className="text-accent">luxury</span>
         </motion.h1>
 
         <motion.p

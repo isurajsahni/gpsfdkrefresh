@@ -14,7 +14,6 @@ import AdminLayout from './components/admin/AdminLayout';
 import CartDrawer from './components/layout/CartDrawer';
 import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
-import PageLoader from './components/common/PageLoader';
 import ChatBot from './components/common/ChatBot';
 import ErrorBoundary from './components/common/ErrorBoundary';
 
@@ -187,7 +186,6 @@ function App() {
     <ErrorBoundary>
     <HelmetProvider>
       <Router>
-        <PageLoader />
         <ScrollManager />
         <AuthProvider>
           <UIProvider>

@@ -6,6 +6,8 @@ Photo-to-canvas printing has become one of the most popular ways to personalize 
 
 ## What is Photo-to-Canvas Printing?
 
+![Custom Photo Canvas Print Closeup](https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=1400)
+
 Photo-to-canvas printing is the process of taking a digital photograph and reproducing it on premium canvas material using high-resolution inkjet printers. The result is a stunning, textured artwork that looks and feels like an original painting.
 
 Unlike standard paper prints, canvas prints:
@@ -14,6 +16,8 @@ Unlike standard paper prints, canvas prints:
 - Use **archival-quality inks** that resist fading for 10-25 years.
 
 ## How to Choose the Right Photo
+
+![Personal Photo Collection on Display](https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1400)
 
 Not every photo makes a great canvas print. Here's what to look for:
 

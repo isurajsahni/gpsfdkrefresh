@@ -52,7 +52,7 @@ const HeroVideo = () => {
           className="mt-10 items-center flex flex-col sm:flex-row gap-4"
         >
           <WebflowButton to="/wall-canvas" className="text-lg">
-            Wall Canvas
+            Canvas
           </WebflowButton>
           <Link to="/house-nameplates" className="btn-outline border-white text-white hover:bg-white hover:text-secondary text-lg px-10 py-4">
             Custom Nameplates

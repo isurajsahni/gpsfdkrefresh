@@ -4,6 +4,8 @@ When it comes to decorating your walls, two options dominate the market: canvas 
 
 ## What Are Canvas Prints?
 
+![Modern Canvas Print in a Living Room](https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=1400)
+
 Canvas prints involve printing an image directly onto canvas material (usually cotton or polyester blend), which is then stretched over a wooden stretcher bar frame. The result is a frameless, gallery-style piece of art with a textured, painterly finish.
 
 ## What Are Framed Prints?
@@ -24,6 +26,8 @@ Framed prints involve printing an image on paper (glossy, matte, or fine art pap
 | **Best For** | Modern homes, large walls | Traditional homes, study rooms |
 
 ## When to Choose Canvas
+
+![Framed and Canvas Art Side by Side](https://images.unsplash.com/photo-1513519245088-0e12902e35ca?q=80&w=1400)
 
 ### You Want a Modern, Clean Aesthetic
 Canvas prints' frameless design creates a sleek, contemporary look. They appear to "float" on the wall, which suits modern apartments and minimalist interiors.

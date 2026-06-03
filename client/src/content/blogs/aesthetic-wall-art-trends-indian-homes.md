@@ -6,6 +6,8 @@ Here are the five biggest wall art trends transforming Indian homes right now.
 
 ## 1. Japandi Minimalism — Less is Definitely More
 
+![Japandi Minimalist Living Room with Canvas Art](https://images.unsplash.com/photo-1556228578-0d85b1a4d571?q=80&w=1400)
+
 The fusion of **Japanese minimalism** and **Scandinavian functionality** has taken Indian urban homes by storm. Japandi wall art features:
 
 - **Muted earth tones** (beige, sage green, warm grey, soft terracotta)
@@ -29,6 +31,8 @@ A fascinating revival is happening in Indian art. Young artists and designers ar
 **Why it works:** It allows homeowners to celebrate their Indian roots while maintaining a modern, Instagram-worthy aesthetic. Perfect for living rooms and dining areas.
 
 ## 3. Maximalist Gallery Walls — More is More
+
+![Maximalist Gallery Wall Display](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1400)
 
 Contrary to minimalism, the maximalist gallery wall trend embraces abundance:
 

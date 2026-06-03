@@ -47,7 +47,7 @@ const FAQ = () => {
     <div className="min-h-screen bg-primary text-secondary overflow-hidden pt-[120px] pb-24">
       <SEO 
         title="Frequently Asked Questions | GPSFDK Support"
-        description="Find answers to common questions about our premium wall canvases, custom nameplates, shipping, and returns."
+        description="Find answers to common questions about our premium canvases, custom nameplates, shipping, and returns."
         schema={faqSchema}
       />
       <div className="max-w-6xl mx-auto px-6">

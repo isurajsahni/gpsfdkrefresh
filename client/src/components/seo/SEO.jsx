@@ -2,8 +2,8 @@ import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
 const SEO = ({
-  title = "Premium Wall Canvas & Name Plates in India | GPSFDK",
-  description = "Buy custom wall canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing.",
+  title = "Premium Canvas & Name Plates in India | GPSFDK",
+  description = "Buy custom canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing.",
   name = "GPSFDK",
   type = "website",
   image = "/logo.webp", // You can change this to your standard OG image

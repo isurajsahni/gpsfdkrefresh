@@ -33,7 +33,7 @@ const LOCATION_DATA = {
   'delhi': {
     delivery: 'Delivered to Delhi in 3-4 days',
     shippingSpeed: 'Express Metro Air Delivery',
-    popularStyles: 'Modern Golden Acrylic Name Plates & Contemporary Wall Canvas Art',
+    popularStyles: 'Modern Golden Acrylic Name Plates & Contemporary Canvas Art',
     phone: '+91 96466-46063',
     whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Delhi%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Delivering Premium Museum-Grade Canvases & Entrance Statement Pieces to the Nation\'s Capital.',
@@ -170,7 +170,7 @@ const LocationPage = () => {
 
   const curatedProducts = getCuratedProducts();
   
-  const title = `Premium Wall Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
+  const title = `Premium Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
   const description = `Looking for Custom Canvas Prints in ${cityName}? GPSFDK offers Gallery Wrapped Canvas, Aesthetic Wall Decor, and premium Photo to Canvas services across ${cityName}.`;
   
   const localBusinessSchema = {
@@ -216,7 +216,7 @@ const LocationPage = () => {
 
             <h1 className="text-4xl md:text-6xl font-heading font-bold text-white mb-6 leading-tight">
               Premium House Name Plates & <br className="hidden md:block" />
-              Wall Canvas in <span className="text-accent">{cityName}</span>
+              Canvas in <span className="text-accent">{cityName}</span>
             </h1>
             <p className="text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-10 font-body leading-relaxed">
               Transform your living space with our Top-Rated Gallery Wrapped Canvas and Custom Photo to Canvas Prints. Whether you need Aesthetic Wall Art or durable custom nameplates, we deliver museum-quality decor straight to {cityName}.
@@ -396,7 +396,7 @@ const LocationPage = () => {
       {/* Internal SEO Links for 29 States */}
       <section className="py-20 max-w-7xl mx-auto px-6 border-t border-gray-200">
         <h3 className="text-2xl font-heading font-bold text-secondary text-center mb-10">
-          Wall Canvas & Name Plates Delivered Across India
+          Canvas & Name Plates Delivered Across India
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
           {indianStates.map((state) => {

@@ -53,7 +53,7 @@ const Navbar = () => {
   useClickOutside(menuRef, () => setUserMenu(false));
 
   const categories = [
-    { name: 'Wall Canvas', slug: 'wall-canvas', subcats: [
+    { name: 'Canvas', slug: 'wall-canvas', subcats: [
       'Ink & Interval',
       'The Sassy Classic',
       'Tethered Horizons',
@@ -69,8 +69,7 @@ const Navbar = () => {
       'The After Hour Suite',
       'The Wild Eccentrics'
     ] },
-    { name: 'House Nameplates', slug: 'house-nameplates', subcats: [] },
-    { name: 'Customize Canvas', slug: 'customize-canvas', subcats: [] },
+    { name: 'Customize', slug: 'customize-canvas', subcats: [] },
   ];
 
   return (

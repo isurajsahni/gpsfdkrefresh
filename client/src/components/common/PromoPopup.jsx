@@ -239,7 +239,7 @@ const PromoPopup = () => {
                   onClick={closePopup}
                   className="inline-block w-full py-3.5 px-6 bg-gradient-to-r from-[#0B5D3B] to-[#0a4f33] text-white font-bold rounded-xl text-sm tracking-wide hover:shadow-lg hover:shadow-[#0B5D3B]/20 hover:-translate-y-0.5 transition-all duration-300 mb-3"
                 >
-                  SHOP WALL CANVAS NOW →
+                  SHOP CANVAS NOW →
                 </Link>
 
                 {/* Don't show again Option */}

@@ -390,7 +390,7 @@ const ProductPage = () => {
               />
             )}
 
-            {/* Static Canvas Details - Only show for Wall Canvas */}
+            {/* Static Canvas Details - Only show for Canvas */}
             {product.category?.slug === 'wall-canvas' && (
               <div className="space-y-8">
                 <div>

@@ -189,7 +189,7 @@ const CustomizeCanvasPage = () => {
       name: `Custom ${selectedMaterial.label}`,
       slug: 'custom-canvas',
       images: [{ url: uploadedUrl }],
-      category: { slug: 'wall-canvas', name: 'Wall Canvas' }
+      category: { slug: 'wall-canvas', name: 'Canvas' }
     };
 
     const variation = {

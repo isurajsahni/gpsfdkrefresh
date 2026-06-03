@@ -18,7 +18,7 @@ const HomePage = () => {
     "name": "GPSFDK",
     "url": "https://www.gpsfdk.com",
     "logo": "https://www.gpsfdk.com/logo.webp",
-    "description": "Premium wall canvases and custom house nameplates provider in India.",
+    "description": "Premium canvases and custom house nameplates provider in India.",
     "contactPoint": {
       "@type": "ContactPoint",
       "telephone": "+91-9646646063",
@@ -35,8 +35,8 @@ const HomePage = () => {
   return (
     <>
       <SEO
-        title="Premium Wall Canvas & Name Plates in India | Custom Designs"
-        description="Buy custom wall canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing. Transform your home today!"
+        title="Premium Canvas & Name Plates in India | Custom Designs"
+        description="Buy custom canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing. Transform your home today!"
         schema={orgSchema}
       />
       <HeroVideo />

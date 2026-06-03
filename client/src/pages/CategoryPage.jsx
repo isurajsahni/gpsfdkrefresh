@@ -121,7 +121,7 @@ const CategoryPage = () => {
       ? `${category.name} | Shop Custom Designs in India`
       : 'Explore Premium Products | GPSFDK';
 
-  const dynamicDescription = category?.description || "Browse our exclusive collection of premium wall canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
+  const dynamicDescription = category?.description || "Browse our exclusive collection of premium canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
 
   // House Nameplates special handling
   if (slug === 'house-nameplates') {

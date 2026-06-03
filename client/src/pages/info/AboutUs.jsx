@@ -109,7 +109,7 @@ const AboutUs = () => {
               </h3>
               <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-secondary/70 group-hover:text-secondary/90 transition-colors">
                 <li>• Customised House Nameplates</li>
-                <li>• Elegant Wall Canvas Art</li>
+                <li>• Elegant Canvas Art</li>
               </ul>
             </div>
           </div>

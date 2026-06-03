@@ -4,6 +4,8 @@ If you've ever shopped for canvas wall art online, you've probably come across t
 
 ## Gallery-Wrapped Canvas Explained
 
+![Gallery-Wrapped Canvas on a Clean Wall](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1400)
+
 A gallery-wrapped canvas is a printing and framing technique where the canvas material is stretched and wrapped around a sturdy wooden stretcher bar frame. The image continues around the edges of the frame (called "gallery wrap"), creating a finished look on all sides — no additional frame needed.
 
 This is the **industry-standard mounting method** used by art galleries, museums, and professional photographers worldwide.
@@ -19,6 +21,8 @@ This is the **industry-standard mounting method** used by art galleries, museums
 | DIY Required | None | Full framing needed | None |
 
 ## How Gallery-Wrapped Canvas is Made
+
+![Museum-Quality Stretched Canvas Edge](https://images.unsplash.com/photo-1542456561-8fcd51b66ab0?q=80&w=1400)
 
 The process involves several precise steps:
 

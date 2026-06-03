@@ -10,7 +10,7 @@ import { useUI } from '../../context/UIContext';
 const MOCK_DATA = [
   {
     id: 1,
-    name: 'Premium Wall Canvas',
+    name: 'Premium Canvas',
     category: 'Wall Art',
     price: '₹2,499',
     logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
@@ -38,7 +38,7 @@ const MOCK_DATA = [
   {
     id: 4,
     name: 'Custom Canvas Print',
-    category: 'Customize Canvas',
+    category: 'Customize',
     price: '₹1,999',
     logoUrl: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?q=80&w=600&auto=format&fit=crop',
     slug: 'customize-canvas',

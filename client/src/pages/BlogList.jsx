@@ -8,8 +8,8 @@ const BlogList = () => {
   const blogSchema = {
     "@context": "https://schema.org",
     "@type": "Blog",
-    "name": "GPSFDK Blog — Wall Canvas & Home Decor Tips",
-    "description": "Expert guides, trends, and inspiration for wall canvas prints, custom nameplates, and home decor in India.",
+    "name": "GPSFDK Blog — Canvas & Home Decor Tips",
+    "description": "Expert guides, trends, and inspiration for canvas prints, custom nameplates, and home decor in India.",
     "url": "https://www.gpsfdk.com/blog",
     "blogPost": blogs.map(blog => ({
       "@type": "BlogPosting",
@@ -23,8 +23,8 @@ const BlogList = () => {
   return (
     <div className="min-h-screen bg-primary">
       <SEO
-        title="Wall Canvas & Home Decor Blog | GPSFDK India"
-        description="Expert guides, trends, and inspiration for wall canvas prints, custom nameplates, and home decor in India. Learn about gallery-wrapped canvas, split prints, and more."
+        title="Canvas & Home Decor Blog | GPSFDK India"
+        description="Expert guides, trends, and inspiration for canvas prints, custom nameplates, and home decor in India. Learn about gallery-wrapped canvas, split prints, and more."
         schema={blogSchema}
       />
 
@@ -43,7 +43,7 @@ const BlogList = () => {
               & Expert <span className="text-accent">Guides</span>
             </h1>
             <p className="text-lg text-white/70 max-w-2xl mx-auto">
-              Discover expert tips on choosing, hanging, and styling wall canvas prints. From gallery-wrapped guides to sustainable decor trends — become a wall art pro.
+              Discover expert tips on choosing, hanging, and styling canvas prints. From gallery-wrapped guides to sustainable decor trends — become a wall art pro.
             </p>
           </motion.div>
         </div>
@@ -114,10 +114,10 @@ const BlogList = () => {
               Ready to Transform Your Walls?
             </h2>
             <p className="text-white/70 max-w-xl mx-auto mb-8 relative z-10">
-              Explore our premium collection of custom wall canvas prints and house nameplates. Fast delivery across India.
+              Explore our premium collection of custom canvas prints and house nameplates. Fast delivery across India.
             </p>
             <Link to="/wall-canvas" className="btn-primary relative z-10 inline-block px-8 py-3.5 text-lg">
-              Shop Wall Canvas
+              Shop Canvas
             </Link>
           </div>
         </motion.div>

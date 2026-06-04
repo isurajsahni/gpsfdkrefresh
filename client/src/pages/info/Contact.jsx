@@ -113,6 +113,8 @@ const Contact = () => {
                 <input
                   type="text"
                   id="name"
+                  name="name"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
                   onBlur={(e) => handleBlur('name', e.target.value)}
@@ -126,6 +128,8 @@ const Contact = () => {
                 <input
                   type="email"
                   id="email"
+                  name="email"
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   onBlur={(e) => handleBlur('email', e.target.value)}
@@ -138,6 +142,7 @@ const Contact = () => {
                 <label htmlFor="message" className="block text-sm font-medium text-secondary mb-2">Message</label>
                 <textarea
                   id="message"
+                  name="message"
                   rows="5"
                   value={formData.message}
                   onChange={(e) => handleChange('message', e.target.value)}

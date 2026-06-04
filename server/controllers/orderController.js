@@ -199,19 +199,26 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     if (!product.isActive) throw new Error(`Product is not available: ${product.name}`);
 
     // Find matching variation by ID or by attributes
+    const norm = (s) => (s || '').toString().trim().toLowerCase();
     let variation;
     if (item.variationId) {
       variation = product.variations.id(item.variationId);
     }
+    if (!variation && item.variation?._id) {
+      variation = product.variations.id(item.variation._id);
+    }
     if (!variation && item.variation) {
       variation = product.variations.find(v =>
-        v.size === item.variation?.size &&
-        (!item.variation?.material || v.material === item.variation?.material) &&
-        (!item.variation?.frame || v.frame === item.variation?.frame) &&
-        (!item.variation?.color || v.color === item.variation?.color)
+        norm(v.size) === norm(item.variation?.size) &&
+        (!item.variation?.material || norm(v.material) === norm(item.variation?.material)) &&
+        (!item.variation?.frame || norm(v.frame) === norm(item.variation?.frame)) &&
+        (!item.variation?.color || norm(v.color) === norm(item.variation?.color))
       );
     }
-    if (!variation) throw new Error(`Invalid variation for ${product.name}`);
+    if (!variation) {
+      const requested = item.variation ? `size=${item.variation.size || '?'}, material=${item.variation.material || '?'}, color=${item.variation.color || '?'}` : 'none';
+      throw new Error(`Invalid variation for ${product.name} (requested: ${requested})`);
+    }
 
     // Check stock (skip for custom orders as they are made to order)
     if (!item.uploadedImageUrl && variation.stock < item.quantity) {
@@ -707,7 +714,7 @@ exports.cancelOrder = async (req, res, next) => {
     }
 
     if (order.status !== 'pending' && order.status !== 'processing') {
-      return res.status(400).json({ message: 'Order cannot be cancelled at this stage' });
+      return res.status(400).json({ message: `Order cannot be cancelled — current status is "${order.status}". Only pending or processing orders can be cancelled.` });
     }
 
     order.status = 'cancelled';

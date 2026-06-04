@@ -255,7 +255,7 @@ const CategoryPage = () => {
                           >
                             {badgeLabels[badgeType] || ''}
                           </div>
-                          <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
+                          <img src={optimizeImage(product.images?.[0]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600', 500)} alt={product.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = product.images?.[0]?.url || ''; }} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
                         </div>
                         <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
                           <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>

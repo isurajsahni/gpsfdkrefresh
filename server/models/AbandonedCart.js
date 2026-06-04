@@ -12,7 +12,8 @@ const abandonedCartSchema = new mongoose.Schema({
       quantity: Number,
       image: String,
       variation: mongoose.Schema.Types.Mixed,
-      customText: String
+      customText: String,
+      uploadedImageUrl: String
     }
   ],
   cartTotal: { type: Number, default: 0 },

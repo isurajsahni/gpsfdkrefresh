@@ -176,15 +176,15 @@ const CheckoutPage = () => {
 
   // Abandoned Cart Tracker (Debounced)
   useEffect(() => {
-    if (!user?.email || cartItems.length === 0) return;
-    
-    // Extract best available contact info combining user profile and current address form
-    const contactPhone = getSelectedAddress()?.phone || address?.phone || user.phone;
-    const contactName = getSelectedAddress()?.fullName || address?.fullName || user.name;
+    const trackingEmail = user?.email || guestEmail?.trim();
+    if (!trackingEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trackingEmail) || cartItems.length === 0) return;
+
+    const contactPhone = getSelectedAddress()?.phone || address?.phone || user?.phone || '';
+    const contactName = getSelectedAddress()?.fullName || address?.fullName || user?.name || '';
 
     const timer = setTimeout(() => {
       API.post('/abandoned-carts', {
-        email: user.email,
+        email: trackingEmail,
         phone: contactPhone,
         name: contactName,
         cartItems: cartItems.map(item => ({
@@ -198,11 +198,11 @@ const CheckoutPage = () => {
           uploadedImageUrl: item.uploadedImageUrl
         })),
         cartTotal
-      }).catch(() => console.log('Abandoned cart updated silently')); // Silent fail
+      }).catch(() => {}); // Silent fail
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [cartItems, cartTotal, address, selectedAddressId, user, getSelectedAddress]);
+  }, [cartItems, cartTotal, address, selectedAddressId, user, guestEmail, getSelectedAddress]);
 
   const handleSaveNewAddress = async () => {
     // Validate all fields
@@ -395,6 +395,7 @@ const CheckoutPage = () => {
           product: item.productId,
           name: item.name,
           image: item.image,
+          variationId: item.variation?._id || undefined,
           variation: item.variation,
           customText: item.customText,
           uploadedImageUrl: item.uploadedImageUrl,
@@ -720,9 +721,12 @@ const CheckoutPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Full Name */}
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-secondary mb-1">Full Name *</label>
+                        <label htmlFor="fullName" className="block text-sm font-semibold text-secondary mb-1">Full Name *</label>
                         <input
                           type="text"
+                          id="fullName"
+                          name="fullName"
+                          autoComplete="name"
                           value={address.fullName}
                           onChange={(e) => handleAddressChange('fullName', e.target.value)}
                           onBlur={() => handleAddressBlur('fullName')}
@@ -735,9 +739,12 @@ const CheckoutPage = () => {
                       {/* Guest email — only shown for unauthenticated buyers */}
                       {!user && (
                         <div className="md:col-span-2">
-                          <label className="block text-sm font-semibold text-secondary mb-1">Email *</label>
+                          <label htmlFor="guestEmail" className="block text-sm font-semibold text-secondary mb-1">Email *</label>
                           <input
                             type="email"
+                            id="guestEmail"
+                            name="email"
+                            autoComplete="email"
                             value={guestEmail}
                             onChange={(e) => setGuestEmail(e.target.value)}
                             className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
@@ -763,10 +770,13 @@ const CheckoutPage = () => {
 
                       {/* Pincode */}
                       <div>
-                        <label className="block text-sm font-semibold text-secondary mb-1">Pincode *</label>
+                        <label htmlFor="pincode" className="block text-sm font-semibold text-secondary mb-1">Pincode *</label>
                         <div className="relative">
                           <input
                             type="text"
+                            id="pincode"
+                            name="pincode"
+                            autoComplete="postal-code"
                             value={address.pincode}
                             onChange={(e) => handleAddressChange('pincode', e.target.value)}
                             onBlur={() => handleAddressBlur('pincode')}
@@ -787,9 +797,12 @@ const CheckoutPage = () => {
 
                       {/* Address Line 1 */}
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-secondary mb-1">Building/Street/Area *</label>
+                        <label htmlFor="addressLine1" className="block text-sm font-semibold text-secondary mb-1">Building/Street/Area *</label>
                         <input
                           type="text"
+                          id="addressLine1"
+                          name="addressLine1"
+                          autoComplete="address-line1"
                           value={address.addressLine1}
                           onChange={(e) => handleAddressChange('addressLine1', e.target.value)}
                           onBlur={() => handleAddressBlur('addressLine1')}
@@ -801,9 +814,12 @@ const CheckoutPage = () => {
 
                       {/* Address Line 2 */}
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-semibold text-secondary mb-1">Landmark (Optional)</label>
+                        <label htmlFor="addressLine2" className="block text-sm font-semibold text-secondary mb-1">Landmark (Optional)</label>
                         <input
                           type="text"
+                          id="addressLine2"
+                          name="addressLine2"
+                          autoComplete="address-line2"
                           value={address.addressLine2}
                           onChange={(e) => handleAddressChange('addressLine2', e.target.value)}
                           className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent"
@@ -813,9 +829,12 @@ const CheckoutPage = () => {
 
                       {/* City */}
                       <div>
-                        <label className="block text-sm font-semibold text-secondary mb-1">City *</label>
+                        <label htmlFor="city" className="block text-sm font-semibold text-secondary mb-1">City *</label>
                         <input
                           type="text"
+                          id="city"
+                          name="city"
+                          autoComplete="address-level2"
                           value={address.city}
                           onChange={(e) => handleAddressChange('city', e.target.value)}
                           onBlur={() => handleAddressBlur('city')}
@@ -826,8 +845,11 @@ const CheckoutPage = () => {
 
                       {/* State */}
                       <div>
-                        <label className="block text-sm font-semibold text-secondary mb-1">State *</label>
+                        <label htmlFor="state" className="block text-sm font-semibold text-secondary mb-1">State *</label>
                         <select
+                          id="state"
+                          name="state"
+                          autoComplete="address-level1"
                           value={address.state}
                           onChange={(e) => handleAddressChange('state', e.target.value)}
                           onBlur={() => handleAddressBlur('state')}
@@ -920,7 +942,7 @@ const CheckoutPage = () => {
                 {cartItems.map(item => (
                   <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                      <img src={optimizeImage(item.image, 200)} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                      <img src={optimizeImage(item.image, 200)} alt={item.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = item.image || ''; }} className="w-12 h-12 rounded-lg object-cover" />
                       <div>
                         <p className="font-semibold text-sm">{item.name}</p>
                         <p className="text-xs text-gray-500">{item.variation?.size} × {item.quantity}</p>
@@ -937,6 +959,9 @@ const CheckoutPage = () => {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
+                    id="couponCode"
+                    name="couponCode"
+                    autoComplete="off"
                     value={couponCode}
                     onChange={(e) => {
                       setCouponCode(e.target.value.toUpperCase());

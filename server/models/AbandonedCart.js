@@ -6,7 +6,7 @@ const abandonedCartSchema = new mongoose.Schema({
   name: { type: String, trim: true, default: '' },
   cartItems: [
     {
-      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      productId: { type: String, default: '' },
       name: String,
       price: Number,
       quantity: Number,

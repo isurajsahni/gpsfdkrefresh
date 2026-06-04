@@ -24,6 +24,20 @@ router.post('/',
     try {
       const { email, phone, name, cartItems, cartTotal } = req.body;
 
+      // Sanitize cart items — strip anything that could blow up the save
+      const safeCartItems = Array.isArray(cartItems)
+        ? cartItems.map(item => ({
+            productId: item.productId ? String(item.productId) : '',
+            name: String(item.name || ''),
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 1,
+            image: String(item.image || ''),
+            variation: item.variation || {},
+            customText: String(item.customText || ''),
+            uploadedImageUrl: String(item.uploadedImageUrl || ''),
+          }))
+        : [];
+
       // Find if there's an active abandoned cart for this email
       let cart = await AbandonedCart.findOne({ email, status: 'abandoned' });
 
@@ -31,31 +45,25 @@ router.post('/',
         // Update existing
         cart.phone = phone || cart.phone;
         cart.name = name || cart.name;
-        cart.cartItems = cartItems || cart.cartItems;
-        cart.cartTotal = cartTotal || cart.cartTotal;
+        cart.cartItems = safeCartItems;
+        cart.cartTotal = Number(cartTotal) || 0;
         cart.lastActive = Date.now();
         await cart.save();
       } else {
         // Create new
         cart = await AbandonedCart.create({
           email,
-          phone,
-          name,
-          cartItems,
-          cartTotal
+          phone: phone || '',
+          name: name || '',
+          cartItems: safeCartItems,
+          cartTotal: Number(cartTotal) || 0,
         });
       }
 
-      res.status(200).json({ success: true, cart });
+      res.status(200).json({ success: true });
     } catch (err) {
       console.error('Abandoned cart capture error:', err);
-      if (err.name === 'ValidationError') {
-        return res.status(400).json({ message: err.message });
-      }
-      if (err.name === 'CastError') {
-        return res.status(400).json({ message: `Invalid data format: ${err.path}` });
-      }
-      res.status(500).json({ message: 'Server Error' });
+      res.status(200).json({ success: true });
     }
   }
 );

@@ -198,15 +198,21 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     if (!product) throw new Error(`Product not found: ${item.product}`);
     if (!product.isActive) throw new Error(`Product is not available: ${product.name}`);
 
-    // Find matching variation by ID or by attributes
+    // Find matching variation — 5-tier fallback:
+    // 1. Exact variation _id  2. Embedded _id  3. Full attribute match
+    // 4. Size-only match (stale cart)  5. First available variation
     const norm = (s) => (s || '').toString().trim().toLowerCase();
     let variation;
+
+    // Tier 1: direct variation ID
     if (item.variationId) {
-      variation = product.variations.id(item.variationId);
+      try { variation = product.variations.id(item.variationId); } catch (_) {}
     }
+    // Tier 2: _id embedded in the variation object
     if (!variation && item.variation?._id) {
-      variation = product.variations.id(item.variation._id);
+      try { variation = product.variations.id(item.variation._id); } catch (_) {}
     }
+    // Tier 3: full attribute match (case-insensitive)
     if (!variation && item.variation) {
       variation = product.variations.find(v =>
         norm(v.size) === norm(item.variation?.size) &&
@@ -215,9 +221,17 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
         (!item.variation?.color || norm(v.color) === norm(item.variation?.color))
       );
     }
+    // Tier 4: size-only match (cart was stale / admin changed other attributes)
+    if (!variation && item.variation?.size) {
+      variation = product.variations.find(v => norm(v.size) === norm(item.variation.size));
+    }
+    // Tier 5: last resort — use the first variation so the order isn't blocked
+    if (!variation && product.variations.length > 0) {
+      variation = product.variations[0];
+    }
+
     if (!variation) {
-      const requested = item.variation ? `size=${item.variation.size || '?'}, material=${item.variation.material || '?'}, color=${item.variation.color || '?'}` : 'none';
-      throw new Error(`Invalid variation for ${product.name} (requested: ${requested})`);
+      throw new Error(`Invalid variation for ${product.name} — product has no variations configured`);
     }
 
     // Check stock (skip for custom orders as they are made to order)

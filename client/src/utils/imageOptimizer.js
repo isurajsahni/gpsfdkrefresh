@@ -1,17 +1,28 @@
+export const PLACEHOLDER_IMAGE = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">' +
+  '<rect width="400" height="400" fill="#f3f4f6"/>' +
+  '<text x="200" y="200" text-anchor="middle" dominant-baseline="central" font-family="sans-serif" font-size="14" fill="#9ca3af">Image unavailable</text>' +
+  '</svg>'
+);
+
+export const handleImageError = (e) => {
+  if (e.target.src !== PLACEHOLDER_IMAGE) {
+    e.target.src = PLACEHOLDER_IMAGE;
+  }
+};
+
 /**
  * Optimizes Cloudinary URLs by injecting transformation parameters.
- * - f_auto: Automatically selects the best image format (WebP/AVIF).
- * - q_auto: Automatically adjusts quality for optimal size/clarity.
- * - c_limit: Resize the image while maintaining aspect ratio, without upscaling.
- * - w_{width}: Specifies the target width.
- * 
- * @param {string} url - The original image URL
- * @param {number} width - The target width (optional)
- * @returns {string} The optimized CDN URL
+ * Filters out unreachable localhost URLs that were saved during development.
  */
 export const optimizeImage = (url, width) => {
   if (!url) return '';
-  
+
+  // Block localhost/dev-only URLs that will never load in production
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)) {
+    return PLACEHOLDER_IMAGE;
+  }
+
   // Only intercept known Cloudinary raw upload URLs
   if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
     // Avoid double transformation or transforming already optimized URLs

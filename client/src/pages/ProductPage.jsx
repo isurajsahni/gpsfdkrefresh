@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
-import { optimizeImage } from '../utils/imageOptimizer';
+import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -210,7 +210,7 @@ const ProductPage = () => {
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
-                    <img src={optimizeImage(img.url, 200)} alt="" crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = img.url; }} className="w-full h-full object-cover" />
+                    <img src={optimizeImage(img.url, 200)} alt="" onError={handleImageError} className="w-full h-full object-cover" />
                   </div>
                 ))}
               </div>
@@ -232,8 +232,7 @@ const ProductPage = () => {
                   transition={{ duration: 0.35, ease: 'easeOut' }}
                   src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
                   alt={product.name}
-                  crossOrigin="anonymous"
-                  onError={(e) => { e.target.crossOrigin = null; e.target.src = product.images?.[selectedImage]?.url || ''; }}
+                  onError={handleImageError}
                   style={(isZooming && isDesktop) ? { ...zoomStyle, transform: 'scale(2.5)' } : { transform: 'scale(1)' }}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 ease-out will-change-transform"
                 />
@@ -538,8 +537,7 @@ const ProductPage = () => {
             <img
               src={product.images?.[selectedImage]?.url}
               alt={product.name}
-              crossOrigin="anonymous"
-              onError={(e) => { e.target.crossOrigin = null; e.target.src = product.images?.[selectedImage]?.url || ''; }}
+              onError={handleImageError}
               className="w-full h-full object-contain"
             />
           </motion.div>

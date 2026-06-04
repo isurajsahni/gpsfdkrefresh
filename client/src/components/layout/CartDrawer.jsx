@@ -4,7 +4,7 @@ import { HiOutlineX, HiMinus, HiPlus, HiOutlineTrash } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUI } from '../../context/UIContext';
-import { optimizeImage } from '../../utils/imageOptimizer';
+import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
 
 const CartDrawer = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
@@ -64,7 +64,7 @@ const CartDrawer = () => {
                         onClick={() => setIsCartOpen(false)}
                         className="flex-shrink-0 w-20 h-24 rounded-xl overflow-hidden bg-cream-dark"
                       >
-                        <img src={optimizeImage(item.image, 200)} alt={item.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = item.image || ''; }} className="w-full h-full object-cover" />
+                        <img src={optimizeImage(item.image, 200)} alt={item.name} onError={handleImageError} className="w-full h-full object-cover" />
                       </Link>
                       <div className="flex-1 min-w-0 flex flex-col justify-between">
                         <div className="flex justify-between items-start">

@@ -8,19 +8,25 @@ import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
-import { optimizeImage } from '../utils/imageOptimizer';
+import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
 import { newEventId, getFbCookies } from '../utils/metaPixel';
 
+let razorpayScriptPromise = null;
 const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
+  if (window.Razorpay) return Promise.resolve(true);
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+  razorpayScriptPromise = new Promise((resolve) => {
+    const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
+    if (existing) { resolve(true); return; }
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
+    script.onerror = () => { razorpayScriptPromise = null; resolve(false); };
     document.body.appendChild(script);
   });
+  return razorpayScriptPromise;
 };
 
 
@@ -942,7 +948,7 @@ const CheckoutPage = () => {
                 {cartItems.map(item => (
                   <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                      <img src={optimizeImage(item.image, 200)} alt={item.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = item.image || ''; }} className="w-12 h-12 rounded-lg object-cover" />
+                      <img src={optimizeImage(item.image, 200)} alt={item.name} onError={handleImageError} className="w-12 h-12 rounded-lg object-cover" />
                       <div>
                         <p className="font-semibold text-sm">{item.name}</p>
                         <p className="text-xs text-gray-500">{item.variation?.size} × {item.quantity}</p>

@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
-import { optimizeImage } from '../utils/imageOptimizer';
+import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
   HiOutlineMail, HiOutlinePhone, HiOutlinePencil, HiOutlineCheck,
@@ -739,7 +739,7 @@ const UserDashboard = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           {order.items?.map((item, j) => (
                             <Link key={j} to={`/product/${item.product?.slug || item.product}`} className="flex items-center gap-4 bg-primary rounded-xl p-3 hover:shadow-md transition-shadow group">
-                              <img src={optimizeImage(item.image, 200)} alt={item.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = item.image || ''; }} className="w-16 h-16 rounded-lg object-cover" />
+                              <img src={optimizeImage(item.image, 200)} alt={item.name} onError={handleImageError} className="w-16 h-16 rounded-lg object-cover" />
                               <div className="flex-1">
                                 <span className="font-bold text-secondary group-hover:text-accent transition-colors line-clamp-1">{item.name}</span>
                                 <div className="text-sm text-gray-500 mt-1 flex justify-between">

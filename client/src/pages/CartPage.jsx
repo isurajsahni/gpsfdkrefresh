@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { HiOutlineTrash, HiMinus, HiPlus } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { optimizeImage } from '../utils/imageOptimizer';
+import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 
 const CartPage = () => {
@@ -45,7 +45,7 @@ const CartPage = () => {
                 className="bg-white rounded-2xl p-5 flex gap-5 shadow-sm"
               >
                 <Link to={`/product/${item.slug}`} className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden bg-cream-dark">
-                  <img src={optimizeImage(item.image || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=300', 200)} alt={item.name} crossOrigin="anonymous" onError={(e) => { e.target.crossOrigin = null; e.target.src = item.image || ''; }} className="w-full h-full object-cover" />
+                  <img src={optimizeImage(item.image, 200)} alt={item.name} onError={handleImageError} className="w-full h-full object-cover" />
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">

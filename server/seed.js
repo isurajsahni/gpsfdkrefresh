@@ -52,37 +52,50 @@ const seed = async () => {
       console.log('  Skipping collection clear (pass --clear to wipe first)');
     }
 
-    // Create users (use env vars or generate strong random passwords)
-    const crypto = require('crypto');
-    const adminPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(16).toString('hex');
-    const demoPassword = process.env.DEMO_PASSWORD || crypto.randomBytes(16).toString('hex');
+    // ═══════════════════════════════════════════
+    //         ADMIN CREDENTIAL GATEKEEPER
+    // ═══════════════════════════════════════════
+    // ADMIN_EMAIL and ADMIN_PASSWORD must be set explicitly in .env or Render
+    // dashboard. Falling back to hardcoded defaults creates an insecure
+    // gateway admin with a predictable email address.
+    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
+      console.error('\n  AUDIT BLOCK: ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env before seeding.');
+      console.error('  Set them in your .env file or Render dashboard, then re-run.\n');
+      process.exit(1);
+    }
 
-    const existingAdmin = await User.findOne({ email: process.env.ADMIN_EMAIL || 'admin@gpsfdk.com' });
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    const existingAdmin = await User.findOne({ email: adminEmail });
     if (!existingAdmin) {
       await User.create({
         name: 'Admin',
-        email: process.env.ADMIN_EMAIL || 'admin@gpsfdk.com',
+        email: adminEmail,
         password: adminPassword,
         role: 'admin',
         phone: '+91 9876543210'
       });
-      console.log('Admin user created');
+      console.log(`Admin user created: ${adminEmail}`);
     } else {
       console.log('Admin user already exists, skipping');
     }
 
-    const existingDemo = await User.findOne({ email: 'user@gpsfdk.com' });
-    if (!existingDemo) {
-      await User.create({
-        name: 'Demo User',
-        email: 'user@gpsfdk.com',
-        password: demoPassword,
-        role: 'user',
-        phone: '+91 9876543211'
-      });
-      console.log('Demo user created');
-    } else {
-      console.log('Demo user already exists, skipping');
+    // Demo user is optional — only create if DEMO_PASSWORD is provided
+    if (process.env.DEMO_PASSWORD) {
+      const existingDemo = await User.findOne({ email: 'user@gpsfdk.com' });
+      if (!existingDemo) {
+        await User.create({
+          name: 'Demo User',
+          email: 'user@gpsfdk.com',
+          password: process.env.DEMO_PASSWORD,
+          role: 'user',
+          phone: '+91 9876543211'
+        });
+        console.log('Demo user created');
+      } else {
+        console.log('Demo user already exists, skipping');
+      }
     }
 
     // Create categories (upsert to avoid duplicates)

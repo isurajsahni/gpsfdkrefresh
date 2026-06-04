@@ -180,8 +180,45 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+// ─── Startup Environment Validation ─────────────────────────────────────────
+// Surface missing tokens as clear warnings on boot so operators don't have
+// to debug silent failures in production.
+const validateEnv = () => {
+  const warnings = [];
+  const errors = [];
+
+  // Critical — server won't function without these
+  if (!process.env.MONGO_URI)    errors.push('MONGO_URI — database will not connect');
+  if (!process.env.JWT_SECRET)   errors.push('JWT_SECRET — authentication will fail');
+
+  // OTP delivery — WhatsApp + email verification won't work
+  if (!process.env.WHATSAPP_TOKEN)    warnings.push('WHATSAPP_TOKEN — WhatsApp OTP delivery disabled');
+  if (!process.env.PHONE_NUMBER_ID)   warnings.push('PHONE_NUMBER_ID — WhatsApp OTP delivery disabled');
+
+  // Meta Conversions API — server-side event tracking disabled
+  if (!process.env.META_CAPI_ACCESS_TOKEN) warnings.push('META_CAPI_ACCESS_TOKEN — Meta CAPI event tracking disabled');
+
+  // Admin seeding
+  if (!process.env.ADMIN_EMAIL)    warnings.push('ADMIN_EMAIL — seed script will refuse to create admin');
+  if (!process.env.ADMIN_PASSWORD) warnings.push('ADMIN_PASSWORD — seed script will refuse to create admin');
+
+  if (errors.length > 0) {
+    console.error('\n  MISSING CRITICAL ENV VARS:');
+    errors.forEach(e => console.error(`    ${e}`));
+  }
+  if (warnings.length > 0) {
+    console.warn('\n  MISSING ENV VARS (features degraded):');
+    warnings.forEach(w => console.warn(`    ${w}`));
+  }
+  if (errors.length === 0 && warnings.length === 0) {
+    console.log('  All environment variables configured');
+  }
+  console.log('');
+};
+
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    validateEnv();
   });
 });

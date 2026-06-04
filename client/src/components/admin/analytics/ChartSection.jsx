@@ -100,35 +100,37 @@ const ChartSection = ({ data = [], showViews = true, showVisitors = true }) => {
          - Skip rendering entirely until data is available — Recharts will
            also warn on empty datasets.
       */}
-      <div className="w-full" style={{ minHeight: 300 }}>
+      <div className="w-full h-[250px] sm:h-[320px] lg:h-[380px]">
         {data.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm" style={{ minHeight: 280 }}>
+          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
             No chart data for this range yet
           </div>
         ) : (
-        <ResponsiveContainer width="100%" height="100%" minWidth={0} aspect={2}>
-          <Chart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+          <Chart data={data} margin={{ top: 5, right: 5, left: -15, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 12, fill: '#9ca3af' }}
+              tick={{ fontSize: 11, fill: '#9ca3af' }}
               axisLine={{ stroke: '#e5e7eb' }}
               tickLine={false}
+              interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fontSize: 12, fill: '#9ca3af' }}
+              tick={{ fontSize: 11, fill: '#9ca3af' }}
               axisLine={false}
               tickLine={false}
+              width={45}
               tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
             {chartType === 'bar' ? (
               <>
                 {viewsVisible && (
-                  <Bar dataKey="views" name="Views" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={20} animationDuration={800} />
+                  <Bar dataKey="views" name="Views" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={800} />
                 )}
                 {visitorsVisible && (
-                  <Bar dataKey="visitors" name="Visitors" fill="#14532d" radius={[4, 4, 0, 0]} barSize={20} animationDuration={800} />
+                  <Bar dataKey="visitors" name="Visitors" fill="#14532d" radius={[4, 4, 0, 0]} maxBarSize={32} animationDuration={800} />
                 )}
               </>
             ) : (

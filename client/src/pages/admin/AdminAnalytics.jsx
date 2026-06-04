@@ -89,7 +89,7 @@ const AdminAnalytics = () => {
   const maxPageViews = topPages.length > 0 ? Math.max(...topPages.map(p => p.views)) : 1;
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -189,31 +189,29 @@ const AdminAnalytics = () => {
                 {sources.map((s, i) => (
                   <div
                     key={i}
-                    className="group flex items-center justify-between py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="group py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: sourceColors[s.source] || '#9CA3AF' }}
-                          />
-                          <span className="text-sm font-medium text-gray-700">{s.source}</span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div
-                          className="h-1.5 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${(s.views / maxSourceViews) * 100}%`,
-                            backgroundColor: sourceColors[s.source] || '#9CA3AF',
-                          }}
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                          style={{ backgroundColor: sourceColors[s.source] || '#9CA3AF' }}
                         />
+                        <span className="text-sm font-medium text-gray-700 truncate">{s.source}</span>
+                      </div>
+                      <div className="ml-3 flex-shrink-0 text-right whitespace-nowrap">
+                        <span className="text-sm font-semibold text-gray-700">{s.views.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400 ml-1 hidden sm:inline">({s.visitors})</span>
                       </div>
                     </div>
-                    <div className="ml-4 shrink-0 text-right">
-                      <span className="text-sm font-semibold text-gray-700">{s.views.toLocaleString()}</span>
-                      <span className="text-xs text-gray-400 ml-1">({s.visitors} visitors)</span>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(s.views / maxSourceViews) * 100}%`,
+                          backgroundColor: sourceColors[s.source] || '#9CA3AF',
+                        }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -245,22 +243,20 @@ const AdminAnalytics = () => {
                 {topPages.map((p, i) => (
                   <div
                     key={i}
-                    className="group flex items-center justify-between py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="group py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-gray-700 truncate pr-4 font-mono">{p.page}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div
-                          className="h-1.5 bg-[#0B5D3B] rounded-full transition-all duration-500"
-                          style={{ width: `${(p.views / maxPageViews) * 100}%` }}
-                        />
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-700 truncate font-mono min-w-0">{p.page}</span>
+                      <div className="ml-3 flex-shrink-0 text-right whitespace-nowrap">
+                        <span className="text-sm font-semibold text-gray-700">{p.views.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400 ml-1 hidden sm:inline">({p.visitors})</span>
                       </div>
                     </div>
-                    <div className="ml-4 shrink-0 text-right">
-                      <span className="text-sm font-semibold text-gray-700">{p.views.toLocaleString()}</span>
-                      <span className="text-xs text-gray-400 ml-1">({p.visitors} visitors)</span>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 bg-[#0B5D3B] rounded-full transition-all duration-500"
+                        style={{ width: `${(p.views / maxPageViews) * 100}%` }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -322,22 +318,20 @@ const AdminAnalytics = () => {
                 return (
                   <div
                     key={i}
-                    className="group flex items-center justify-between py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
+                    className="group py-2.5 hover:bg-gray-50 -mx-2 px-2 rounded-lg transition-colors"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-gray-700 truncate pr-4">{ref.source}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div
-                          className="h-1.5 bg-green-500 rounded-full transition-all duration-500"
-                          style={{ width: `${(ref.views / maxRefViews) * 100}%` }}
-                        />
-                      </div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm text-gray-700 truncate min-w-0">{ref.source}</span>
+                      <span className="text-sm font-semibold text-gray-700 ml-3 flex-shrink-0 whitespace-nowrap">
+                        {ref.views.toLocaleString()}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 ml-4 shrink-0">
-                      {ref.views.toLocaleString()}
-                    </span>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className="h-1.5 bg-green-500 rounded-full transition-all duration-500"
+                        style={{ width: `${(ref.views / maxRefViews) * 100}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}

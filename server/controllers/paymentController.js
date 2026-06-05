@@ -3,7 +3,7 @@ const stripe = require('stripe');
 const crypto = require('crypto');
 const Order = require('../models/Order');
 const orderController = require('./orderController');
-const { detectCountry, getCurrency, convertPrice, roundClean, CURRENCY_CONFIG, INR_EXCHANGE_RATES } = require('../utils/geoPricing');
+const { detectCountry, getCurrency } = require('../utils/geoPricing');
 const metaCapi = require('../utils/metaCapi');
 
 const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
@@ -44,27 +44,15 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
 
     // ─── Geo-Pricing: Detect user's currency ───
+    // NOTE: Razorpay only supports INR for Indian merchant accounts.
+    // We ALWAYS charge in INR. Geo-pricing info is stored in notes for
+    // reconciliation/display but the actual Razorpay order is always INR.
     const country = await detectCountry(req);
     const currency = getCurrency(country);
-    const isIndia = country === 'IN';
 
-    let chargeAmount;
-    let chargeCurrency = currency;
-
-    if (isIndia || currency === 'INR') {
-      chargeAmount = Math.round(prices.totalPrice * 100);
-      chargeCurrency = 'INR';
-    } else {
-      const converted = convertPrice(prices.totalPrice, country);
-      if (currency === 'JPY' || currency === 'KRW') {
-        chargeAmount = converted.price;
-      } else if (currency === 'KWD' || currency === 'BHD' || currency === 'OMR') {
-        chargeAmount = Math.round(converted.price * 1000);
-      } else {
-        chargeAmount = Math.round(converted.price * 100);
-      }
-      chargeCurrency = currency;
-    }
+    // Always charge in INR (Razorpay requirement for Indian merchants)
+    const chargeAmount = Math.round(prices.totalPrice * 100); // paise
+    const chargeCurrency = 'INR';
 
     const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
@@ -75,7 +63,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
       notes: {
         inr_total: prices.totalPrice.toString(),
         geo_country: country,
-        geo_currency: chargeCurrency,
+        geo_currency: currency, // what the user's local currency is (for display)
       },
     };
 

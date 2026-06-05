@@ -191,6 +191,12 @@ const validateEnv = () => {
   if (!process.env.MONGO_URI)    errors.push('MONGO_URI — database will not connect');
   if (!process.env.JWT_SECRET)   errors.push('JWT_SECRET — authentication will fail');
 
+  // Payment gateway — Razorpay (detect placeholder keys too)
+  const rzpPlaceholders = ['your_razorpay', 'placeholder', 'YOUR_'];
+  const isRzpPlaceholder = (v) => !v || rzpPlaceholders.some((p) => v.includes(p));
+  if (isRzpPlaceholder(process.env.RAZORPAY_KEY_ID))     errors.push('RAZORPAY_KEY_ID — Razorpay payments will fail (still set to placeholder)');
+  if (isRzpPlaceholder(process.env.RAZORPAY_KEY_SECRET)) errors.push('RAZORPAY_KEY_SECRET — Razorpay payments will fail (still set to placeholder)');
+
   // OTP delivery — WhatsApp + email verification won't work
   if (!process.env.WHATSAPP_TOKEN)    warnings.push('WHATSAPP_TOKEN — WhatsApp OTP delivery disabled');
   if (!process.env.PHONE_NUMBER_ID)   warnings.push('PHONE_NUMBER_ID — WhatsApp OTP delivery disabled');

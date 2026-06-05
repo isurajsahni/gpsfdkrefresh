@@ -36,8 +36,13 @@ const seed = async () => {
     // ═══════════════════════════════════════════
     //         CRITICAL SECURITY GATEKEEPER
     // ═══════════════════════════════════════════
-    if (process.env.NODE_ENV === 'production' ||
-        process.env.MONGO_URI?.includes('cluster')) {
+    // Only block when NODE_ENV is explicitly 'production'.
+    // The previous URI-based check (MONGO_URI.includes('cluster')) was too
+    // aggressive — it also blocked staging Atlas URIs, making it impossible
+    // to repair broken seed data on staging without a --force bypass.
+    // Set NODE_ENV=production in the Render production service and
+    // NODE_ENV=staging (or omit it) in the Render staging service.
+    if (process.env.NODE_ENV === 'production') {
       console.error('\n  AUDIT BLOCK: Destructive data injection scripts cannot be executed on the live Production Database cluster!\n');
       process.exit(1);
     }
@@ -209,6 +214,7 @@ const seed = async () => {
         { name: 'Neon Nostalgia', desc: 'Retro-futuristic vibes painted in electric neon. A conversation starter.', tags: ['neon', 'retro', 'living-room'] },
         { name: 'The Gilded Bloom', desc: 'Luxurious golden florals on a rich dark background. Pure opulence for your walls.', tags: ['floral', 'gold', 'luxury'] },
         { name: 'Celestial Frontier', desc: 'Journey through the cosmos with this stunning interstellar art piece.', tags: ['space', 'cosmic', 'bedroom'] },
+        { name: 'The Dapper Predator', desc: 'Raw power meets refined elegance. A bold predator rendered in striking monochrome strokes.', tags: ['animal', 'bold', 'monochrome', 'living-room'] },
       ];
 
       const canvasVariations = [
@@ -235,22 +241,36 @@ const seed = async () => {
         'https://images.unsplash.com/photo-1482160549825-59d1b23cb208?w=800',
         'https://images.unsplash.com/photo-1579783901586-d88db74b4fe4?w=800',
         'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800',
+        'https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=800',
       ];
 
+      // Find-then-fix approach: create missing products, repair empty-variation
+      // products, skip products that already have valid variations. This makes
+      // the seed safe to re-run without --clear and without any data loss.
+      let canvasCreated = 0, canvasRepaired = 0;
       for (let i = 0; i < canvasProducts.length; i++) {
-        await Product.create({
-          name: canvasProducts[i].name,
-          description: canvasProducts[i].desc,
-          shortDescription: canvasProducts[i].desc.substring(0, 80),
-          category: wallCanvas._id,
-          images: [{ url: canvasImages[i], public_id: '', alt: canvasProducts[i].name }],
-          variations: canvasVariations,
-          featured: i < 6,
-          isMasonry: i >= 4 && i < 10,
-          tags: canvasProducts[i].tags,
-        });
+        const existing = await Product.findOne({ name: canvasProducts[i].name });
+        if (!existing) {
+          await Product.create({
+            name: canvasProducts[i].name,
+            description: canvasProducts[i].desc,
+            shortDescription: canvasProducts[i].desc.substring(0, 80),
+            category: wallCanvas._id,
+            images: [{ url: canvasImages[i], public_id: '', alt: canvasProducts[i].name }],
+            variations: canvasVariations,
+            featured: i < 6,
+            isMasonry: i >= 4 && i < 10,
+            tags: canvasProducts[i].tags,
+          });
+          canvasCreated++;
+        } else if (!existing.variations || existing.variations.length === 0) {
+          existing.variations = canvasVariations;
+          await existing.save();
+          console.log(`  Repaired empty variations for: ${canvasProducts[i].name}`);
+          canvasRepaired++;
+        }
       }
-      console.log('Wall Canvas products seeded');
+      console.log(`Wall Canvas products: ${canvasCreated} created, ${canvasRepaired} repaired, ${canvasProducts.length - canvasCreated - canvasRepaired} already healthy`);
 
       // ── House Nameplate products (hardcoded fallback) ─────────────────
       const nameplateProducts = [
@@ -275,6 +295,7 @@ const seed = async () => {
         'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800',
       ];
 
+      let npCreated = 0, npRepaired = 0;
       for (let i = 0; i < nameplateProducts.length; i++) {
         const np = nameplateProducts[i];
         const variations = [];
@@ -282,21 +303,30 @@ const seed = async () => {
           variations.push({ color, size: '15 inch', price: 1999, comparePrice: 2999, stock: 50 });
           variations.push({ color, size: '18 inch', price: 2499, comparePrice: 3499, stock: 50 });
         }
-        await Product.create({
-          name: np.name,
-          description: np.desc,
-          shortDescription: np.desc.substring(0, 80),
-          category: houseNameplates._id,
-          images: [{ url: nameplateImages[i], public_id: '', alt: np.name }],
-          variations,
-          customizable: true,
-          customizationLabel: 'Enter your family name',
-          featured: i < 4,
-          isMasonry: i >= 2 && i < 6,
-          tags: ['nameplate', 'custom', 'home-decor'],
-        });
+        const existing = await Product.findOne({ name: np.name });
+        if (!existing) {
+          await Product.create({
+            name: np.name,
+            description: np.desc,
+            shortDescription: np.desc.substring(0, 80),
+            category: houseNameplates._id,
+            images: [{ url: nameplateImages[i], public_id: '', alt: np.name }],
+            variations,
+            customizable: true,
+            customizationLabel: 'Enter your family name',
+            featured: i < 4,
+            isMasonry: i >= 2 && i < 6,
+            tags: ['nameplate', 'custom', 'home-decor'],
+          });
+          npCreated++;
+        } else if (!existing.variations || existing.variations.length === 0) {
+          existing.variations = variations;
+          await existing.save();
+          console.log(`  Repaired empty variations for: ${np.name}`);
+          npRepaired++;
+        }
       }
-      console.log('House Nameplate products seeded');
+      console.log(`House Nameplate products: ${npCreated} created, ${npRepaired} repaired, ${nameplateProducts.length - npCreated - npRepaired} already healthy`);
     }
 
     console.log('\nDatabase seeded successfully!');

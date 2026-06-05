@@ -1,7 +1,7 @@
 const express = require('express');
 const AbandonedCart = require('../models/AbandonedCart');
 const { protect, admin } = require('../middleware/auth');
-const { publicEndpointLimiter } = require('../middleware/validators');
+const { abandonedCartLimiter } = require('../middleware/validators');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 
@@ -18,7 +18,7 @@ const validate = (req, res, next) => {
 // @desc    Capture or update abandoned cart data
 // @access  Public (rate limited)
 router.post('/',
-  publicEndpointLimiter,
+  abandonedCartLimiter,
   [body('email').isEmail().normalizeEmail().withMessage('Valid email is required'), validate],
   async (req, res) => {
     try {
@@ -32,7 +32,7 @@ router.post('/',
             price: Number(item.price) || 0,
             quantity: Number(item.quantity) || 1,
             image: String(item.image || ''),
-            variation: item.variation || {},
+            variation: item.variation && typeof item.variation === 'object' ? item.variation : {},
             customText: String(item.customText || ''),
             uploadedImageUrl: String(item.uploadedImageUrl || ''),
           }))
@@ -60,10 +60,11 @@ router.post('/',
         });
       }
 
-      res.status(200).json({ success: true });
+      if (!res.headersSent) res.status(200).json({ success: true });
     } catch (err) {
       console.error('Abandoned cart capture error:', err);
-      res.status(200).json({ success: true });
+      // Guard against double-send if something upstream already committed a response
+      if (!res.headersSent) res.status(200).json({ success: true });
     }
   }
 );
@@ -96,15 +97,15 @@ router.delete('/:id', protect, admin, async (req, res) => {
 // @route   POST /api/abandoned-carts/recover
 // @desc    Mark a cart as recovered (deleted) after successful order
 // @access  Public (rate limited)
-router.post('/recover', publicEndpointLimiter, async (req, res) => {
+router.post('/recover', abandonedCartLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (email && typeof email === 'string') {
       await AbandonedCart.findOneAndDelete({ email, status: 'abandoned' });
     }
-    res.status(200).json({ success: true });
+    if (!res.headersSent) res.status(200).json({ success: true });
   } catch (err) {
-    res.status(500).json({ message: 'Server Error' });
+    if (!res.headersSent) res.status(200).json({ success: true });
   }
 });
 

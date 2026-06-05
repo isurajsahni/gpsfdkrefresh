@@ -98,6 +98,17 @@ const publicEndpointLimiter = rateLimit({
   message: { message: 'Too many requests. Please slow down.' },
 });
 
+// Abandoned-cart tracker fires every 2 s while the user is on the checkout
+// page. 10/min is too tight — it generates spurious 429s that look like 500s
+// in some monitoring dashboards. 30/min gives plenty of headroom while still
+// blocking abuse (carts are upserted by email, so flooding just overwrites the
+// same row).
+const abandonedCartLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { message: 'Too many requests. Please slow down.' },
+});
+
 // Analytics endpoints (pageview, 404-log) fire on every SPA route change.
 // A normal browsing session easily exceeds 10/min, so we use a far higher
 // ceiling here. Pure logging endpoints — abuse risk is low; we just don't
@@ -124,4 +135,5 @@ module.exports = {
   guestOrderLimiter,
   publicEndpointLimiter,
   analyticsLimiter,
+  abandonedCartLimiter,
 };

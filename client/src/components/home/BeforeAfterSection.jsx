@@ -1,170 +1,144 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import beforeImg from '../../assets/image/home page/before.webp';
-import afterImg from '../../assets/image/home page/after.webp';
+import { handleImageError } from '../../utils/imageOptimizer';
+
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80';
+
+const steps = [
+  { num: 1, label: 'Upload image' },
+  { num: 2, label: 'Choose size' },
+  { num: 3, label: 'Add text & style' },
+  { num: 4, label: 'Delivered in 5 days' },
+];
 
 const BeforeAfterSection = ({ showCTA = true, showTitle = true, compact = false }) => {
-  const [sliderPosition, setSliderPosition] = useState(50);
-  const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef(null);
-
-  const handleMove = useCallback((clientX) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setSliderPosition(percentage);
-  }, []);
-
-  const handleTouchMove = useCallback((e) => {
-    if (!isDragging) return;
-    if (e.touches && e.touches[0]) {
-      handleMove(e.touches[0].clientX);
-    }
-  }, [isDragging, handleMove]);
-
-  const handleMouseMove = useCallback((e) => {
-    if (!isDragging) return;
-    handleMove(e.clientX);
-  }, [isDragging, handleMove]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove]);
-
-  const content = (
-    <div className="max-w-6xl mx-auto px-2 sm:px-4">
-      {/* Section Heading */}
-      {showTitle && (
-        <div className="text-center mb-10 md:mb-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <span className="text-accent font-body text-xs sm:text-sm tracking-[0.3em] uppercase">Before & After</span>
-            <h2 className="text-2xl sm:text-3xl md:text-5xl font-heading font-bold text-secondary mt-2 sm:mt-3 px-2">
-              Turn Photos Into Timeless Paintings
-            </h2>
-            <div className="w-16 sm:w-20 h-1 bg-accent mt-[15px] rounded-full mx-auto" />
-            <p className="text-gray-600 font-body text-xs sm:text-sm md:text-lg mt-4 sm:mt-6 max-w-2xl mx-auto px-2">
-              See the magic of our digital design team. Drag the slider to compare an ordinary client photo with our finished premium canvas print.
-            </p>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Image Slider Container */}
-      <div className="relative max-w-4xl mx-auto">
-        <div
-          ref={containerRef}
-          className="relative w-full aspect-[4/3] md:aspect-[16/9] overflow-hidden rounded-xl sm:rounded-[2rem] shadow-2xl border border-cream-dark select-none cursor-ew-resize"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-            const rect = containerRef.current.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            setSliderPosition((x / rect.width) * 100);
-          }}
-          onTouchStart={(e) => {
-            setIsDragging(true);
-            if (e.touches && e.touches[0]) {
-              const rect = containerRef.current.getBoundingClientRect();
-              const x = e.touches[0].clientX - rect.left;
-              setSliderPosition((x / rect.width) * 100);
-            }
-          }}
-        >
-          {/* After Image (Background) */}
-          <img
-            src={afterImg}
-            alt="Custom Canvas After Paint Effect"
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-          />
-
-          {/* Before Image (Clipped Overlay) */}
-          <img
-            src={beforeImg}
-            alt="Client Original Uploaded Photo"
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            style={{
-              clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)`
-            }}
-          />
-
-          {/* Labels - Responsively scaled to avoid overlaps */}
-          <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-black/65 text-white text-[8px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full backdrop-blur-md select-none tracking-wider uppercase">
-            Before<span className="hidden min-[380px]:inline">: Original Photo</span>
-          </div>
-          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-accent/90 text-white text-[8px] sm:text-xs font-semibold px-2 sm:px-3 py-1 sm:py-1.5 rounded-full shadow-md select-none tracking-wider uppercase">
-            After<span className="hidden min-[380px]:inline">: Hand-Painted</span><span className="hidden sm:inline"> Canvas</span>
-          </div>
-
-          {/* Drag Handle Divider */}
-          <div
-            className="absolute inset-y-0 z-10 w-0.5 bg-white cursor-ew-resize shadow-[0_0_10px_rgba(0,0,0,0.5)]"
-            style={{ left: `${sliderPosition}%` }}
-          >
-            {/* Central handle knob - Responsively scaled */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white shadow-xl flex items-center justify-center border-2 border-secondary select-none">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-                className="w-4 h-4 sm:w-5 h-5 text-secondary animate-pulse"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9"
-                  className="rotate-90 origin-center"
-                />
-              </svg>
+  if (compact) {
+    return (
+      <div className="w-full py-6">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-[16/9]">
+            <img
+              src={HERO_IMAGE}
+              alt="Custom canvas print in a modern living room"
+              className="w-full h-full object-cover"
+              onError={handleImageError}
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6">
+              <span className="bg-secondary text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                NEW
+              </span>
+              <p className="text-white font-heading text-lg sm:text-2xl font-bold mt-2 drop-shadow-lg">
+                Your memory. <span className="text-accent">Gallery quality.</span>
+              </p>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Conversion CTA */}
-      {showCTA && (
-        <div className="text-center mt-8 sm:mt-12">
-          <Link
-            to="/customize-canvas"
-            className="inline-block bg-secondary hover:bg-secondary-dark text-white font-heading font-bold py-3 sm:py-4 px-4 min-[360px]:px-6 sm:px-10 rounded-full shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all duration-300 uppercase tracking-wider sm:tracking-widest text-[10px] min-[360px]:text-xs sm:text-sm whitespace-nowrap"
-          >
-            Customize Your Canvas →
-          </Link>
-        </div>
-      )}
-    </div>
-  );
-
-  if (compact) {
-    return <div className="w-full relative py-4 sm:py-6">{content}</div>;
+    );
   }
 
   return (
-    <section className="section-padding section-spacing bg-white overflow-hidden relative">
-      {content}
+    <section className="bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[500px] lg:min-h-[600px]">
+          {/* ── Left Column: Text Content ── */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col justify-center px-6 sm:px-10 lg:px-14 xl:px-20 py-12 lg:py-16"
+          >
+            {/* Badge */}
+            {showTitle && (
+              <div className="flex items-center gap-3 mb-6">
+                <span className="bg-secondary text-white text-[10px] sm:text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  NEW
+                </span>
+                <span className="text-secondary font-bold text-xs sm:text-sm uppercase tracking-[0.15em]">
+                  Customize Canvas
+                </span>
+              </div>
+            )}
+
+            {/* Heading */}
+            <h2 className="font-heading text-4xl sm:text-5xl lg:text-[3.4rem] xl:text-6xl font-bold leading-[1.1] tracking-tight">
+              <span className="text-secondary">Your memory.</span>
+              <br />
+              <span className="text-accent">Gallery quality.</span>
+              <br />
+              <span className="text-secondary">Your wall.</span>
+            </h2>
+
+            {/* Description */}
+            <p className="text-gray-500 font-body text-sm sm:text-base lg:text-lg mt-6 max-w-md leading-relaxed">
+              Upload any photograph — a family portrait, a travel memory, a milestone moment — and we transform it into a premium gallery-wrapped canvas delivered to your door.
+            </p>
+
+            {/* Steps */}
+            <div className="mt-8 sm:mt-10">
+              {/* Labels */}
+              <div className="flex items-start justify-between max-w-md">
+                {steps.map((step) => (
+                  <div key={step.num} className="flex flex-col items-center text-center w-1/4 px-1">
+                    <span className="text-gray-600 text-[10px] sm:text-xs font-medium leading-tight">
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Numbered circles + lines */}
+              <div className="flex items-center max-w-md mt-3">
+                {steps.map((step, i) => (
+                  <div key={step.num} className="flex items-center flex-1 last:flex-none">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
+                      {step.num}
+                    </div>
+                    {i < steps.length - 1 && (
+                      <div className="flex-1 h-0.5 bg-secondary/30 mx-1" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* CTA */}
+            {showCTA && (
+              <div className="mt-8 sm:mt-10">
+                <Link
+                  to="/customize-canvas"
+                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-heading font-bold py-4 px-8 sm:px-10 rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300 text-sm sm:text-base"
+                >
+                  Create Your Canvas
+                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 13L13 3M13 3H5M13 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </Link>
+              </div>
+            )}
+          </motion.div>
+
+          {/* ── Right Column: Hero Image ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="relative min-h-[300px] sm:min-h-[400px] lg:min-h-0"
+          >
+            <img
+              src={HERO_IMAGE}
+              alt="Premium custom canvas print displayed in a stylish modern living room"
+              className="w-full h-full object-cover lg:absolute lg:inset-0"
+              onError={handleImageError}
+              loading="lazy"
+            />
+          </motion.div>
+        </div>
+      </div>
     </section>
   );
 };

@@ -1,14 +1,15 @@
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { handleImageError } from '../../utils/imageOptimizer';
+import WebflowButton from '../ui/WebflowButton';
+import customizeImg from '../../assets/image/home page/customize.jpeg';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80';
+const HERO_IMAGE = customizeImg;
 
 const steps = [
   { num: 1, label: 'Upload image' },
   { num: 2, label: 'Choose size' },
   { num: 3, label: 'Add text & style' },
-  { num: 4, label: 'Delivered in 5 days' },
+  { num: 4, label: 'Delivered in 5-7 days' },
 ];
 
 const BeforeAfterSection = ({ showCTA = true, showTitle = true, compact = false }) => {
@@ -78,28 +79,18 @@ const BeforeAfterSection = ({ showCTA = true, showTitle = true, compact = false 
             </p>
 
             {/* Steps */}
-            <div className="mt-8 sm:mt-10">
-              {/* Labels */}
-              <div className="flex items-start justify-between max-w-md">
+            <div className="mt-8 sm:mt-10 max-w-md">
+              <div className="relative flex justify-between items-end">
+                {/* Single connector line at circle-center height */}
+                <div className="absolute left-8 right-8 bottom-3.5 sm:bottom-4 h-0.5 bg-secondary/30" />
                 {steps.map((step) => (
-                  <div key={step.num} className="flex flex-col items-center text-center w-1/4 px-1">
-                    <span className="text-gray-600 text-[10px] sm:text-xs font-medium leading-tight">
+                  <div key={step.num} className="relative z-10 flex flex-col items-center gap-2 w-16">
+                    <span className="text-gray-600 text-[10px] sm:text-xs font-medium leading-tight text-center">
                       {step.label}
                     </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Numbered circles + lines */}
-              <div className="flex items-center max-w-md mt-3">
-                {steps.map((step, i) => (
-                  <div key={step.num} className="flex items-center flex-1 last:flex-none">
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
                       {step.num}
                     </div>
-                    {i < steps.length - 1 && (
-                      <div className="flex-1 h-0.5 bg-secondary/30 mx-1" />
-                    )}
                   </div>
                 ))}
               </div>
@@ -108,15 +99,9 @@ const BeforeAfterSection = ({ showCTA = true, showTitle = true, compact = false 
             {/* CTA */}
             {showCTA && (
               <div className="mt-8 sm:mt-10">
-                <Link
-                  to="/customize-canvas"
-                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-dark text-white font-heading font-bold py-4 px-8 sm:px-10 rounded-full shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-300 text-sm sm:text-base"
-                >
+                <WebflowButton to="/customize-canvas">
                   Create Your Canvas
-                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M3 13L13 3M13 3H5M13 3V11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </Link>
+                </WebflowButton>
               </div>
             )}
           </motion.div>

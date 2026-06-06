@@ -1,6 +1,14 @@
 /**
  * Shiprocket Tracking Webhook Controller
  *
+ * ⚠️  AUTH IS ENFORCED UPSTREAM — DO NOT MOUNT THIS HANDLER DIRECTLY.
+ *     Requests reaching `handleTrackingUpdate` have already been authenticated
+ *     by the `validateApiKey` middleware in `routes/shiprocketWebhook.js`
+ *     (constant-time x-api-key compare against SHIPROCKET_WEBHOOK_SECRET).
+ *     If you wire this controller into a new route, you MUST apply the same
+ *     middleware — otherwise the order-state-mutation endpoints below are
+ *     publicly writable.
+ *
  * Handles incoming tracking status updates from Shiprocket's webhook system.
  * - Maps Shiprocket statuses to internal order statuses
  * - Prevents duplicate tracking entries

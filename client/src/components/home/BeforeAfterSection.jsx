@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { handleImageError } from '../../utils/imageOptimizer';
 import WebflowButton from '../ui/WebflowButton';
-import customizeImg from '../../assets/image/home page/customize.jpeg';
+import customizeImg from '../../assets/image/home-page/customize.jpeg';
 
 const HERO_IMAGE = customizeImg;
 

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay } from 'swiper/modules';
-import felinePreferenceVid from '../../assets/videos/Feline Preference.mp4';
-import dreamingInColorsVid from '../../assets/videos/Dreaming In Colors.mp4';
-import palmSpringsProwlVid from '../../assets/videos/Palm Springs Prowl.mp4';
-import theSentinelVid from '../../assets/videos/The Sentinel.mp4';
+import felinePreferenceVid from '../../assets/videos/Feline-Preference.mp4';
+import dreamingInColorsVid from '../../assets/videos/Dreaming-In-Colors.mp4';
+import palmSpringsProwlVid from '../../assets/videos/Palm-Springs-Prowl.mp4';
+import theSentinelVid from '../../assets/videos/The-Sentinel.mp4';
 import 'swiper/css';
 import 'swiper/css/navigation';
 

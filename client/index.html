@@ -21,6 +21,13 @@
       t.src=v;s=b.getElementsByTagName(e)[0];
       s.parentNode.insertBefore(t,s)}(window, document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
+      // Disable Meta's "automatic configuration" — Pixel otherwise scrapes
+      // the DOM for prices/currency strings and fires inferred e-commerce
+      // events. On product/checkout pages it mis-parses our ₹ formatting and
+      // logs `[Meta Pixel] - Invalid parameter format for currency`. Our
+      // explicit fbq('track', 'Purchase'|'AddToCart'|...) calls already pass
+      // a clean `currency: 'INR'` literal, so we don't need autoConfig.
+      fbq('set', 'autoConfig', false, '953916107234506');
       fbq('init', '953916107234506');
       // NOTE: PageView is fired by the SPA router (ScrollManager in App.jsx)
       // on every route change including initial mount. Do NOT fire it here too

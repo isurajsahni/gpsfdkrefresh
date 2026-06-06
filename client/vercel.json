@@ -15,6 +15,12 @@
   ],
   "headers": [
     {
+      "source": "/assets/(.*\\.mp4)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },

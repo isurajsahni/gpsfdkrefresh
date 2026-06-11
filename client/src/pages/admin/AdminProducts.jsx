@@ -19,7 +19,7 @@ const AdminProducts = () => {
   const PAGE_SIZE = 50;
   const [form, setForm] = useState({
     name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
-    variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
+    variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
     images: [],
     thumbnailImage: null,
   });
@@ -75,7 +75,7 @@ const AdminProducts = () => {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }], images: [], thumbnailImage: null });
+      setForm({ name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }], images: [], thumbnailImage: null });
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
@@ -94,7 +94,7 @@ const AdminProducts = () => {
       customizationLabel: product.customizationLabel || 'Custom Text',
       featured: product.featured,
       isMasonry: product.isMasonry,
-      variations: product.variations?.length > 0 ? product.variations : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
+      variations: product.variations?.length > 0 ? product.variations : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
       images: product.images || [],
       thumbnailImage: product.thumbnailImage || null,
     });
@@ -119,7 +119,7 @@ const AdminProducts = () => {
       customizationLabel: product.customizationLabel || 'Custom Text',
       featured: product.featured,
       isMasonry: product.isMasonry,
-      variations: product.variations?.length > 0 ? product.variations.map(v => ({...v, _id: undefined})) : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }],
+      variations: product.variations?.length > 0 ? product.variations.map(v => ({...v, _id: undefined})) : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
       images: product.images || [],
       thumbnailImage: product.thumbnailImage || null,
     });
@@ -217,12 +217,12 @@ const AdminProducts = () => {
   };
 
   const addVariation = () => {
-    setForm({ ...form, variations: [...form.variations, { material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, stock: 100 }] });
+    setForm({ ...form, variations: [...form.variations, { material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }] });
   };
 
   const updateVariation = (index, field, value) => {
     const updated = [...form.variations];
-    updated[index][field] = field === 'price' || field === 'comparePrice' || field === 'stock' ? Number(value) : value;
+    updated[index][field] = field === 'price' || field === 'comparePrice' || field === 'costPrice' || field === 'stock' ? Number(value) : value;
     setForm({ ...form, variations: updated });
   };
 
@@ -382,6 +382,7 @@ const AdminProducts = () => {
                     <input placeholder="Color" value={v.color} onChange={(e) => updateVariation(i, 'color', e.target.value)} className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-accent" />
                     <input type="number" placeholder="Price" required value={v.price || ''} onChange={(e) => updateVariation(i, 'price', e.target.value)} className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-accent" />
                     <input type="number" placeholder="Compare Price" value={v.comparePrice || ''} onChange={(e) => updateVariation(i, 'comparePrice', e.target.value)} className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-accent" />
+                    <input type="number" placeholder="Cost Price (internal)" title="Making/ingredient cost — internal only, used for profit reports" value={v.costPrice || ''} onChange={(e) => updateVariation(i, 'costPrice', e.target.value)} className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-accent" />
                     <input type="number" placeholder="Stock" value={v.stock || ''} onChange={(e) => updateVariation(i, 'stock', e.target.value)} className="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-accent" />
                     {form.variations.length > 1 && (
                       <button type="button" onClick={() => removeVariation(i)} className="text-red-400 hover:text-red-600 text-sm">Remove</button>

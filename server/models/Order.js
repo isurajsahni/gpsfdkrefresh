@@ -17,6 +17,11 @@ const orderItemSchema = new mongoose.Schema({
   customText: { type: String, default: '' },
   uploadedImageUrl: { type: String, default: '' },
   price: { type: Number, required: true },
+  // Making/ingredient cost snapshotted from the variation at purchase time so
+  // margin reports survive later catalog cost changes. Default 0 (not required)
+  // — orders must never fail because a product has no cost configured, and
+  // legacy orders predate this field.
+  costPrice: { type: Number, default: 0 },
   quantity: { type: Number, required: true, default: 1 },
 });
 

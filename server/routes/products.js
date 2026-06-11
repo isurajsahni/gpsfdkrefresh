@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, bulkDeleteProducts, importProducts, getHotSellingProducts } = require('../controllers/productController');
-const { protect, admin } = require('../middleware/auth');
+const { protect, admin, optionalAuth } = require('../middleware/auth');
 const { csvUpload } = require('../middleware/upload');
 
 // Wrapper that catches multer / Cloudinary upload errors gracefully
@@ -15,12 +15,14 @@ const handleUpload = (uploadMiddleware) => (req, res, next) => {
   });
 };
 
-router.get('/', getProducts);
+// optionalAuth so the controller can include variations.costPrice for admins
+// while stripping it from public responses
+router.get('/', optionalAuth, getProducts);
 router.get('/hot-selling', getHotSellingProducts);
 router.post('/', protect, admin, createProduct);
 router.post('/import', protect, admin, handleUpload(csvUpload.single('csv')), importProducts);
 router.post('/bulk-delete', protect, admin, bulkDeleteProducts);
-router.get('/:slug', getProductBySlug);
+router.get('/:slug', optionalAuth, getProductBySlug);
 router.put('/:id', protect, admin, updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
 

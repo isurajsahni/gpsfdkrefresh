@@ -125,8 +125,13 @@ exports.getProducts = async (req, res, next) => {
     
     const finalQuery = andConditions.length > 0 ? { $and: andConditions } : {};
 
+    // variations.costPrice is internal — only admins (same roles as the
+    // `admin` middleware) get it back; public callers never see it
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing');
+
     const total = await Product.countDocuments(finalQuery);
     const products = await Product.find(finalQuery)
+      .select(isAdmin ? {} : { 'variations.costPrice': 0 })
       .populate('category', 'name slug')
       .sort(sortObj)
       .skip((page - 1) * safeLimit)
@@ -179,6 +184,7 @@ exports.getHotSellingProducts = async (req, res, next) => {
         category: wallCanvasCat._id,
         isActive: true,
       })
+        .select({ 'variations.costPrice': 0 })
         .populate('category', 'name slug')
         .lean();
 
@@ -201,6 +207,7 @@ exports.getHotSellingProducts = async (req, res, next) => {
         isActive: true,
         _id: { $nin: excludeIds },
       })
+        .select({ 'variations.costPrice': 0 })
         .populate('category', 'name slug')
         .sort({ createdAt: -1 })
         .limit(remaining)
@@ -217,7 +224,11 @@ exports.getHotSellingProducts = async (req, res, next) => {
 // GET /api/products/:slug
 exports.getProductBySlug = async (req, res, next) => {
   try {
-    const product = await Product.findOne({ slug: req.params.slug }).populate('category', 'name slug').lean();
+    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing');
+    const product = await Product.findOne({ slug: req.params.slug })
+      .select(isAdmin ? {} : { 'variations.costPrice': 0 })
+      .populate('category', 'name slug')
+      .lean();
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
   } catch (error) {

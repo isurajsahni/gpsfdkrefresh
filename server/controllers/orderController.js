@@ -267,6 +267,9 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       customText: item.customText || '',
       uploadedImageUrl: item.uploadedImageUrl || '',
       price: serverPrice,
+      // Cost snapshot from the DB variation (never client-supplied); plays no
+      // part in totals so it can never change what the customer pays.
+      costPrice: variation.costPrice || 0,
       quantity: item.quantity,
     });
   }
@@ -701,12 +704,30 @@ exports.getOrderStats = async (req, res, next) => {
       { $match: { isPaid: true } },
       { $group: { _id: null, total: { $sum: '$totalPrice' } } }
     ]);
+    // Cost of goods from per-item cost snapshots. Orders created before
+    // costPrice existed (or products with no cost configured) contribute 0,
+    // so grossProfit overstates until costs are filled in.
+    const totalCostAgg = await Order.aggregate([
+      { $match: { isPaid: true } },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: { $multiply: [{ $ifNull: ['$items.costPrice', 0] }, '$items.quantity'] } },
+        },
+      },
+    ]);
     const pendingOrders = await Order.countDocuments({ status: 'pending' });
     const deliveredOrders = await Order.countDocuments({ status: 'delivered' });
-    
+
+    const revenue = totalRevenue[0]?.total || 0;
+    const totalCost = totalCostAgg[0]?.total || 0;
+
     res.json({
       totalOrders,
-      totalRevenue: totalRevenue[0]?.total || 0,
+      totalRevenue: revenue,
+      totalCost,
+      grossProfit: revenue - totalCost,
       pendingOrders,
       deliveredOrders,
     });

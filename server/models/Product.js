@@ -8,6 +8,9 @@ const variationSchema = new mongoose.Schema({
   color: { type: String, default: '' },
   price: { type: Number, required: true },
   comparePrice: { type: Number, default: 0 },
+  // Internal making/ingredient cost — never exposed on public product APIs,
+  // snapshotted into order items at checkout for margin reporting.
+  costPrice: { type: Number, default: 0 },
   stock: { type: Number, default: 100 },
   sku: { type: String, default: '' }
 });

@@ -3,20 +3,48 @@ const PageView = require('../models/PageView');
 const UAParser = require('ua-parser-js');
 
 // ─── Helper: Get country from IP (non-blocking, best-effort) ───
+// ip-api.com free tier allows ~45 req/min, so cache successful lookups per IP
+const GEO_CACHE_MAX = 5000;
+const geoCache = new Map();
+
 const getCountryFromIP = async (ip) => {
   try {
     if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168') || ip.startsWith('10.')) {
       return { name: 'Local', code: 'LO' };
     }
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,countryCode`);
+    if (geoCache.has(ip)) {
+      return geoCache.get(ip);
+    }
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=country,countryCode`, {
+      signal: AbortSignal.timeout(2000),
+    });
     const data = await res.json();
     if (data.country) {
-      return { name: data.country, code: data.countryCode };
+      const geo = { name: data.country, code: data.countryCode };
+      if (geoCache.size >= GEO_CACHE_MAX) {
+        geoCache.delete(geoCache.keys().next().value);
+      }
+      geoCache.set(ip, geo);
+      return geo;
     }
     return null;
   } catch {
     return null;
   }
+};
+
+// ─── Helper: Backfill visitor country after the response is sent ───
+// Fire-and-forget: atomic update only where country is still unset, never throws
+const backfillVisitorCountry = (visitorId, ip) => {
+  getCountryFromIP(ip)
+    .then((geo) => {
+      if (!geo) return;
+      return Visitor.updateOne(
+        { visitorId, country: '' },
+        { $set: { country: geo.name, countryCode: geo.code } }
+      );
+    })
+    .catch(() => {});
 };
 
 // ─── Helper: Detect traffic source from UTM params or referrer ───
@@ -91,26 +119,21 @@ exports.trackPageView = async (req, res, next) => {
     // Detect traffic source
     const source = detectSource(utmSource, referrer);
 
-    // Upsert visitor
+    // Upsert visitor — country is backfilled in the background so a slow
+    // ip-api.com response can never hold this request open
     const existingVisitor = await Visitor.findOne({ visitorId });
     let isReturning = false;
+    let needsGeo = false;
 
     if (existingVisitor) {
       isReturning = true;
       existingVisitor.lastVisitAt = new Date();
       existingVisitor.totalVisits += 1;
       existingVisitor.returning = true;
-      // Update country if not set yet
-      if (!existingVisitor.country) {
-        const geo = await getCountryFromIP(ip);
-        if (geo) {
-          existingVisitor.country = geo.name;
-          existingVisitor.countryCode = geo.code;
-        }
-      }
+      needsGeo = !existingVisitor.country;
       await existingVisitor.save();
     } else {
-      const geo = await getCountryFromIP(ip);
+      needsGeo = true;
       await Visitor.create({
         visitorId,
         firstVisitAt: new Date(),
@@ -120,9 +143,13 @@ exports.trackPageView = async (req, res, next) => {
         browser,
         ip,
         returning: false,
-        country: geo?.name || '',
-        countryCode: geo?.code || '',
+        country: '',
+        countryCode: '',
       });
+    }
+
+    if (needsGeo) {
+      backfillVisitorCountry(visitorId, ip);
     }
 
     // Log page view (always)
@@ -356,34 +383,22 @@ exports.getDashboardData = async (req, res, next) => {
       { $limit: 10 },
     ]);
 
+    // ── Active visitors in range (timestamp index) — avoids a $lookup over
+    // the whole visitors collection for the device/country breakdowns ──
+    const activeVisitorIds = await PageView.distinct('visitorId', {
+      timestamp: { $gte: start },
+    });
+
     // ── Device breakdown ──
     const devices = await Visitor.aggregate([
-      {
-        $lookup: {
-          from: 'pageviews',
-          localField: 'visitorId',
-          foreignField: 'visitorId',
-          pipeline: [{ $match: { timestamp: { $gte: start } } }, { $limit: 1 }],
-          as: 'recentViews',
-        },
-      },
-      { $match: { 'recentViews.0': { $exists: true } } },
+      { $match: { visitorId: { $in: activeVisitorIds } } },
       { $group: { _id: '$device', count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]);
 
     // ── Country breakdown ──
     const countries = await Visitor.aggregate([
-      {
-        $lookup: {
-          from: 'pageviews',
-          localField: 'visitorId',
-          foreignField: 'visitorId',
-          pipeline: [{ $match: { timestamp: { $gte: start } } }, { $limit: 1 }],
-          as: 'recentViews',
-        },
-      },
-      { $match: { 'recentViews.0': { $exists: true }, country: { $ne: '' } } },
+      { $match: { visitorId: { $in: activeVisitorIds }, country: { $ne: '' } } },
       { $group: { _id: { country: '$country', code: '$countryCode' }, visitors: { $sum: 1 } } },
       { $project: { name: '$_id.country', code: '$_id.code', views: '$visitors' } },
       { $sort: { views: -1 } },

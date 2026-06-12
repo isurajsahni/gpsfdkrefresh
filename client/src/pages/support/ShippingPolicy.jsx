@@ -1,9 +1,14 @@
 import { motion } from 'framer-motion';
 import shippingImage from '../../assets/image/shipping_demo.png';
+import SEO from '../../components/seo/SEO';
 
 const ShippingPolicy = () => {
   return (
     <div className="min-h-screen bg-primary text-secondary overflow-hidden pt-[100px] sm:pt-[120px] pb-16 sm:pb-24">
+      <SEO
+        title="Shipping Policy | GPSFDK Canvas & Nameplate Delivery India"
+        description="GPSFDK shipping policy — delivery timelines, charges and order tracking for premium canvas prints and custom nameplates across India and worldwide."
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         <motion.div

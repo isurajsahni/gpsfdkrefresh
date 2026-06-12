@@ -252,7 +252,7 @@ const CustomizeCanvasPage = () => {
                 
                 {preview ? (
                   <div className="relative group">
-                    <img src={preview} alt="Preview" className="max-h-64 sm:max-h-80 mx-auto rounded-2xl shadow-xl" />
+                    <img src={preview} alt="Preview" className="max-h-64 sm:max-h-80 mx-auto rounded-2xl shadow-xl" loading="lazy" decoding="async" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
                       <p className="text-white text-xs sm:text-sm font-bold uppercase tracking-widest">Change Image</p>
                     </div>

@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
+import SEO from '../../components/seo/SEO';
 
 const TermsConditions = () => {
   return (
     <div className="min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary">
+      <SEO
+        title="Terms & Conditions | GPSFDK"
+        description="Terms and conditions for shopping premium canvas prints and custom house nameplates at GPSFDK India."
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

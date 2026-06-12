@@ -2,10 +2,15 @@ import { motion } from 'framer-motion';
 import { FaFacebook, FaInstagram, FaQuoteLeft } from 'react-icons/fa';
 
 import fimpyGargImage from '../../assets/image/fimpygarg.webp';
+import SEO from '../../components/seo/SEO';
 
 const CEOPage = () => {
   return (
     <div className="min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary overflow-hidden">
+      <SEO
+        title="Meet the Founder | GPSFDK Premium Home Décor India"
+        description="Meet the founder of GPSFDK and read the story behind India's premium custom canvas prints and house nameplate brand."
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-12 sm:mb-16 md:mb-20 text-center">

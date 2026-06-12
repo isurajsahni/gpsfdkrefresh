@@ -1,10 +1,14 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-// Hardcoded blog slugs from client/src/content/blogs/index.js
-const blogSlugs = [
+// Fallback blog slugs — complete list mirroring client/src/content/blogs/index.js.
+// Used when the client folder isn't present (e.g. on the Render deployment,
+// which only ships the server/ directory).
+const FALLBACK_BLOG_SLUGS = [
   'ultimate-guide-wall-canvas-living-room',
   'photo-to-canvas-memories-gallery-art',
   'what-is-gallery-wrapped-canvas',
@@ -16,11 +20,49 @@ const blogSlugs = [
   'custom-canvas-prints-anniversary-gift',
   'split-canvas-prints-multi-panel-display',
   'eco-friendly-sustainable-canvas-prints-india',
-  'transforming-home-offices-wall-canvas'
+  'transforming-home-offices-wall-canvas',
+  'buyer-guide-museum-grade-canvas-worth-it',
+  'wall-canvas-size-guide-living-room-layouts',
+  'vaastu-wall-art-canvas-painting-ideas-positive-energy',
+  'luxury-wall-decor-trends-2026-japandi-abstract',
+  'why-uv-resistant-canvas-prints-matter-india'
 ];
+
+// At module load, try to extract slugs from the client blog registry so the
+// sitemap stays in sync automatically in local/monorepo deployments.
+const loadBlogSlugs = () => {
+  try {
+    const blogIndexPath = path.resolve(__dirname, '..', '..', 'client', 'src', 'content', 'blogs', 'index.js');
+    const source = fs.readFileSync(blogIndexPath, 'utf8');
+    const slugs = [];
+    const slugRegex = /slug:\s*['"]([^'"]+)['"]/g;
+    let match;
+    while ((match = slugRegex.exec(source)) !== null) {
+      slugs.push(match[1]);
+    }
+    if (slugs.length > 0) return slugs;
+  } catch (err) {
+    // Client folder not deployed alongside server — expected on Render.
+  }
+  return FALLBACK_BLOG_SLUGS;
+};
+
+const blogSlugs = loadBlogSlugs();
+
+// In-memory cache of the generated XML — sitemap data changes rarely, so skip
+// the DB queries for an hour at a time.
+const CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes
+let cachedXml = null;
+let cachedAt = 0;
 
 router.get('/', async (req, res) => {
   try {
+    if (cachedXml && Date.now() - cachedAt < CACHE_TTL_MS) {
+      res.header('Content-Type', 'application/xml');
+      res.header('Cache-Control', 'public, max-age=3600');
+      return res.send(cachedXml);
+    }
+
     const baseUrl = process.env.CLIENT_URL || 'https://www.gpsfdk.com';
 
     // Fetch dynamic data
@@ -32,12 +74,13 @@ router.get('/', async (req, res) => {
     // Static pages
     const staticPages = [
       '',
-      '/search',
       '/blog',
       '/about',
       '/ceo',
       '/contact',
       '/faq',
+      '/customize-canvas',
+      '/premium-wall-canvas-india',
       '/shipping-policy',
       '/returns-refunds',
       '/privacy-policy',
@@ -95,7 +138,11 @@ router.get('/', async (req, res) => {
 
     xml += `\n</urlset>`;
 
+    cachedXml = xml;
+    cachedAt = Date.now();
+
     res.header('Content-Type', 'application/xml');
+    res.header('Cache-Control', 'public, max-age=3600');
     res.send(xml);
   } catch (error) {
     console.error('Sitemap generation error:', error);

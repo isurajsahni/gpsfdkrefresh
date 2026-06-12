@@ -43,7 +43,7 @@ const ProductPage = () => {
 
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
-  const { formatPrice, currency } = useCurrency();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -166,11 +166,40 @@ const ProductPage = () => {
     "offers": {
       "@type": "Offer",
       "url": `https://www.gpsfdk.com/product/${product.slug}`,
-      "priceCurrency": currency,
+      // Schema must state the canonical store currency. The on-screen geo conversion
+      // from useCurrency() is display-only — Googlebot crawls from US IPs and would
+      // otherwise see INR amounts labeled as USD.
+      "priceCurrency": "INR",
       "price": selectedVariation?.price || product.basePrice,
       "itemCondition": "https://schema.org/NewCondition",
-      "availability": product.variations?.some(v => v.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      // With variations, in stock if any variation has stock; without variations,
+      // fall back to the product's top-level stock field (model defaults it to 100).
+      "availability": (product.variations?.length > 0
+        ? product.variations.some(v => v.stock > 0)
+        : (product.stock ?? 0) > 0)
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
     }
+  } : null;
+
+  // BreadcrumbList mirroring the visible breadcrumb: Home → category → product.
+  // product.category may be a populated object ({ name, slug }) or a bare id string —
+  // skip the category crumb when name/slug aren't available.
+  const hasCategoryCrumb = Boolean(product?.category?.name && product?.category?.slug);
+  const breadcrumbSchema = product ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.gpsfdk.com" },
+      ...(hasCategoryCrumb ? [{
+        "@type": "ListItem",
+        "position": 2,
+        "name": product.category.name,
+        "item": `https://www.gpsfdk.com/${product.category.slug}`,
+      }] : []),
+      // Last crumb is the current page — no item URL on the final breadcrumb
+      { "@type": "ListItem", "position": hasCategoryCrumb ? 3 : 2, "name": product.name },
+    ],
   } : null;
 
   return (
@@ -180,7 +209,8 @@ const ProductPage = () => {
           title={product.metaTitle || `${product.name} | Custom Designs by GPSFDK`}
           description={product.metaDescription || product.description?.substring(0, 160)}
           image={optimizeImage(product.images?.[0]?.url, 800)}
-          schema={productSchema}
+          schema={[productSchema, breadcrumbSchema]}
+          type="product"
         />
       )}
       <div className="max-w-7xl mx-auto section-padding pt-8 pb-12">

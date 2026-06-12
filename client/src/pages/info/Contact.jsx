@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { validators, formatters, sanitize } from '../../utils/validation';
 import toast from 'react-hot-toast';
+import SEO from '../../components/seo/SEO';
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -63,6 +64,10 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-primary text-secondary">
+      <SEO
+        title="Contact GPSFDK | Custom Canvas & Nameplate Experts India"
+        description="Get in touch with GPSFDK for custom canvas prints, house nameplate orders, bulk enquiries and support. Call, WhatsApp or email our team in India."
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

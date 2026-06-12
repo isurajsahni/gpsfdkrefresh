@@ -7,6 +7,7 @@ import { useUI } from '../context/UIContext';
 import API from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
+import SEO from '../components/seo/SEO';
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,6 +74,11 @@ const SearchPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[100px] pb-20">
+      <SEO
+        title="Search Premium Canvas & Nameplates | GPSFDK"
+        description="Search the GPSFDK catalogue of premium wall canvas prints and custom house nameplates."
+        noindex
+      />
       <div className="max-w-[1200px] mx-auto px-[15px]">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12 text-center">
           <h1 className="text-3xl md:text-5xl font-heading font-bold text-secondary">Search Results</h1>

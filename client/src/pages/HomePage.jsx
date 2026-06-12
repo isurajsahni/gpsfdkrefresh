@@ -17,7 +17,7 @@ const HomePage = () => {
     "@type": "Organization",
     "name": "GPSFDK",
     "url": "https://www.gpsfdk.com",
-    "logo": "https://www.gpsfdk.com/logo.webp",
+    "logo": "https://www.gpsfdk.com/logo-fav.webp",
     "description": "Premium canvases and custom house nameplates provider in India.",
     "contactPoint": {
       "@type": "ContactPoint",
@@ -32,12 +32,25 @@ const HomePage = () => {
     ]
   };
 
+  // WebSite schema with SearchAction — enables the Google sitelinks search box
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "GPSFDK",
+    "url": "https://www.gpsfdk.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.gpsfdk.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <>
       <SEO
-        title="Premium Canvas & Name Plates in India | Custom Designs"
-        description="Buy custom canvas prints & stylish house name plates online in India. Modern designs, fast delivery & affordable pricing. Transform your home today!"
-        schema={orgSchema}
+        title="Premium Wall Canvas Prints & Custom House Nameplates India | GPSFDK"
+        description="Shop premium wall canvas prints and custom house nameplates online in India. Museum-grade quality, custom sizes, fast delivery across India & worldwide."
+        schema={[orgSchema, websiteSchema]}
       />
       <HeroVideo />
       <VideoShowcase />

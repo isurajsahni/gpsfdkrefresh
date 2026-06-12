@@ -9,7 +9,7 @@ const HeroVideo = () => {
       <img
         className="absolute inset-0 w-full h-full object-cover"
         src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=1920"
-        alt="Premium Home Decor"
+        alt="Premium wall canvas prints and custom house nameplates — GPSFDK luxury home décor India"
         fetchpriority="high"
       />
 
@@ -27,23 +27,23 @@ const HeroVideo = () => {
           Luxury Home Décor
         </motion.span>
 
-        <motion.h1
+        <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
           className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white max-w-4xl leading-tight"
         >
           Right to <span className="text-accent">luxury</span>
-        </motion.h1>
+        </motion.p>
 
-        <motion.p
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
           className="text-white/70 text-lg md:text-xl max-w-2xl mt-6 font-body"
         >
           A Canvas for your soul & A Nameplate for Aapki Pehchaan
-        </motion.p>
+        </motion.h1>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -36,7 +36,7 @@ const Footer = () => {
       <div className="max-w-5xl mx-auto px-4 pt-14 pb-10 text-center">
         {/* Logo */}
         <Link to="/" className="inline-block">
-          <img src={logo} alt="GPSFDK Logo" className="h-20 w-auto mx-auto" />
+          <img src={logo} alt="GPSFDK Logo" className="h-20 w-auto mx-auto" loading="lazy" decoding="async" />
         </Link>
 
         {/* Tagline */}

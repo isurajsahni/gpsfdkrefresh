@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
+import SEO from '../../components/seo/SEO';
 
 const ReturnsRefunds = () => {
   return (
     <div className="min-h-screen bg-primary text-secondary">
+      <SEO
+        title="Returns & Refunds Policy | GPSFDK India"
+        description="How returns, replacements and refunds work for canvas prints and custom house nameplates at GPSFDK. Read our hassle-free policy."
+      />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

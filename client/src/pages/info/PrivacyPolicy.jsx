@@ -1,8 +1,13 @@
 import { motion } from 'framer-motion';
+import SEO from '../../components/seo/SEO';
 
 const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-primary pt-[120px] pb-24 text-secondary">
+      <SEO
+        title="Privacy Policy | GPSFDK"
+        description="How GPSFDK collects, uses and protects your personal data when you shop for canvas prints and custom nameplates online."
+      />
       <div className="max-w-4xl mx-auto px-6">
         
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-16 text-center">

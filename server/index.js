@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
+const compression = require('compression');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 
@@ -25,6 +26,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,        // Allow cross-origin API calls
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Let Vercel frontend read responses
 }));
+
+// Gzip-compress responses (big win for JSON product lists and the sitemap XML)
+app.use(compression());
 
 // ─── Security: Global rate limiter (500 req / 15 min per IP) ───
 // Raised from 100 to 500 because admin product uploads with images

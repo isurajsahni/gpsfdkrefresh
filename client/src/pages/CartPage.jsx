@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
+import SEO from '../components/seo/SEO';
 
 const CartPage = () => {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
@@ -16,6 +17,7 @@ const CartPage = () => {
   if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-primary pt-24 flex flex-col items-center justify-center">
+        <SEO title="Your Cart | GPSFDK" noindex />
         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
           <div className="text-8xl mb-6">🛒</div>
           <h2 className="text-3xl font-heading font-bold text-secondary">Your cart is empty</h2>
@@ -28,6 +30,7 @@ const CartPage = () => {
 
   return (
     <div className="min-h-screen bg-primary pt-[120px] pb-20">
+      <SEO title="Your Cart | GPSFDK" noindex />
       <div className="max-w-7xl mx-auto section-padding">
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-10">
           Shopping Cart

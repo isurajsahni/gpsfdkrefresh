@@ -1,11 +1,16 @@
 import { motion } from 'framer-motion';
 import aboutUsImage from '../../assets/image/about_us_demo.png';
+import SEO from '../../components/seo/SEO';
 
 const AboutUs = () => {
   return (
     <div className="min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary overflow-hidden">
+      <SEO
+        title="About GPSFDK | Premium Canvas Prints & House Nameplates India"
+        description="GPSFDK crafts premium wall canvas prints and custom house nameplates in India. Discover our story, craftsmanship, and commitment to luxury home décor."
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        
+
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-16 md:mb-20 text-center">
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold text-secondary mb-4 sm:mb-6 tracking-wide dropdown-shadow leading-tight">About Us</h1>
           <div className="w-24 sm:w-32 h-1 sm:h-1.5 bg-accent mx-auto rounded-full shadow-lg shadow-accent/20"></div>

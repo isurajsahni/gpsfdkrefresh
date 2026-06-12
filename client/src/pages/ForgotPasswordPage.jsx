@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import API from '../utils/api';
 import { validators, formatters, sanitize } from '../utils/validation';
+import SEO from '../components/seo/SEO';
 
 const ForgotPasswordPage = () => {
   const [step, setStep] = useState(1);
@@ -94,6 +95,7 @@ const ForgotPasswordPage = () => {
 
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center px-4 pt-32 pb-24">
+      <SEO title="Reset Password | GPSFDK" noindex />
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

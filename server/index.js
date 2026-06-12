@@ -136,6 +136,7 @@ app.use('/api/abandoned-carts', require('./routes/abandonedCarts'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/marketing', require('./routes/marketing'));
 app.use('/sitemap.xml', require('./routes/sitemap'));
+app.use('/api/share', require('./routes/share')); // OG previews for social link scrapers
 app.use('/webhook', require('./routes/webhook'));
 app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 app.use('/api/pricing', require('./routes/pricing'));

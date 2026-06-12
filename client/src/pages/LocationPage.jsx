@@ -65,6 +65,42 @@ const LOCATION_DATA = {
     whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Himachal%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Bringing Archival Quality, Weather-Protected Forest & Mountain Landscapes to the Hills.',
     popularProductsTitle: 'Curated Himachal Favorites',
+  },
+  'bangalore': {
+    delivery: 'Delivered to Bangalore in 3-4 days',
+    shippingSpeed: 'Express South India Air Delivery',
+    popularStyles: 'Abstract Minimalist Canvas Art for Apartments & Brushed Gold Acrylic Name Plates',
+    phone: '+91 96466-46063',
+    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Bangalore%20and%20looking%20for%20custom%20decor.',
+    curatedHeadline: 'Statement Wall Art & Modern Name Plates for the Garden City\'s Apartments, Villas & Studios.',
+    popularProductsTitle: 'Curated Bangalore Favorites',
+  },
+  'hyderabad': {
+    delivery: 'Delivered to Hyderabad in 3-4 days',
+    shippingSpeed: 'Express Deccan Air Delivery',
+    popularStyles: 'Royal Heritage-Motif Canvases & Elegant Golden Acrylic House Name Plates',
+    phone: '+91 96466-46063',
+    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Hyderabad%20and%20looking%20for%20custom%20decor.',
+    curatedHeadline: 'Regal Canvas Art & Entrance Name Plates Worthy of the City of Pearls.',
+    popularProductsTitle: 'Curated Hyderabad Favorites',
+  },
+  'chennai': {
+    delivery: 'Delivered to Chennai in 4-5 days',
+    shippingSpeed: 'Express Tamil Nadu Air Delivery',
+    popularStyles: 'Tanjore-Inspired Canvas Art & Humidity-Resistant Weatherproof Name Plates',
+    phone: '+91 96466-46063',
+    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Chennai%20and%20looking%20for%20custom%20decor.',
+    curatedHeadline: 'Coastal-Proof Premium Canvases & Name Plates Built for Chennai Homes.',
+    popularProductsTitle: 'Curated Chennai Favorites',
+  },
+  'pune': {
+    delivery: 'Delivered to Pune in 3-4 days',
+    shippingSpeed: 'Express West India Air Delivery',
+    popularStyles: 'Serene Sahyadri Landscape Canvases & Contemporary Marathi Calligraphy Name Plates',
+    phone: '+91 96466-46063',
+    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Pune%20and%20looking%20for%20custom%20decor.',
+    curatedHeadline: 'Modern Wall Canvases & Designer Name Plates for Pune\'s Heritage & New-Age Homes.',
+    popularProductsTitle: 'Curated Pune Favorites',
   }
 };
 

@@ -65,9 +65,10 @@ router.get('/', async (req, res) => {
 
     const baseUrl = process.env.CLIENT_URL || 'https://www.gpsfdk.com';
 
-    // Fetch dynamic data
+    // Fetch dynamic data (images included so product entries can carry
+    // <image:image> tags for Google Images indexing)
     const [products, categories] = await Promise.all([
-      Product.find({ isActive: true }).select('slug updatedAt').lean(),
+      Product.find({ isActive: true }).select('slug updatedAt images').lean(),
       Category.find({ isActive: true }).select('slug updatedAt').lean()
     ]);
 
@@ -88,11 +89,24 @@ router.get('/', async (req, res) => {
       '/location/delhi',
       '/location/mumbai',
       '/location/punjab',
-      '/location/himachal-pradesh'
+      '/location/himachal-pradesh',
+      '/location/bangalore',
+      '/location/hyderabad',
+      '/location/chennai',
+      '/location/pune'
     ];
 
+    // Escape XML-special characters for <loc> values (image URLs contain '&')
+    const escXml = (value = '') =>
+      String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">`;
 
     // Add static pages
     staticPages.forEach((page) => {
@@ -115,14 +129,18 @@ router.get('/', async (req, res) => {
   </url>`;
     });
 
-    // Add products
+    // Add products (with first image for Google Images indexing)
     products.forEach((product) => {
+      const imageUrl = product.images && product.images[0] && product.images[0].url;
       xml += `
   <url>
     <loc>${baseUrl}/product/${product.slug}</loc>
     <lastmod>${product.updatedAt ? product.updatedAt.toISOString() : new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.8</priority>${imageUrl ? `
+    <image:image>
+      <image:loc>${escXml(imageUrl)}</image:loc>
+    </image:image>` : ''}
   </url>`;
     });
 

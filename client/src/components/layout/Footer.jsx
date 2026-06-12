@@ -14,6 +14,10 @@ const fireContactPixel = (method) => {
 
 const Footer = () => {
   const navLinks = [
+    { name: 'Wall Canvas', path: '/wall-canvas' },
+    { name: 'House Nameplates', path: '/house-nameplates' },
+    { name: 'Customize Canvas', path: '/customize-canvas' },
+    { name: 'Premium Wall Canvas India', path: '/premium-wall-canvas-india' },
     { name: 'Track Order', path: '/track-order' },
     { name: 'Blog', path: '/blog' },
     { name: 'Contact us', path: '/contact' },
@@ -23,6 +27,18 @@ const Footer = () => {
     { name: 'FAQs', path: '/faq' },
     { name: 'Terms & Conditions', path: '/terms-conditions' },
     { name: 'Privacy Policy', path: '/privacy-policy' },
+  ];
+
+  // City landing pages — internal links help these rank for "canvas prints in <city>"
+  const locationLinks = [
+    { name: 'Delhi', path: '/location/delhi' },
+    { name: 'Mumbai', path: '/location/mumbai' },
+    { name: 'Bangalore', path: '/location/bangalore' },
+    { name: 'Hyderabad', path: '/location/hyderabad' },
+    { name: 'Chennai', path: '/location/chennai' },
+    { name: 'Pune', path: '/location/pune' },
+    { name: 'Punjab', path: '/location/punjab' },
+    { name: 'Himachal', path: '/location/himachal-pradesh' },
   ];
 
   const socials = [
@@ -53,6 +69,20 @@ const Footer = () => {
               className="text-secondary/80 text-sm md:text-base hover:text-accent transition-colors duration-200 hover-underline"
             >
               {link.name}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Location landing pages */}
+        <nav className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-secondary/50">
+          <span>Canvas Prints &amp; Nameplates in:</span>
+          {locationLinks.map((loc) => (
+            <Link
+              key={loc.name}
+              to={loc.path}
+              className="hover:text-accent transition-colors duration-200"
+            >
+              {loc.name}
             </Link>
           ))}
         </nav>

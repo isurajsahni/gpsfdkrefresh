@@ -12,6 +12,17 @@
   ],
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://gpsfdkrefresh.onrender.com/sitemap.xml" },
+    {
+      "source": "/product/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
+        }
+      ],
+      "destination": "https://gpsfdkrefresh.onrender.com/api/share/product/:slug"
+    },
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

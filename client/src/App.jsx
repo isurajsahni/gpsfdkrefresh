@@ -44,6 +44,11 @@ const ShippingPolicy = lazy(() => import('./pages/support/ShippingPolicy'));
 const ReturnsRefunds = lazy(() => import('./pages/support/ReturnsRefunds'));
 const PrivacyPolicy = lazy(() => import('./pages/info/PrivacyPolicy'));
 const CEOPage = lazy(() => import('./pages/info/CEOPage'));
+const Vision = lazy(() => import('./pages/info/Vision'));
+const SchoolOfLearning = lazy(() => import('./pages/info/SchoolOfLearning'));
+const Love = lazy(() => import('./pages/info/Love'));
+const Partner = lazy(() => import('./pages/info/Partner'));
+const Support = lazy(() => import('./pages/info/Support'));
 const TermsConditions = lazy(() => import('./pages/support/TermsConditions'));
 const LocationPage = lazy(() => import('./pages/LocationPage'));
 const BlogList = lazy(() => import('./pages/BlogList'));
@@ -221,12 +226,19 @@ function App() {
                 {/* Info & Policy */}
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />
                 <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
+                <Route path="/vision" element={<><Vision /><Footer /></>} />
                 <Route path="/contact" element={<><Contact /><Footer /></>} />
                 <Route path="/faq" element={<><FAQ /><Footer /></>} />
                 <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
                 <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />
                 <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
                 <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
+
+                {/* GPS Business Group pillars (coming soon) */}
+                <Route path="/school-of-learning" element={<><SchoolOfLearning /><Footer /></>} />
+                <Route path="/love" element={<><Love /><Footer /></>} />
+                <Route path="/partner" element={<><Partner /><Footer /></>} />
+                <Route path="/support" element={<><Support /><Footer /></>} />
 
               {/* Checkout & ThankYou are guest-accessible — the server-side guest
                   order endpoint (/orders/guest) handles unauthenticated buyers.

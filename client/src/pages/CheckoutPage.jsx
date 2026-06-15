@@ -13,6 +13,30 @@ import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
 import { newEventId, getFbCookies } from '../utils/metaPixel';
 
+// Render's free tier spins the API down after ~15 min idle. The first checkout
+// after that hits a cold container whose connection to Razorpay isn't warm yet,
+// so the call can return a transient 502/503/504 (or briefly not reach the app
+// at all). Retry those a couple of times so a returning customer's first attempt
+// doesn't bounce with "Payment gateway error". Safe to retry: the config GET is
+// read-only, and each create-order just mints another *unpaid* Razorpay order —
+// only the one the buyer actually pays is ever verified, and verify is
+// idempotent on the payment id.
+const retryTransient = async (fn, { retries = 2, delayMs = 1500 } = {}) => {
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const status = err?.response?.status;
+      const transient = !err?.response || status === 502 || status === 503 || status === 504;
+      if (attempt === retries || !transient) throw err;
+      await new Promise((r) => setTimeout(r, delayMs * (attempt + 1)));
+    }
+  }
+  throw lastErr;
+};
+
 let razorpayScriptPromise = null;
 const loadRazorpayScript = () => {
   if (window.Razorpay) return Promise.resolve(true);
@@ -458,7 +482,7 @@ const CheckoutPage = () => {
           // when the env var is absent from Vercel's build settings).
           let razorpayKeyId;
           try {
-            const { data: paymentConfig } = await API.get('/payment-config');
+            const { data: paymentConfig } = await retryTransient(() => API.get('/payment-config'));
             razorpayKeyId = paymentConfig.keyId;
           } catch (configErr) {
             const msg = configErr?.response?.data?.message || 'Payment gateway is not configured. Please contact support.';
@@ -474,7 +498,7 @@ const CheckoutPage = () => {
             return;
           }
 
-          const { data: razorpayOrder } = await API.post('/create-order', { orderData });
+          const { data: razorpayOrder } = await retryTransient(() => API.post('/create-order', { orderData }));
 
           const options = {
             key: razorpayKeyId || razorpayOrder.key,

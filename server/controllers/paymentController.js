@@ -11,6 +11,39 @@ const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
 const isPlaceholder = (val) =>
   !val || PLACEHOLDER_PATTERNS.some((p) => val.includes(p));
 
+// Razorpay's API can throw transient 5xx / network errors — most commonly on
+// the FIRST call from a freshly-started (cold) Render container, before DNS/TLS
+// to api.razorpay.com is warmed up. That single failure surfaced to the buyer
+// as a 502 "Payment gateway error" and killed an otherwise-valid checkout.
+// Creating an order moves no money, and verifyRazorpay is idempotent on the
+// payment id, so retrying transient failures is completely safe. We only retry
+// network errors (no statusCode) or 5xx — a 4xx (bad amount/key) is
+// deterministic and retrying it would just waste the buyer's time.
+const rzpCallWithRetry = async (label, fn, attempts = 3) => {
+  let lastErr;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      const statusCode = err?.statusCode;
+      const isTransient = !statusCode || statusCode >= 500;
+      console.error(
+        `[Razorpay] ${label} attempt ${attempt}/${attempts} failed:`,
+        JSON.stringify({
+          statusCode,
+          code: err?.error?.code || err?.code,
+          description: err?.error?.description,
+          message: err?.message,
+        })
+      );
+      if (!isTransient || attempt === attempts) break;
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
+  throw lastErr;
+};
+
 // Returns the public Razorpay key to the frontend — avoids baking VITE_* into
 // the Vercel build. The key ID is public (safe to expose); the secret never leaves.
 exports.getRazorpayConfig = (req, res) => {
@@ -69,10 +102,10 @@ exports.createRazorpayOrder = async (req, res, next) => {
 
     let order;
     try {
-      order = await instance.orders.create(options);
+      order = await rzpCallWithRetry('orders.create', () => instance.orders.create(options));
     } catch (rzpErr) {
       const description = rzpErr?.error?.description || rzpErr?.message || 'Payment gateway error';
-      console.error('[Razorpay] orders.create failed:', rzpErr?.error || rzpErr);
+      console.error('[Razorpay] orders.create failed after retries:', rzpErr?.error || rzpErr?.message || rzpErr);
       return res.status(502).json({ message: description });
     }
 
@@ -175,7 +208,7 @@ exports.verifyRazorpay = async (req, res, next) => {
         key_id: process.env.RAZORPAY_KEY_ID,
         key_secret: process.env.RAZORPAY_KEY_SECRET,
       });
-      const rzpOrder = await instance.orders.fetch(razorpay_order_id);
+      const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpay_order_id));
       
       // The Razorpay order was created with geo-pricing already applied.
       // Verify the stored INR total from the order notes matches our recalculated price.

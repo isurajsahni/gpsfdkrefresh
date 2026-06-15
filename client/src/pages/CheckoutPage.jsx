@@ -485,7 +485,12 @@ const CheckoutPage = () => {
             const { data: paymentConfig } = await retryTransient(() => API.get('/payment-config'));
             razorpayKeyId = paymentConfig.keyId;
           } catch (configErr) {
-            const msg = configErr?.response?.data?.message || 'Payment gateway is not configured. Please contact support.';
+            // No response at all = server unreachable (down, cold-starting, or
+            // no network) — saying "gateway not configured" here sends support
+            // chasing Razorpay keys when the API simply didn't answer.
+            const msg = configErr?.response
+              ? (configErr.response.data?.message || 'Payment gateway is not configured. Please contact support.')
+              : 'Could not reach the server. Please check your connection and try again.';
             toast.error(msg);
             setLoading(false);
             return;

@@ -201,7 +201,10 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     // Find matching variation — 5-tier fallback:
     // 1. Exact variation _id  2. Embedded _id  3. Full attribute match
     // 4. Size-only match (stale cart)  5. First available variation
-    const norm = (s) => (s || '').toString().trim().toLowerCase();
+    // Strip ALL whitespace, not just outer: the customize page labels sizes
+    // "24 x 36" while product variations store "24x36" — trim-only matching
+    // sent every custom order to tier 5 (first variation = cheapest price).
+    const norm = (s) => (s || '').toString().toLowerCase().replace(/\s+/g, '');
     let variation;
 
     // Tier 1: direct variation ID

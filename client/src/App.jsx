@@ -55,6 +55,7 @@ const BlogList = lazy(() => import('./pages/BlogList'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const CustomizeCanvasPage = lazy(() => import('./pages/CustomizeCanvasPage'));
+const StorePage = lazy(() => import('./pages/StorePage'));
 const SEO_PremiumWallCanvasIndia = lazy(() => import('./pages/SEO_PremiumWallCanvasIndia'));
 const WhatsAppLogin = lazy(() => import('./pages/WhatsAppLogin'));
 
@@ -209,6 +210,7 @@ function App() {
                 <Route path="/" element={<><HomePage /><Footer /></>} />
                 <Route path="/search" element={<><SearchPage /><Footer /></>} />
                 <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />
+                <Route path="/store" element={<><StorePage /><Footer /></>} />
                 <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
                 <Route path="/login" element={<><LoginPage /><Footer /></>} />

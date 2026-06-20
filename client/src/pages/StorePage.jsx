@@ -201,11 +201,11 @@ const StorePage = () => {
             What we offer to change your <span className="text-secondary italic underline decoration-accent decoration-4 underline-offset-4">lifestyle</span>
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {/* Canvas card — 50px narrower, centered in its grid cell */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[0.8fr_0.8fr_1.2fr] gap-4 sm:gap-5 lg:auto-rows-[560px]">
+            {/* Canvas card */}
             <Link
               to="/wall-canvas"
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block w-[calc(100%-50px)] mx-auto"
+              className="group relative h-[480px] sm:h-[520px] lg:h-full rounded-3xl overflow-hidden block"
             >
               <img
                 src={canvasPoster}
@@ -223,10 +223,10 @@ const StorePage = () => {
               </div>
             </Link>
 
-            {/* Nameplates card — 50px narrower, centered in its grid cell */}
+            {/* Nameplates card */}
             <Link
               to="/house-nameplates"
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block w-[calc(100%-50px)] mx-auto"
+              className="group relative h-[480px] sm:h-[520px] lg:h-full rounded-3xl overflow-hidden block"
             >
               <img
                 src={nameplatePoster}
@@ -247,7 +247,7 @@ const StorePage = () => {
             {/* Upload widget */}
             <Link
               to="/customize-canvas"
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden bg-[#f5edd8] flex flex-col items-center justify-center p-6 text-center sm:col-span-2 lg:col-span-1"
+              className="group relative h-[480px] sm:h-[520px] lg:h-full rounded-3xl overflow-hidden bg-[#f5edd8] flex flex-col items-center justify-center p-6 text-center sm:col-span-2 lg:col-span-1"
             >
               <div className="text-secondary">
                 <p className="text-base sm:text-lg font-heading font-semibold leading-snug">

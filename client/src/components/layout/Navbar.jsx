@@ -1,18 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiChevronDown, HiOutlineSearch } from 'react-icons/hi';
+import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiOutlineSearch } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
 import useClickOutside from '../../hooks/useClickOutside';
 import logo from '../../assets/vite.webp';
-import toast from 'react-hot-toast';
+
+const NAV_LINKS = [
+  { name: 'Store', path: '/' },
+  { name: 'School of Learning', path: '/school-of-learning' },
+  { name: 'Love', path: '/love' },
+  { name: 'Vision', path: '/vision' },
+  { name: 'Partner', path: '/partner' },
+  { name: 'Support', path: '/support' },
+];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileSubcats, setMobileSubcats] = useState(null);
   const [userMenu, setUserMenu] = useState(false);
   const { user, logout } = useAuth();
   const { cartCount } = useCart();
@@ -22,27 +29,21 @@ const Navbar = () => {
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
-      setUserMenu(false); // Close user menu on scroll
+      setUserMenu(false);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile Menu on Scroll
   useEffect(() => {
     if (!mobileOpen) return;
-    
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
-      if (Math.abs(window.scrollY - lastScrollY) > 10) {
-        setMobileOpen(false);
-      }
+      if (Math.abs(window.scrollY - lastScrollY) > 10) setMobileOpen(false);
     };
-
     const timer = setTimeout(() => {
       window.addEventListener('scroll', handleScroll, { passive: true });
     }, 100);
-
     return () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
@@ -52,161 +53,127 @@ const Navbar = () => {
   const menuRef = useRef(null);
   useClickOutside(menuRef, () => setUserMenu(false));
 
-  const categories = [
-    { name: 'Canvas', slug: 'wall-canvas', subcats: [
-      'Ink & Interval',
-      'The Sassy Classic',
-      'Tethered Horizons',
-      'The Botanical Muse',
-      'The Celestial Frontier',
-      'The Ethereal Gaze',
-      'The Gaze of Power',
-      'The Modern Legend',
-      'The Gilded Bloom',
-      'The Velocity Suite',
-      'Millionaire Art',
-      'Nostalgia Noir',
-      'The After Hour Suite',
-      'The Wild Eccentrics'
-    ] },
-    { name: 'Customize', slug: 'customize-canvas', subcats: [] },
-  ];
-
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
         <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
           <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
-          <div className="flex items-center justify-between h-16 md:h-20">
+            <div className="flex items-center justify-between h-16 md:h-20">
 
-            <div className="flex items-center gap-12">
-            {/* Logo */}
-            <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group">
-              <span className="">
-                <img src={logo} alt="Logo" className="h-20 w-auto" />
-              </span>
-            </Link>
+              <div className="flex items-center gap-10">
+                {/* Logo → Home Page (legacy /home) */}
+                <Link to="/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group">
+                  <img src={logo} alt="GPSFDK" className="h-14 md:h-20 w-auto" />
+                </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-8">
-              {categories.map((cat) => (
-                <div key={cat.slug} className="relative group">
-                  <Link
-                    to={`/${cat.slug}`}
-                    className="flex items-center gap-1 text-secondary hover:text-accent font-semibold text-md tracking-wide transition-colors duration-300"
-                  >
-                    {cat.name}
-                    {cat.subcats.length > 0 && <HiChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />}
-                  </Link>
-                  {cat.subcats.length > 0 && (
-                    <div className="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                      <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 py-4 px-2 min-w-[450px] grid grid-cols-2 gap-x-2">
-                        {cat.subcats.map((sub) => {
-                          const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-                          return (
-                            <Link
-                              key={sub}
-                              to={`/${cat.slug}/${subSlug}`}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-cream hover:text-secondary rounded-lg transition-colors"
-                            >
-                              {sub}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-</div>
-            {/* Right Actions */}
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="p-2 text-secondary hover:text-accent transition-colors duration-300"
-              >
-                <HiOutlineSearch className="w-6 h-6" />
-              </button>
-
-              {/* Cart */}
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="relative p-2 text-secondary hover:text-accent transition-colors duration-300"
-              >
-                <HiOutlineShoppingBag className="w-6 h-6" />
-                {cartCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 bg-accent text-secondary text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"
-                  >
-                    {cartCount}
-                  </motion.span>
-                )}
-              </button>
-
-              {/* User */}
-              <div className="relative" ref={menuRef}>
-                {user ? (
-                  <>
-                    <button
-                      onClick={() => setUserMenu(!userMenu)}
-                      className="flex items-center gap-2 p-2 text-secondary hover:text-accent transition-colors duration-300"
+                {/* Desktop Nav */}
+                <div className="hidden lg:flex items-center gap-8">
+                  {NAV_LINKS.map((link) => (
+                    <NavLink
+                      key={link.path}
+                      to={link.path}
+                      end
+                      className={({ isActive }) =>
+                        `font-semibold text-sm tracking-wide transition-colors duration-300 ${
+                          isActive ? 'text-accent' : 'text-secondary hover:text-accent'
+                        }`
+                      }
                     >
-                      <HiOutlineUser className="w-6 h-6" />
-                      <span className="hidden lg:block text-sm font-medium">{user.name}</span>
-                    </button>
-                    <AnimatePresence>
-                      {userMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 min-w-[180px]"
-                        >
-                          <Link to="/dashboard" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
-                            My Orders
-                          </Link>
-                          {(user.role === 'admin' || user.role === 'admin_marketing') && (
-                            <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
-                              Admin Panel
-                            </Link>
-                          )}
-                          {(user.role === 'marketing' || user.role === 'admin_marketing') && (
-                            <Link to="/marketing" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
-                              Marketing Dashboard
-                            </Link>
-                          )}
-                          <button
-                            onClick={() => { logout(); setUserMenu(false); navigate('/'); }}
-                            className="block w-full text-left px-5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                          >
-                            Logout
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
-                ) : (
-                  <Link to="/register" className="p-2 text-secondary hover:text-accent transition-colors duration-300">
-                    <HiOutlineUser className="w-6 h-6" />
-                  </Link>
-                )}
+                      {link.name}
+                    </NavLink>
+                  ))}
+                </div>
               </div>
 
-              {/* Mobile Toggle */}
-              <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="lg:hidden p-2 text-secondary hover:text-accent transition-colors"
-              >
-                {mobileOpen ? <HiOutlineX className="w-6 h-6" /> : <HiOutlineMenu className="w-6 h-6" />}
-              </button>
+              {/* Right Actions */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  aria-label="Search"
+                  className="p-2 text-secondary hover:text-accent transition-colors duration-300"
+                >
+                  <HiOutlineSearch className="w-6 h-6" />
+                </button>
+
+                {/* User */}
+                <div className="relative" ref={menuRef}>
+                  {user ? (
+                    <>
+                      <button
+                        onClick={() => setUserMenu(!userMenu)}
+                        aria-label="Account"
+                        className="flex items-center gap-2 p-2 text-secondary hover:text-accent transition-colors duration-300"
+                      >
+                        <HiOutlineUser className="w-6 h-6" />
+                      </button>
+                      <AnimatePresence>
+                        {userMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 min-w-[180px]"
+                          >
+                            <Link to="/dashboard" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
+                              My Orders
+                            </Link>
+                            {(user.role === 'admin' || user.role === 'admin_marketing') && (
+                              <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
+                                Admin Panel
+                              </Link>
+                            )}
+                            {(user.role === 'marketing' || user.role === 'admin_marketing') && (
+                              <Link to="/marketing" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
+                                Marketing Dashboard
+                              </Link>
+                            )}
+                            <button
+                              onClick={() => { logout(); setUserMenu(false); navigate('/'); }}
+                              className="block w-full text-left px-5 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                              Logout
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  ) : (
+                    <Link to="/register" aria-label="Sign in" className="p-2 text-secondary hover:text-accent transition-colors duration-300 block">
+                      <HiOutlineUser className="w-6 h-6" />
+                    </Link>
+                  )}
+                </div>
+
+                {/* Cart */}
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  aria-label="Cart"
+                  className="relative p-2 text-secondary hover:text-accent transition-colors duration-300"
+                >
+                  <HiOutlineShoppingBag className="w-6 h-6" />
+                  {cartCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 bg-accent text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </button>
+
+                {/* Mobile Toggle */}
+                <button
+                  onClick={() => setMobileOpen(!mobileOpen)}
+                  aria-label="Menu"
+                  className="lg:hidden p-2 text-secondary hover:text-accent transition-colors"
+                >
+                  {mobileOpen ? <HiOutlineX className="w-6 h-6" /> : <HiOutlineMenu className="w-6 h-6" />}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
       </header>
 
       {/* Mobile Menu */}
@@ -219,54 +186,21 @@ const Navbar = () => {
             transition={{ type: 'tween', duration: 0.3 }}
             className="fixed inset-0 z-40 bg-secondary pt-20"
           >
-            <div className="p-6 space-y-4 h-full overflow-y-auto pb-32">
-              {categories.map((cat) => (
-                <div key={cat.slug} className="border-b border-white/10 pb-2">
-                  <div className="flex items-center justify-between py-3">
-                    <Link
-                      to={`/${cat.slug}`}
-                      onClick={() => setMobileOpen(false)}
-                      className="text-xl text-white font-heading"
-                    >
-                      {cat.name}
-                    </Link>
-                    {cat.subcats.length > 0 && (
-                      <button 
-                        onClick={() => setMobileSubcats(mobileSubcats === cat.slug ? null : cat.slug)}
-                        className="p-2 text-white/50 hover:text-white"
-                      >
-                        <HiChevronDown className={`w-6 h-6 transition-transform ${mobileSubcats === cat.slug ? 'rotate-180' : ''}`} />
-                      </button>
-                    )}
-                  </div>
-                  
-                  <AnimatePresence>
-                    {cat.subcats.length > 0 && mobileSubcats === cat.slug && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="pl-4 py-2 flex flex-col gap-4 mb-4">
-                          {cat.subcats.map(sub => {
-                            const subSlug = sub.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-                            return (
-                              <Link
-                                key={sub}
-                                to={`/${cat.slug}/${subSlug}`}
-                                onClick={() => setMobileOpen(false)}
-                                className="text-white/70 text-base font-medium hover:text-white transition-colors"
-                              >
-                                {sub}
-                              </Link>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+            <div className="p-6 space-y-1 h-full overflow-y-auto pb-32">
+              {NAV_LINKS.map((link) => (
+                <NavLink
+                  key={link.path}
+                  to={link.path}
+                  end
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `block text-xl font-heading py-3 border-b border-white/10 ${
+                      isActive ? 'text-accent' : 'text-white'
+                    }`
+                  }
+                >
+                  {link.name}
+                </NavLink>
               ))}
               <button
                 onClick={() => { setMobileOpen(false); setIsSearchOpen(true); }}

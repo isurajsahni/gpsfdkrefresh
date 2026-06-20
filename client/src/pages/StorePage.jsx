@@ -19,6 +19,8 @@ import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
 import WebflowButton from '../components/ui/WebflowButton';
+import canvasPoster from '../assets/image/wallcanvas_poster_1.webp';
+import nameplatePoster from '../assets/image/housenameplate_poster.webp';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 
@@ -200,13 +202,13 @@ const StorePage = () => {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-            {/* Canvas card */}
+            {/* Canvas card — 50px narrower, centered in its grid cell */}
             <Link
               to="/wall-canvas"
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block"
+              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block w-[calc(100%-50px)] mx-auto"
             >
               <img
-                src="https://images.unsplash.com/photo-1582738411706-bfc8e691d1c2?w=800&auto=format&fit=crop"
+                src={canvasPoster}
                 alt="Canvas wall art"
                 loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -221,13 +223,13 @@ const StorePage = () => {
               </div>
             </Link>
 
-            {/* Nameplates card */}
+            {/* Nameplates card — 50px narrower, centered in its grid cell */}
             <Link
               to="/house-nameplates"
-              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block"
+              className="group relative aspect-[4/5] rounded-3xl overflow-hidden block w-[calc(100%-50px)] mx-auto"
             >
               <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop"
+                src={nameplatePoster}
                 alt="House nameplate"
                 loading="lazy"
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"

@@ -22,6 +22,7 @@ const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
 
 // ─── Eager (above-the-fold / very common routes) ───
 import HomePage from './pages/HomePage';
+import StorePage from './pages/StorePage';
 import CategoryPage from './pages/CategoryPage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
@@ -55,7 +56,6 @@ const BlogList = lazy(() => import('./pages/BlogList'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
 const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const CustomizeCanvasPage = lazy(() => import('./pages/CustomizeCanvasPage'));
-const StorePage = lazy(() => import('./pages/StorePage'));
 const SEO_PremiumWallCanvasIndia = lazy(() => import('./pages/SEO_PremiumWallCanvasIndia'));
 const WhatsAppLogin = lazy(() => import('./pages/WhatsAppLogin'));
 
@@ -207,10 +207,11 @@ function App() {
               <Suspense fallback={<SuspenseFallback />}>
               <Routes>
                 {/* Public */}
-                <Route path="/" element={<><HomePage /><Footer /></>} />
+                <Route path="/" element={<><StorePage /><Footer /></>} />
+                <Route path="/home" element={<><HomePage /><Footer /></>} />
+                <Route path="/store" element={<><StorePage /><Footer /></>} />
                 <Route path="/search" element={<><SearchPage /><Footer /></>} />
                 <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />
-                <Route path="/store" element={<><StorePage /><Footer /></>} />
                 <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
                 <Route path="/cart" element={<><CartPage /><Footer /></>} />
                 <Route path="/login" element={<><LoginPage /><Footer /></>} />

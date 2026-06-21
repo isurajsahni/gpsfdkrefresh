@@ -1,12 +1,14 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const Otp = require('../models/Otp');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const { getAuthEmail } = require('../utils/emailTemplates');
 const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
+const { protect, admin } = require('../middleware/auth');
 
 // Mirrors authController.generateToken — kept local so this route doesn't
 // circular-import the controller.
@@ -43,9 +45,10 @@ const verifyOtpLimiter = rateLimit({
 
 // GET /api/whatsapp-otp/diagnose
 // Returns which OTP channels are configured WITHOUT exposing secrets.
-// Useful for debugging "OTP not arriving" reports — you can curl this from
-// a browser/Postman and immediately see which env vars Render is missing.
-router.get('/diagnose', (req, res) => {
+// Useful for debugging "OTP not arriving" reports. Admin-only: even though it
+// masks secrets, the config state (channel availability, PHONE_NUMBER_ID last-4,
+// token length, infra hints) is reconnaissance an attacker shouldn't get for free.
+router.get('/diagnose', protect, admin, (req, res) => {
   const status = {
     email: {
       configured: Boolean(process.env.RESEND_API_KEY || process.env.EMAIL_PASS),
@@ -109,7 +112,7 @@ router.post('/send', sendOtpLimiter, async (req, res) => {
     }
 
     // 2. Generate 6-digit OTP
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const generatedOtp = crypto.randomInt(100000, 1000000).toString();
 
     // 3. Save to Database (Expires in 5 minutes)
     await Otp.create({

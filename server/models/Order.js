@@ -51,7 +51,7 @@ const orderSchema = new mongoose.Schema({
     pincode: String,
     country: { type: String, default: 'India' }
   },
-  paymentMethod: { type: String, enum: ['razorpay', 'stripe', 'free', 'cod'], required: true },
+  paymentMethod: { type: String, enum: ['razorpay', 'free', 'cod'], required: true },
 
   paymentResult: {
     id: String,

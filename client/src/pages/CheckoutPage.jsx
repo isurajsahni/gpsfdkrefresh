@@ -534,7 +534,7 @@ const CheckoutPage = () => {
                   orderData: orderData
                 });
                 // Verified successfully — drop the recovery marker.
-                try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) {}
+                try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) { /* ignore */ }
                 API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
                 // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
                 if (typeof window.fbq === 'function') {

@@ -7,7 +7,6 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 
 const connectDB = require('./config/db');
-const { stripeWebhook } = require('./controllers/paymentController');
 
 dotenv.config();
 
@@ -53,9 +52,6 @@ const globalLimiter = rateLimit({
   },
 });
 app.use(globalLimiter);
-
-// Stripe webhook needs raw body — MUST be before express.json()
-app.post('/api/payments/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // ─── Shiprocket Webhook (mounted BEFORE CORS — server-to-server, no browser origin) ───
 // Needs its own JSON parser since it's mounted before the global express.json()

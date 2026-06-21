@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
 const welcomeEmail = require('../utils/welcomeEmailTemplate');
@@ -110,7 +111,7 @@ exports.sendRegistrationOtp = async (req, res, next) => {
     }
 
     // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
 
     // Store pending registration + OTP
     await registrationOtpSessions.set(normalizedEmail, {
@@ -333,6 +334,15 @@ exports.updateProfile = async (req, res, next) => {
       if (req.body.password.length < 8) {
         return res.status(400).json({ message: 'Password must be at least 8 characters' });
       }
+      // Re-authenticate before changing a password. Without proof of the current
+      // password, a stolen/leaked JWT (7-day lifetime, stored in localStorage)
+      // could silently take over the account by rotating the password. No current
+      // frontend flow hits this branch; a future "change password" UI must send
+      // `currentPassword`.
+      const { currentPassword } = req.body;
+      if (!currentPassword || !(await user.matchPassword(currentPassword))) {
+        return res.status(401).json({ message: 'Current password is incorrect.' });
+      }
       user.password = req.body.password;
     }
 
@@ -446,7 +456,7 @@ exports.sendEmailUpdateOtp = async (req, res, next) => {
     }
 
     // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
 
     // Store session
     await emailOtpSessions.set(userId, {
@@ -616,7 +626,7 @@ exports.forgotPassword = async (req, res, next) => {
     }
 
     // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     
     // Set OTP and expiration (10 minutes), reset attempt counter
     user.resetPasswordOtp = otp;
@@ -801,7 +811,7 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
       return res.status(429).json({ message: 'Please wait 30 seconds before requesting again.' });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = crypto.randomInt(100000, 1000000).toString();
     await passwordlessOtpSessions.set(normalizedId, { otp, attempts: 0, sentAt: Date.now() });
 
     if (isEmail) {
@@ -866,7 +876,12 @@ exports.verifyPasswordlessOtp = async (req, res, next) => {
 
     // Find User
     const isEmail = normalizedId.includes('@');
-    const query = isEmail ? { email: normalizedId } : { phone: { $regex: normalizedId.replace(/\D/g, ''), $options: 'i' } };
+    // Match the last 10 digits anchored to end-of-string. The previous unanchored
+    // substring regex could match a DIFFERENT user whose number merely contained
+    // these digits mid-string. End-anchoring stays tolerant of stored country-code
+    // prefixes (e.g. "+91…") while preventing false matches.
+    const phoneDigits = normalizedId.replace(/\D/g, '').slice(-10);
+    const query = isEmail ? { email: normalizedId } : { phone: { $regex: phoneDigits + '$' } };
     const user = await User.findOne(query);
 
     if (user) {
@@ -917,7 +932,8 @@ exports.verifyFirebaseToken = async (req, res, next) => {
 
     const phone = firebaseUser.phoneNumber;
     const phoneDigits = phone.replace(/\D/g, '').slice(-10);
-    const user = await User.findOne({ phone: { $regex: phoneDigits, $options: 'i' } });
+    // End-anchored last-10-digit match — see verifyPasswordlessOtp note above.
+    const user = await User.findOne({ phone: { $regex: phoneDigits + '$' } });
 
     if (user) {
       return res.json({
@@ -967,7 +983,9 @@ exports.completePasswordlessRegistration = async (req, res, next) => {
       name,
       email: finalEmail.toLowerCase(),
       phone: finalPhone || '',
-      password: Math.random().toString(36).slice(-10)
+      // Strong throwaway password — passwordless accounts authenticate via OTP and
+      // never use this, but it's hashed and stored, so make it unguessable.
+      password: crypto.randomBytes(18).toString('hex')
     });
 
     sendEmail({

@@ -79,7 +79,12 @@ exports.getProducts = async (req, res, next) => {
     if (subCategoryExact) {
       andConditions.push({ subCategory: subCategoryExact });
     } else if (subCategory) {
-      const escaped = subCategory.replace(/-/g, '.*');
+      // Neutralize regex metacharacters first (ReDoS-safe), THEN treat hyphens
+      // as wildcard separators. Escaping must come first so a crafted query like
+      // "(a+)+" can't trigger catastrophic backtracking.
+      const escaped = subCategory
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/-/g, '.*');
       andConditions.push({ subCategory: { $regex: escaped, $options: 'i' } });
     }
 

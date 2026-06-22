@@ -203,7 +203,9 @@ exports.handleTrackingUpdate = async (req, res) => {
 
     if (!order) {
       console.warn(`🚫 [Shiprocket Webhook] Order not found for: awb=${awb}, order_id=${orderId}, shipment_id=${shipmentId}, channel_order_id=${channelOrderId}`);
-      return res.status(404).json({ success: false, message: 'Order not found' });
+      // Acknowledge (200), don't 404: a shipment we don't recognise will never
+      // become findable, so a non-2xx just makes Shiprocket retry it forever (F6).
+      return res.status(200).json({ success: true, ignored: true, reason: 'Order not found' });
     }
 
     console.log(`📦 [Shiprocket Webhook] Order found: ${order.orderNumber} (current status: ${order.status})`);
@@ -253,10 +255,17 @@ exports.handleTrackingUpdate = async (req, res) => {
     // ─── Update last tracking timestamp ───
     order.lastTrackingUpdate = new Date();
 
-    // ─── Email flags ───
-    const shouldSendShippedEmail = mappedStatus === 'shipped' && !order.trackingEmailSent;
-    if (shouldSendShippedEmail) {
-      order.trackingEmailSent = true;
+    // ─── Email idempotency ───
+    // Send each status email at most once per order — guards against webhook
+    // redelivery and status oscillation, e.g. delivered → RTO → delivered (F7).
+    const emailableStatuses = ['shipped', 'delivered', 'cancelled'];
+    const alreadyNotified =
+      order.notifiedStatuses.includes(mappedStatus) ||
+      (mappedStatus === 'shipped' && order.trackingEmailSent); // legacy flag for pre-existing orders
+    const shouldSendEmail = emailableStatuses.includes(mappedStatus) && !alreadyNotified;
+    if (shouldSendEmail) {
+      order.notifiedStatuses.push(mappedStatus);
+      if (mappedStatus === 'shipped') order.trackingEmailSent = true; // keep legacy flag in sync
     }
 
     // ─── Save the order ───
@@ -273,18 +282,22 @@ exports.handleTrackingUpdate = async (req, res) => {
       );
     }
 
-    // Email notifications
-    if (shouldSendShippedEmail) {
-      sendStatusEmail(order, 'shipped');
-    } else if (mappedStatus === 'delivered' && statusChanged) {
-      sendStatusEmail(order, 'delivered');
-    } else if (mappedStatus === 'cancelled' && statusChanged) {
-      sendStatusEmail(order, 'cancelled');
+    // Email notifications — once per status, resolved above
+    if (shouldSendEmail) {
+      sendStatusEmail(order, mappedStatus);
     }
 
     return res.status(200).json({ success: true });
 
   } catch (err) {
+    // A Mongoose VersionError means a concurrent webhook for the same order won
+    // the save race. State has already advanced and Shiprocket re-sends
+    // current_status on later events, so acknowledge (200) instead of 500 to
+    // avoid a retry storm over an event that's already moot (F5).
+    if (err.name === 'VersionError') {
+      console.warn(`⚠️ [Shiprocket Webhook] Concurrent update (VersionError) — acknowledging`);
+      return res.status(200).json({ success: true, concurrent: true });
+    }
     console.error(`❌ [Shiprocket Webhook] Error:`, err.message, err.stack);
     return res.status(500).json({ success: false, message: 'Internal error' });
   }

@@ -51,10 +51,27 @@ class ShiprocketService {
     }
   }
 
+  // Run an authed request; on a 401 (token rejected / expired early) force a
+  // fresh login and retry once. Without this a stale cached token locks out all
+  // Shiprocket calls until the 9-day local expiry or a container restart (F3).
+  async _authedRequest(fn) {
+    let token = await this.getToken();
+    try {
+      return await fn(token);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        console.warn('[Shiprocket] 401 — token rejected; re-authenticating and retrying once');
+        this.token = null;
+        this.tokenExpiry = null;
+        token = await this.getToken();
+        return await fn(token);
+      }
+      throw error;
+    }
+  }
+
   async createShipment(order) {
     try {
-      const token = await this.getToken();
-      
       // ─── Auto Weight & Dimension Calculation from Product Size ───
       let totalWeight = 0;
       let maxLength = 0, maxBreadth = 0, maxHeight = 0;
@@ -104,6 +121,18 @@ class ShiprocketService {
       phone = phone.replace(/[^0-9]/g, ''); // strip non-digits
       if (phone.length > 10) phone = phone.slice(-10); // take last 10 digits
 
+      // Resolve customer email — registered-user orders keep it on the User doc,
+      // not order.guestEmail. Without this lookup Shiprocket records the
+      // 'customer@gpsfdk.com' placeholder for every logged-in customer (F2).
+      let customerEmail = order.guestEmail || '';
+      if (!customerEmail && order.user) {
+        try {
+          const User = require('../models/User');
+          const u = await User.findById(order.user).select('email');
+          customerEmail = u?.email || '';
+        } catch (_) { /* fall back to placeholder below */ }
+      }
+
       const pickupLocation = process.env.SHIPROCKET_PICKUP_LOCATION || 'Home';
 
       const payload = {
@@ -118,7 +147,7 @@ class ShiprocketService {
         billing_pincode: order.shippingAddress.pincode,
         billing_state: order.shippingAddress.state,
         billing_country: order.shippingAddress.country || 'India',
-        billing_email: order.guestEmail || 'customer@gpsfdk.com',
+        billing_email: customerEmail || 'customer@gpsfdk.com',
         billing_phone: phone,
         shipping_is_billing: true,
         order_items: orderItems,
@@ -133,11 +162,11 @@ class ShiprocketService {
       console.log(`[Shiprocket] Creating order ${order.orderNumber} → Weight: ${finalWeight}kg | Dims: ${finalLength}x${finalBreadth}x${finalHeight}cm | Pickup: "${pickupLocation}" | Phone: ${phone}`);
       console.log(`[Shiprocket] Full payload:`, JSON.stringify(payload, null, 2));
 
-      const response = await axios.post(
+      const response = await this._authedRequest((token) => axios.post(
         `${this.baseUrl}/orders/create/adhoc`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ));
 
       console.log(`✅ [Shiprocket] API Response for ${order.orderNumber}:`, JSON.stringify(response.data, null, 2));
 
@@ -161,11 +190,10 @@ class ShiprocketService {
 
   async getTracking(awbCode) {
     try {
-      const token = await this.getToken();
-      const response = await axios.get(
+      const response = await this._authedRequest((token) => axios.get(
         `${this.baseUrl}/courier/track/awb/${awbCode}`,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ));
       return response.data;
     } catch (error) {
       if (error.response) {
@@ -183,13 +211,12 @@ class ShiprocketService {
    */
   async getOrderDetails(shiprocketOrderId) {
     try {
-      const token = await this.getToken();
       console.log(`[Shiprocket] Fetching details for SR Order ID: ${shiprocketOrderId}`);
-      
-      const response = await axios.get(
+
+      const response = await this._authedRequest((token) => axios.get(
         `${this.baseUrl}/orders/show/${shiprocketOrderId}`,
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ));
 
       if (response.data && response.data.data) {
         return response.data.data;
@@ -211,14 +238,13 @@ class ShiprocketService {
    */
   async cancelOrder(shiprocketOrderId) {
     try {
-      const token = await this.getToken();
       console.log(`[Shiprocket] Cancelling SR Order ID: ${shiprocketOrderId}`);
-      
-      const response = await axios.post(
+
+      const response = await this._authedRequest((token) => axios.post(
         `${this.baseUrl}/orders/cancel`,
         { ids: [Number(shiprocketOrderId)] },
         { headers: { Authorization: `Bearer ${token}` } }
-      );
+      ));
 
       console.log(`✅ [Shiprocket] Order Cancellation API Response for ID ${shiprocketOrderId}:`, JSON.stringify(response.data, null, 2));
       return response.data;

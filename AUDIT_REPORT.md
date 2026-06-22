@@ -185,6 +185,24 @@ The application code is **well-engineered**. Core commerce and auth flows are se
 
 ---
 
+## Functional & Integration Findings (second audit pass)
+
+A separate pass focused on **runtime correctness** of the payment, delivery-webhook,
+geo-pricing, and database integrations (not security). All actionable items fixed on staging.
+
+| ID | Severity | Problem | Location | Status |
+|----|----------|---------|----------|--------|
+| F1 | 🔴 High | "Paid but no order": post-capture `calculateOrderPrices` could throw (stock ran out / product inactive) → customer charged, no order created | `orderController.js`, `paymentController.js` | ✅ Fixed — `allowOversell` post-payment (prices still recalculated from DB) |
+| F2 | 🟠 Medium | Registered-user shipments sent to Shiprocket with `customer@gpsfdk.com` placeholder email | `utils/shiprocket.js` | ✅ Fixed — resolves real user email |
+| F3 | 🟠 Medium | Stale Shiprocket token (401) locks out all calls until container restart / 9-day expiry | `utils/shiprocket.js` | ✅ Fixed — `_authedRequest` re-auths + retries once on 401 |
+| F4 | 🟡 Low | No transient-failure retry on Shiprocket calls | `utils/shiprocket.js` | ⏸️ Intentionally NOT auto-retried — `orders/create/adhoc` is non-idempotent; blind retry risks duplicate shipments. Order already survives the failure (admin re-creates). |
+| F5 | 🟡 Low | Concurrent webhooks → Mongoose `VersionError` → 500 retry storm | `shiprocketWebhookController.js` | ✅ Fixed — acknowledge 200 on VersionError (state already advanced) |
+| F6 | 🟡 Low | Webhook returns 404 for unknown orders → Shiprocket retry storm | `shiprocketWebhookController.js` | ✅ Fixed — acknowledge 200 |
+| F7 | 🟡 Low | `delivered`/`cancelled` emails could resend on status oscillation | `shiprocketWebhookController.js`, `Order.js` | ✅ Fixed — `notifiedStatuses[]` idempotency |
+| F8 | 🟡 Low | `detectCountry` hits ipinfo.io on every checkout (up to 2s) | `utils/geoPricing.js` | ✅ Fixed — 24h in-memory IP→country cache |
+| F9 | ⚪ Info | `connectDB` `process.exit(1)` on boot failure | `config/db.js` | ⏸️ By design (fail-fast; Mongoose auto-reconnects at runtime) |
+| F10 | ⚪ Info | `dns.setServers()` globally redirects DNS on SRV failure | `config/db.js` | ⏸️ By design (intended SRV-resolution workaround) |
+
 ## Recommended remediation order
 
 1. **H1** — patch dependencies (`npm audit fix` + bump axios & react-router-dom), then rebuild & smoke-test.

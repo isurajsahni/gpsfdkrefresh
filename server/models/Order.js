@@ -82,6 +82,10 @@ const orderSchema = new mongoose.Schema({
   deliveredAt: Date,
   notes: { type: String, default: '' },
   trackingEmailSent: { type: Boolean, default: false },
+  // Status-change emails already sent for this order — prevents duplicate
+  // shipped/delivered/cancelled emails on webhook redelivery or status
+  // oscillation, e.g. delivered → RTO → delivered (F7).
+  notifiedStatuses: { type: [String], default: [] },
   // Shiprocket webhook tracking timeline — persisted in DB so frontend
   // can display history even when the live Shiprocket API is unavailable.
   trackingHistory: [{

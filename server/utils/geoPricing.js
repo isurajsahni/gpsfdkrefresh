@@ -117,6 +117,20 @@ const roundClean = (price) => {
   return Math.ceil(price / 100) * 100 - 1;
 };
 
+// In-memory IP→country cache. detectCountry sits on the checkout path; without
+// this, every order with no CDN geo header triggers a live ipinfo.io fetch (up to
+// 2s). Caching makes repeat checkouts instant and bounds our dependency on the
+// third-party API (F8). Process-local — fine for Render's persistent containers.
+const COUNTRY_CACHE = new Map(); // ip -> { country, expires }
+const COUNTRY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const COUNTRY_CACHE_MAX = 5000;  // cap to prevent unbounded memory growth
+const setCachedCountry = (ip, country) => {
+  if (COUNTRY_CACHE.size >= COUNTRY_CACHE_MAX) {
+    COUNTRY_CACHE.delete(COUNTRY_CACHE.keys().next().value); // evict oldest (insertion order)
+  }
+  COUNTRY_CACHE.set(ip, { country, expires: Date.now() + COUNTRY_CACHE_TTL_MS });
+};
+
 /**
  * Detect country from Express request.
  * Priority:
@@ -147,6 +161,10 @@ const detectCountry = async (req) => {
     return 'IN';
   }
 
+  // Cache hit — avoid re-hitting ipinfo.io for a recently-seen IP (F8)
+  const cached = COUNTRY_CACHE.get(ip);
+  if (cached && cached.expires > Date.now()) return cached.country;
+
   // 4. Free geo API lookup (ipinfo.io — 50k requests/month free)
   try {
     const controller = new AbortController();
@@ -159,7 +177,11 @@ const detectCountry = async (req) => {
 
     if (response.ok) {
       const data = await response.json();
-      if (data.country) return data.country.toUpperCase();
+      if (data.country) {
+        const country = data.country.toUpperCase();
+        setCachedCountry(ip, country);
+        return country;
+      }
     }
   } catch (err) {
     console.warn('[GeoPricing] IP lookup failed, falling back to IN:', err.message);

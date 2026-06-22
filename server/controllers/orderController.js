@@ -178,7 +178,13 @@ exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
 // Recalculate all prices from the database to prevent price manipulation.
 // Also returns `stockOps` — the atomic stock-decrement instructions that the
 // caller should apply once the order is confirmed (via decrementStockForOrder).
-const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null) => {
+// `options.allowOversell` is set by the post-payment path (verifyRazorpay): once
+// Razorpay has captured the money we MUST create the order, so a product that went
+// inactive or out of stock in the seconds between checkout and payment can no longer
+// be a hard error — that would charge the customer and create no order. Prices are
+// still recalculated from the DB; only the availability *blocks* are relaxed.
+const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null, options = {}) => {
+  const { allowOversell = false } = options;
   let calculatedItemsPrice = 0;
   const verifiedItems = [];
   const stockOps = []; // [{ productId, variationId, qty }] — applied post-order
@@ -196,7 +202,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     }
 
     if (!product) throw new Error(`Product not found: ${item.product}`);
-    if (!product.isActive) throw new Error(`Product is not available: ${product.name}`);
+    if (!product.isActive && !allowOversell) throw new Error(`Product is not available: ${product.name}`);
 
     // Find matching variation — 5-tier fallback:
     // 1. Exact variation _id  2. Embedded _id  3. Full attribute match
@@ -237,9 +243,15 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       throw new Error(`Invalid variation for ${product.name} — product has no variations configured`);
     }
 
-    // Check stock (skip for custom orders as they are made to order)
+    // Check stock (skip for custom orders as they are made to order).
+    // Post-payment (allowOversell) we record the order anyway and let the atomic
+    // decrement no-op — overselling is a fulfilment problem, not a reason to keep
+    // a paying customer's money with no order.
     if (!item.uploadedImageUrl && variation.stock < item.quantity) {
-      throw new Error(`Insufficient stock for ${product.name} (${variation.size})`);
+      if (!allowOversell) {
+        throw new Error(`Insufficient stock for ${product.name} (${variation.size})`);
+      }
+      console.warn(`[oversell] Order proceeding post-payment despite low stock: product=${product._id} variation=${variation.size} need=${item.quantity} have=${variation.stock}`);
     }
 
     const serverPrice = variation.price;

@@ -199,7 +199,10 @@ exports.verifyRazorpay = async (req, res, next) => {
       const userId = req.user ? req.user._id : null;
       const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
       const { calculateOrderPrices } = require('./orderController');
-      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
+      // Payment is already captured — allowOversell ensures a product that went
+      // low-stock/inactive between checkout and capture can't block order creation
+      // and strand the customer's money with no order (F1).
+      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { allowOversell: true });
       
       // Verify the payment amount matches what we expect
       // Fetch the Razorpay order to confirm the amount paid

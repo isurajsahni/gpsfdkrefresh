@@ -18,6 +18,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
+import VideoShowcase from '../components/home/VideoShowcase';
 import WebflowButton from '../components/ui/WebflowButton';
 import canvasPoster from '../assets/image/wallcanvas_poster_1.webp';
 import nameplatePoster from '../assets/image/housenameplate_poster.webp';
@@ -78,8 +79,16 @@ const StorePage = () => {
     let cancelled = false;
     (async () => {
       try {
-        const { data } = await API.get('/products', { params: { limit: 12, categorySlug: 'wall-canvas' } });
-        if (!cancelled) setProducts(data.products || []);
+        // Most-sold products (by units sold), with featured items filling any gap
+        // — see getHotSellingProducts. Fall back to the general wall-canvas catalogue
+        // if it returns nothing so the slider never renders empty.
+        const { data } = await API.get('/products/hot-selling');
+        let list = data.products || [];
+        if (!list.length) {
+          const fb = await API.get('/products', { params: { limit: 12, categorySlug: 'wall-canvas' } });
+          list = fb.data.products || [];
+        }
+        if (!cancelled) setProducts(list);
       } catch (_) {
         if (!cancelled) setProducts([]);
       }
@@ -283,6 +292,9 @@ const StorePage = () => {
           </div>
         </div>
       </section>
+
+      {/* ─── Artworks in Motion (video showcase) ─── */}
+      <VideoShowcase />
 
       {/* ─── Inspire and collaborate ─── */}
       <section className="pb-16 section-padding">

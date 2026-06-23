@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 
 const SITE_URL = 'https://www.gpsfdk.com';
 // Default social-share image — must be a file that exists in client/public
-const DEFAULT_IMAGE = '/logo-fav.webp';
+const DEFAULT_IMAGE = '/graph.webp';
 
 const SEO = ({
   title = "Premium Canvas & Name Plates in India | GPSFDK",

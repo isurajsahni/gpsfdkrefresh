@@ -57,13 +57,13 @@ const Navbar = () => {
     <>
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
         <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
-          <div className="mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-0">
-            <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-[60px]">
 
-              <div className="flex items-center gap-10">
+              <div className="flex items-center gap-10 h-full">
                 {/* Logo → Home Page (legacy /home) */}
-                <Link to="/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group">
-                  <img src={logo} alt="GPSFDK" className="h-14 md:h-20 w-auto" />
+                <Link to="/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group h-full">
+                  <img src={logo} alt="GPSFDK" className="max-w-[50px] h-full w-auto object-contain" />
                 </Link>
 
                 {/* Desktop Nav */}
@@ -184,7 +184,7 @@ const Navbar = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed inset-0 z-40 bg-secondary pt-20"
+            className="fixed inset-0 z-40 bg-secondary pt-[60px]"
           >
             <div className="p-6 space-y-1 h-full overflow-y-auto pb-32">
               {NAV_LINKS.map((link) => (

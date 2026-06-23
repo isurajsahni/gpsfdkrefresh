@@ -198,7 +198,7 @@ function App() {
             <CurrencyProvider>
             <CartProvider>
               <Toaster position="top-center" toastOptions={{
-                style: { background: '#0B5D3B', color: '#fff', borderRadius: '12px', fontFamily: '"DM Sans", sans-serif' },
+                style: { background: '#0B5D3B', color: '#fff', borderRadius: '12px', fontFamily: 'var(--font-sf)' },
                 success: { iconTheme: { primary: '#F15A29', secondary: '#fff' } },
               }} />
               

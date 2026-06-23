@@ -16,8 +16,9 @@ export default {
         'cream-dark': '#f5edd8',
       },
       fontFamily: {
-        heading: ['"Bricolage Grotesque"', 'sans-serif'],
-        body: ['"DM Sans"', 'sans-serif'],
+        sans: ['var(--font-sf)'],
+        heading: ['var(--font-sf)'],
+        body: ['var(--font-sf)'],
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out',

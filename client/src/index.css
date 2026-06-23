@@ -3,6 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global type system — "SF Pro" via system font stack.
+   Renders true SF Pro on Apple devices (-apple-system / BlinkMacSystemFont),
+   Segoe UI on Windows, Roboto on Android. No web-font fetch needed. */
+:root {
+  --font-sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 
 
 
@@ -27,7 +34,8 @@
   }
 
   body {
-    font-family: 'DM Sans', sans-serif;
+    font-family: var(--font-sf);
+    font-size: 15px;
     background-color: #FFF7E7;
     color: #1a1a1a;
     -webkit-font-smoothing: antialiased;
@@ -35,7 +43,15 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-family: var(--font-sf);
+  }
+
+  h1 {
+    font-size: 80px;
+  }
+
+  h2 {
+    font-size: 28px;
   }
 
   ::-webkit-scrollbar {
@@ -151,7 +167,7 @@
   max-height: 500px;
 }
 
-/* Force Prose overrides for true heading sizes (Cinzel needs massive scale) and tight spacing */
+/* Force Prose overrides for blog heading sizes and tight spacing */
 .prose h2 {
   font-size: 2.25rem !important; /* 36px equivalent */
   line-height: 2.5rem !important;

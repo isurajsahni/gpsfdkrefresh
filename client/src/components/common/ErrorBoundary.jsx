@@ -45,7 +45,7 @@ class ErrorBoundary extends React.Component {
           justifyContent: 'center',
           background: '#fffdf9',
           padding: '24px',
-          fontFamily: '"DM Sans", system-ui, sans-serif',
+          fontFamily: 'var(--font-sf)',
         }}>
           <div style={{
             maxWidth: 480,

@@ -23,7 +23,7 @@ const esc = (value = '') =>
 
 // 1200x630 social crop for Cloudinary-hosted images; other hosts pass through.
 const shareImage = (url) => {
-  if (!url) return `${SITE_URL}/logo-fav.webp`;
+  if (!url) return `${SITE_URL}/graph.webp`;
   if (url.includes('res.cloudinary.com') && url.includes('/upload/') && !url.includes('/f_auto')) {
     const [head, tail] = url.split('/upload/');
     return `${head}/upload/c_fill,w_1200,h_630,g_auto,q_auto,f_auto/${tail}`;

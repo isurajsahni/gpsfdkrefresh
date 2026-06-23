@@ -129,7 +129,7 @@ const CategoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[80px] pb-12">
+    <div className="min-h-screen bg-gray-50 pt-[60px] pb-12">
       <SEO title={dynamicTitle} description={dynamicDescription} />
       
       {/* Header Area */}

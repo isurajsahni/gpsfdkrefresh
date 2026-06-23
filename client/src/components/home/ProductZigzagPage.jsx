@@ -111,7 +111,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       {/* Hero Header - 100vh 50/50 Split */}
       <div className="relative w-full h-[100vh] flex flex-col md:flex-row overflow-hidden bg-secondary">
         {/* Left Side: Content */}
-        <div className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col justify-center px-6 md:px-16 lg:px-24 relative z-10 pt-[80px] md:pt-0">
+        <div className="w-full md:w-1/2 h-[50vh] md:h-full flex flex-col justify-center px-6 md:px-16 lg:px-24 relative z-10 pt-[60px] md:pt-0">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
             <nav className="text-white/60 text-sm mb-6 flex items-center gap-2">
               <Link to="/" className="hover:text-white transition-colors">Home</Link>

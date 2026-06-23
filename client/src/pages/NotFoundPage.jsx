@@ -39,7 +39,7 @@ const NotFoundPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#fffdf9] flex items-center justify-center pt-20 pb-16 px-4">
+    <div className="min-h-screen bg-[#fffdf9] flex items-center justify-center pt-[60px] pb-16 px-4">
       {/* 
         CRITICAL FOR SEO (Soft 404 Fix in SPA):
         Adding noindex meta tag ensures search engines don't index this non-existent content 

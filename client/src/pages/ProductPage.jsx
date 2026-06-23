@@ -74,7 +74,7 @@ const ProductPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center pt-20">
+      <div className="min-h-screen bg-white flex items-center justify-center pt-[60px]">
         <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
       </div>
     );

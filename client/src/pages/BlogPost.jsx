@@ -63,7 +63,7 @@ const BlogPost = () => {
 
   if (!blog) {
     return (
-      <div className="min-h-screen bg-primary flex flex-col items-center justify-center pt-20">
+      <div className="min-h-screen bg-primary flex flex-col items-center justify-center pt-[60px]">
         <h2 className="text-2xl font-heading text-secondary">Blog post not found</h2>
         <Link to="/blog" className="btn-primary mt-4">Back to Blog</Link>
       </div>

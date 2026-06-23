@@ -14,7 +14,7 @@ const MarketingLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
+    <div className="min-h-screen bg-gray-50 pt-[60px]">
       {/* Mobile toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)} className="fixed top-24 left-4 z-50 lg:hidden bg-secondary text-white p-2 rounded-lg shadow-lg">
         <HiOutlineMenu className="w-5 h-5" />
@@ -22,7 +22,7 @@ const MarketingLayout = () => {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`fixed lg:sticky top-20 left-0 z-40 w-64 h-[calc(100vh-5rem)] bg-white border-r border-gray-100 shadow-sm transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside className={`fixed lg:sticky top-[60px] left-0 z-40 w-64 h-[calc(100vh-60px)] bg-white border-r border-gray-100 shadow-sm transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           <div className="p-6">
             <h2 className="font-heading text-xl font-bold text-secondary">Marketing Hub</h2>
             <p className="text-sm text-gray-400 mt-1">{user?.name || user?.email}</p>

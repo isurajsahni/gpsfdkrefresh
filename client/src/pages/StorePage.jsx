@@ -132,11 +132,20 @@ const StorePage = () => {
       {/* ─── Inspired by your journey ─── */}
       <section className="pb-16 section-padding">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-secondary">
-              Inspired by your <span className="text-accent italic">journey</span>
-            </h2>
-            <div className="flex gap-2">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-secondary">
+                Inspired by your <span className="text-accent italic">journey</span>
+              </h2>
+              <Link
+                to="/wall-canvas"
+                className="group/viewall inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-dark transition-colors whitespace-nowrap"
+              >
+                View all
+                <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover/viewall:translate-x-1" />
+              </Link>
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
               <button
                 ref={prevRef}
                 aria-label="Previous"

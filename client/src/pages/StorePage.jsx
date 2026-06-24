@@ -132,34 +132,30 @@ const StorePage = () => {
       {/* ─── Inspired by your journey ─── */}
       <section className="pb-16 section-padding">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-end justify-between gap-4 mb-6">
-            <div className="flex items-baseline gap-x-4 gap-y-1 flex-wrap">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-secondary">
-                Inspired by your <span className="text-accent italic">journey</span>
-              </h2>
-              <Link
-                to="/wall-canvas"
-                className="group/viewall inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:text-accent-dark transition-colors whitespace-nowrap"
-              >
+          <div className="mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-secondary mb-4">
+              Inspired by your <span className="text-accent italic">journey</span>
+            </h2>
+            <div className="flex items-center justify-between gap-4">
+              <WebflowButton to="/wall-canvas" className="text-sm py-1.5 pl-5 pr-1.5">
                 View all
-                <HiOutlineArrowRight className="w-4 h-4 transition-transform group-hover/viewall:translate-x-1" />
-              </Link>
-            </div>
-            <div className="flex gap-2 flex-shrink-0">
-              <button
-                ref={prevRef}
-                aria-label="Previous"
-                className="w-10 h-10 rounded-full bg-white border border-gray-200 text-secondary hover:bg-secondary hover:text-white transition-colors flex items-center justify-center"
-              >
-                <HiOutlineArrowRight className="w-4 h-4 rotate-180" />
-              </button>
-              <button
-                ref={nextRef}
-                aria-label="Next"
-                className="w-10 h-10 rounded-full bg-accent text-white hover:bg-accent-dark transition-colors flex items-center justify-center"
-              >
-                <HiOutlineArrowRight className="w-4 h-4" />
-              </button>
+              </WebflowButton>
+              <div className="flex gap-2 flex-shrink-0">
+                <button
+                  ref={prevRef}
+                  aria-label="Previous"
+                  className="w-10 h-10 rounded-full bg-white border border-gray-200 text-secondary hover:bg-secondary hover:text-white transition-colors flex items-center justify-center"
+                >
+                  <HiOutlineArrowRight className="w-4 h-4 rotate-180" />
+                </button>
+                <button
+                  ref={nextRef}
+                  aria-label="Next"
+                  className="w-10 h-10 rounded-full bg-accent text-white hover:bg-accent-dark transition-colors flex items-center justify-center"
+                >
+                  <HiOutlineArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 

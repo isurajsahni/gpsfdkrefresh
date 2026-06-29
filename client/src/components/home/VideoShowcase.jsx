@@ -62,7 +62,7 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle, videoRefs }) =
   </a>
 );
 
-const VideoShowcase = () => {
+const VideoShowcase = ({ showHeading = true }) => {
   const [mutedStates, setMutedStates] = useState([true, true, true, true]);
   const videoRefs = useRef([]);
 
@@ -118,12 +118,14 @@ const VideoShowcase = () => {
     <section className="py-20 md:py-28 bg-[#fafaf9] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
-        <div className="text-center mb-10 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] capitalize tracking-tight">
-            Artworks in Motion
-          </h2>
-          <div className="w-20 h-[3px] bg-[#E3543A] mt-[15px] mx-auto" />
-        </div>
+        {showHeading && (
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-[#2D4A3E] capitalize tracking-tight">
+              Artworks in Motion
+            </h2>
+            <div className="w-20 h-[3px] bg-[#E3543A] mt-[15px] mx-auto" />
+          </div>
+        )}
 
         {/* Mobile Swiper Slider (visible below 786px) */}
         <div className="block min-[786px]:hidden relative pb-20">

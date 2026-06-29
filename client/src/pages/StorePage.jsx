@@ -71,6 +71,7 @@ const TRANQUILITY_CARDS = [
 
 const StorePage = () => {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { formatPrice } = useCurrency();
   const prevRef = useRef(null);
   const nextRef = useRef(null);
@@ -91,6 +92,8 @@ const StorePage = () => {
         if (!cancelled) setProducts(list);
       } catch (_) {
         if (!cancelled) setProducts([]);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
@@ -176,34 +179,49 @@ const StorePage = () => {
               1280: { slidesPerView: 4 },
             }}
           >
-            {products.map((p, i) => {
-              const prices = p ? [p.basePrice, ...(p.variations || []).map(v => v.price)].filter(n => typeof n === 'number') : [];
-              const minPrice = prices.length ? Math.min(...prices) : (p?.basePrice || 999);
-              return (
-                <SwiperSlide key={p?._id || i}>
-                  <Link to={p ? `/product/${p.slug}` : '/wall-canvas'} className="group block">
-                    <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-cream-dark">
-                      <img
-                        src={p ? (optimizeImage(p.images?.[0]?.url, 500) || PLACEHOLDER) : PLACEHOLDER}
-                        alt={p?.name || 'Featured artwork'}
-                        onError={handleImageError}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                <SwiperSlide key={`skeleton-${i}`}>
+                  <div className="animate-pulse">
+                    <div className="aspect-[4/5] rounded-2xl bg-cream-dark" />
+                    <div className="mt-3 px-1 space-y-2">
+                      <div className="h-4 w-3/4 rounded bg-cream-dark" />
+                      <div className="h-3 w-1/2 rounded bg-cream-dark" />
+                      <div className="h-4 w-1/4 rounded bg-cream-dark mt-1" />
                     </div>
-                    <div className="mt-3 px-1">
-                      <h3 className="font-heading font-semibold text-secondary text-base sm:text-lg leading-tight truncate">
-                        {p?.name || 'Coming soon'}
-                      </h3>
-                      {p?.shortDescription && (
-                        <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">{p.shortDescription}</p>
-                      )}
-                      <p className="text-accent font-bold mt-2">{formatPrice(minPrice)}</p>
-                    </div>
-                  </Link>
+                  </div>
                 </SwiperSlide>
-              );
-            })}
+              ))
+              : products.map((p, i) => {
+                const prices = [p.basePrice, ...(p.variations || []).map(v => v.price)].filter(n => typeof n === 'number');
+                const minPrice = prices.length ? Math.min(...prices) : (p.basePrice || 999);
+                return (
+                  <SwiperSlide key={p._id || i}>
+                    <Link to={`/product/${p.slug}`} className="group block">
+                      <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-cream-dark">
+                        <img
+                          src={optimizeImage(p.images?.[0]?.url, 500) || PLACEHOLDER}
+                          alt={p.name || 'Featured artwork'}
+                          onError={handleImageError}
+                          loading={i < 4 ? 'eager' : 'lazy'}
+                          decoding="async"
+                          fetchpriority={i < 2 ? 'high' : 'auto'}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="mt-3 px-1">
+                        <h3 className="font-heading font-semibold text-secondary text-base sm:text-lg leading-tight truncate">
+                          {p.name || 'Coming soon'}
+                        </h3>
+                        {p.shortDescription && (
+                          <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">{p.shortDescription}</p>
+                        )}
+                        <p className="text-accent font-bold mt-2">{formatPrice(minPrice)}</p>
+                      </div>
+                    </Link>
+                  </SwiperSlide>
+                );
+              })}
           </Swiper>
         </div>
       </section>

@@ -42,7 +42,7 @@ const BeforeAfterSection = ({ showCTA = true, showTitle = true, compact = false 
 
   return (
     <section className="bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-5">
         <div className="grid grid-cols-1 md:grid-cols-2 md:min-h-[500px] lg:min-h-[550px]">
           {/* ── Left Column: Text Content ── */}
           <motion.div

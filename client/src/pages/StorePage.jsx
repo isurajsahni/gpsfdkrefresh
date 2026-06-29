@@ -176,7 +176,7 @@ const StorePage = () => {
               1280: { slidesPerView: 4 },
             }}
           >
-            {(products.length ? products : Array.from({ length: 4 })).map((p, i) => {
+            {products.map((p, i) => {
               const prices = p ? [p.basePrice, ...(p.variations || []).map(v => v.price)].filter(n => typeof n === 'number') : [];
               const minPrice = prices.length ? Math.min(...prices) : (p?.basePrice || 999);
               return (

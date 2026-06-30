@@ -47,15 +47,15 @@ const OFFER = [
 ];
 
 const COLLABORATE_CARDS = [
-  { title: 'Hands on workshop', blurb: 'Create, experiment and learn through guided workshops.', image: collab1, gradient: '#F0F0F0', dark: true },
-  { title: 'Collaborative sessions', blurb: 'Exchange ideas with creators and industry experts.', image: collab2, gradient: '#000000', dark: false },
-  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3, gradient: '#8E9096', dark: false },
+  { title: 'Hands on workshop', blurb: 'Create, experiment and learn through guided workshops.', image: collab1 },
+  { title: 'Collaborative sessions', blurb: 'Exchange ideas with creators and industry experts.', image: collab2 },
+  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3 },
 ];
 
 const TRANQUILITY_CARDS = [
-  { title: 'Luxury poolside stays', blurb: 'Curated escapes where nature, comfort and unforgettable moments come together.', image: tranq1, gradient: '#FCDC86', dark: true },
-  { title: 'Infinite horizons', blurb: 'Take in uninterrupted sea views from beautifully designed stays overlooking the coastline.', image: tranq2, gradient: '#A7D5F7', dark: true },
-  { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3, gradient: '#AECFF0', dark: true },
+  { title: 'Luxury poolside stays', blurb: 'Curated escapes where nature, comfort and unforgettable moments come together.', image: tranq1 },
+  { title: 'Infinite horizons', blurb: 'Take in uninterrupted sea views from beautifully designed stays overlooking the coastline.', image: tranq2 },
+  { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3 },
 ];
 
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
@@ -79,8 +79,26 @@ const ArrowLink = ({ to, children }) => (
   </Link>
 );
 
-// 380×490 image card with a 130px colour-gradient band (30px padding) holding the title/blurb.
-const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
+// Top band with a progressive "layer blur" (Figma-style): blurred + dark at the top,
+// fading to clear/light at the bottom. Holds the card text with 30px padding.
+const BlurBand = ({ height, children }) => (
+  <div className="absolute top-0 left-0 right-0" style={{ height: `${height}px` }}>
+    <div
+      className="absolute inset-0"
+      style={{
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        background: 'linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)',
+        maskImage: 'linear-gradient(180deg, #000 0%, #000 45%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(180deg, #000 0%, #000 45%, transparent 100%)',
+      }}
+    />
+    <div className="relative p-[30px]">{children}</div>
+  </div>
+);
+
+// 380×490 image card with a 130px progressive-blur band holding the title/blurb.
+const OverlayCard = ({ title, blurb, image }) => (
   <div className="group relative rounded-2xl overflow-hidden w-full max-w-[380px] aspect-[38/49] mx-auto">
     <img
       src={image}
@@ -89,15 +107,10 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       onError={handleImageError}
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
-    <div
-      className="absolute top-0 left-0 right-0"
-      style={{ height: '130px', background: `linear-gradient(180deg, ${gradient} 0%, ${gradient}00 100%)` }}
-    >
-      <div className="p-[30px]">
-        <h3 className={`font-heading font-bold text-base sm:text-lg leading-tight ${dark ? 'text-gray-900' : 'text-white drop-shadow-md'}`}>{title}</h3>
-        <p className={`text-xs sm:text-sm mt-1 leading-snug ${dark ? 'text-gray-700' : 'text-white/90 drop-shadow-md'}`}>{blurb}</p>
-      </div>
-    </div>
+    <BlurBand height={130}>
+      <h3 className="font-heading font-bold text-base sm:text-lg leading-tight text-white drop-shadow-md">{title}</h3>
+      <p className="text-xs sm:text-sm mt-1 leading-snug text-white/90 drop-shadow-md">{blurb}</p>
+    </BlurBand>
   </div>
 );
 
@@ -133,7 +146,7 @@ const StorePage = () => {
 
       {/* ─── Hero header ─── */}
       <section className="pt-28 sm:pt-32 pb-6 section-padding">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-heading font-bold text-gray-900 leading-none">
             Store
           </h1>
@@ -169,8 +182,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── What we offer ─── */}
-      <section className="pb-16 section-padding">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 section-padding">
+        <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
           <div className="flex flex-wrap items-start gap-y-6">
             {OFFER.map((o, i) => (
@@ -200,8 +213,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── Customize canvas ─── */}
-      <section className="pb-16 section-padding">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 section-padding">
+        <div className="max-w-[1200px] mx-auto">
           <Heading bold="Can't decide what to gift." light="Want to customize" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Left: customize promo */}
@@ -216,22 +229,17 @@ const StorePage = () => {
                 onError={handleImageError}
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div
-                className="absolute top-0 left-0 right-0"
-                style={{ height: '180px', background: 'linear-gradient(180deg, #E4DBCF 0%, #E4DBCF00 100%)' }}
-              >
-                <div className="p-[30px]">
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                    Customize Canvas
-                  </span>
-                  <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
-                    Turn your memories into timeless artwork.
-                  </h3>
-                  <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
-                    Your memory. Beautifully transformed into timeless art.
-                  </p>
-                </div>
-              </div>
+              <BlurBand height={180}>
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent-light drop-shadow">
+                  Customize Canvas
+                </span>
+                <h3 className="font-heading font-bold text-white text-lg sm:text-xl mt-1.5 leading-snug max-w-xs drop-shadow-md">
+                  Turn your memories into timeless artwork.
+                </h3>
+                <p className="text-white/90 text-xs sm:text-sm mt-1.5 max-w-xs drop-shadow-md">
+                  Your memory. Beautifully transformed into timeless art.
+                </p>
+              </BlurBand>
             </Link>
 
             {/* Right: upload widget */}
@@ -265,8 +273,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── Artworks in motion (full-width canvas slider) ─── */}
-      <section className="pb-16 overflow-hidden">
-        <div className="max-w-7xl mx-auto section-padding">
+      <section className="py-20 overflow-hidden">
+        <div className="max-w-[1200px] mx-auto section-padding">
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
@@ -345,8 +353,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── Inspire and collaborate ─── */}
-      <section className="pb-16 section-padding">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 section-padding">
+        <div className="max-w-[1200px] mx-auto">
           <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {COLLABORATE_CARDS.map((card) => (
@@ -357,8 +365,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── Escape into tranquility ─── */}
-      <section className="pb-16 section-padding">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 section-padding">
+        <div className="max-w-[1200px] mx-auto">
           <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {TRANQUILITY_CARDS.map((card) => (
@@ -369,8 +377,8 @@ const StorePage = () => {
       </section>
 
       {/* ─── The art of giving ─── */}
-      <section className="pb-24 section-padding">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-20 section-padding">
+        <div className="max-w-[1200px] mx-auto">
           <Heading bold="Can't decide what to gift." light="Or create something truly personal." />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Left: gift promo */}
@@ -385,22 +393,17 @@ const StorePage = () => {
                 onError={handleImageError}
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div
-                className="absolute top-0 left-0 right-0"
-                style={{ height: '180px', background: 'linear-gradient(180deg, #E4DBCF 0%, #E4DBCF00 100%)' }}
-              >
-                <div className="p-[30px]">
-                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                    The Art Of Giving
-                  </span>
-                  <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
-                    Find the perfect gift.
-                  </h3>
-                  <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
-                    Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
-                  </p>
-                </div>
-              </div>
+              <BlurBand height={180}>
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent-light drop-shadow">
+                  The Art Of Giving
+                </span>
+                <h3 className="font-heading font-bold text-white text-lg sm:text-xl mt-1.5 leading-snug max-w-xs drop-shadow-md">
+                  Find the perfect gift.
+                </h3>
+                <p className="text-white/90 text-xs sm:text-sm mt-1.5 max-w-xs drop-shadow-md">
+                  Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
+                </p>
+              </BlurBand>
             </Link>
 
             {/* Right: gift options */}

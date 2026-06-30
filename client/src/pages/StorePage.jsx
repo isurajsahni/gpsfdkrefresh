@@ -47,15 +47,15 @@ const OFFER = [
 ];
 
 const COLLABORATE_CARDS = [
-  { title: 'Hands on workshop', blurb: 'Create, experiment and learn through guided workshops.', image: collab1 },
-  { title: 'Collaborative sessions', blurb: 'Exchange ideas with creators and industry experts.', image: collab2 },
-  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3 },
+  { title: 'Hands on workshop', blurb: 'Create, experiment and learn through guided workshops.', image: collab1, gradient: '#F0F0F0', dark: true },
+  { title: 'Collaborative sessions', blurb: 'Exchange ideas with creators and industry experts.', image: collab2, gradient: '#000000', dark: false },
+  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3, gradient: '#8E9096', dark: false },
 ];
 
 const TRANQUILITY_CARDS = [
-  { title: 'Luxury poolside stays', blurb: 'Curated escapes where nature, comfort and unforgettable moments come together.', image: tranq1 },
-  { title: 'Infinite horizons', blurb: 'Take in uninterrupted sea views from beautifully designed stays overlooking the coastline.', image: tranq2 },
-  { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3 },
+  { title: 'Luxury poolside stays', blurb: 'Curated escapes where nature, comfort and unforgettable moments come together.', image: tranq1, gradient: '#FCDC86', dark: true },
+  { title: 'Infinite horizons', blurb: 'Take in uninterrupted sea views from beautifully designed stays overlooking the coastline.', image: tranq2, gradient: '#A7D5F7', dark: true },
+  { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3, gradient: '#AECFF0', dark: true },
 ];
 
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
@@ -79,9 +79,9 @@ const ArrowLink = ({ to, children }) => (
   </Link>
 );
 
-// Full-image card with the title/blurb overlaid at the top-left.
-const OverlayCard = ({ title, blurb, image }) => (
-  <div className="group relative rounded-2xl overflow-hidden aspect-[4/5]">
+// 380×490 image card with a 130px colour-gradient band (30px padding) holding the title/blurb.
+const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
+  <div className="group relative rounded-2xl overflow-hidden w-full max-w-[380px] aspect-[38/49] mx-auto">
     <img
       src={image}
       alt={title}
@@ -89,10 +89,14 @@ const OverlayCard = ({ title, blurb, image }) => (
       onError={handleImageError}
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
-    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/10 to-black/40" />
-    <div className="absolute top-4 left-4 right-4">
-      <h3 className="text-white font-heading font-bold text-base sm:text-lg drop-shadow-md">{title}</h3>
-      <p className="text-white/85 text-xs sm:text-sm mt-1 leading-snug drop-shadow-md">{blurb}</p>
+    <div
+      className="absolute top-0 left-0 right-0"
+      style={{ height: '130px', background: `linear-gradient(180deg, ${gradient} 0%, ${gradient}00 100%)` }}
+    >
+      <div className="p-[30px]">
+        <h3 className={`font-heading font-bold text-base sm:text-lg leading-tight ${dark ? 'text-gray-900' : 'text-white drop-shadow-md'}`}>{title}</h3>
+        <p className={`text-xs sm:text-sm mt-1 leading-snug ${dark ? 'text-gray-700' : 'text-white/90 drop-shadow-md'}`}>{blurb}</p>
+      </div>
     </div>
   </div>
 );
@@ -203,26 +207,30 @@ const StorePage = () => {
             {/* Left: customize promo */}
             <Link
               to="/customize-canvas"
-              className="group relative rounded-2xl overflow-hidden min-h-[320px] sm:min-h-[420px] block"
+              className="group relative w-full max-w-[550px] rounded-2xl overflow-hidden block"
             >
               <img
                 src={customizeImg}
                 alt="Family beside a custom canvas of their portrait"
                 loading="lazy"
                 onError={handleImageError}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/30 to-transparent" />
-              <div className="absolute top-5 left-5 right-5">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                  Customize Canvas
-                </span>
-                <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
-                  Turn your memories into timeless artwork.
-                </h3>
-                <p className="text-gray-600 text-xs sm:text-sm mt-1.5 max-w-xs">
-                  Your memory. Beautifully transformed into timeless art.
-                </p>
+              <div
+                className="absolute top-0 left-0 right-0"
+                style={{ height: '180px', background: 'linear-gradient(180deg, #E4DBCF 0%, #E4DBCF00 100%)' }}
+              >
+                <div className="p-[30px]">
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
+                    Customize Canvas
+                  </span>
+                  <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
+                    Turn your memories into timeless artwork.
+                  </h3>
+                  <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
+                    Your memory. Beautifully transformed into timeless art.
+                  </p>
+                </div>
               </div>
             </Link>
 
@@ -368,26 +376,30 @@ const StorePage = () => {
             {/* Left: gift promo */}
             <Link
               to="/wall-canvas"
-              className="group relative rounded-2xl overflow-hidden min-h-[320px] sm:min-h-[420px] block"
+              className="group relative w-full max-w-[550px] rounded-2xl overflow-hidden block"
             >
               <img
                 src={GIFT_IMAGE}
                 alt="Grandparent receiving a personalized gift"
                 loading="lazy"
                 onError={handleImageError}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/30 to-transparent" />
-              <div className="absolute top-5 left-5 right-5">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                  The Art Of Giving
-                </span>
-                <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
-                  Find the perfect gift.
-                </h3>
-                <p className="text-gray-600 text-xs sm:text-sm mt-1.5 max-w-xs">
-                  Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
-                </p>
+              <div
+                className="absolute top-0 left-0 right-0"
+                style={{ height: '180px', background: 'linear-gradient(180deg, #E4DBCF 0%, #E4DBCF00 100%)' }}
+              >
+                <div className="p-[30px]">
+                  <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
+                    The Art Of Giving
+                  </span>
+                  <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
+                    Find the perfect gift.
+                  </h3>
+                  <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
+                    Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
+                  </p>
+                </div>
               </div>
             </Link>
 

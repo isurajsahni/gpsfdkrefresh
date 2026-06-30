@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, FreeMode } from 'swiper/modules';
 import { HiOutlineArrowRight, HiOutlineUpload } from 'react-icons/hi';
@@ -32,6 +33,29 @@ import tranq2 from '../assets/image/store page/Rectangle 174 (4).png';
 import tranq3 from '../assets/image/store page/Rectangle 174 (5).png';
 
 const HERO_STRIP = [strip1, strip2, strip3, strip4, strip5, strip6, strip7];
+
+// Initial vertical stagger for the gallery (repeats every 3): 60px, 30px, 0px.
+const STAGGER = [60, 30, 0];
+
+// A gallery image that starts pushed down by `base` and rises to 0 as the
+// section scrolls into view (scroll-linked, like the reference video).
+const GalleryImage = ({ src, base, progress }) => {
+  const y = useTransform(progress, [0, 1], [base, 0]);
+  return (
+    <motion.div
+      style={{ y }}
+      className="flex-shrink-0 w-32 sm:w-40 md:w-48 lg:w-52 aspect-[5/4] rounded-2xl overflow-hidden bg-cream-dark"
+    >
+      <img
+        src={src}
+        alt="Customers with their canvases"
+        loading="lazy"
+        onError={handleImageError}
+        className="w-full h-full object-cover"
+      />
+    </motion.div>
+  );
+};
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&auto=format&fit=crop';
 
@@ -119,6 +143,11 @@ const StorePage = () => {
   const [loading, setLoading] = useState(true);
   const { formatPrice } = useCurrency();
   const nextRef = useRef(null);
+  const galleryRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: galleryRef,
+    offset: ['start end', 'start center'],
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -161,22 +190,11 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* ─── Lifestyle strip (full-bleed auto-scroll marquee) ─── */}
-      <section className="pb-14 overflow-hidden">
-        <div className="flex gap-3 sm:gap-4 w-max animate-[store-marquee_50s_linear_infinite] hover:[animation-play-state:paused]">
-          {[...HERO_STRIP, ...HERO_STRIP].map((src, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 w-36 sm:w-44 md:w-52 aspect-[5/4] rounded-2xl overflow-hidden bg-cream-dark"
-            >
-              <img
-                src={src}
-                alt="Customers with their canvases"
-                loading="lazy"
-                onError={handleImageError}
-                className="w-full h-full object-cover"
-              />
-            </div>
+      {/* ─── Lifestyle gallery (scroll-linked vertical stagger) ─── */}
+      <section ref={galleryRef} className="pb-20 overflow-hidden">
+        <div className="flex justify-center gap-3 sm:gap-4 px-2">
+          {HERO_STRIP.map((src, i) => (
+            <GalleryImage key={i} src={src} base={STAGGER[i % STAGGER.length]} progress={scrollYProgress} />
           ))}
         </div>
       </section>
@@ -449,13 +467,6 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* Marquee keyframes for the lifestyle strip */}
-      <style>{`
-        @keyframes store-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -1,8 +1,14 @@
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, FreeMode } from 'swiper/modules';
 import { HiOutlineArrowRight, HiOutlineUpload } from 'react-icons/hi';
-import { handleImageError } from '../utils/imageOptimizer';
+import { useCurrency } from '../context/CurrencyContext';
+import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
+import API from '../utils/api';
 import SEO from '../components/seo/SEO';
-import VideoShowcase from '../components/home/VideoShowcase';
+import 'swiper/css';
+import 'swiper/css/free-mode';
 
 // ─── Figma store-page imagery (client/src/assets/image/store page) ───
 import strip1 from '../assets/image/store page/Rectangle 155.png';
@@ -26,6 +32,8 @@ import tranq2 from '../assets/image/store page/Rectangle 174 (4).png';
 import tranq3 from '../assets/image/store page/Rectangle 174 (5).png';
 
 const HERO_STRIP = [strip1, strip2, strip3, strip4, strip5, strip6, strip7];
+
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&auto=format&fit=crop';
 
 const GIFT_IMAGE =
   'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=900&auto=format&fit=crop';
@@ -90,6 +98,28 @@ const OverlayCard = ({ title, blurb, image }) => (
 );
 
 const StorePage = () => {
+  const [canvases, setCanvases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { formatPrice } = useCurrency();
+  const nextRef = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await API.get('/products', {
+          params: { limit: 12, categorySlug: 'wall-canvas' },
+        });
+        if (!cancelled) setCanvases(data.products || []);
+      } catch (_) {
+        if (!cancelled) setCanvases([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <div className="bg-white min-h-screen">
       <SEO
@@ -226,16 +256,84 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* ─── Artworks in motion (video showcase) ─── */}
-      <section className="section-padding">
-        <div className="max-w-7xl mx-auto">
+      {/* ─── Artworks in motion (full-width canvas slider) ─── */}
+      <section className="pb-16 overflow-hidden">
+        <div className="max-w-7xl mx-auto section-padding">
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
             action={<ArrowLink to="/wall-canvas">Explore Collections</ArrowLink>}
           />
         </div>
-        <VideoShowcase showHeading={false} />
+
+        {/* Slider gets a left gutter only so cards bleed off the right edge */}
+        <div className="relative pl-4 sm:pl-6 lg:pl-8 xl:pl-16 2xl:pl-24">
+          <Swiper
+            modules={[Navigation, FreeMode]}
+            spaceBetween={20}
+            slidesPerView={1.3}
+            freeMode={{ enabled: true, momentum: true, momentumRatio: 0.6 }}
+            grabCursor
+            onBeforeInit={(swiper) => {
+              swiper.params.navigation.nextEl = nextRef.current;
+            }}
+            navigation={{ nextEl: nextRef.current }}
+            breakpoints={{
+              640: { slidesPerView: 2.3 },
+              1024: { slidesPerView: 3.3 },
+              1280: { slidesPerView: 4.3 },
+            }}
+          >
+            {(loading ? Array.from({ length: 5 }) : canvases).map((p, i) => {
+              if (loading) {
+                return (
+                  <SwiperSlide key={`canvas-skeleton-${i}`}>
+                    <div className="animate-pulse">
+                      <div className="aspect-[3/4] rounded-2xl bg-cream-dark" />
+                      <div className="mt-3 space-y-2">
+                        <div className="h-4 w-3/4 rounded bg-cream-dark" />
+                        <div className="h-4 w-1/3 rounded bg-cream-dark" />
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                );
+              }
+              const prices = [p.basePrice, ...(p.variations || []).map(v => v.price)].filter(n => typeof n === 'number');
+              const minPrice = prices.length ? Math.min(...prices) : (p.basePrice || 999);
+              return (
+                <SwiperSlide key={p._id || i}>
+                  <Link to={`/product/${p.slug}`} className="group block">
+                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                      <img
+                        src={optimizeImage(p.images?.[0]?.url, 500) || PLACEHOLDER}
+                        alt={p.name || 'Canvas artwork'}
+                        onError={handleImageError}
+                        loading={i < 5 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="mt-3 pr-1">
+                      <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate">
+                        {p.name || 'Canvas artwork'}
+                      </h3>
+                      <p className="text-accent font-bold text-sm mt-1">{formatPrice(minPrice)}</p>
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
+
+          {/* Floating round next button (matches Figma) */}
+          <button
+            ref={nextRef}
+            aria-label="Next"
+            className="hidden sm:flex absolute right-4 sm:right-6 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
+          >
+            <HiOutlineArrowRight className="w-5 h-5" />
+          </button>
+        </div>
       </section>
 
       {/* ─── Inspire and collaborate ─── */}

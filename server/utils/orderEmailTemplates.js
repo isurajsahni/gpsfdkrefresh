@@ -254,6 +254,44 @@ const orderShipped = (order, customerName) => {
   return emailWrapper(content, `Your order ${order.orderNumber} has been shipped!`);
 };
 
+// 3b. AWB ASSIGNED — sent as soon as Shiprocket generates the tracking number
+// (via webhook), before the shipment is actually picked up. Gives the customer
+// their AWB early so they can follow the order from the very first scan.
+const awbAssigned = (order, customerName) => {
+  const awb = order.awb || order.awbCode || order.trackingNumber || '';
+  const trackingLink = `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?orderId=${encodeURIComponent(order.orderNumber)}`;
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 30px;">
+      <div style="font-size: 50px; margin-bottom: 10px;">📦</div>
+      <h2 style="color: #333; margin: 0; font-size: 24px;">Your Tracking Number is Ready!</h2>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your shipment has been created and a tracking number has been assigned to your order.</p>
+    </div>
+
+    <div style="background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
+      <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Order Number</div>
+      <div style="font-size: 20px; font-weight: 700; color: ${brandColor}; margin-top: 4px;">${order.orderNumber}</div>
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #bbdefb;">
+        <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
+        <div style="font-size: 22px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${awb}</div>
+        ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 25px;">
+      <a href="${trackingLink}" class="btn" style="display: inline-block; background: ${brandColor}; color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">Track Your Order →</a>
+    </div>
+
+    <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">What's Next?</h3>
+    <p style="color: #666; font-size: 14px; line-height: 1.6;">Your package will be picked up by the courier shortly. This tracking number is also visible in your order dashboard on our website. We'll email you again the moment your order is on the move.</p>
+
+    <div class="divider"></div>
+    <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items in Your Order</h3>
+    ${renderItems(order.items)}
+  `;
+  return emailWrapper(content, `Tracking number ${awb} assigned to your order ${order.orderNumber}`);
+};
+
 // 4. ORDER DELIVERED
 const orderDelivered = (order, customerName) => {
   const content = `
@@ -321,6 +359,7 @@ module.exports = {
   orderPlaced,
   orderProcessing,
   orderShipped,
+  awbAssigned,
   orderDelivered,
   orderCancelled,
 };

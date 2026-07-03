@@ -19,7 +19,7 @@
 
 const Order = require('../models/Order');
 const sendEmail = require('../utils/sendEmail');
-const { orderShipped, orderDelivered, orderCancelled } = require('../utils/orderEmailTemplates');
+const { orderShipped, orderDelivered, orderCancelled, awbAssigned } = require('../utils/orderEmailTemplates');
 const { restoreStockForOrder } = require('./orderController');
 
 // ─── Shiprocket status string → internal status map ───
@@ -151,6 +151,27 @@ const sendStatusEmail = async (order, newStatus) => {
   }
 };
 
+// ─── Helper: Send AWB-assigned email (fire-and-forget) ───
+const sendAwbEmail = async (order) => {
+  try {
+    const email = await getCustomerEmail(order);
+    if (!email) {
+      console.warn(`⚠️ [Shiprocket Webhook] No customer email for order ${order.orderNumber}, skipping AWB email.`);
+      return;
+    }
+    const populatedOrder = await Order.findById(order._id).populate('items.product', 'slug');
+    await sendEmail({
+      email,
+      subject: `Tracking Number Assigned 📦 - ${order.orderNumber}`,
+      html: awbAssigned(populatedOrder, getCustomerName(order)),
+    });
+    console.log(`✅ [Shiprocket Webhook] AWB-assigned email sent to ${email} for order ${order.orderNumber}`);
+  } catch (err) {
+    console.error(`❌ [Shiprocket Webhook] AWB email failed for order ${order.orderNumber}:`, err.message);
+    // Don't re-throw — email failure should not break the webhook response
+  }
+};
+
 // ─── Main Webhook Handler ───
 exports.handleTrackingUpdate = async (req, res) => {
   try {
@@ -224,6 +245,8 @@ exports.handleTrackingUpdate = async (req, res) => {
     const statusChanged = previousStatus !== mappedStatus;
 
     // ─── Update shipping metadata ───
+    // First time we see an AWB for this order? (checked before assignment below)
+    const isFirstAwb = !!awb && !order.awb && !order.awbCode && !order.trackingNumber;
     if (awb && !order.awb) order.awb = awb;
     if (awb && !order.awbCode) order.awbCode = awb;
     if (awb && !order.trackingNumber) order.trackingNumber = awb;
@@ -268,6 +291,18 @@ exports.handleTrackingUpdate = async (req, res) => {
       if (mappedStatus === 'shipped') order.trackingEmailSent = true; // keep legacy flag in sync
     }
 
+    // AWB-assigned email — fires the first time Shiprocket reports a tracking
+    // number (usually on "AWB Assigned"/pickup events, before "shipped").
+    // Skipped when a status email goes out on this same event, since the
+    // shipped/delivered/cancelled templates already carry the AWB.
+    const shouldSendAwbEmail =
+      isFirstAwb &&
+      !shouldSendEmail &&
+      !order.notifiedStatuses.includes('awb_assigned');
+    if (shouldSendAwbEmail) {
+      order.notifiedStatuses.push('awb_assigned');
+    }
+
     // ─── Save the order ───
     await order.save();
     console.log(`✅ [Shiprocket Webhook] Updated: ${order.orderNumber} → ${mappedStatus} (AWB: ${awb || 'N/A'}, Courier: ${courierName || 'N/A'})`);
@@ -285,6 +320,9 @@ exports.handleTrackingUpdate = async (req, res) => {
     // Email notifications — once per status, resolved above
     if (shouldSendEmail) {
       sendStatusEmail(order, mappedStatus);
+    }
+    if (shouldSendAwbEmail) {
+      sendAwbEmail(order);
     }
 
     return res.status(200).json({ success: true });

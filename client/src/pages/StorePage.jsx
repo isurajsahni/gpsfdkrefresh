@@ -1,15 +1,11 @@
-import { useEffect, useState, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, FreeMode } from 'swiper/modules';
-import { HiOutlineArrowRight, HiOutlineUpload } from 'react-icons/hi';
-import { useCurrency } from '../context/CurrencyContext';
-import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
-import API from '../utils/api';
+import { HiOutlineArrowRight, HiPhotograph, HiPlus } from 'react-icons/hi';
+import { handleImageError } from '../utils/imageOptimizer';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
-import 'swiper/css/free-mode';
 
 // ─── Figma store-page imagery (client/src/assets/image/store page) ───
 import strip1 from '../assets/image/store page/Rectangle 155.png';
@@ -31,36 +27,62 @@ import collab3 from '../assets/image/store page/Rectangle 174 (2).png';
 import tranq1 from '../assets/image/store page/Rectangle 174 (3).png';
 import tranq2 from '../assets/image/store page/Rectangle 174 (4).png';
 import tranq3 from '../assets/image/store page/Rectangle 174 (5).png';
+import giftGrandparent from '../assets/image/store page/grandparent.png';
+
+// ─── Artworks-in-motion videos (filename doubles as the artwork title) ───
+import vidBubblegum from '../assets/videos/Bubblegum Rebellion.mp4';
+import vidDreaming from '../assets/videos/Dreaming-In-Colors.mp4';
+import vidFeline from '../assets/videos/Feline-Preference.mp4';
+import vidFlora from '../assets/videos/Flora Obscura.mp4';
+import vidFragmented from '../assets/videos/Fragmented Soul.mp4';
+import vidPalm from '../assets/videos/Palm-Springs-Prowl.mp4';
+import vidWolf from '../assets/videos/The Wolf of Wall Street.mp4';
+import vidSentinel from '../assets/videos/The-Sentinel.mp4';
 
 const HERO_STRIP = [strip1, strip2, strip3, strip4, strip5, strip6, strip7];
 
-// Initial vertical stagger for the gallery (repeats every 3): 60px, 30px, 0px.
-const STAGGER = [60, 30, 0];
+const ARTWORK_VIDEOS = [
+  { name: 'Bubblegum Rebellion', src: vidBubblegum, slug: 'bubblegum-rebellion' },
+  { name: 'Dreaming in Colors', src: vidDreaming, slug: 'dreaming-in-colors' },
+  { name: 'Feline Preference', src: vidFeline, slug: 'feline-preference' },
+  { name: 'Flora Obscura', src: vidFlora, slug: 'flora-obscura-1' },
+  { name: 'Fragmented Soul', src: vidFragmented, slug: 'fragmented-soul' },
+  { name: 'Palm Springs Prowl', src: vidPalm, slug: 'palm-springs-prowl' },
+  { name: 'The Wolf of Wall Street', src: vidWolf, slug: 'the-wolf-of-wall-street' },
+  { name: 'The Sentinel', src: vidSentinel, slug: 'the-sentinel' },
+];
 
-// A gallery image that starts pushed down by `base` and rises to 0 as the
-// section scrolls into view (scroll-linked, like the reference video).
-const GalleryImage = ({ src, base, progress }) => {
-  const y = useTransform(progress, [0, 1], [base, 0]);
-  return (
-    <motion.div
-      style={{ y }}
-      className="flex-shrink-0 w-32 sm:w-40 md:w-48 lg:w-52 aspect-[5/4] rounded-2xl overflow-hidden bg-cream-dark"
-    >
-      <img
-        src={src}
-        alt="Customers with their canvases"
-        loading="lazy"
-        onError={handleImageError}
-        className="w-full h-full object-cover"
-      />
-    </motion.div>
-  );
-};
+// Per-image widths (px) — uneven widths, fixed 150px height (object-cover).
+// Rendered as a seamless, continuously-scrolling infinite marquee.
+const GALLERY_HEIGHT = 180;
+const GALLERY_GAP = 16; // px gap between slides
+// Widths track each source image's native aspect ratio at 180px tall, so none get
+// upscaled horizontally (the narrow sources turned blurry when stretched wider).
+const GALLERY_WIDTHS = [136, 203, 104, 101, 199, 130, 271];
 
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600&auto=format&fit=crop';
+// Width of one full set (incl. trailing gaps); the marquee shifts by this for a seamless loop.
+const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
+  (sum, _, i) => sum + GALLERY_WIDTHS[i % GALLERY_WIDTHS.length] + GALLERY_GAP,
+  0,
+);
 
-const GIFT_IMAGE =
-  'https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=900&auto=format&fit=crop';
+// One slide in the marquee.
+const GalleryImage = ({ src, width }) => (
+  <div
+    style={{ width, height: GALLERY_HEIGHT }}
+    className="flex-shrink-0 rounded-2xl overflow-hidden bg-cream-dark"
+  >
+    <img
+      src={src}
+      alt="Customers with their canvases"
+      loading="lazy"
+      onError={handleImageError}
+      className="w-full h-full object-cover"
+    />
+  </div>
+);
+
+const GIFT_IMAGE = giftGrandparent;
 
 const OFFER = [
   { label: 'Canvas', img: offerCanvas, to: '/wall-canvas' },
@@ -73,7 +95,7 @@ const OFFER = [
 const COLLABORATE_CARDS = [
   { title: 'Hands on workshop', blurb: 'Create, experiment and learn through guided workshops.', image: collab1, gradient: '#F0F0F0', dark: true },
   { title: 'Collaborative sessions', blurb: 'Exchange ideas with creators and industry experts.', image: collab2, gradient: '#000000', dark: false },
-  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3, gradient: '#8E9096', dark: false },
+  { title: 'Community gathering', blurb: 'Connect with people who share your passion for creativity.', image: collab3, gradient: '#8E9096', dark: true },
 ];
 
 const TRANQUILITY_CARDS = [
@@ -82,10 +104,21 @@ const TRANQUILITY_CARDS = [
   { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3, gradient: '#AECFF0', dark: true },
 ];
 
+// Stable references — inline objects would make swiper-react re-init (and reset)
+// the slider on every parent re-render.
+const ARTWORK_BREAKPOINTS = {
+  640: { slidesPerView: 2.3 },
+  1024: { slidesPerView: 3.3 },
+  1280: { slidesPerView: 4.3 },
+};
+
+// Doubled so loop mode always has more slides than slidesPerView×2 (4.3 needs ≥9).
+const ARTWORK_SLIDES = [...ARTWORK_VIDEOS, ...ARTWORK_VIDEOS];
+
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
 const Heading = ({ bold, light, action }) => (
   <div className="flex flex-wrap items-end justify-between gap-3 mb-7 sm:mb-9">
-    <h2 className="font-heading text-2xl sm:text-3xl md:text-[2.25rem] font-bold leading-tight tracking-tight">
+    <h2 className="font-heading text-[28px] font-bold leading-tight tracking-tight">
       <span className="text-gray-900">{bold}</span>{' '}
       <span className="text-gray-400 font-semibold">{light}</span>
     </h2>
@@ -105,16 +138,18 @@ const ArrowLink = ({ to, children }) => (
 
 // Top band tinted with the card's `gradient` colour (fading to transparent), with a
 // progressive "layer blur" (Figma-style) underneath. Holds the card text, 30px padding.
-const BlurBand = ({ height, gradient, children }) => (
+const BlurBand = ({ height, gradient, solidStop = 45, children }) => (
   <div className="absolute top-0 left-0 right-0" style={{ height: `${height}px` }}>
     <div
       className="absolute inset-0"
       style={{
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        background: `linear-gradient(180deg, ${gradient} 0%, ${gradient}00 100%)`,
-        maskImage: 'linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)',
-        WebkitMaskImage: 'linear-gradient(180deg, #000 0%, #000 55%, transparent 100%)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        background: `linear-gradient(180deg, ${gradient} 0%, ${gradient} ${solidStop}%, ${gradient}00 100%)`,
+        // Long, gentle mask tail so the blurred region dissolves into the image
+        // instead of ending in a visible seam.
+        maskImage: 'linear-gradient(180deg, #000 0%, #000 30%, rgba(0,0,0,0.5) 60%, transparent 90%)',
+        WebkitMaskImage: 'linear-gradient(180deg, #000 0%, #000 30%, rgba(0,0,0,0.5) 60%, transparent 90%)',
       }}
     />
     <div className="relative p-[30px]">{children}</div>
@@ -131,39 +166,18 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       onError={handleImageError}
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
-    <BlurBand height={130} gradient={gradient}>
-      <h3 className={`font-heading font-bold text-base sm:text-lg leading-tight ${dark ? 'text-gray-900' : 'text-white drop-shadow-md'}`}>{title}</h3>
-      <p className={`text-xs sm:text-sm mt-1 leading-snug ${dark ? 'text-gray-700' : 'text-white/90 drop-shadow-md'}`}>{blurb}</p>
+    <BlurBand height={160} gradient={gradient}>
+      <h3 className={`font-heading font-bold text-lg sm:text-2xl leading-tight ${dark ? 'text-gray-900' : 'text-white'}`}>{title}</h3>
+      <p className={`text-xs sm:text-[13px] mt-2.5 leading-snug ${dark ? 'text-gray-700' : 'text-white/90'}`}>{blurb}</p>
     </BlurBand>
   </div>
 );
 
 const StorePage = () => {
-  const [canvases, setCanvases] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const { formatPrice } = useCurrency();
-  const nextRef = useRef(null);
-  const galleryRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: galleryRef,
-    offset: ['start end', 'start center'],
-  });
+  const artworkSwiperRef = useRef(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data } = await API.get('/products', {
-          params: { limit: 12, categorySlug: 'wall-canvas' },
-        });
-        if (!cancelled) setCanvases(data.products || []);
-      } catch (_) {
-        if (!cancelled) setCanvases([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
+  const handleArtworkSwiper = useCallback((swiper) => {
+    artworkSwiperRef.current = swiper;
   }, []);
 
   return (
@@ -190,38 +204,41 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* ─── Lifestyle gallery (scroll-linked vertical stagger) ─── */}
-      <section ref={galleryRef} className="pb-20 overflow-hidden">
-        <div className="flex justify-center gap-3 sm:gap-4 px-2">
-          {HERO_STRIP.map((src, i) => (
-            <GalleryImage key={i} src={src} base={STAGGER[i % STAGGER.length]} progress={scrollYProgress} />
+      {/* ─── Lifestyle gallery (infinite marquee) ─── */}
+      <section className="pb-20 overflow-hidden">
+        <motion.div
+          className="flex w-max"
+          style={{ gap: GALLERY_GAP }}
+          animate={{ x: [0, -GALLERY_LOOP_WIDTH] }}
+          transition={{ duration: GALLERY_LOOP_WIDTH / 50, ease: 'linear', repeat: Infinity }}
+        >
+          {[...HERO_STRIP, ...HERO_STRIP].map((src, i) => (
+            <GalleryImage key={i} src={src} width={GALLERY_WIDTHS[i % HERO_STRIP.length]} />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* ─── What we offer ─── */}
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
-          <div className="flex flex-wrap items-start gap-y-6">
-            {OFFER.map((o, i) => (
+          <div className="flex flex-wrap items-end gap-[70px]">
+            {OFFER.map((o) => (
               <Link
                 key={o.label}
                 to={o.to}
-                className={`group flex flex-col items-center text-center px-6 sm:px-9 ${
-                  i > 0 ? 'border-l border-gray-200' : ''
-                }`}
+                className="group flex flex-col items-center text-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-cream-dark">
+                <div className="h-28 flex items-end justify-center">
                   <img
                     src={o.img}
                     alt={o.label}
                     loading="lazy"
                     onError={handleImageError}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="max-h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <span className="text-gray-700 text-xs sm:text-sm mt-2.5 font-medium group-hover:text-accent transition-colors">
+                <span className="text-gray-900 text-sm sm:text-base mt-4 font-medium group-hover:text-accent transition-colors">
                   {o.label}
                 </span>
               </Link>
@@ -234,28 +251,28 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Can't decide what to gift." light="Want to customize" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-[510px_660px] gap-[60px] items-stretch">
             {/* Left: customize promo */}
             <Link
               to="/customize-canvas"
-              className="group relative w-full max-w-[550px] rounded-2xl overflow-hidden block"
+              className="group relative rounded-3xl overflow-hidden block min-h-[320px] sm:h-[500px]"
             >
               <img
                 src={customizeImg}
                 alt="Family beside a custom canvas of their portrait"
                 loading="lazy"
                 onError={handleImageError}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                className="absolute inset-0 w-full h-full object-cover object-center scale-[1.14] transition-transform duration-700 group-hover:scale-[1.2]"
               />
-              <BlurBand height={180} gradient="#E4DBCF">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
+              <BlurBand height={190} gradient="#E7DFD2">
+                <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-gray-500">
                   Customize Canvas
                 </span>
-                <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
+                <h3 className="font-heading font-bold text-gray-900 text-xl sm:text-2xl mt-2 leading-snug max-w-sm">
                   Turn your memories into timeless artwork.
                 </h3>
-                <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
-                  Your memory. Beautifully transformed into timeless art.
+                <p className="text-gray-700 text-xs sm:text-sm mt-2 max-w-sm">
+                  Your memories. Beautifully transformed into timeless art.
                 </p>
               </BlurBand>
             </Link>
@@ -263,26 +280,29 @@ const StorePage = () => {
             {/* Right: upload widget */}
             <Link
               to="/customize-canvas"
-              className="group rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 flex flex-col items-center justify-center text-center min-h-[320px] sm:min-h-[420px] hover:border-accent/40 transition-colors"
+              className="group rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px] hover:shadow-[0_2px_32px_rgba(0,0,0,0.08)] transition-shadow"
             >
-              <div className="flex items-center gap-5 text-[10px] font-bold tracking-widest uppercase text-accent">
+              <div className="flex items-center gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
                 <span>Step 1: Upload</span>
                 <span>Step 2: Customize</span>
               </div>
-              <h3 className="font-heading text-xl sm:text-2xl font-bold text-gray-900 mt-3">
+              <h3 className="font-heading text-2xl sm:text-3xl font-bold text-gray-900 mt-4">
                 Upload your photo
               </h3>
-              <p className="text-gray-500 text-sm mt-2 max-w-xs">
+              <p className="text-gray-500 text-sm mt-2.5 max-w-xs">
                 Upload a photo. Choose your style. We'll create the masterpiece.
               </p>
 
-              <div className="mt-6 w-full max-w-sm rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-7 flex flex-col items-center gap-2">
-                <div className="w-11 h-11 rounded-full bg-accent/10 flex items-center justify-center">
-                  <HiOutlineUpload className="w-5 h-5 text-accent" />
+              <div className="mt-8 w-full max-w-md rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 px-7 py-10 flex flex-col items-center gap-3">
+                <div className="relative">
+                  <HiPhotograph className="w-12 h-12 text-[#F2A39C]" />
+                  <span className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-[#E5484D] ring-2 ring-white flex items-center justify-center">
+                    <HiPlus className="w-3 h-3 text-white" />
+                  </span>
                 </div>
-                <p className="text-gray-400 text-xs">or drag and drop here</p>
-                <p className="text-gray-400 text-[9px] uppercase tracking-widest mt-1">
-                  JPG, PNG or WEBP · 500 KB to 10 MB (3 MB+ recommended)
+                <p className="text-gray-600 text-sm mt-1">or drag and drop here</p>
+                <p className="text-gray-400 text-[11px] tracking-wide">
+                  JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
                 </p>
               </div>
             </Link>
@@ -290,9 +310,9 @@ const StorePage = () => {
         </div>
       </section>
 
-      {/* ─── Artworks in motion (full-width canvas slider) ─── */}
+      {/* ─── Artworks in motion (full-width video slider) ─── */}
       <section className="py-20 overflow-hidden">
-        <div className="max-w-[1200px] mx-auto section-padding">
+        <div className="max-w-[1200px] mx-auto px-5">
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
@@ -300,70 +320,57 @@ const StorePage = () => {
           />
         </div>
 
-        {/* Slider gets a left gutter only so cards bleed off the right edge */}
+        {/* Full-width slider with a left gutter so the first card aligns with the
+            content column; !overflow-visible lets scrolled cards run to the true
+            left screen edge (the section clips them) instead of vanishing at the
+            gutter boundary. */}
         <div className="relative pl-4 sm:pl-6 lg:pl-8 xl:pl-16 2xl:pl-24">
           <Swiper
-            modules={[Navigation, FreeMode]}
+            className="!overflow-visible"
             spaceBetween={20}
             slidesPerView={1.3}
-            freeMode={{ enabled: true, momentum: true, momentumRatio: 0.6 }}
+            loop
+            speed={500}
             grabCursor
-            onBeforeInit={(swiper) => {
-              swiper.params.navigation.nextEl = nextRef.current;
-            }}
-            navigation={{ nextEl: nextRef.current }}
-            breakpoints={{
-              640: { slidesPerView: 2.3 },
-              1024: { slidesPerView: 3.3 },
-              1280: { slidesPerView: 4.3 },
-            }}
+            onSwiper={handleArtworkSwiper}
+            breakpoints={ARTWORK_BREAKPOINTS}
           >
-            {(loading ? Array.from({ length: 5 }) : canvases).map((p, i) => {
-              if (loading) {
-                return (
-                  <SwiperSlide key={`canvas-skeleton-${i}`}>
-                    <div className="animate-pulse">
-                      <div className="aspect-[3/4] rounded-2xl bg-cream-dark" />
-                      <div className="mt-3 space-y-2">
-                        <div className="h-4 w-3/4 rounded bg-cream-dark" />
-                        <div className="h-4 w-1/3 rounded bg-cream-dark" />
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                );
-              }
-              const prices = [p.basePrice, ...(p.variations || []).map(v => v.price)].filter(n => typeof n === 'number');
-              const minPrice = prices.length ? Math.min(...prices) : (p.basePrice || 999);
-              return (
-                <SwiperSlide key={p._id || i}>
-                  <Link to={`/product/${p.slug}`} className="group block">
-                    <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                      <img
-                        src={optimizeImage(p.images?.[0]?.url, 500) || PLACEHOLDER}
-                        alt={p.name || 'Canvas artwork'}
-                        onError={handleImageError}
-                        loading={i < 5 ? 'eager' : 'lazy'}
-                        decoding="async"
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="mt-3 pr-1">
-                      <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate">
-                        {p.name || 'Canvas artwork'}
-                      </h3>
-                      <p className="text-accent font-bold text-sm mt-1">{formatPrice(minPrice)}</p>
-                    </div>
-                  </Link>
-                </SwiperSlide>
-              );
-            })}
+            {ARTWORK_SLIDES.map((v, i) => (
+              <SwiperSlide key={`${v.name}-${i}`}>
+                <Link to={`/product/${v.slug}`} className="group block">
+                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
+                    <video
+                      src={v.src}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload={i < 4 ? 'auto' : 'metadata'}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="mt-3 pr-1">
+                    <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate group-hover:text-accent transition-colors">
+                      {v.name}
+                    </h3>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            ))}
           </Swiper>
 
-          {/* Floating round next button (matches Figma) */}
+          {/* Floating round prev/next buttons (matches Figma) */}
           <button
-            ref={nextRef}
+            aria-label="Previous"
+            onClick={() => artworkSwiperRef.current?.slidePrev()}
+            className="hidden sm:flex absolute left-2 sm:left-4 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
+          >
+            <HiOutlineArrowRight className="w-5 h-5 rotate-180" />
+          </button>
+          <button
             aria-label="Next"
-            className="hidden sm:flex absolute right-4 sm:right-6 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
+            onClick={() => artworkSwiperRef.current?.slideNext()}
+            className="hidden sm:flex absolute right-2 sm:right-4 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
           >
             <HiOutlineArrowRight className="w-5 h-5" />
           </button>
@@ -374,7 +381,7 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-[30px]">
             {COLLABORATE_CARDS.map((card) => (
               <OverlayCard key={card.title} {...card} />
             ))}
@@ -386,7 +393,7 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-[30px]">
             {TRANQUILITY_CARDS.map((card) => (
               <OverlayCard key={card.title} {...card} />
             ))}
@@ -411,7 +418,7 @@ const StorePage = () => {
                 onError={handleImageError}
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <BlurBand height={180} gradient="#E4DBCF">
+              <BlurBand height={260} gradient="#E4DBCF" solidStop={60}>
                 <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
                   The Art Of Giving
                 </span>

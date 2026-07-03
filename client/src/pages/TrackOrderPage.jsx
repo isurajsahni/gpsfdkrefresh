@@ -1,21 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FaSearch, FaBox, FaCheckCircle, FaTruck, FaMapMarkerAlt, FaTimesCircle } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const TrackOrderPage = () => {
-  const [orderId, setOrderId] = useState('');
-  const [contact, setContact] = useState('');
+  const [searchParams] = useSearchParams();
+  const [orderId, setOrderId] = useState(searchParams.get('orderId') || '');
+  const [contact, setContact] = useState(searchParams.get('contact') || '');
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
   const [shiprocketData, setShiprocketData] = useState(null);
+  const autoTracked = useRef(false);
 
-  const handleTrack = async (e) => {
-    e.preventDefault();
-    if (!orderId || !contact) {
+  const track = async (orderIdVal, contactVal) => {
+    if (!orderIdVal || !contactVal) {
       toast.error('Please enter both Order ID and Email/Phone');
       return;
     }
@@ -25,9 +26,9 @@ const TrackOrderPage = () => {
     setShiprocketData(null);
 
     try {
-      const response = await API.get(`/orders/track?orderId=${encodeURIComponent(orderId)}&contact=${encodeURIComponent(contact)}`);
+      const response = await API.get(`/orders/track?orderId=${encodeURIComponent(orderIdVal)}&contact=${encodeURIComponent(contactVal)}`);
       setOrderData(response.data);
-      
+
       // If AWB exists, try to get real-time tracking (non-blocking)
       if (response.data.awbCode) {
         try {
@@ -37,7 +38,7 @@ const TrackOrderPage = () => {
           console.error('Shiprocket tracking fetch failed:', srErr);
         }
       }
-      
+
       toast.success('Order found!');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to track order. Please check your details.');
@@ -45,6 +46,23 @@ const TrackOrderPage = () => {
       setLoading(false);
     }
   };
+
+  const handleTrack = (e) => {
+    e.preventDefault();
+    track(orderId, contact);
+  };
+
+  // Deep links (from emails / support page) can carry ?orderId= and ?contact= —
+  // prefill the form and, when both are present, track immediately.
+  useEffect(() => {
+    const qOrderId = searchParams.get('orderId');
+    const qContact = searchParams.get('contact');
+    if (qOrderId && qContact && !autoTracked.current) {
+      autoTracked.current = true;
+      track(qOrderId, qContact);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Status mapping for the stepper
   const steps = [

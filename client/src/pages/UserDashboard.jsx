@@ -750,11 +750,19 @@ const UserDashboard = () => {
                             </Link>
                           ))}
                         </div>
-                        {order.trackingNumber && (
-                          <div className="mt-6 bg-blue-50 text-blue-800 p-4 rounded-xl text-sm flex items-center justify-between">
-                            <span>Tracking Number: <strong className="ml-1">{order.trackingNumber}</strong></span>
-                            {order.trackingUrl && (
+                        {(order.awbCode || order.awb || order.trackingNumber) && (
+                          <div className="mt-6 bg-blue-50 text-blue-800 p-4 rounded-xl text-sm flex flex-wrap items-center justify-between gap-3">
+                            <div>
+                              <span className="text-[11px] uppercase tracking-wider font-bold text-blue-500 block">Tracking Number (AWB)</span>
+                              <strong className="font-mono text-base">{order.awbCode || order.awb || order.trackingNumber}</strong>
+                              {order.courierName && (
+                                <span className="block text-xs text-blue-600 mt-0.5">Courier: <strong>{order.courierName}</strong></span>
+                              )}
+                            </div>
+                            {order.trackingUrl ? (
                               <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors">Track Status</a>
+                            ) : (
+                              <Link to={`/track-order?orderId=${encodeURIComponent(order.orderNumber)}`} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors">Track Status</Link>
                             )}
                           </div>
                         )}

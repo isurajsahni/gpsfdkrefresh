@@ -50,6 +50,16 @@ const emailWrapper = (content, previewText = '') => `
 </html>
 `;
 
+// HTML-escape user-controlled values (names, custom text, addresses, coupon
+// codes) before interpolating into templates. Prevents HTML/link injection in
+// the emails themselves and stored XSS anywhere these strings are re-rendered.
+const esc = (value) => String(value ?? '')
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;');
+
 // Format currency
 const formatPrice = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
 
@@ -61,15 +71,15 @@ const renderItems = (items) => {
     <tr>
       <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          ${item.image ? `<img src="${item.image}" alt="${item.name}" width="55" height="55" style="border-radius: 8px; object-fit: cover;" />` : ''}
+          ${item.image ? `<img src="${esc(item.image)}" alt="${esc(item.name)}" width="55" height="55" style="border-radius: 8px; object-fit: cover;" />` : ''}
           <div>
             <div style="font-weight: 600; color: #333; font-size: 14px;">
-              <a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}" style="color: #333; text-decoration: none;">${item.name}</a>
+              <a href="${process.env.CLIENT_URL}/product/${encodeURIComponent(item.product?.slug || '')}" style="color: #333; text-decoration: none;">${esc(item.name)}</a>
             </div>
             ${item.variation ? `<div style="font-size: 12px; color: #888; margin-top: 2px;">
-              ${[item.variation.size, item.variation.material, item.variation.frame, item.variation.color].filter(Boolean).join(' · ')}
+              ${[item.variation.size, item.variation.material, item.variation.frame, item.variation.color].filter(Boolean).map(esc).join(' · ')}
             </div>` : ''}
-            ${item.customText ? `<div style="font-size: 12px; color: ${accentColor}; margin-top: 2px;">Custom: ${item.customText}</div>` : ''}
+            ${item.customText ? `<div style="font-size: 12px; color: ${accentColor}; margin-top: 2px;">Custom: ${esc(item.customText)}</div>` : ''}
           </div>
         </div>
       </td>
@@ -105,7 +115,7 @@ const renderPriceSummary = (order) => `
     </tr>
     ${order.discountPrice > 0 ? `
     <tr>
-      <td style="padding: 6px 0; color: #16a34a; font-size: 14px;">Discount${order.couponCode ? ' (' + order.couponCode + ')' : ''}</td>
+      <td style="padding: 6px 0; color: #16a34a; font-size: 14px;">Discount${order.couponCode ? ' (' + esc(order.couponCode) + ')' : ''}</td>
       <td style="padding: 6px 0; text-align: right; color: #16a34a; font-size: 14px;">-${formatPrice(order.discountPrice)}</td>
     </tr>` : ''}
     ${order.taxPrice > 0 ? `
@@ -127,11 +137,11 @@ const renderAddress = (address) => {
     <div style="background: #fafafa; border-radius: 10px; padding: 18px; margin-top: 15px;">
       <div style="font-weight: 600; color: #333; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Shipping Address</div>
       <div style="color: #555; font-size: 14px; line-height: 1.6;">
-        ${address.fullName || ''}<br>
-        ${address.addressLine1 || ''}${address.addressLine2 ? ', ' + address.addressLine2 : ''}<br>
-        ${address.city || ''}${address.state ? ', ' + address.state : ''} ${address.pincode || ''}<br>
-        ${address.country || 'India'}
-        ${address.phone ? `<br>📞 ${address.phone}` : ''}
+        ${esc(address.fullName || '')}<br>
+        ${esc(address.addressLine1 || '')}${address.addressLine2 ? ', ' + esc(address.addressLine2) : ''}<br>
+        ${esc(address.city || '')}${address.state ? ', ' + esc(address.state) : ''} ${esc(address.pincode || '')}<br>
+        ${esc(address.country || 'India')}
+        ${address.phone ? `<br>📞 ${esc(address.phone)}` : ''}
       </div>
     </div>
   `;
@@ -143,13 +153,15 @@ const renderAddress = (address) => {
 
 // 1. ORDER PLACED
 const orderPlaced = (order, customerName) => {
-  const trackingLink = order.awbCode ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?awb=${order.awbCode}` : '';
+  // Link with orderId (prefills the tracking form; the page still requires the
+  // customer's email/phone to authorize the lookup — ?awb= is not read at all).
+  const trackingLink = order.awbCode ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?orderId=${encodeURIComponent(order.orderNumber)}` : '';
 
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">🎉</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Your Order is Confirmed!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, thank you for shopping with GPSFDK! Your order has been placed successfully.</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, thank you for shopping with GPSFDK! Your order has been placed successfully.</p>
     </div>
 
     <div style="background: #f0faf4; border-left: 4px solid ${brandColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
@@ -161,8 +173,8 @@ const orderPlaced = (order, customerName) => {
     ${order.awbCode ? `
     <div style="background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
       <div style="font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
-      <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${order.awbCode}</div>
-      ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
+      <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${esc(order.awbCode)}</div>
+      ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${esc(order.courierName)}</div>` : ''}
       <div style="margin-top: 12px;">
         <a href="${trackingLink}" style="display: inline-block; background: #1976d2; color: #ffffff !important; text-decoration: none; padding: 10px 25px; border-radius: 6px; font-weight: 600; font-size: 13px;">Track Your Order →</a>
       </div>
@@ -187,7 +199,7 @@ const orderProcessing = (order, customerName) => {
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">⚙️</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Your Order is Being Prepared!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, great news! We're now preparing your order.</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, great news! We're now preparing your order.</p>
     </div>
 
     <div style="background: #fff8f0; border-left: 4px solid ${accentColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
@@ -211,13 +223,14 @@ const orderProcessing = (order, customerName) => {
 // 3. ORDER SHIPPED / DISPATCHED
 const orderShipped = (order, customerName) => {
   const awb = order.awbCode || order.trackingNumber || '';
-  const trackingLink = awb ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?awb=${awb}` : '';
+  // orderId prefills the tracking form; ?awb= is not read by the page.
+  const trackingLink = awb ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?orderId=${encodeURIComponent(order.orderNumber)}` : '';
 
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">🚚</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Your Order Has Been Shipped!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your order is on its way to you!</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, your order is on its way to you!</p>
     </div>
 
     <div style="background: #e8f5e9; border-left: 4px solid ${brandColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
@@ -226,8 +239,8 @@ const orderShipped = (order, customerName) => {
       ${awb ? `
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #c8e6c9;">
           <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
-          <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${awb}</div>
-          ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
+          <div style="font-size: 18px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${esc(awb)}</div>
+          ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${esc(order.courierName)}</div>` : ''}
         </div>
       ` : ''}
       <div style="margin-top: 10px;">
@@ -265,7 +278,7 @@ const awbAssigned = (order, customerName) => {
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">📦</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Your Tracking Number is Ready!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your shipment has been created and a tracking number has been assigned to your order.</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, your shipment has been created and a tracking number has been assigned to your order.</p>
     </div>
 
     <div style="background: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
@@ -273,8 +286,8 @@ const awbAssigned = (order, customerName) => {
       <div style="font-size: 20px; font-weight: 700; color: ${brandColor}; margin-top: 4px;">${order.orderNumber}</div>
       <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #bbdefb;">
         <div style="font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Tracking Number (AWB)</div>
-        <div style="font-size: 22px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${awb}</div>
-        ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${order.courierName}</div>` : ''}
+        <div style="font-size: 22px; font-weight: 700; color: #1976d2; margin-top: 4px; letter-spacing: 1px;">${esc(awb)}</div>
+        ${order.courierName ? `<div style="font-size: 12px; color: #888; margin-top: 4px;">Courier: ${esc(order.courierName)}</div>` : ''}
       </div>
     </div>
 
@@ -289,7 +302,7 @@ const awbAssigned = (order, customerName) => {
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items in Your Order</h3>
     ${renderItems(order.items)}
   `;
-  return emailWrapper(content, `Tracking number ${awb} assigned to your order ${order.orderNumber}`);
+  return emailWrapper(content, `Tracking number ${esc(awb)} assigned to your order ${order.orderNumber}`);
 };
 
 // 4. ORDER DELIVERED
@@ -298,7 +311,7 @@ const orderDelivered = (order, customerName) => {
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">✅</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Your Order Has Been Delivered!</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your order has been successfully delivered.</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, your order has been successfully delivered.</p>
     </div>
 
     <div style="background: #e8f5e9; border-left: 4px solid ${brandColor}; border-radius: 8px; padding: 18px; margin-bottom: 25px;">
@@ -327,7 +340,7 @@ const orderCancelled = (order, customerName) => {
     <div style="text-align: center; margin-bottom: 30px;">
       <div style="font-size: 50px; margin-bottom: 10px;">❌</div>
       <h2 style="color: #333; margin: 0; font-size: 24px;">Order Cancelled</h2>
-      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${customerName}, your order has been cancelled.</p>
+      <p style="color: #666; margin-top: 8px; font-size: 15px;">Hi ${esc(customerName)}, your order has been cancelled.</p>
     </div>
 
     <div style="background: #fbe9e7; border-left: 4px solid #d32f2f; border-radius: 8px; padding: 18px; margin-bottom: 25px;">

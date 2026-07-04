@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { FaSearch, FaBox, FaCheckCircle, FaTruck, FaMapMarkerAlt, FaTimesCircle } from 'react-icons/fa';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../utils/imageOptimizer';
 
 const TrackOrderPage = () => {
   const [searchParams] = useSearchParams();
-  const [orderId, setOrderId] = useState(searchParams.get('orderId') || '');
-  const [contact, setContact] = useState(searchParams.get('contact') || '');
+  // Contact arrives via router state (from the Support form) so PII never
+  // lands in the URL; ?contact= is still honoured for old links/bookmarks.
+  const { state: routeState } = useLocation();
+  const [orderId, setOrderId] = useState(routeState?.orderId || searchParams.get('orderId') || '');
+  const [contact, setContact] = useState(routeState?.contact || searchParams.get('contact') || '');
   const [loading, setLoading] = useState(false);
   const [orderData, setOrderData] = useState(null);
   const [shiprocketData, setShiprocketData] = useState(null);
@@ -18,6 +21,15 @@ const TrackOrderPage = () => {
   const track = async (orderIdVal, contactVal) => {
     if (!orderIdVal || !contactVal) {
       toast.error('Please enter both Order ID and Email/Phone');
+      return;
+    }
+
+    // UX-only format check — real verification happens server-side.
+    const cleanContact = contactVal.trim();
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContact);
+    const looksLikePhone = /^\+?[0-9][0-9\s-]{5,14}$/.test(cleanContact);
+    if (!looksLikeEmail && !looksLikePhone) {
+      toast.error('Please enter a valid email address or phone number');
       return;
     }
 
@@ -52,14 +64,15 @@ const TrackOrderPage = () => {
     track(orderId, contact);
   };
 
-  // Deep links (from emails / support page) can carry ?orderId= and ?contact= —
-  // prefill the form and, when both are present, track immediately.
+  // Deep links can prefill the form: router state (Support page) or ?orderId=
+  // (email buttons; legacy links may also carry ?contact=). When both values
+  // are present, track immediately.
   useEffect(() => {
-    const qOrderId = searchParams.get('orderId');
-    const qContact = searchParams.get('contact');
-    if (qOrderId && qContact && !autoTracked.current) {
+    const initialOrderId = routeState?.orderId || searchParams.get('orderId');
+    const initialContact = routeState?.contact || searchParams.get('contact');
+    if (initialOrderId && initialContact && !autoTracked.current) {
       autoTracked.current = true;
-      track(qOrderId, qContact);
+      track(initialOrderId, initialContact);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -53,13 +53,22 @@ const Support = () => {
 
   const handleTrack = (e) => {
     e.preventDefault();
-    if (!orderId.trim() || !contact.trim()) {
+    const cleanOrderId = orderId.trim();
+    const cleanContact = contact.trim();
+    if (!cleanOrderId || !cleanContact) {
       toast.error('Please enter both Order ID and Email/Phone');
       return;
     }
-    navigate(
-      `/track-order?orderId=${encodeURIComponent(orderId.trim())}&contact=${encodeURIComponent(contact.trim())}`,
-    );
+    // UX-only format check — real verification happens server-side.
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanContact);
+    const looksLikePhone = /^\+?[0-9][0-9\s-]{5,14}$/.test(cleanContact);
+    if (!looksLikeEmail && !looksLikePhone) {
+      toast.error('Please enter a valid email address or phone number');
+      return;
+    }
+    // Contact (email/phone) travels via router state, not the query string —
+    // keeps PII out of browser history, logs, and Referer headers.
+    navigate('/track-order', { state: { orderId: cleanOrderId, contact: cleanContact } });
   };
 
   return (

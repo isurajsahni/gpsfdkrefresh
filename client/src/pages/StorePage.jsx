@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -114,6 +114,40 @@ const ARTWORK_BREAKPOINTS = {
 
 // Doubled so loop mode always has more slides than slidesPerView×2 (4.3 needs ≥9).
 const ARTWORK_SLIDES = [...ARTWORK_VIDEOS, ...ARTWORK_VIDEOS];
+
+// Carousel video that only plays while on screen. With 16 slides, letting them
+// all autoplay meant 16 concurrently-decoding videos — heavy on CPU/GPU and
+// mobile battery/data — so off-screen slides are paused via IntersectionObserver.
+const ArtworkVideo = ({ src, eager }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // play() returns a promise that rejects if autoplay is blocked — ignore.
+        if (entry.isIntersecting) el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: '100px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      muted
+      loop
+      playsInline
+      preload={eager ? 'auto' : 'metadata'}
+      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
+  );
+};
 
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
 const Heading = ({ bold, light, action }) => (
@@ -339,15 +373,7 @@ const StorePage = () => {
               <SwiperSlide key={`${v.name}-${i}`}>
                 <Link to={`/product/${v.slug}`} className="group block">
                   <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                    <video
-                      src={v.src}
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      preload={i < 4 ? 'auto' : 'metadata'}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
+                    <ArtworkVideo src={v.src} eager={i < 4} />
                   </div>
                   <div className="mt-3 pr-1">
                     <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate group-hover:text-accent transition-colors">

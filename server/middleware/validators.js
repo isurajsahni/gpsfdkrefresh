@@ -98,6 +98,21 @@ const publicEndpointLimiter = rateLimit({
   message: { message: 'Too many requests. Please slow down.' },
 });
 
+// Order-tracking lookups (/orders/track, /orders/track-awb) are public and
+// keyed on guessable identifiers (order number, AWB), so this limiter is the
+// main defence against enumeration. Deliberately a separate instance from
+// publicEndpointLimiter: that one also meters coupon validation during
+// checkout, and tracking traffic must never consume the checkout budget.
+// A legitimate lookup costs 2 requests (order + live AWB), so 20/min ≈ 10
+// lookups per minute per IP.
+const orderTrackingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many tracking requests. Please wait a minute and try again.' },
+});
+
 // Abandoned-cart tracker fires every 2 s while the user is on the checkout
 // page. 10/min is too tight — it generates spurious 429s that look like 500s
 // in some monitoring dashboards. 30/min gives plenty of headroom while still
@@ -134,6 +149,7 @@ module.exports = {
   otpLimiter,
   guestOrderLimiter,
   publicEndpointLimiter,
+  orderTrackingLimiter,
   analyticsLimiter,
   abandonedCartLimiter,
 };

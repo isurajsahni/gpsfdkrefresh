@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import SEO from '../components/seo/SEO';
+import API from '../utils/api';
 
 const WhatsAppLogin = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -32,25 +33,18 @@ const WhatsAppLogin = () => {
       const body = { phoneNumber };
       if (email.trim()) body.email = email.trim();
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/whatsapp-otp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      // Shared API client — same normalized HTTPS base URL as the rest of the
+      // app (the old hardcoded localhost fallback caused mixed-content requests
+      // whenever the env var was missing).
+      const { data } = await API.post('/whatsapp-otp/send', body);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setSentChannels(data.channels || []);
-        const channelText = data.channels?.join(' & ') || 'WhatsApp';
-        toast.success(`OTP sent via ${channelText}!`);
-        setStep(2);
-        setCooldown(60);
-      } else {
-        toast.error(data.message || 'Failed to send OTP');
-      }
+      setSentChannels(data.channels || []);
+      const channelText = data.channels?.join(' & ') || 'WhatsApp';
+      toast.success(`OTP sent via ${channelText}!`);
+      setStep(2);
+      setCooldown(60);
     } catch (err) {
-      toast.error('Connection error. Is the server running?');
+      toast.error(err.response?.data?.message || 'Failed to send OTP');
       console.error(err);
     }
     setLoading(false);
@@ -64,22 +58,11 @@ const WhatsAppLogin = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/whatsapp-otp/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber, otp }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success('Verified successfully! 🎉');
-        // Here you would typically log the user in (save JWT, redirect, etc.)
-      } else {
-        toast.error(data.message || 'Invalid OTP');
-      }
+      await API.post('/whatsapp-otp/verify', { phoneNumber, otp });
+      toast.success('Verified successfully! 🎉');
+      // Here you would typically log the user in (save JWT, redirect, etc.)
     } catch (err) {
-      toast.error('Verification failed. Try again.');
+      toast.error(err.response?.data?.message || 'Verification failed. Try again.');
     }
     setLoading(false);
   };

@@ -820,10 +820,14 @@ exports.trackOrder = async (req, res, next) => {
     const cleanOrderId = orderId.trim().toUpperCase();
     const cleanContact = contact.trim().toLowerCase();
 
+    // Same generic message for "no such order" and "contact mismatch" below, so
+    // the endpoint doesn't confirm which order numbers exist (enumeration guard).
+    const genericNotFound = 'No order matches that Order ID and email/phone. Please check both and try again.';
+
     const order = await Order.findOne({ orderNumber: cleanOrderId }).populate('items.product', 'slug name image price');
-    
+
     if (!order) {
-      return res.status(404).json({ message: 'Order not found. Please check your Order ID.' });
+      return res.status(404).json({ message: genericNotFound });
     }
 
     let isValidContact = false;
@@ -859,7 +863,7 @@ exports.trackOrder = async (req, res, next) => {
     }
 
     if (!isValidContact) {
-      return res.status(403).json({ message: 'Order found, but the provided email/phone does not match our records.' });
+      return res.status(404).json({ message: genericNotFound });
     }
 
     // Return safe/redacted data
@@ -897,13 +901,37 @@ exports.trackOrder = async (req, res, next) => {
 };
 
 // GET /api/orders/track-awb/:awb
+// Public endpoint keyed on AWB alone, so the raw Shiprocket payload must never
+// be passed through: it can carry consignee name/address and other PII. Only
+// the courier-movement fields the tracking page renders are returned.
 exports.getShipmentTracking = async (req, res, next) => {
   try {
     const { awb } = req.params;
     if (!awb) return res.status(400).json({ message: 'AWB code is required' });
 
     const trackingData = await shiprocket.getTracking(awb);
-    res.json(trackingData);
+
+    const td = trackingData?.tracking_data || {};
+    const pickActivity = (a) => ({
+      activity: a?.activity || a?.status || '',
+      date:     a?.date || '',
+      location: a?.location || '',
+    });
+    const track = td.shipment_track?.[0] || {};
+
+    res.json({
+      tracking_data: {
+        track_url: td.track_url || '',
+        shipment_track: [{
+          current_status: track.current_status || '',
+          last_location:  track.last_location || '',
+          activities: Array.isArray(track.activities) ? track.activities.map(pickActivity) : undefined,
+        }],
+        shipment_track_activities: Array.isArray(td.shipment_track_activities)
+          ? td.shipment_track_activities.map(pickActivity)
+          : undefined,
+      },
+    });
   } catch (error) {
     next(error);
   }

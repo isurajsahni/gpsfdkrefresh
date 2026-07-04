@@ -105,6 +105,14 @@ const getCustomerEmail = async (order) => {
   return null;
 };
 
+// ─── Helper: Mask email for logs (PII/log hygiene — order number is the
+// correlation key; full addresses don't belong in application logs) ───
+const maskEmail = (email) => {
+  if (typeof email !== 'string' || !email.includes('@')) return '***';
+  const [local, domain] = email.split('@');
+  return `${local.slice(0, 1)}***@${domain}`;
+};
+
 // ─── Helper: Get customer name from order ───
 const getCustomerName = (order) => {
   return order.shippingAddress?.fullName || 'Customer';
@@ -129,21 +137,21 @@ const sendStatusEmail = async (order, newStatus) => {
         subject: `Your Order Has Been Shipped 🚚 - ${order.orderNumber}`,
         html: orderShipped(populatedOrder, customerName),
       });
-      console.log(`✅ [Shiprocket Webhook] Shipped email sent to ${email} for order ${order.orderNumber}`);
+      console.log(`✅ [Shiprocket Webhook] Shipped email sent to ${maskEmail(email)} for order ${order.orderNumber}`);
     } else if (newStatus === 'delivered') {
       await sendEmail({
         email,
         subject: `Order Delivered ✅ - ${order.orderNumber}`,
         html: orderDelivered(populatedOrder, customerName),
       });
-      console.log(`✅ [Shiprocket Webhook] Delivered email sent to ${email} for order ${order.orderNumber}`);
+      console.log(`✅ [Shiprocket Webhook] Delivered email sent to ${maskEmail(email)} for order ${order.orderNumber}`);
     } else if (newStatus === 'cancelled') {
       await sendEmail({
         email,
         subject: `Order Cancelled - ${order.orderNumber}`,
         html: orderCancelled(populatedOrder, customerName),
       });
-      console.log(`✅ [Shiprocket Webhook] Cancellation email sent to ${email} for order ${order.orderNumber}`);
+      console.log(`✅ [Shiprocket Webhook] Cancellation email sent to ${maskEmail(email)} for order ${order.orderNumber}`);
     }
   } catch (err) {
     console.error(`❌ [Shiprocket Webhook] Email failed for order ${order.orderNumber}:`, err.message);
@@ -165,7 +173,7 @@ const sendAwbEmail = async (order) => {
       subject: `Tracking Number Assigned 📦 - ${order.orderNumber}`,
       html: awbAssigned(populatedOrder, getCustomerName(order)),
     });
-    console.log(`✅ [Shiprocket Webhook] AWB-assigned email sent to ${email} for order ${order.orderNumber}`);
+    console.log(`✅ [Shiprocket Webhook] AWB-assigned email sent to ${maskEmail(email)} for order ${order.orderNumber}`);
   } catch (err) {
     console.error(`❌ [Shiprocket Webhook] AWB email failed for order ${order.orderNumber}:`, err.message);
     // Don't re-throw — email failure should not break the webhook response
@@ -231,9 +239,14 @@ exports.handleTrackingUpdate = async (req, res) => {
 
     console.log(`📦 [Shiprocket Webhook] Order found: ${order.orderNumber} (current status: ${order.status})`);
 
+    // Belt-and-braces: Mongoose hydrates missing array paths as [], but a
+    // throw here would 500 → Shiprocket retry storm, so guard explicitly.
+    if (!Array.isArray(order.trackingHistory)) order.trackingHistory = [];
+    if (!Array.isArray(order.notifiedStatuses)) order.notifiedStatuses = [];
+
     // ─── Duplicate detection ───
     // Check if we already have a tracking entry with the exact same raw status
-    const isDuplicate = order.trackingHistory?.some(entry => entry.srStatus === statusUpper);
+    const isDuplicate = order.trackingHistory.some(entry => entry.srStatus === statusUpper);
 
     if (isDuplicate && order.status === mappedStatus) {
       console.log(`🔁 [Shiprocket Webhook] Duplicate event for ${order.orderNumber}: "${statusRaw}" already recorded — skipping`);

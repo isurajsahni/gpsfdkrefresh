@@ -256,7 +256,7 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
-          <div className="flex flex-wrap items-end gap-[70px]">
+          <div className="flex flex-wrap items-end justify-center sm:justify-start gap-x-10 gap-y-10 sm:gap-x-12 lg:gap-x-[70px]">
             {OFFER.map((o) => (
               <Link
                 key={o.label}
@@ -285,7 +285,10 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Can't decide what to gift." light="Want to customize" />
-          <div className="grid grid-cols-1 md:grid-cols-[510px_660px] gap-[60px] items-stretch">
+          {/* fr units keep the Figma 510:660 ratio but scale with the container —
+              fixed px columns (510+660+60 gap = 1230px) overflowed the 1200px
+              wrapper and every viewport below ~1290px. */}
+          <div className="grid grid-cols-1 md:grid-cols-[510fr_660fr] gap-8 lg:gap-[60px] items-stretch">
             {/* Left: customize promo */}
             <Link
               to="/customize-canvas"
@@ -316,7 +319,7 @@ const StorePage = () => {
               to="/customize-canvas"
               className="group rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px] hover:shadow-[0_2px_32px_rgba(0,0,0,0.08)] transition-shadow"
             >
-              <div className="flex items-center gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
                 <span>Step 1: Upload</span>
                 <span>Step 2: Customize</span>
               </div>
@@ -407,7 +410,9 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-[30px]">
+          {/* 3-up only from md — at sm widths three columns squeeze the cards to
+              ~190px, where the 160px blur band swallows the whole image. */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
             {COLLABORATE_CARDS.map((card) => (
               <OverlayCard key={card.title} {...card} />
             ))}
@@ -419,7 +424,9 @@ const StorePage = () => {
       <section className="py-20 section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-[30px]">
+          {/* 3-up only from md — at sm widths three columns squeeze the cards to
+              ~190px, where the 160px blur band swallows the whole image. */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
             {TRANQUILITY_CARDS.map((card) => (
               <OverlayCard key={card.title} {...card} />
             ))}
@@ -435,7 +442,7 @@ const StorePage = () => {
             {/* Left: gift promo */}
             <Link
               to="/wall-canvas"
-              className="group relative w-full max-w-[550px] rounded-2xl overflow-hidden block"
+              className="group relative w-full max-w-[550px] mx-auto md:mx-0 rounded-2xl overflow-hidden block"
             >
               <img
                 src={GIFT_IMAGE}

@@ -8,20 +8,49 @@ import theSentinelVid from '../../assets/videos/The-Sentinel.mp4';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-const VideoCard = ({ video, index, mutedStates, handleMuteToggle, videoRefs }) => (
+const VideoCard = ({ video, index, mutedStates, handleMuteToggle }) => {
+  const videoRef = useRef(null);
+
+  // Play only while on screen. Combined with preload="metadata" this defers the
+  // full download of each clip until it scrolls into view (the section sits
+  // below the fold) instead of fetching all four MP4s on page load. Each card
+  // owns its own element: the mobile slider and desktop grid both mount, so the
+  // old shared index-keyed ref map only ever pointed at one of the two copies
+  // (which also broke the mute button on mobile).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // play() returns a promise that rejects if autoplay is blocked — ignore.
+        if (entry.isIntersecting) el.play().catch(() => {});
+        else el.pause();
+      },
+      { rootMargin: '100px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // Direct sync of DOM muted property to avoid React attribute-property syncing mismatch
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = mutedStates[index];
+  }, [mutedStates, index]);
+
+  return (
   <a
     href={video.buyUrl}
     className="group block relative w-full aspect-[9/16] rounded-[2rem] overflow-hidden shadow-lg bg-black transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 border border-gray-100/50"
   >
-    {/* Autoplaying looping video */}
+    {/* Looping video, played while visible */}
     <video
-      ref={(el) => (videoRefs.current[index] = el)}
+      ref={videoRef}
       src={video.src}
+      preload="metadata"
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       loop
       muted
       playsInline
-      autoPlay
     />
 
     {/* Sophisticated Dark Gradient Overlay */}
@@ -60,11 +89,11 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle, videoRefs }) =
       )}
     </button>
   </a>
-);
+  );
+};
 
 const VideoShowcase = ({ showHeading = true }) => {
   const [mutedStates, setMutedStates] = useState([true, true, true, true]);
-  const videoRefs = useRef([]);
 
   const videosData = [
     {
@@ -93,15 +122,6 @@ const VideoShowcase = ({ showHeading = true }) => {
     },
   ];
 
-  // Direct sync of DOM muted property to avoid React attribute-property syncing mismatch
-  useEffect(() => {
-    mutedStates.forEach((isMuted, index) => {
-      if (videoRefs.current[index]) {
-        videoRefs.current[index].muted = isMuted;
-      }
-    });
-  }, [mutedStates]);
-
   const handleMuteToggle = (e, index) => {
     e.preventDefault();
     e.stopPropagation();
@@ -112,7 +132,7 @@ const VideoShowcase = ({ showHeading = true }) => {
     });
   };
 
-  const cardProps = { mutedStates, handleMuteToggle, videoRefs };
+  const cardProps = { mutedStates, handleMuteToggle };
 
   return (
     <section className="py-20 md:py-28 bg-[#fafaf9] overflow-hidden">

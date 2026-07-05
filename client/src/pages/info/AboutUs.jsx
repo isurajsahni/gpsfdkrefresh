@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import aboutUsImage from '../../assets/image/about_us_demo.png';
+import aboutUsImage from '../../assets/image/about_us_demo.webp';
 import SEO from '../../components/seo/SEO';
 
 const AboutUs = () => {

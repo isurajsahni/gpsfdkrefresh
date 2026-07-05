@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import shippingImage from '../../assets/image/shipping_demo.png';
+import shippingImage from '../../assets/image/shipping_demo.webp';
 import SEO from '../../components/seo/SEO';
 
 const ShippingPolicy = () => {

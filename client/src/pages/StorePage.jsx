@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { HiOutlineArrowRight, HiPhotograph, HiPlus } from 'react-icons/hi';
+import { HiOutlineArrowRight, HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
@@ -20,14 +20,14 @@ import offerNameplate from '../assets/image/store page/image 18.png';
 import offerConsultancy from '../assets/image/store page/portrait-happy-smiling-cheerful-beautiful-young-support-phone-operator-headset-with-laptop-isolated-white-wall 1.png';
 import offerGetaway from '../assets/image/store page/image 21.png';
 import offerEvents from '../assets/image/store page/image 22.png';
-import customizeImg from '../assets/image/store page/Rectangle 102.png';
-import collab1 from '../assets/image/store page/Rectangle 174.png';
-import collab2 from '../assets/image/store page/Rectangle 174 (1).png';
-import collab3 from '../assets/image/store page/Rectangle 174 (2).png';
-import tranq1 from '../assets/image/store page/Rectangle 174 (3).png';
-import tranq2 from '../assets/image/store page/Rectangle 174 (4).png';
-import tranq3 from '../assets/image/store page/Rectangle 174 (5).png';
-import giftGrandparent from '../assets/image/store page/grandparent.png';
+import customizeImg from '../assets/image/store page/Rectangle 102.webp';
+import collab1 from '../assets/image/store page/Rectangle 174.webp';
+import collab2 from '../assets/image/store page/Rectangle 174 (1).webp';
+import collab3 from '../assets/image/store page/Rectangle 174 (2).webp';
+import tranq1 from '../assets/image/store page/Rectangle 174 (3).webp';
+import tranq2 from '../assets/image/store page/Rectangle 174 (4).webp';
+import tranq3 from '../assets/image/store page/Rectangle 174 (5).webp';
+import giftGrandparent from '../assets/image/store page/grandparent.webp';
 
 // ─── Artworks-in-motion videos (filename doubles as the artwork title) ───
 import vidBubblegum from '../assets/videos/Bubblegum Rebellion.mp4';
@@ -118,7 +118,7 @@ const ARTWORK_SLIDES = [...ARTWORK_VIDEOS, ...ARTWORK_VIDEOS];
 // Carousel video that only plays while on screen. With 16 slides, letting them
 // all autoplay meant 16 concurrently-decoding videos — heavy on CPU/GPU and
 // mobile battery/data — so off-screen slides are paused via IntersectionObserver.
-const ArtworkVideo = ({ src, eager }) => {
+const ArtworkVideo = ({ src, isUnmuted }) => {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -136,6 +136,12 @@ const ArtworkVideo = ({ src, eager }) => {
     return () => observer.disconnect();
   }, []);
 
+  // Sync the DOM muted property directly — React's `muted` attribute doesn't
+  // reliably update a playing element.
+  useEffect(() => {
+    if (ref.current) ref.current.muted = !isUnmuted;
+  }, [isUnmuted]);
+
   return (
     <video
       ref={ref}
@@ -143,7 +149,7 @@ const ArtworkVideo = ({ src, eager }) => {
       muted
       loop
       playsInline
-      preload={eager ? 'auto' : 'metadata'}
+      preload="metadata"
       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
   );
@@ -152,9 +158,9 @@ const ArtworkVideo = ({ src, eager }) => {
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
 const Heading = ({ bold, light, action }) => (
   <div className="flex flex-wrap items-end justify-between gap-3 mb-7 sm:mb-9">
-    <h2 className="font-heading text-[28px] font-bold leading-tight tracking-tight">
-      <span className="text-gray-900">{bold}</span>{' '}
-      <span className="text-gray-400 font-semibold">{light}</span>
+    <h2 className="font-heading text-[28px] font-bold leading-[1.4] tracking-tight">
+      <span className="text-[#1D1D1F]">{bold}</span>{' '}
+      <span className="text-[#686868] font-semibold">{light}</span>
     </h2>
     {action}
   </div>
@@ -201,35 +207,45 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
     <BlurBand height={160} gradient={gradient}>
-      <h3 className={`font-heading font-bold text-lg sm:text-2xl leading-tight ${dark ? 'text-gray-900' : 'text-white'}`}>{title}</h3>
-      <p className={`text-xs sm:text-[13px] mt-2.5 leading-snug ${dark ? 'text-gray-700' : 'text-white/90'}`}>{blurb}</p>
+      <h3 className={`font-heading font-bold text-xl sm:text-[28px] leading-[1.4] ${dark ? 'text-[#1D1D1F]' : 'text-white'}`}>{title}</h3>
+      <p className={`text-xs sm:text-[13px] mt-2.5 leading-snug ${dark ? 'text-[#1D1D1F]' : 'text-white/90'}`}>{blurb}</p>
     </BlurBand>
   </div>
 );
 
 const StorePage = () => {
   const artworkSwiperRef = useRef(null);
+  // Index of the one slide with sound on (null = all muted) — a single-slot
+  // "sound system" so two slides never talk over each other.
+  const [unmutedIndex, setUnmutedIndex] = useState(null);
 
   const handleArtworkSwiper = useCallback((swiper) => {
     artworkSwiperRef.current = swiper;
   }, []);
 
+  const handleSoundToggle = useCallback((e, index) => {
+    // Inside a <Link> — keep the click from navigating to the product page.
+    e.preventDefault();
+    e.stopPropagation();
+    setUnmutedIndex((cur) => (cur === index ? null : index));
+  }, []);
+
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen font-sans text-[14px] font-normal leading-[1.5] text-[#1D1D1F]">
       <SEO
         title="Store | Art, Experiences & Personalized Creations | GPSFDK"
         description="Discover GPSFDK's curated store: museum-grade canvases, custom nameplates, workshops, retreats, and personalized gifts — all in one place."
       />
 
       {/* ─── Hero header ─── */}
-      <section className="pt-28 sm:pt-32 pb-6 section-padding">
+      <section className="pt-28 sm:pt-32 pb-16 md:pb-[120px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl font-heading font-bold text-gray-900 leading-none">
+          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-bold text-[#1D1D1F] !leading-[0.9]">
             Store
           </h1>
           <div className="sm:text-right">
-            <p className="text-gray-900 font-bold text-base sm:text-lg leading-snug max-w-xs sm:ml-auto">
-              The best way to buy the products you love.
+            <p className="text-[#1D1D1F] font-bold text-base sm:text-lg leading-snug sm:ml-auto">
+              The best way to buy the <br /> products you love.
             </p>
             <div className="mt-1 sm:flex sm:justify-end">
               <ArrowLink to="/contact">Connect with a Specialist</ArrowLink>
@@ -272,7 +288,7 @@ const StorePage = () => {
                     className="max-h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <span className="text-gray-900 text-sm sm:text-base mt-4 font-medium group-hover:text-accent transition-colors">
+                <span className="text-[#1D1D1F] text-sm sm:text-base mt-4 font-medium group-hover:text-accent transition-colors">
                   {o.label}
                 </span>
               </Link>
@@ -302,13 +318,13 @@ const StorePage = () => {
                 className="absolute inset-0 w-full h-full object-cover object-center scale-[1.14] transition-transform duration-700 group-hover:scale-[1.2]"
               />
               <BlurBand height={190} gradient="#E7DFD2">
-                <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-gray-500">
+                <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#1D1D1F]">
                   Customize Canvas
                 </span>
-                <h3 className="font-heading font-bold text-gray-900 text-xl sm:text-2xl mt-2 leading-snug max-w-sm">
+                <h3 className="font-heading font-bold text-[#1D1D1F] text-xl sm:text-[28px] mt-2 leading-[1.4] max-w-sm">
                   Turn your memories into timeless artwork.
                 </h3>
-                <p className="text-gray-700 text-xs sm:text-sm mt-2 max-w-sm">
+                <p className="text-[#1D1D1F] text-xs sm:text-sm mt-2 max-w-sm">
                   Your memories. Beautifully transformed into timeless art.
                 </p>
               </BlurBand>
@@ -323,10 +339,10 @@ const StorePage = () => {
                 <span>Step 1: Upload</span>
                 <span>Step 2: Customize</span>
               </div>
-              <h3 className="font-heading text-2xl sm:text-3xl font-bold text-gray-900 mt-4">
+              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-4">
                 Upload your photo
               </h3>
-              <p className="text-gray-500 text-sm mt-2.5 max-w-xs">
+              <p className="text-[#1D1D1F] text-sm mt-2.5 max-w-xs">
                 Upload a photo. Choose your style. We'll create the masterpiece.
               </p>
 
@@ -337,8 +353,8 @@ const StorePage = () => {
                     <HiPlus className="w-3 h-3 text-white" />
                   </span>
                 </div>
-                <p className="text-gray-600 text-sm mt-1">or drag and drop here</p>
-                <p className="text-gray-400 text-[11px] tracking-wide">
+                <p className="text-[#1D1D1F] text-sm mt-1">or drag and drop here</p>
+                <p className="text-[#1D1D1F] text-[11px] tracking-wide">
                   JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
                 </p>
               </div>
@@ -375,11 +391,23 @@ const StorePage = () => {
             {ARTWORK_SLIDES.map((v, i) => (
               <SwiperSlide key={`${v.name}-${i}`}>
                 <Link to={`/product/${v.slug}`} className="group block">
-                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-cream-dark">
-                    <ArtworkVideo src={v.src} eager={i < 4} />
+                  <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-cream-dark">
+                    <ArtworkVideo src={v.src} isUnmuted={unmutedIndex === i} />
+                    <button
+                      onClick={(e) => handleSoundToggle(e, i)}
+                      aria-label={unmutedIndex === i ? 'Mute video' : 'Unmute video'}
+                      title={unmutedIndex === i ? 'Mute' : 'Unmute'}
+                      className="absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-black/60 hover:scale-110 transition-all duration-300 shadow-lg"
+                    >
+                      {unmutedIndex === i ? (
+                        <HiVolumeUp className="w-4 h-4" />
+                      ) : (
+                        <HiVolumeOff className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                   <div className="mt-3 pr-1">
-                    <h3 className="font-heading font-semibold text-gray-900 text-sm sm:text-base leading-tight truncate group-hover:text-accent transition-colors">
+                    <h3 className="font-heading font-semibold text-[#1D1D1F] text-sm sm:text-base leading-tight truncate group-hover:text-accent transition-colors">
                       {v.name}
                     </h3>
                   </div>
@@ -455,10 +483,10 @@ const StorePage = () => {
                 <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
                   The Art Of Giving
                 </span>
-                <h3 className="font-heading font-bold text-gray-900 text-lg sm:text-xl mt-1.5 leading-snug max-w-xs">
+                <h3 className="font-heading font-bold text-[#1D1D1F] text-xl sm:text-[28px] mt-1.5 leading-[1.4] w-full">
                   Find the perfect gift.
                 </h3>
-                <p className="text-gray-700 text-xs sm:text-sm mt-1.5 max-w-xs">
+                <p className="text-[#1D1D1F] text-xs sm:text-sm mt-1.5 w-full">
                   Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
                 </p>
               </BlurBand>
@@ -469,10 +497,10 @@ const StorePage = () => {
               <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
                 The Art Of Giving
               </span>
-              <h3 className="font-heading text-xl sm:text-2xl font-bold text-gray-900 mt-2">
+              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-2">
                 Create a gift that's truly theirs.
               </h3>
-              <p className="text-gray-500 text-sm mt-2 max-w-sm">
+              <p className="text-[#1D1D1F] text-sm mt-2 max-w-sm">
                 Whether you're choosing the perfect gift or creating something uniquely yours, we've got you covered.
               </p>
 
@@ -481,7 +509,7 @@ const StorePage = () => {
                   <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
                     A
                   </div>
-                  <p className="text-gray-700 font-medium text-xs sm:text-sm mt-3">Our most gifted item !</p>
+                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Our most gifted item !</p>
                   <Link
                     to="/wall-canvas"
                     className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
@@ -493,7 +521,7 @@ const StorePage = () => {
                   <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
                     B
                   </div>
-                  <p className="text-gray-700 font-medium text-xs sm:text-sm mt-3">Start customizing</p>
+                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Start customizing</p>
                   <Link
                     to="/customize-canvas"
                     className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"

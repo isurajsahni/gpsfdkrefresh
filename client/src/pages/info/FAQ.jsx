@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
-import faqImage from '../../assets/image/faq_demo.png';
+import faqImage from '../../assets/image/faq_demo.webp';
 import SEO from '../../components/seo/SEO';
 
 const FAQ = () => {

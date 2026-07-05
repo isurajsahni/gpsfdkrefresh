@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { HiOutlineArrowRight, HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
+import { HiOutlineArrowRight, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
@@ -27,7 +27,6 @@ import collab3 from '../assets/image/store page/Rectangle 174 (2).webp';
 import tranq1 from '../assets/image/store page/Rectangle 174 (3).webp';
 import tranq2 from '../assets/image/store page/Rectangle 174 (4).webp';
 import tranq3 from '../assets/image/store page/Rectangle 174 (5).webp';
-import giftGrandparent from '../assets/image/store page/grandparent.webp';
 
 // ─── Artworks-in-motion videos (filename doubles as the artwork title) ───
 import vidBubblegum from '../assets/videos/Bubblegum Rebellion.mp4';
@@ -81,8 +80,6 @@ const GalleryImage = ({ src, width }) => (
     />
   </div>
 );
-
-const GIFT_IMAGE = giftGrandparent;
 
 const OFFER = [
   { label: 'Canvas', img: offerCanvas, to: '/wall-canvas' },
@@ -308,7 +305,7 @@ const StorePage = () => {
             {/* Left: customize promo */}
             <Link
               to="/customize-canvas"
-              className="group relative rounded-3xl overflow-hidden block min-h-[320px] sm:h-[500px]"
+              className="group relative rounded-3xl overflow-hidden hidden md:block min-h-[320px] sm:h-[500px]"
             >
               <img
                 src={customizeImg}
@@ -330,35 +327,45 @@ const StorePage = () => {
               </BlurBand>
             </Link>
 
-            {/* Right: upload widget */}
-            <Link
-              to="/customize-canvas"
-              className="group rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px] hover:shadow-[0_2px_32px_rgba(0,0,0,0.08)] transition-shadow"
-            >
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
-                <span>Step 1: Upload</span>
-                <span>Step 2: Customize</span>
-              </div>
-              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-4">
-                Upload your photo
+            {/* Right: gift options */}
+            <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px]">
+              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
+                The Art Of Giving
+              </span>
+              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-2">
+                Create a gift that's truly theirs.
               </h3>
-              <p className="text-[#1D1D1F] text-sm mt-2.5 max-w-xs">
-                Upload a photo. Choose your style. We'll create the masterpiece.
+              <p className="text-[#1D1D1F] text-sm mt-2 max-w-sm">
+                Whether you're choosing the perfect gift or creating something uniquely yours, we've got you covered.
               </p>
 
-              <div className="mt-8 w-full max-w-md rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 px-7 py-10 flex flex-col items-center gap-3">
-                <div className="relative">
-                  <HiPhotograph className="w-12 h-12 text-[#F2A39C]" />
-                  <span className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-[#E5484D] ring-2 ring-white flex items-center justify-center">
-                    <HiPlus className="w-3 h-3 text-white" />
-                  </span>
+              <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-sm">
+                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
+                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
+                    A
+                  </div>
+                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Our most gifted item !</p>
+                  <Link
+                    to="/wall-canvas"
+                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
+                  >
+                    Find gift
+                  </Link>
                 </div>
-                <p className="text-[#1D1D1F] text-sm mt-1">or drag and drop here</p>
-                <p className="text-[#1D1D1F] text-[11px] tracking-wide">
-                  JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
-                </p>
+                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
+                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
+                    B
+                  </div>
+                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Start customizing</p>
+                  <Link
+                    to="/customize-canvas"
+                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
+                  >
+                    Design now
+                  </Link>
+                </div>
               </div>
-            </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -458,79 +465,6 @@ const StorePage = () => {
             {TRANQUILITY_CARDS.map((card) => (
               <OverlayCard key={card.title} {...card} />
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── The art of giving ─── */}
-      <section className="py-20 section-padding">
-        <div className="max-w-[1200px] mx-auto">
-          <Heading bold="Can't decide what to gift." light="Or create something truly personal." />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Left: gift promo */}
-            <Link
-              to="/wall-canvas"
-              className="group relative w-full max-w-[550px] mx-auto md:mx-0 rounded-2xl overflow-hidden block"
-            >
-              <img
-                src={GIFT_IMAGE}
-                alt="Grandparent receiving a personalized gift"
-                loading="lazy"
-                onError={handleImageError}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <BlurBand height={260} gradient="#E4DBCF" solidStop={60}>
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                  The Art Of Giving
-                </span>
-                <h3 className="font-heading font-bold text-[#1D1D1F] text-xl sm:text-[28px] mt-1.5 leading-[1.4] w-full">
-                  Find the perfect gift.
-                </h3>
-                <p className="text-[#1D1D1F] text-xs sm:text-sm mt-1.5 w-full">
-                  Explore our bestselling personalized gifts, thoughtfully curated for every celebration and every story.
-                </p>
-              </BlurBand>
-            </Link>
-
-            {/* Right: gift options */}
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8 flex flex-col items-center justify-center text-center min-h-[320px] sm:min-h-[420px]">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                The Art Of Giving
-              </span>
-              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-2">
-                Create a gift that's truly theirs.
-              </h3>
-              <p className="text-[#1D1D1F] text-sm mt-2 max-w-sm">
-                Whether you're choosing the perfect gift or creating something uniquely yours, we've got you covered.
-              </p>
-
-              <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-sm">
-                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
-                    A
-                  </div>
-                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Our most gifted item !</p>
-                  <Link
-                    to="/wall-canvas"
-                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
-                  >
-                    Find gift
-                  </Link>
-                </div>
-                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
-                    B
-                  </div>
-                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Start customizing</p>
-                  <Link
-                    to="/customize-canvas"
-                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
-                  >
-                    Design now
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

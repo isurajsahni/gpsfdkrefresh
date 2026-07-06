@@ -54,6 +54,38 @@ exports.getRazorpayConfig = (req, res) => {
   res.json({ keyId });
 };
 
+// Ops probe: attempts a ₹1 order create (unpaid stub, no money moves) and
+// reports a sanitized outcome, so gateway failures on the host can be
+// diagnosed without access to its logs. Never leaks the key secret.
+exports.getPaymentHealth = async (req, res) => {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+  if (isPlaceholder(keyId) || isPlaceholder(keySecret)) {
+    return res.status(503).json({ ok: false, reason: 'credentials missing or placeholder' });
+  }
+  const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
+  try {
+    const order = await instance.orders.create({
+      amount: 100,
+      currency: 'INR',
+      receipt: 'health_' + Date.now().toString().slice(-8),
+      notes: { purpose: 'gateway-health-probe' },
+    });
+    return res.json({ ok: true, orderId: order.id, keyIdPrefix: keyId.slice(0, 8) });
+  } catch (err) {
+    console.error('[Razorpay] health probe failed:', JSON.stringify(err, Object.getOwnPropertyNames(err || {})));
+    return res.status(502).json({
+      ok: false,
+      keyIdPrefix: keyId.slice(0, 8),
+      statusCode: err?.statusCode ?? null,
+      code: err?.error?.code || err?.code || null,
+      description: err?.error?.description || null,
+      message: err?.message || null,
+      errorKeys: Object.keys(err || {}),
+    });
+  }
+};
+
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
@@ -103,8 +135,17 @@ exports.createRazorpayOrder = async (req, res, next) => {
     try {
       order = await rzpCallWithRetry('orders.create', () => instance.orders.create(options));
     } catch (rzpErr) {
-      const description = rzpErr?.error?.description || rzpErr?.message || 'Payment gateway error';
-      console.error('[Razorpay] orders.create failed after retries:', rzpErr?.error || rzpErr?.message || rzpErr);
+      // The SDK normalizes network-level failures to { statusCode: undefined,
+      // error: undefined } — no description/message. Include what we do know
+      // in the response so failures are diagnosable without server log access.
+      const description =
+        rzpErr?.error?.description ||
+        rzpErr?.message ||
+        `Payment gateway error (${rzpErr?.statusCode || 'network'})`;
+      console.error(
+        '[Razorpay] orders.create failed after retries:',
+        JSON.stringify(rzpErr, Object.getOwnPropertyNames(rzpErr || {}))
+      );
       return res.status(502).json({ message: description });
     }
 

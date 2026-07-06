@@ -91,7 +91,7 @@ const Contact = () => {
           >
             <div>
               <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Email</h3>
-              <a href="mailto:customer@gpsfdk.com" className="text-secondary/80 text-lg hover:text-accent transition-colors" onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: 'Email' }); console.log('[Meta Pixel] Contact event fired (Email)'); } }}>customer@gpsfdk.com</a>
+              <a href="mailto:support@gpsfdk.com" className="text-secondary/80 text-lg hover:text-accent transition-colors" onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: 'Email' }); console.log('[Meta Pixel] Contact event fired (Email)'); } }}>support@gpsfdk.com</a>
             </div>
             <div>
               <h3 className="text-xl font-heading font-bold text-secondary mb-2 text-accent">Phone Number</h3>

@@ -14,7 +14,7 @@ const mockDataINR = {
       'Faridkot, Punjab 151203',
       'India'
     ],
-    email: 'customer@gpsfdk.com',
+    email: 'support@gpsfdk.com',
     phone: '+91 62803-10103',
     gstNumber: '03AABBCC1234Z1'
   },
@@ -60,7 +60,7 @@ const mockDataUSD = {
       'Faridkot, Punjab 151203',
       'India'
     ],
-    email: 'customer@gpsfdk.com',
+    email: 'support@gpsfdk.com',
     phone: '+91 62803-10103'
   },
   billTo: {

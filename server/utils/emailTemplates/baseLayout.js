@@ -139,7 +139,7 @@ const baseLayout = ({ preheaderText, content }) => `
         </p>
         <p style="margin: 6px 0 0; font-size: 12px; color: #aaa;">
           Need help? Contact us at
-          <a href="mailto:customer@gpsfdk.com" style="color: ${BRAND_COLOR}; text-decoration: none;">customer@gpsfdk.com</a>
+          <a href="mailto:support@gpsfdk.com" style="color: ${BRAND_COLOR}; text-decoration: none;">support@gpsfdk.com</a>
         </p>
       </div>
 

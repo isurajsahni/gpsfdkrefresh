@@ -58,7 +58,9 @@ const Navbar = () => {
       <header className="fixed top-0 left-0 right-0 z-50 flex flex-col">
         <nav className={`transition-all duration-500 w-full ${scrolled ? 'bg-cream/95 backdrop-blur-lg shadow-md' : 'bg-cream'}`}>
           <div className="mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-[60px]">
+            {/* Desktop: nav content (logo + links + actions) centered as one
+                group with even 40px gaps. Mobile keeps logo-left / actions-right. */}
+            <div className="flex items-center justify-between lg:justify-center lg:gap-10 h-[60px]">
 
               <div className="flex items-center gap-10 h-full">
                 {/* Logo → Home Page (legacy /home) */}
@@ -67,15 +69,15 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Nav */}
-                <div className="hidden lg:flex items-center gap-8">
+                <div className="hidden lg:flex items-center gap-10">
                   {NAV_LINKS.map((link) => (
                     <NavLink
                       key={link.path}
                       to={link.path}
                       end
                       className={({ isActive }) =>
-                        `font-semibold text-sm tracking-wide transition-colors duration-300 ${
-                          isActive ? 'text-accent' : 'text-secondary hover:text-accent'
+                        `text-xs font-normal transition-colors duration-300 ${
+                          isActive ? 'text-accent' : 'text-[#424245] hover:text-accent'
                         }`
                       }
                     >
@@ -90,7 +92,7 @@ const Navbar = () => {
                 <button
                   onClick={() => setIsSearchOpen(true)}
                   aria-label="Search"
-                  className="p-2 text-secondary hover:text-accent transition-colors duration-300"
+                  className="p-2 text-[#424245] hover:text-accent transition-colors duration-300"
                 >
                   <HiOutlineSearch className="w-6 h-6" />
                 </button>
@@ -102,7 +104,7 @@ const Navbar = () => {
                       <button
                         onClick={() => setUserMenu(!userMenu)}
                         aria-label="Account"
-                        className="flex items-center gap-2 p-2 text-secondary hover:text-accent transition-colors duration-300"
+                        className="flex items-center gap-2 p-2 text-[#424245] hover:text-accent transition-colors duration-300"
                       >
                         <HiOutlineUser className="w-6 h-6" />
                       </button>
@@ -138,7 +140,7 @@ const Navbar = () => {
                       </AnimatePresence>
                     </>
                   ) : (
-                    <Link to="/register" aria-label="Sign in" className="p-2 text-secondary hover:text-accent transition-colors duration-300 block">
+                    <Link to="/register" aria-label="Sign in" className="p-2 text-[#424245] hover:text-accent transition-colors duration-300 block">
                       <HiOutlineUser className="w-6 h-6" />
                     </Link>
                   )}
@@ -148,7 +150,7 @@ const Navbar = () => {
                 <button
                   onClick={() => setIsCartOpen(true)}
                   aria-label="Cart"
-                  className="relative p-2 text-secondary hover:text-accent transition-colors duration-300"
+                  className="relative p-2 text-[#424245] hover:text-accent transition-colors duration-300"
                 >
                   <HiOutlineShoppingBag className="w-6 h-6" />
                   {cartCount > 0 && (
@@ -166,7 +168,7 @@ const Navbar = () => {
                 <button
                   onClick={() => setMobileOpen(!mobileOpen)}
                   aria-label="Menu"
-                  className="lg:hidden p-2 text-secondary hover:text-accent transition-colors"
+                  className="lg:hidden p-2 text-[#424245] hover:text-accent transition-colors"
                 >
                   {mobileOpen ? <HiOutlineX className="w-6 h-6" /> : <HiOutlineMenu className="w-6 h-6" />}
                 </button>

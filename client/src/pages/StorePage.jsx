@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { HiOutlineArrowRight, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
+import { HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
@@ -20,7 +20,7 @@ import offerNameplate from '../assets/image/store page/image 18.png';
 import offerConsultancy from '../assets/image/store page/portrait-happy-smiling-cheerful-beautiful-young-support-phone-operator-headset-with-laptop-isolated-white-wall 1.png';
 import offerGetaway from '../assets/image/store page/image 21.png';
 import offerEvents from '../assets/image/store page/image 22.png';
-import customizeImg from '../assets/image/store page/Rectangle 102.webp';
+import giftedImg from '../assets/image/store page/newimg.png';
 import collab1 from '../assets/image/store page/Rectangle 174.webp';
 import collab2 from '../assets/image/store page/Rectangle 174 (1).webp';
 import collab3 from '../assets/image/store page/Rectangle 174 (2).webp';
@@ -53,11 +53,11 @@ const ARTWORK_VIDEOS = [
 
 // Per-image widths (px) — uneven widths, fixed 150px height (object-cover).
 // Rendered as a seamless, continuously-scrolling infinite marquee.
-const GALLERY_HEIGHT = 180;
+const GALLERY_HEIGHT = 150;
 const GALLERY_GAP = 16; // px gap between slides
-// Widths track each source image's native aspect ratio at 180px tall, so none get
+// Widths track each source image's native aspect ratio at 150px tall, so none get
 // upscaled horizontally (the narrow sources turned blurry when stretched wider).
-const GALLERY_WIDTHS = [136, 203, 104, 101, 199, 130, 271];
+const GALLERY_WIDTHS = [113, 169, 87, 84, 166, 108, 226];
 
 // Width of one full set (incl. trailing gaps); the marquee shifts by this for a seamless loop.
 const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
@@ -81,12 +81,13 @@ const GalleryImage = ({ src, width }) => (
   </div>
 );
 
+// width: per-item Figma image width (px); height follows each image's ratio.
 const OFFER = [
-  { label: 'Canvas', img: offerCanvas, to: '/wall-canvas' },
-  { label: 'Nameplates', img: offerNameplate, to: '/house-nameplates' },
-  { label: 'Consultancy', img: offerConsultancy, to: '/contact' },
-  { label: 'Getaway', img: offerGetaway, to: '/contact' },
-  { label: 'Events', img: offerEvents, to: '/contact' },
+  { label: 'Canvas', img: offerCanvas, to: '/wall-canvas', width: 160 },
+  { label: 'Nameplates', img: offerNameplate, to: '/house-nameplates', width: 150 },
+  { label: 'Consultancy', img: offerConsultancy, to: '/contact', width: 135 },
+  { label: 'Getaway', img: offerGetaway, to: '/contact', width: 156 },
+  { label: 'Events', img: offerEvents, to: '/contact', width: 160 },
 ];
 
 const COLLABORATE_CARDS = [
@@ -101,15 +102,8 @@ const TRANQUILITY_CARDS = [
   { title: 'Breathtaking Views', blurb: 'Experience panoramic landscapes where every sunrise and sunset becomes an unforgettable memory.', image: tranq3, gradient: '#AECFF0', dark: true },
 ];
 
-// Stable references — inline objects would make swiper-react re-init (and reset)
-// the slider on every parent re-render.
-const ARTWORK_BREAKPOINTS = {
-  640: { slidesPerView: 2.3 },
-  1024: { slidesPerView: 3.3 },
-  1280: { slidesPerView: 4.3 },
-};
-
-// Doubled so loop mode always has more slides than slidesPerView×2 (4.3 needs ≥9).
+// Doubled so loop mode always has comfortably more slides than fit on screen
+// (fixed 280px cards → ~5 visible on wide desktops, loop wants ≥ 2×visible).
 const ARTWORK_SLIDES = [...ARTWORK_VIDEOS, ...ARTWORK_VIDEOS];
 
 // Carousel video that only plays while on screen. With 16 slides, letting them
@@ -155,21 +149,48 @@ const ArtworkVideo = ({ src, isUnmuted }) => {
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
 const Heading = ({ bold, light, action }) => (
   <div className="flex flex-wrap items-end justify-between gap-3 mb-7 sm:mb-9">
-    <h2 className="font-heading text-[28px] font-bold leading-[1.4] tracking-tight">
+    <h2 className="font-heading text-[28px] font-semibold leading-[1.4] tracking-tight">
       <span className="text-[#1D1D1F]">{bold}</span>{' '}
-      <span className="text-[#686868] font-semibold">{light}</span>
+      <span className="text-[#686868]">{light}</span>
     </h2>
     {action}
   </div>
 );
 
+// Chevron from the Figma file (Downloads/Group.svg); size via className.
+const FigmaChevron = ({ className = 'w-[15px] h-auto' }) => (
+  <svg viewBox="0 0 16 27" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path
+      d="M1.93922 27C1.55627 27.0022 1.18133 26.8903 0.86221 26.6786C0.543087 26.4669 0.294236 26.165 0.147386 25.8113C0.000536208 25.4576 -0.0376605 25.0682 0.0376661 24.6928C0.112993 24.3173 0.298429 23.9728 0.570334 23.7031L10.7888 13.5039L0.570334 3.30478C0.207284 2.94173 0.00332394 2.44933 0.00332394 1.93589C0.00332394 1.68167 0.053397 1.42993 0.150685 1.19506C0.247973 0.960186 0.39057 0.746775 0.570334 0.56701C0.750099 0.387246 0.963509 0.24465 1.19838 0.147362C1.43326 0.050074 1.68499 0 1.93922 0C2.45265 0 2.94505 0.20396 3.3081 0.56701L14.8761 12.135C15.2352 12.4963 15.4368 12.9849 15.4368 13.4943C15.4368 14.0036 15.2352 14.4923 14.8761 14.8535L3.3081 26.4216C3.12954 26.6037 2.9166 26.7487 2.68163 26.848C2.44665 26.9472 2.19431 26.9989 1.93922 27Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+// 8×8 diagonal arrow from the Figma file (Downloads/Group (1).svg).
+const ArrowUpRight = () => (
+  // translate-y: flex centers the 8px arrow on the full line box, which reads
+  // ~2px high against the text's optical middle (descender space skews it).
+  <svg
+    viewBox="0 0 8 8"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="w-2 h-2 flex-shrink-0 translate-y-[1.5px]"
+  >
+    <path
+      d="M6.669 2.27202L0.94102 8L0 7.05898L5.72731 1.331H0.679478V0H8V7.32052H6.669V2.27202Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 const ArrowLink = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex items-center gap-1 text-accent font-semibold text-sm hover:gap-2 transition-all"
+    className="inline-flex items-center gap-1 text-accent text-base font-normal hover:gap-2 transition-all"
   >
     {children}
-    <HiOutlineArrowRight className="w-4 h-4 -rotate-45" />
+    <ArrowUpRight />
   </Link>
 );
 
@@ -204,8 +225,8 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
     <BlurBand height={160} gradient={gradient}>
-      <h3 className={`font-heading font-bold text-xl sm:text-[28px] leading-[1.4] ${dark ? 'text-[#1D1D1F]' : 'text-white'}`}>{title}</h3>
-      <p className={`text-xs sm:text-[13px] mt-2.5 leading-snug ${dark ? 'text-[#1D1D1F]' : 'text-white/90'}`}>{blurb}</p>
+      <h3 className={`font-heading font-medium text-xl sm:text-[28px] leading-[1.4] ${dark ? 'text-[#1D1D1F]' : 'text-white'}`}>{title}</h3>
+      <p className={`text-sm mt-2.5 leading-snug ${dark ? 'text-[#1D1D1F]' : 'text-white/90'}`}>{blurb}</p>
     </BlurBand>
   </div>
 );
@@ -235,13 +256,13 @@ const StorePage = () => {
       />
 
       {/* ─── Hero header ─── */}
-      <section className="pt-28 sm:pt-32 pb-16 md:pb-[120px] section-padding">
+      <section className="pt-28 sm:pt-32 pb-[100px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-bold text-[#1D1D1F] !leading-[0.9]">
+          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-semibold text-[#1D1D1F] !leading-[0.9]">
             Store
           </h1>
           <div className="sm:text-right">
-            <p className="text-[#1D1D1F] font-bold text-base sm:text-lg leading-snug sm:ml-auto">
+            <p className="text-[#1D1D1F] font-bold text-xl sm:text-[28px] leading-[1.4] sm:ml-auto">
               The best way to buy the <br /> products you love.
             </p>
             <div className="mt-1 sm:flex sm:justify-end">
@@ -252,40 +273,42 @@ const StorePage = () => {
       </section>
 
       {/* ─── Lifestyle gallery (infinite marquee) ─── */}
-      <section className="pb-20 overflow-hidden">
+      <section className="pb-[55px] overflow-hidden">
         <motion.div
           className="flex w-max"
           style={{ gap: GALLERY_GAP }}
           animate={{ x: [0, -GALLERY_LOOP_WIDTH] }}
           transition={{ duration: GALLERY_LOOP_WIDTH / 50, ease: 'linear', repeat: Infinity }}
         >
-          {[...HERO_STRIP, ...HERO_STRIP].map((src, i) => (
+          {/* 4 copies: the marquee shifts by one set (~1065px), so the strip must
+              always be ≥ viewport + one set wide or a blank gap scrolls through
+              at the end of each cycle (covers viewports up to ~3200px). */}
+          {[...HERO_STRIP, ...HERO_STRIP, ...HERO_STRIP, ...HERO_STRIP].map((src, i) => (
             <GalleryImage key={i} src={src} width={GALLERY_WIDTHS[i % HERO_STRIP.length]} />
           ))}
         </motion.div>
       </section>
 
       {/* ─── What we offer ─── */}
-      <section className="py-20 section-padding">
+      <section className="py-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
-          <div className="flex flex-wrap items-end justify-center sm:justify-start gap-x-10 gap-y-10 sm:gap-x-12 lg:gap-x-[70px]">
+          <div className="w-full flex flex-wrap items-end justify-between gap-[30px]">
             {OFFER.map((o) => (
               <Link
                 key={o.label}
                 to={o.to}
                 className="group flex flex-col items-center text-center"
               >
-                <div className="h-28 flex items-end justify-center">
-                  <img
-                    src={o.img}
-                    alt={o.label}
-                    loading="lazy"
-                    onError={handleImageError}
-                    className="max-h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <span className="text-[#1D1D1F] text-sm sm:text-base mt-4 font-medium group-hover:text-accent transition-colors">
+                <img
+                  src={o.img}
+                  alt={o.label}
+                  loading="lazy"
+                  onError={handleImageError}
+                  style={{ width: o.width }}
+                  className="h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="text-[#1D1D1F] text-sm mt-4 font-medium group-hover:text-accent transition-colors">
                   {o.label}
                 </span>
               </Link>
@@ -295,83 +318,72 @@ const StorePage = () => {
       </section>
 
       {/* ─── Customize canvas ─── */}
-      <section className="py-20 section-padding">
+      <section className="py-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
-          <Heading bold="Can't decide what to gift." light="Want to customize" />
-          {/* fr units keep the Figma 510:660 ratio but scale with the container —
-              fixed px columns (510+660+60 gap = 1230px) overflowed the 1200px
-              wrapper and every viewport below ~1290px. */}
-          <div className="grid grid-cols-1 md:grid-cols-[510fr_660fr] gap-8 lg:gap-[60px] items-stretch">
-            {/* Left: customize promo */}
+          <Heading bold="Can't decide what to gift." light="Want to customize ?" />
+          {/* fr units keep the Figma 505:635 ratio but scale with the container —
+              fixed px columns would overflow the 1200px wrapper on smaller
+              viewports. Left card caps at its Figma width (505px), height auto. */}
+          <div className="grid grid-cols-1 md:grid-cols-[505fr_635fr] gap-8 lg:gap-[60px] items-start">
+            {/* Left: most-gifted items promo — text sits straight on the dark
+                image (no blur band), per Figma. */}
             <Link
-              to="/customize-canvas"
-              className="group relative rounded-3xl overflow-hidden hidden md:block min-h-[320px] sm:h-[500px]"
+              to="/wall-canvas"
+              className="group relative rounded-3xl overflow-hidden block w-full max-w-[505px]"
             >
               <img
-                src={customizeImg}
-                alt="Family beside a custom canvas of their portrait"
+                src={giftedImg}
+                alt="Family gifting a framed canvas"
                 loading="lazy"
                 onError={handleImageError}
-                className="absolute inset-0 w-full h-full object-cover object-center scale-[1.14] transition-transform duration-700 group-hover:scale-[1.2]"
+                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <BlurBand height={190} gradient="#E7DFD2">
-                <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#1D1D1F]">
-                  Customize Canvas
-                </span>
-                <h3 className="font-heading font-bold text-[#1D1D1F] text-xl sm:text-[28px] mt-2 leading-[1.4] max-w-sm">
-                  Turn your memories into timeless artwork.
+              <div className="absolute top-0 left-0 right-0 p-[30px]">
+                <h3 className="font-heading font-medium text-white text-xl sm:text-[28px] leading-[1.4]">
+                  Our most gifted items
                 </h3>
-                <p className="text-[#1D1D1F] text-xs sm:text-sm mt-2 max-w-sm">
-                  Your memories. Beautifully transformed into timeless art.
-                </p>
-              </BlurBand>
+                <span className="mt-2 inline-flex items-center gap-1.5 text-accent text-base group-hover:gap-2.5 transition-all">
+                  Visit Collection
+                  <FigmaChevron className="w-[7px] h-auto mt-1" />
+                </span>
+              </div>
             </Link>
 
-            {/* Right: gift options */}
+            {/* Right: upload widget (Figma "Upload your photo") */}
             <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px]">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-accent">
-                The Art Of Giving
-              </span>
-              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-bold text-[#1D1D1F] mt-2">
-                Create a gift that's truly theirs.
+              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
+                <span>Step 1: Upload</span>
+                <span>Step 2: Customize</span>
+              </div>
+              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-medium text-[#1D1D1F] mt-4">
+                Upload your photo
               </h3>
-              <p className="text-[#1D1D1F] text-sm mt-2 max-w-sm">
-                Whether you're choosing the perfect gift or creating something uniquely yours, we've got you covered.
+              <p className="text-[#1D1D1F] text-sm mt-2.5 max-w-xs">
+                Upload a photo. Choose your style. We'll create the masterpiece.
               </p>
 
-              <div className="mt-6 grid grid-cols-2 gap-4 w-full max-w-sm">
-                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
-                    A
-                  </div>
-                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Our most gifted item !</p>
-                  <Link
-                    to="/wall-canvas"
-                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
-                  >
-                    Find gift
-                  </Link>
+              <Link
+                to="/customize-canvas"
+                className="group mt-7 w-full max-w-md rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 px-7 py-8 flex flex-col items-center gap-3 hover:border-accent/50 transition-colors"
+              >
+                <div className="relative">
+                  <HiPhotograph className="w-12 h-12 text-[#F2A39C]" />
+                  <span className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-[#E5484D] ring-2 ring-white flex items-center justify-center">
+                    <HiPlus className="w-3 h-3 text-white" />
+                  </span>
                 </div>
-                <div className="rounded-2xl bg-cream-dark/60 p-5 flex flex-col items-center">
-                  <div className="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center text-sm font-bold font-heading">
-                    B
-                  </div>
-                  <p className="text-[#1D1D1F] font-medium text-xs sm:text-sm mt-3">Start customizing</p>
-                  <Link
-                    to="/customize-canvas"
-                    className="mt-3 inline-flex items-center justify-center bg-accent hover:bg-accent-dark text-white text-xs font-semibold py-2 px-4 rounded-full transition-colors"
-                  >
-                    Design now
-                  </Link>
-                </div>
-              </div>
+                <p className="text-[#1D1D1F] text-sm mt-1">or drag and drop here</p>
+                <p className="text-[#1D1D1F] text-[11px] tracking-wide">
+                  JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
+                </p>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
       {/* ─── Artworks in motion (full-width video slider) ─── */}
-      <section className="py-20 overflow-hidden">
+      <section className="py-[50px] md:py-[55px] overflow-hidden">
         <div className="max-w-[1200px] mx-auto px-5">
           <Heading
             bold="Artworks in motion."
@@ -380,69 +392,68 @@ const StorePage = () => {
           />
         </div>
 
-        {/* Full-width slider with a left gutter so the first card aligns with the
-            content column; !overflow-visible lets scrolled cards run to the true
-            left screen edge (the section clips them) instead of vanishing at the
-            gutter boundary. */}
-        <div className="relative pl-4 sm:pl-6 lg:pl-8 xl:pl-16 2xl:pl-24">
-          <Swiper
-            className="!overflow-visible"
-            spaceBetween={20}
-            slidesPerView={1.3}
-            loop
-            speed={500}
-            grabCursor
-            onSwiper={handleArtworkSwiper}
-            breakpoints={ARTWORK_BREAKPOINTS}
-          >
-            {ARTWORK_SLIDES.map((v, i) => (
-              <SwiperSlide key={`${v.name}-${i}`}>
-                <Link to={`/product/${v.slug}`} className="group block">
-                  <div className="relative aspect-[9/16] rounded-2xl overflow-hidden bg-cream-dark">
-                    <ArtworkVideo src={v.src} isUnmuted={unmutedIndex === i} />
-                    <button
-                      onClick={(e) => handleSoundToggle(e, i)}
-                      aria-label={unmutedIndex === i ? 'Mute video' : 'Unmute video'}
-                      title={unmutedIndex === i ? 'Mute' : 'Unmute'}
-                      className="absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-black/60 hover:scale-110 transition-all duration-300 shadow-lg"
-                    >
-                      {unmutedIndex === i ? (
-                        <HiVolumeUp className="w-4 h-4" />
-                      ) : (
-                        <HiVolumeOff className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  <div className="mt-3 pr-1">
-                    <h3 className="font-heading font-semibold text-[#1D1D1F] text-sm sm:text-base leading-tight truncate group-hover:text-accent transition-colors">
-                      {v.name}
-                    </h3>
-                  </div>
-                </Link>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {/* Slider lives in the same 1200px column as the heading so the first
+            card left-aligns with "Artworks in motion." exactly (Figma);
+            !overflow-visible lets scrolled cards run to the true screen edges
+            (the section clips them) instead of vanishing at the column edge. */}
+        <div className="relative">
+          <div className="max-w-[1200px] mx-auto px-5">
+            {/* Fixed Figma card size (277×450) — slidesPerView="auto" lets each
+                slide take its own 277px width at every viewport. */}
+            <Swiper
+              className="!overflow-visible"
+              spaceBetween={20}
+              slidesPerView="auto"
+              loop
+              speed={500}
+              grabCursor
+              onSwiper={handleArtworkSwiper}
+            >
+              {ARTWORK_SLIDES.map((v, i) => (
+                <SwiperSlide key={`${v.name}-${i}`} className="!w-[277px]">
+                  <Link to={`/product/${v.slug}`} className="group block">
+                    <div className="relative w-[277px] h-[450px] rounded-2xl overflow-hidden bg-cream-dark">
+                      <ArtworkVideo src={v.src} isUnmuted={unmutedIndex === i} />
+                      <button
+                        onClick={(e) => handleSoundToggle(e, i)}
+                        aria-label={unmutedIndex === i ? 'Mute video' : 'Unmute video'}
+                        title={unmutedIndex === i ? 'Mute' : 'Unmute'}
+                        className="absolute top-3 right-3 z-10 flex items-center justify-center w-9 h-9 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white hover:bg-black/60 hover:scale-110 transition-all duration-300 shadow-lg"
+                      >
+                        {unmutedIndex === i ? (
+                          <HiVolumeUp className="w-4 h-4" />
+                        ) : (
+                          <HiVolumeOff className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
 
-          {/* Floating round prev/next buttons (matches Figma) */}
+          {/* Figma prev/next: flat 56px accent circles with a white chevron,
+              vertically centred on the 450px video cards (225px). */}
           <button
             aria-label="Previous"
             onClick={() => artworkSwiperRef.current?.slidePrev()}
-            className="hidden sm:flex absolute left-2 sm:left-4 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
+            className="hidden sm:flex absolute left-2 sm:left-4 top-[225px] -translate-y-1/2 z-10 w-14 h-14 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center"
           >
-            <HiOutlineArrowRight className="w-5 h-5 rotate-180" />
+            <FigmaChevron className="w-[15px] h-auto rotate-180" />
           </button>
           <button
             aria-label="Next"
             onClick={() => artworkSwiperRef.current?.slideNext()}
-            className="hidden sm:flex absolute right-2 sm:right-4 top-[38%] -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center shadow-lg"
+            className="hidden sm:flex absolute right-2 sm:right-4 top-[225px] -translate-y-1/2 z-10 w-14 h-14 rounded-full bg-accent text-white hover:bg-accent-dark active:scale-95 transition-all items-center justify-center"
           >
-            <HiOutlineArrowRight className="w-5 h-5" />
+            <FigmaChevron />
           </button>
         </div>
       </section>
 
       {/* ─── Inspire and collaborate ─── */}
-      <section className="py-20 section-padding">
+      <section className="py-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
           {/* 3-up only from md — at sm widths three columns squeeze the cards to
@@ -456,7 +467,7 @@ const StorePage = () => {
       </section>
 
       {/* ─── Escape into tranquility ─── */}
-      <section className="py-20 section-padding">
+      <section className="py-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
           {/* 3-up only from md — at sm widths three columns squeeze the cards to

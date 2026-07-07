@@ -259,8 +259,8 @@ const StorePage = () => {
       />
 
       {/* ─── Hero header ─── */}
-      {/* pt = 60px fixed navbar + 70px visual gap, matching the 70px bottom padding */}
-      <section className="pt-[130px] pb-[70px] section-padding">
+      {/* pt-[100px] = 60px fixed navbar + 40px visual gap */}
+      <section className="pt-[100px] pb-[50px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-semibold text-[#1D1D1F] !leading-[0.9]">
             Store

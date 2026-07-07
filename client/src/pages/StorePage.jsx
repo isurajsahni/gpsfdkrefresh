@@ -8,13 +8,16 @@ import SEO from '../components/seo/SEO';
 import 'swiper/css';
 
 // ─── Figma store-page imagery (client/src/assets/image/store page) ───
-import strip1 from '../assets/image/store page/Rectangle 155.png';
-import strip2 from '../assets/image/store page/Rectangle 156.png';
-import strip3 from '../assets/image/store page/Rectangle 157.png';
-import strip4 from '../assets/image/store page/Rectangle 159.png';
-import strip5 from '../assets/image/store page/Rectangle 160.png';
-import strip6 from '../assets/image/store page/Rectangle 161.png';
-import strip7 from '../assets/image/store page/Rectangle 162.png';
+// "@2x" strips are lanczos-upscaled + sharpened from the 1x Figma exports so
+// high-DPI screens aren't stuck with the browser's blurry bilinear upscale.
+// True 2x Figma re-exports can drop in over these same filenames.
+import strip1 from '../assets/image/store page/Rectangle 155 @2x.webp';
+import strip2 from '../assets/image/store page/Rectangle 156 @2x.webp';
+import strip3 from '../assets/image/store page/Rectangle 157 @2x.webp';
+import strip4 from '../assets/image/store page/Rectangle 159 @2x.webp';
+import strip5 from '../assets/image/store page/Rectangle 160 @2x.webp';
+import strip6 from '../assets/image/store page/Rectangle 161 @2x.webp';
+import strip7 from '../assets/image/store page/Rectangle 162 @2x.webp';
 import offerCanvas from '../assets/image/store page/image 16.png';
 import offerNameplate from '../assets/image/store page/image 18.png';
 import offerConsultancy from '../assets/image/store page/portrait-happy-smiling-cheerful-beautiful-young-support-phone-operator-headset-with-laptop-isolated-white-wall 1.png';
@@ -256,7 +259,8 @@ const StorePage = () => {
       />
 
       {/* ─── Hero header ─── */}
-      <section className="pt-28 sm:pt-32 pb-[100px] section-padding">
+      {/* pt = 60px fixed navbar + 70px visual gap, matching the 70px bottom padding */}
+      <section className="pt-[130px] pb-[70px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-semibold text-[#1D1D1F] !leading-[0.9]">
             Store
@@ -273,7 +277,7 @@ const StorePage = () => {
       </section>
 
       {/* ─── Lifestyle gallery (infinite marquee) ─── */}
-      <section className="pb-[55px] overflow-hidden">
+      <section className="overflow-hidden">
         <motion.div
           className="flex w-max"
           style={{ gap: GALLERY_GAP }}

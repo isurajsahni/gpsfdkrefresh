@@ -3,9 +3,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global type system — "SF Pro" via system font stack.
-   Renders true SF Pro on Apple devices (-apple-system / BlinkMacSystemFont),
-   Segoe UI on Windows, Roboto on Android. No web-font fetch needed. */
+/* Global type system — true SF Pro everywhere.
+   Apple devices match -apple-system natively (the self-hosted files below are
+   never downloaded there); Windows/Android/Linux fall through to the
+   self-hosted "SF Pro Display" web font instead of Segoe UI/Roboto.
+   No upright 600 file exists in this set — weight 600 resolves to the 700 face. */
+@font-face {
+  font-family: 'SF Pro Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('SF Pro Display'), url('./assets/fonts/sf-pro-display-regular.woff') format('woff');
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('SF Pro Display Medium'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-medium.woff') format('woff');
+}
+@font-face {
+  font-family: 'SF Pro Display';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: local('SF Pro Display Bold'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-bold.woff') format('woff');
+}
+
 :root {
   --font-sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }

@@ -364,7 +364,7 @@ exports.handleTrackingUpdate = async (req, res) => {
 
     // ─── Save the order ───
     await order.save();
-    console.log(`✅ [Shiprocket Webhook] Updated: ${order.orderNumber} → ${mappedStatus} (AWB: ${awb || 'N/A'}, Courier: ${courierName || 'N/A'})`);
+    console.log(`✅ [Shiprocket Webhook] Updated: ${order.orderNumber} → ${order.status} (AWB: ${awb || 'N/A'}, Courier: ${courierName || 'N/A'})`);
 
     // ─── Post-save side effects (non-blocking) ───
 

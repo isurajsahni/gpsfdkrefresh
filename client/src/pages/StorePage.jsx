@@ -259,10 +259,10 @@ const StorePage = () => {
       />
 
       {/* ─── Hero header ─── */}
-      {/* pt-[100px] = 60px fixed navbar + 40px visual gap */}
-      <section className="pt-[100px] pb-[50px] section-padding">
+      {/* pt-[130px] = 60px fixed navbar + 70px visual gap */}
+      <section className="pt-[130px] pb-[50px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-semibold text-[#1D1D1F] !leading-[0.9]">
+          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-medium text-[#1D1D1F] !leading-[0.9]">
             Store
           </h1>
           <div className="sm:text-right">
@@ -277,7 +277,7 @@ const StorePage = () => {
       </section>
 
       {/* ─── Lifestyle gallery (infinite marquee) ─── */}
-      <section className="overflow-hidden">
+      <section className="overflow-hidden py-[30px]">
         <motion.div
           className="flex w-max"
           style={{ gap: GALLERY_GAP }}
@@ -297,7 +297,7 @@ const StorePage = () => {
       <section className="py-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
-          <div className="w-full flex flex-wrap items-end justify-between gap-[30px]">
+          <div className="w-full flex flex-wrap items-end justify-between gap-[30px] max-[500px]:grid max-[500px]:grid-cols-2 max-[500px]:gap-x-4 max-[500px]:gap-y-8 max-[500px]:justify-items-center">
             {OFFER.map((o) => (
               <Link
                 key={o.label}
@@ -310,7 +310,7 @@ const StorePage = () => {
                   loading="lazy"
                   onError={handleImageError}
                   style={{ width: o.width }}
-                  className="h-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                  className="h-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />
                 <span className="text-[#1D1D1F] text-sm mt-4 font-medium group-hover:text-accent transition-colors">
                   {o.label}
@@ -354,7 +354,7 @@ const StorePage = () => {
             </Link>
 
             {/* Right: upload widget (Figma "Upload your photo") */}
-            <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_2px_24px_rgba(0,0,0,0.05)] p-6 sm:p-10 flex flex-col items-center justify-center text-center min-h-[320px] sm:h-[500px]">
+            <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_6px_36px_rgba(0,0,0,0.12)] p-6 sm:p-10 flex flex-col items-center justify-center text-center h-full">
               <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
                 <span>Step 1: Upload</span>
                 <span>Step 2: Customize</span>

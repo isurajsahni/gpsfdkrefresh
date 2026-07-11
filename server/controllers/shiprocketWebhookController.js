@@ -67,7 +67,11 @@ const STATUS_ID_MAP = {
   10: 'cancelled',   // RTO Delivered
   17: 'shipped',     // Out For Delivery
   18: 'shipped',     // In Transit
-  19: 'shipped',     // Out For Delivery
+  19: 'shipped',     // ⚠️ UNVERIFIED — several Shiprocket references list id 19 as
+                     // "Out For Pickup" (a pre-shipment state that should map to
+                     // 'processing', not 'shipped'). Left as-is pending confirmation
+                     // from real webhook logs; the string map handles the common
+                     // path, so this only bites if a bare numeric 19 ever arrives.
 };
 
 // ─── Internal status lifecycle ordering ───
@@ -205,7 +209,14 @@ exports.handleTrackingUpdate = async (req, res) => {
     const shipmentId    = body.shipment_id ? String(body.shipment_id) : '';
     const channelOrderId = body.channel_order_id ? String(body.channel_order_id) : '';
     const courierName   = body.courier_name || '';
-    const location      = body.current_city || body.scans?.location || '';
+    // Shiprocket sends `scans` as an ARRAY of scan objects, so reading
+    // `body.scans.location` was always undefined. Prefer current_city, then the
+    // most recent scan's location (last element), falling back to the first.
+    const scans = Array.isArray(body.scans) ? body.scans : [];
+    const scanLocation = scans.length
+      ? (scans[scans.length - 1]?.location || scans[0]?.location || '')
+      : '';
+    const location      = body.current_city || scanLocation || '';
 
     // Extract status — Shiprocket sends it as current_status or shipment_status
     const statusRaw  = body.current_status || body.shipment_status || '';
@@ -217,9 +228,15 @@ exports.handleTrackingUpdate = async (req, res) => {
     // ─── Map to internal status ───
     let mappedStatus = STATUS_STRING_MAP[statusUpper] || null;
 
-    // Fallback to numeric ID if string mapping didn't match
+    // Fallback to numeric ID if string mapping didn't match. The string map is
+    // authoritative and covers Shiprocket's live payloads; this numeric table is
+    // best-effort and NOT verified against Shiprocket's authenticated API docs,
+    // so log loudly when it's actually exercised — real webhook traffic is the
+    // reliable way to confirm each id, and a wrong id here would otherwise
+    // silently drive a status change.
     if (!mappedStatus && statusId) {
       mappedStatus = STATUS_ID_MAP[Number(statusId)] || null;
+      console.warn(`🔢 [Shiprocket Webhook] String status "${statusRaw || 'N/A'}" unmapped — using numeric fallback id=${statusId} → ${mappedStatus || 'still-unmapped'}. Verify this id against Shiprocket if unexpected.`);
     }
 
     if (!mappedStatus) {

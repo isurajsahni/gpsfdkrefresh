@@ -832,23 +832,37 @@ exports.trackOrder = async (req, res, next) => {
 
     let isValidContact = false;
 
+    // Phone comparisons normalise BOTH sides to the last 10 digits, so a
+    // customer who saved "+91 98765 43210" (or "098765 43210") at checkout still
+    // matches when they type "9876543210" here. Mirrors the phone normalisation
+    // in utils/shiprocket.js — without it, format drift between storage and this
+    // lookup locked valid customers out of tracking their own order.
+    const normalizePhone = (val) => {
+      const digits = (val || '').toString().replace(/\D/g, '');
+      return digits.length > 10 ? digits.slice(-10) : digits;
+    };
+    const contactPhone = normalizePhone(contact);
+    // Only treat the input as a phone when it resolves to a full 10-digit
+    // number, so an email that happens to contain digits can't match a phone.
+    const phoneMatches = (stored) => contactPhone.length === 10 && normalizePhone(stored) === contactPhone;
+
     // Check Guest Email
     if (order.guestEmail && order.guestEmail.toLowerCase() === cleanContact) {
       isValidContact = true;
     }
-    
+
     // Check Guest Phone
-    if (order.guestPhone && order.guestPhone === cleanContact) {
+    if (phoneMatches(order.guestPhone)) {
       isValidContact = true;
     }
-    
+
     // Check Shipping Address Phone
-    if (order.shippingAddress && order.shippingAddress.phone && order.shippingAddress.phone === cleanContact) {
+    if (order.shippingAddress && phoneMatches(order.shippingAddress.phone)) {
       isValidContact = true;
     }
 
     // Check Billing Address Phone
-    if (order.billingAddress && order.billingAddress.phone && order.billingAddress.phone === cleanContact) {
+    if (order.billingAddress && phoneMatches(order.billingAddress.phone)) {
       isValidContact = true;
     }
 
@@ -858,7 +872,7 @@ exports.trackOrder = async (req, res, next) => {
       const user = await User.findById(order.user);
       if (user) {
         if (user.email && user.email.toLowerCase() === cleanContact) isValidContact = true;
-        if (user.phone && user.phone === cleanContact) isValidContact = true;
+        if (phoneMatches(user.phone)) isValidContact = true;
       }
     }
 

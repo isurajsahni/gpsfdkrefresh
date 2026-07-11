@@ -68,11 +68,12 @@ const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
   0,
 );
 
-// One slide in the marquee.
+// One slide in the marquee — links through to the wall-canvas collection.
 const GalleryImage = ({ src, width }) => (
-  <div
+  <Link
+    to="/wall-canvas"
     style={{ width, height: GALLERY_HEIGHT }}
-    className="flex-shrink-0 rounded-2xl overflow-hidden bg-cream-dark"
+    className="block flex-shrink-0 rounded-2xl overflow-hidden bg-cream-dark"
   >
     <img
       src={src}
@@ -81,7 +82,7 @@ const GalleryImage = ({ src, width }) => (
       onError={handleImageError}
       className="w-full h-full object-cover"
     />
-  </div>
+  </Link>
 );
 
 // width: per-item Figma image width (px); height follows each image's ratio.

@@ -70,6 +70,20 @@ const STATUS_ID_MAP = {
   19: 'shipped',     // Out For Delivery
 };
 
+// ─── Internal status lifecycle ordering ───
+// Webhook events are NOT guaranteed to arrive in order and Shiprocket retries
+// deliveries, so a stale event (e.g. a re-delivered "IN TRANSIT" that lands
+// after "DELIVERED") must never move an order backward. Higher rank = later in
+// the lifecycle. `cancelled` is handled separately (terminal, and reachable
+// from any live state), so it is intentionally not ranked here.
+const STATUS_RANK = {
+  payment_pending: 0,
+  pending:         1,
+  processing:      2,
+  shipped:         3,
+  delivered:       4,
+};
+
 // ─── Human-readable messages for each raw status ───
 const STATUS_MESSAGE_MAP = {
   'NEW':               'Order created on Shiprocket',
@@ -245,17 +259,43 @@ exports.handleTrackingUpdate = async (req, res) => {
     if (!Array.isArray(order.notifiedStatuses)) order.notifiedStatuses = [];
 
     // ─── Duplicate detection ───
-    // Check if we already have a tracking entry with the exact same raw status
-    const isDuplicate = order.trackingHistory.some(entry => entry.srStatus === statusUpper);
+    // A single raw status (esp. "IN TRANSIT") legitimately fires many times as
+    // the package moves through hubs, each with a different location. Keying the
+    // dedup on raw status ALONE collapsed the whole journey into one timeline
+    // entry, so match on (srStatus + location): only a repeat of the same status
+    // at the same location is a true duplicate; a new-location scan is recorded.
+    const eventLocation = (location || '').trim();
+    const isDuplicate = order.trackingHistory.some(
+      entry => entry.srStatus === statusUpper && (entry.location || '').trim() === eventLocation
+    );
 
     if (isDuplicate && order.status === mappedStatus) {
-      console.log(`🔁 [Shiprocket Webhook] Duplicate event for ${order.orderNumber}: "${statusRaw}" already recorded — skipping`);
+      console.log(`🔁 [Shiprocket Webhook] Duplicate event for ${order.orderNumber}: "${statusRaw}" @ "${eventLocation || 'N/A'}" already recorded — skipping`);
       return res.status(200).json({ success: true, duplicate: true });
     }
 
     // ─── Track previous status for transition logic ───
     const previousStatus = order.status;
-    const statusChanged = previousStatus !== mappedStatus;
+
+    // ─── Decide whether this event may CHANGE order.status (forward-only) ───
+    // Guards against out-of-order / re-delivered webhooks regressing an order:
+    //  • `cancelled` is terminal — a stale live-shipment event must not un-cancel
+    //  • a cancellation / RTO is authoritative and may arrive from any live state
+    //  • otherwise only move forward in the lifecycle, never backward
+    // (History is still appended below regardless, so the timeline stays complete.)
+    let willAdvance;
+    if (previousStatus === mappedStatus) {
+      willAdvance = false;
+    } else if (previousStatus === 'cancelled') {
+      willAdvance = false;
+    } else if (mappedStatus === 'cancelled') {
+      willAdvance = true;
+    } else {
+      willAdvance = (STATUS_RANK[mappedStatus] ?? -1) > (STATUS_RANK[previousStatus] ?? -1);
+    }
+    if (!willAdvance && previousStatus !== mappedStatus) {
+      console.log(`↩️ [Shiprocket Webhook] Not advancing ${order.orderNumber}: "${mappedStatus}" does not supersede current "${previousStatus}" (out-of-order/stale event) — recording history only`);
+    }
 
     // ─── Update shipping metadata ───
     // First time we see an AWB for this order? (checked before assignment below)
@@ -266,13 +306,15 @@ exports.handleTrackingUpdate = async (req, res) => {
     if (courierName && !order.courierName) order.courierName = courierName;
     if (shipmentId && !order.shipmentId) order.shipmentId = shipmentId;
 
-    // ─── Update order status ───
-    if (statusChanged) {
+    // ─── Update order status (forward-only, per willAdvance above) ───
+    if (willAdvance) {
       order.status = mappedStatus;
     }
 
     // ─── Set delivered timestamp ───
-    if (mappedStatus === 'delivered' && !order.deliveredAt) {
+    // Keyed on the order's ACTUAL status after the guard above, so a stale
+    // "DELIVERED" that didn't advance the order never back-dates deliveredAt.
+    if (order.status === 'delivered' && !order.deliveredAt) {
       order.deliveredAt = new Date();
     }
 
@@ -283,7 +325,7 @@ exports.handleTrackingUpdate = async (req, res) => {
         status:    mappedStatus,
         srStatus:  statusUpper,
         message,
-        location:  location || '',
+        location:  eventLocation,
         timestamp: new Date(),
       });
     }
@@ -298,7 +340,11 @@ exports.handleTrackingUpdate = async (req, res) => {
     const alreadyNotified =
       order.notifiedStatuses.includes(mappedStatus) ||
       (mappedStatus === 'shipped' && order.trackingEmailSent); // legacy flag for pre-existing orders
-    const shouldSendEmail = emailableStatuses.includes(mappedStatus) && !alreadyNotified;
+    // Only notify when this event actually moved the order INTO mappedStatus
+    // (or the order is already there) — never on a stale backward event, so a
+    // re-delivered "IN TRANSIT" after "DELIVERED" can't send a late shipped email.
+    const isForwardOrCurrent = willAdvance || previousStatus === mappedStatus;
+    const shouldSendEmail = emailableStatuses.includes(mappedStatus) && !alreadyNotified && isForwardOrCurrent;
     if (shouldSendEmail) {
       order.notifiedStatuses.push(mappedStatus);
       if (mappedStatus === 'shipped') order.trackingEmailSent = true; // keep legacy flag in sync

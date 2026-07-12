@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { HiOutlineChartBar, HiOutlineClipboardList, HiOutlineArrowLeft, HiOutlineMenu } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
+import SEO from '../seo/SEO';
 
 const navItems = [
   { path: '/marketing', icon: HiOutlineChartBar, label: 'Dashboard' },
@@ -15,6 +16,7 @@ const MarketingLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[60px]">
+      <SEO title="Marketing Hub | GPSFDK" noindex />
       {/* Mobile toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)} className="fixed top-24 left-4 z-50 lg:hidden bg-secondary text-white p-2 rounded-lg shadow-lg">
         <HiOutlineMenu className="w-5 h-5" />

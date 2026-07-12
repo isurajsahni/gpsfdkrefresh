@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/seo/SEO';
 import { FaSearch, FaBox, FaCheckCircle, FaTruck, FaMapMarkerAlt, FaTimesCircle } from 'react-icons/fa';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import API from '../utils/api';
@@ -111,10 +111,11 @@ const TrackOrderPage = () => {
 
   return (
     <div className="min-h-screen bg-primary pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      <Helmet>
-        <title>Track Order | GPSFDK</title>
-        <meta name="description" content="Track your GPSFDK order status easily using your Order ID and Email/Phone Number." />
-      </Helmet>
+      <SEO
+        title="Track Order | GPSFDK"
+        description="Track your GPSFDK order status easily using your Order ID and Email/Phone Number."
+        noindex
+      />
 
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">

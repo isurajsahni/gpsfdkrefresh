@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
+import SEO from '../components/seo/SEO';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
@@ -284,6 +285,7 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen bg-primary pt-[120px] pb-20">
+      <SEO title="My Account | GPSFDK" noindex />
       <div className="max-w-6xl mx-auto section-padding flex flex-col md:flex-row gap-8">
 
         {/* ─── Sidebar Navigation ─────────────────────────────────────── */}

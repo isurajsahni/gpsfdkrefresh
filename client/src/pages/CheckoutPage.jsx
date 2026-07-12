@@ -12,6 +12,7 @@ import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
 import { newEventId, getFbCookies } from '../utils/metaPixel';
+import SEO from '../components/seo/SEO';
 
 // Render's free tier spins the API down after ~15 min idle. The first checkout
 // after that hits a cold container whose connection to Razorpay isn't warm yet,
@@ -633,6 +634,7 @@ const CheckoutPage = () => {
 
   return (
     <div className="min-h-screen bg-primary pt-[120px] pb-20">
+      <SEO title="Checkout | GPSFDK" noindex />
       <div className="max-w-4xl mx-auto section-padding">
         <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-2xl sm:text-3xl font-heading font-bold text-secondary mb-8">
           Checkout

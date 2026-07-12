@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineTrendingUp } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
+import SEO from '../seo/SEO';
 
 const navItems = [
   { path: '/admin', icon: HiOutlineChartBar, label: 'Dashboard' },
@@ -24,6 +25,7 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[60px]">
+      <SEO title="Admin Panel | GPSFDK" noindex />
       {/* Mobile toggle */}
       <button onClick={() => setSidebarOpen(!sidebarOpen)} className="fixed top-24 left-4 z-50 lg:hidden bg-secondary text-white p-2 rounded-lg shadow-lg">
         <HiOutlineMenu className="w-5 h-5" />

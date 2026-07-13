@@ -129,7 +129,7 @@ function ScrollManager() {
 
     // Fire Google Analytics pageview on every route change (SPA support)
     if (typeof window.gtag === 'function') {
-      window.gtag('config', 'G-5VKTKJYN5R', {
+      window.gtag('config', 'G-ZCBBBEV6VE', {
         page_path: location.pathname + location.search,
       });
     }

@@ -50,11 +50,10 @@ const LINK_COLUMNS = [
   {
     title: 'Support',
     links: [
-      { name: 'Track Order', path: '/track-order' },
+      { name: 'Support', path: '/support' },
       { name: 'Shipping & Delivery', path: '/shipping-policy' },
       { name: 'Return & Refunds', path: '/returns-refunds' },
       { name: 'FAQs', path: '/faq' },
-      { name: 'Contact Support', path: '/support' },
     ],
   },
   {

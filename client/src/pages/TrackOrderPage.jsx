@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import SEO from '../components/seo/SEO';
 import { FaSearch, FaBox, FaCheckCircle, FaTruck, FaMapMarkerAlt, FaTimesCircle } from 'react-icons/fa';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../utils/imageOptimizer';
+import { KindButton, KindHero } from '../components/kindact/KindUI';
+import heroImage from '../assets/image/shipping_demo.webp';
 
 const TrackOrderPage = () => {
   const [searchParams] = useSearchParams();
@@ -110,28 +113,31 @@ const TrackOrderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-primary pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
         title="Track Order | GPSFDK"
         description="Track your GPSFDK order status easily using your Order ID and Email/Phone Number."
         noindex
       />
 
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-heading font-bold text-secondary mb-4">
-            Track Your Order
-          </h1>
-          <p className="text-secondary/70 max-w-xl mx-auto">
-            Enter your Order ID and the Email or Phone number you used during checkout to see the current status of your shipment.
-          </p>
-        </div>
-
-        {/* Tracking Form */}
-        <div className="bg-secondary/5 rounded-2xl p-6 md:p-8 backdrop-blur-sm border border-secondary/10 shadow-lg mb-12">
-          <form onSubmit={handleTrack} className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <label htmlFor="orderId" className="block text-sm font-medium text-secondary/80 mb-1">
+      {/* ─── Hero + tracking form ─── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <KindHero
+          image={heroImage}
+          crumb="Home / Track order"
+          title={
+            <>
+              Follow your order, <span className="text-kind-lime">every step.</span>
+            </>
+          }
+          description="Enter your Order ID and the Email or Phone number you used during checkout to see the current status of your shipment."
+        >
+          <form
+            onSubmit={handleTrack}
+            className="relative mt-8 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 sm:items-end max-w-3xl"
+          >
+            <div>
+              <label htmlFor="orderId" className="block text-sm font-medium text-white/90 mb-1.5 pl-2">
                 Order ID
               </label>
               <input
@@ -140,12 +146,12 @@ const TrackOrderPage = () => {
                 placeholder="e.g. GPS-XYZ123"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value)}
-                className="w-full bg-primary/50 border border-secondary/20 rounded-xl px-4 py-3 text-secondary focus:outline-none focus:border-accent transition-colors"
+                className="w-full bg-white text-kind-ink placeholder-kind-ink/40 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-kind-lime border border-transparent transition-shadow"
                 required
               />
             </div>
-            <div className="flex-1">
-              <label htmlFor="contact" className="block text-sm font-medium text-secondary/80 mb-1">
+            <div>
+              <label htmlFor="contact" className="block text-sm font-medium text-white/90 mb-1.5 pl-2">
                 Email or Phone
               </label>
               <input
@@ -154,52 +160,51 @@ const TrackOrderPage = () => {
                 placeholder="Enter email or phone"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
-                className="w-full bg-primary/50 border border-secondary/20 rounded-xl px-4 py-3 text-secondary focus:outline-none focus:border-accent transition-colors"
+                className="w-full bg-white text-kind-ink placeholder-kind-ink/40 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-kind-lime border border-transparent transition-shadow"
                 required
               />
             </div>
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full md:w-auto bg-accent hover:bg-accent/90 text-white font-medium rounded-xl px-8 py-3 flex items-center justify-center gap-2 transition-all disabled:opacity-70 disabled:cursor-not-allowed h-[50px]"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <FaSearch /> Track
-                  </>
-                )}
-              </button>
-            </div>
+            <KindButton type="submit" variant="lime" disabled={loading}>
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-kind-ink/30 border-t-kind-ink rounded-full animate-spin" />
+                  Tracking…
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-2">
+                  <FaSearch className="w-4 h-4" /> Track
+                </span>
+              )}
+            </KindButton>
           </form>
-        </div>
+        </KindHero>
+      </motion.div>
 
+      <div className="max-w-3xl mx-auto px-3 sm:px-5">
         {/* Results Section */}
         {orderData && (
-          <div className="bg-secondary/5 rounded-2xl p-6 md:p-8 border border-secondary/10 shadow-lg animate-fade-in">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-secondary/10 gap-4">
+          <div className="bg-white rounded-[24px] border border-kind-forest/10 p-6 md:p-8 mt-8 sm:mt-10 animate-fade-in">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-kind-ink/10 gap-4">
               <div>
-                <h2 className="text-xl font-bold text-secondary">
+                <h2 className="text-xl font-heading font-bold text-kind-ink">
                   Order #{orderData.orderNumber}
                 </h2>
-                <p className="text-secondary/60 text-sm mt-1">
+                <p className="text-kind-ink/60 text-sm mt-1">
                   Placed on {new Date(orderData.createdAt).toLocaleDateString()}
                 </p>
               </div>
               <div className="text-left md:text-right">
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                   ${isCancelled ? 'bg-red-500/10 text-red-500' :
-                    orderData.status === 'delivered' ? 'bg-green-500/10 text-green-500' :
+                    orderData.status === 'delivered' ? 'bg-green-500/10 text-green-600' :
                     isPaymentPending ? 'bg-orange-500/10 text-orange-500' :
-                    'bg-accent/10 text-accent'}
+                    'bg-kind-mint text-kind-forest'}
                 `}>
-                  {isCancelled ? 'Cancelled' : 
-                   isPaymentPending ? 'Payment Pending' : 
+                  {isCancelled ? 'Cancelled' :
+                   isPaymentPending ? 'Payment Pending' :
                    orderData.status.charAt(0).toUpperCase() + orderData.status.slice(1)}
                 </span>
-                <p className="text-secondary/80 font-semibold mt-2 text-lg">
+                <p className="text-kind-ink font-semibold mt-2 text-lg">
                   Total: ₹{orderData.totalPrice}
                 </p>
               </div>
@@ -210,9 +215,9 @@ const TrackOrderPage = () => {
               <div className="py-6">
                 <div className="relative">
                   {/* Progress Line */}
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-secondary/20 rounded-full hidden sm:block"></div>
-                  <div 
-                    className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-accent rounded-full transition-all duration-500 hidden sm:block"
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-kind-ink/10 rounded-full hidden sm:block"></div>
+                  <div
+                    className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-kind-forest rounded-full transition-all duration-500 hidden sm:block"
                     style={{ width: `${Math.max(0, (currentStep / (steps.length - 1)) * 100)}%` }}
                   ></div>
 
@@ -227,21 +232,21 @@ const TrackOrderPage = () => {
                         <div key={step.id} className="relative flex sm:flex-col items-center gap-4 sm:gap-2 z-10">
                           <div className={`
                             w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center border-2 transition-colors duration-300
-                            ${isCompleted 
-                              ? 'bg-accent border-accent text-white' 
-                              : 'bg-primary border-secondary/30 text-secondary/30'}
-                            ${isCurrent ? 'ring-4 ring-accent/20' : ''}
+                            ${isCompleted
+                              ? 'bg-kind-forest border-kind-forest text-kind-lime'
+                              : 'bg-white border-kind-ink/20 text-kind-ink/30'}
+                            ${isCurrent ? 'ring-4 ring-kind-lime/40' : ''}
                           `}>
                             <StepIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
-                          
+
                           {/* Mobile View Line */}
                           {index !== steps.length - 1 && (
-                            <div className={`w-0.5 h-10 sm:hidden ${isCompleted ? 'bg-accent' : 'bg-secondary/20'}`}></div>
+                            <div className={`w-0.5 h-10 sm:hidden ${isCompleted ? 'bg-kind-forest' : 'bg-kind-ink/10'}`}></div>
                           )}
 
                           <div className="sm:text-center sm:absolute sm:top-14 sm:-translate-x-1/2 sm:left-1/2 sm:w-24">
-                            <p className={`text-sm font-medium ${isCompleted ? 'text-secondary' : 'text-secondary/50'}`}>
+                            <p className={`text-sm font-medium ${isCompleted ? 'text-kind-ink' : 'text-kind-ink/50'}`}>
                               {step.label}
                             </p>
                           </div>
@@ -264,21 +269,21 @@ const TrackOrderPage = () => {
 
             {/* Tracking / Shipping info */}
             {(orderData.awbCode || orderData.trackingNumber) && (
-              <div className="mt-8 sm:mt-16 bg-primary/50 rounded-xl p-6 border border-secondary/10">
+              <div className="mt-8 sm:mt-16 bg-kind-mist rounded-[20px] p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-1">AWB / Tracking Number</p>
-                    <p className="text-accent font-mono text-lg">{orderData.awbCode || orderData.trackingNumber}</p>
+                    <p className="text-kind-ink/60 text-xs uppercase tracking-wider font-bold mb-1">AWB / Tracking Number</p>
+                    <p className="text-kind-forest font-mono text-lg">{orderData.awbCode || orderData.trackingNumber}</p>
                     {orderData.courierName && (
-                      <p className="text-secondary/80 text-sm mt-1">Courier: <span className="font-bold text-secondary">{orderData.courierName}</span></p>
+                      <p className="text-kind-ink/70 text-sm mt-1">Courier: <span className="font-bold text-kind-ink">{orderData.courierName}</span></p>
                     )}
                   </div>
                   {shiprocketData?.tracking_data?.track_url && (
-                    <a 
-                      href={shiprocketData.tracking_data.track_url} 
-                      target="_blank" 
+                    <a
+                      href={shiprocketData.tracking_data.track_url}
+                      target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center px-4 py-2 border border-accent text-accent hover:bg-accent hover:text-white rounded-lg transition-colors text-sm font-medium"
+                      className="inline-flex items-center justify-center border border-kind-forest text-kind-forest hover:bg-kind-forest hover:text-white rounded-full px-4 py-2 transition-colors text-sm font-medium"
                     >
                       Real-time Tracking <FaTruck className="ml-2 w-3 h-3" />
                     </a>
@@ -289,16 +294,16 @@ const TrackOrderPage = () => {
 
             {/* DB-persisted Tracking Timeline (primary — always available once webhook fires) */}
             {orderData.trackingHistory && orderData.trackingHistory.length > 0 && (
-              <div className="mt-8 bg-primary/50 rounded-xl p-6 border border-secondary/10">
+              <div className="mt-8 bg-kind-mist rounded-[20px] p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold">Tracking Timeline</p>
+                  <p className="text-kind-ink/60 text-xs uppercase tracking-wider font-bold">Tracking Timeline</p>
                   {orderData.lastTrackingUpdate && (
-                    <p className="text-secondary/40 text-xs">
+                    <p className="text-kind-ink/40 text-xs">
                       Last updated: {new Date(orderData.lastTrackingUpdate).toLocaleString()}
                     </p>
                   )}
                 </div>
-                <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
+                <div className="relative border-l-2 border-kind-ink/15 ml-2 mt-2 space-y-6">
                   {[...orderData.trackingHistory].reverse().map((entry, index) => {
                     const statusColors = {
                       processing: 'bg-amber-500',
@@ -306,17 +311,17 @@ const TrackOrderPage = () => {
                       delivered:  'bg-green-500',
                       cancelled:  'bg-red-500',
                     };
-                    const dotColor = statusColors[entry.status] || 'bg-secondary/40';
+                    const dotColor = statusColors[entry.status] || 'bg-kind-ink/40';
 
                     return (
                       <div key={index} className="relative pl-6">
-                        <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? `${dotColor} animate-pulse` : dotColor} opacity-${index === 0 ? '100' : '70'}`}></div>
-                        
-                        <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
+                        <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-kind-mist ${index === 0 ? `${dotColor} animate-pulse` : dotColor} opacity-${index === 0 ? '100' : '70'}`}></div>
+
+                        <p className={`font-semibold ${index === 0 ? 'text-kind-forest' : 'text-kind-ink'}`}>
                           {entry.message || entry.srStatus || 'Status Updated'}
                         </p>
-                        
-                        <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
+
+                        <div className="text-sm mt-1 text-kind-ink/60 flex flex-col sm:flex-row sm:gap-4">
                           {entry.timestamp && (
                             <span className="flex items-center gap-1">
                               <FaCheckCircle className="w-3 h-3 opacity-50" />
@@ -348,26 +353,26 @@ const TrackOrderPage = () => {
 
             {/* Live Courier Updates from Shiprocket API (secondary enrichment) */}
             {shiprocketData?.tracking_data && (
-              <div className="mt-6 bg-primary/50 rounded-xl p-6 border border-secondary/10">
-                <p className="text-secondary/60 text-xs uppercase tracking-wider font-bold mb-4">Live Courier Updates</p>
-                
+              <div className="mt-6 bg-kind-mist rounded-[20px] p-6">
+                <p className="text-kind-ink/60 text-xs uppercase tracking-wider font-bold mb-4">Live Courier Updates</p>
+
                 {(() => {
                   const trackObj = shiprocketData.tracking_data.shipment_track?.[0] || {};
                   const activities = shiprocketData.tracking_data.shipment_track_activities || trackObj.activities || [];
-                  
+
                   if (activities.length > 0) {
                     return (
-                      <div className="relative border-l-2 border-secondary/20 ml-2 mt-2 space-y-6">
+                      <div className="relative border-l-2 border-kind-ink/15 ml-2 mt-2 space-y-6">
                         {activities.map((activity, index) => (
                           <div key={index} className="relative pl-6">
                             {/* Dot for timeline */}
-                            <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-primary ${index === 0 ? 'bg-accent animate-pulse' : 'bg-secondary/40'}`}></div>
-                            
-                            <p className={`font-semibold ${index === 0 ? 'text-accent' : 'text-secondary'}`}>
+                            <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-kind-mist ${index === 0 ? 'bg-kind-forest animate-pulse' : 'bg-kind-ink/40'}`}></div>
+
+                            <p className={`font-semibold ${index === 0 ? 'text-kind-forest' : 'text-kind-ink'}`}>
                               {activity.activity || activity.status || 'Status Updated'}
                             </p>
-                            
-                            <div className="text-sm mt-1 text-secondary/60 flex flex-col sm:flex-row sm:gap-4">
+
+                            <div className="text-sm mt-1 text-kind-ink/60 flex flex-col sm:flex-row sm:gap-4">
                               {activity.date && (
                                 <span className="flex items-center gap-1">
                                   <FaCheckCircle className="w-3 h-3 opacity-50" />
@@ -388,15 +393,15 @@ const TrackOrderPage = () => {
                   } else {
                     // Fallback if no activities array but we have current status
                     return trackObj.current_status ? (
-                      <div className="flex items-center gap-3 text-secondary">
+                      <div className="flex items-center gap-3 text-kind-ink">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <p className="font-medium">{trackObj.current_status}</p>
                         {trackObj.last_location && (
-                          <span className="text-secondary/50 text-sm ml-2">({trackObj.last_location})</span>
+                          <span className="text-kind-ink/50 text-sm ml-2">({trackObj.last_location})</span>
                         )}
                       </div>
                     ) : (
-                      <p className="text-secondary/60 text-sm italic py-2">Tracking details will update once the courier scans your package.</p>
+                      <p className="text-kind-ink/60 text-sm italic py-2">Tracking details will update once the courier scans your package.</p>
                     );
                   }
                 })()}
@@ -404,28 +409,28 @@ const TrackOrderPage = () => {
             )}
 
             {/* Order Items */}
-            <div className="mt-8 sm:mt-16 pt-6 border-t border-secondary/10">
-              <h3 className="text-lg font-bold text-secondary mb-4">Items Ordered</h3>
+            <div className="mt-8 sm:mt-16 pt-6 border-t border-kind-ink/10">
+              <h3 className="text-lg font-heading font-bold text-kind-ink mb-4">Items Ordered</h3>
               <div className="space-y-4">
                 {orderData.items.map((item, index) => (
-                  <div key={index} className="flex items-center gap-4 bg-primary/30 p-3 rounded-xl border border-secondary/5 hover:border-secondary/20 transition-colors">
-                    <img 
-                      src={optimizeImage(item.image, 200)} 
-                      alt={item.name} 
-                      className="w-16 h-16 object-cover rounded-lg"
+                  <div key={index} className="flex items-center gap-4 bg-kind-mist/60 p-3 rounded-[16px] hover:bg-kind-mist transition-colors">
+                    <img
+                      src={optimizeImage(item.image, 200)}
+                      alt={item.name}
+                      className="w-16 h-16 object-cover rounded-[12px]"
                     />
                     <div className="flex-1 min-w-0">
-                      <Link 
-                        to={item.productSlug ? `/product/${item.productSlug}` : '#'} 
-                        className="text-secondary font-medium hover:text-accent truncate block"
+                      <Link
+                        to={item.productSlug ? `/product/${item.productSlug}` : '#'}
+                        className="text-kind-ink font-medium hover:text-kind-forest truncate block"
                       >
                         {item.name}
                       </Link>
-                      <p className="text-sm text-secondary/60 mt-1">
+                      <p className="text-sm text-kind-ink/60 mt-1">
                         Qty: {item.quantity} × ₹{item.price}
                       </p>
                       {item.variation && (
-                        <p className="text-xs text-secondary/50 mt-1 capitalize">
+                        <p className="text-xs text-kind-ink/50 mt-1 capitalize">
                           {Object.values(item.variation).filter(Boolean).join(' • ')}
                         </p>
                       )}
@@ -434,17 +439,17 @@ const TrackOrderPage = () => {
                 ))}
               </div>
             </div>
-            
+
             {/* Delivery address */}
             {orderData.shippingAddress && orderData.shippingAddress.city && (
-               <div className="mt-6 p-4 rounded-xl bg-accent/5 border border-accent/10">
+               <div className="mt-6 p-4 rounded-[16px] bg-kind-lime/20 border border-kind-lime/40">
                  <div className="flex items-start gap-3">
-                    <div className="mt-1 flex-shrink-0 text-accent">
+                    <div className="mt-1 flex-shrink-0 text-kind-forest">
                       <FaMapMarkerAlt />
                     </div>
                     <div>
-                      <p className="text-sm text-secondary/80 font-medium">Delivery Destination</p>
-                      <p className="text-sm text-secondary mt-1 font-semibold">{orderData.shippingAddress.city}, {orderData.shippingAddress.state}</p>
+                      <p className="text-sm text-kind-ink/80 font-medium">Delivery Destination</p>
+                      <p className="text-sm text-kind-ink mt-1 font-semibold">{orderData.shippingAddress.city}, {orderData.shippingAddress.state}</p>
                     </div>
                  </div>
                </div>

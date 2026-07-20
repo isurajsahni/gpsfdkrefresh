@@ -295,7 +295,7 @@ const StorePage = () => {
       </section>
 
       {/* ─── What we offer ─── */}
-      <section className="py-[55px] section-padding">
+      <section className="pt-[70px] pb-[55px] section-padding">
         <div className="max-w-[1200px] mx-auto">
           <Heading bold="What we offer." light="To change your life." />
           <div className="w-full flex flex-wrap items-end justify-between gap-[30px] max-[500px]:grid max-[500px]:grid-cols-2 max-[500px]:gap-x-4 max-[500px]:gap-y-8 max-[500px]:justify-items-center">

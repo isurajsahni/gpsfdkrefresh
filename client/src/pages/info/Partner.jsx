@@ -1,9 +1,11 @@
 import { HiOutlineUserGroup } from 'react-icons/hi';
 import ComingSoon from '../../components/common/ComingSoon';
+import heroImage from '../../assets/image/store page/Rectangle 174 (1).webp';
 
 const Partner = () => (
   <ComingSoon
     Icon={HiOutlineUserGroup}
+    image={heroImage}
     eyebrow="Partner with GPS"
     title="Partner"
     tagline="Let's build something remarkable, together."

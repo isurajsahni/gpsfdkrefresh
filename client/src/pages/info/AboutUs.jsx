@@ -1,176 +1,183 @@
 import { motion } from 'framer-motion';
 import aboutUsImage from '../../assets/image/about_us_demo.webp';
 import SEO from '../../components/seo/SEO';
+import { Eyebrow, KindCTA, KindHero, KindSectionHead } from '../../components/kindact/KindUI';
+import heroImage from '../../assets/image/about_us_demo.webp';
+
+const WHAT_WE_DO = [
+  {
+    title: 'Advertising & Marketing',
+    items: ['Out-of-Home (DOH) Advertising', 'Social Media Management', 'Commercial Content Production'],
+  },
+  {
+    title: 'Digital Solutions & Tech',
+    items: ['Web Hosting & Development', 'Digital Media Creation'],
+  },
+  {
+    title: 'Event Management',
+    items: ['Corporate & Cultural Events', 'School of Creation - Innovation Hub'],
+  },
+  {
+    title: 'Home & Lifestyle',
+    items: ['Customised House Nameplates', 'Elegant Canvas Art'],
+  },
+];
+
+const CORE_VALUES = [
+  { title: 'Innovation', desc: "We prioritise our clients' needs and continuously adapt." },
+  { title: 'Sustainability', desc: 'Ethical and sustainable business practices matter to us.' },
+  { title: 'Community', desc: 'Nurturing collective advancement and growth for all.' },
+  { title: 'Open Knowledge', desc: 'No holding patents, ensuring innovation is a communal asset.' },
+];
+
+const fadeUp = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+};
 
 const AboutUs = () => {
   return (
-    <div className="min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary overflow-hidden">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
         title="About GPSFDK | Premium Canvas Prints & House Nameplates India"
         description="GPSFDK crafts premium wall canvas prints and custom house nameplates in India. Discover our story, craftsmanship, and commitment to luxury home décor."
       />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
 
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-16 md:mb-20 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold text-secondary mb-4 sm:mb-6 tracking-wide dropdown-shadow leading-tight">About Us</h1>
-          <div className="w-24 sm:w-32 h-1 sm:h-1.5 bg-accent mx-auto rounded-full shadow-lg shadow-accent/20"></div>
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-secondary/70 font-body max-w-2xl mx-auto px-2 sm:px-0">
-             Discover our journey, mission, and the passion that drives us forward.
-          </p>
-        </motion.div>
+      {/* ─── Hero ─── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <KindHero
+          image={heroImage}
+          crumb="Home / About GPS"
+          title={
+            <>
+              We make luxury <span className="text-kind-lime">accessible to all.</span>
+            </>
+          }
+          description="Discover our journey, mission, and the passion that drives us forward."
+        />
+      </motion.div>
 
-        {/* Zig Zag Section 1 */}
-        <div className="flex flex-col md:flex-row items-center gap-8 sm:gap-12 mb-20 md:mb-24">
-          <motion.div 
-            initial={{ opacity: 0, x: -40 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="w-full md:w-1/2"
-          >
-            <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group border border-secondary/10">
-              <div className="absolute inset-0 bg-accent/20 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
-              <img src={aboutUsImage} alt="About Us Creative Workspace" className="w-full h-56 sm:h-80 md:h-[500px] object-cover hover:scale-105 transition-transform duration-700" />
-            </div>
-          </motion.div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-5">
+        {/* ─── Who we are ─── */}
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center mt-10 sm:mt-14"
+        >
+          <div className="rounded-[24px] overflow-hidden">
+            <img
+              src={aboutUsImage}
+              alt="About Us Creative Workspace"
+              className="w-full h-64 sm:h-80 lg:h-[480px] object-cover hover:scale-105 transition-transform duration-700"
+            />
+          </div>
 
-          <motion.div 
-            initial={{ opacity: 0, x: 40 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="w-full md:w-1/2 prose prose-base sm:prose-lg prose-invert max-w-none font-body"
-          >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-accent mb-4 sm:mb-6 leading-tight">Who We Are</h2>
-            <div className="space-y-4 sm:space-y-6 text-secondary/80">
-              <p className="leading-relaxed text-base sm:text-lg">
+          <div>
+            <Eyebrow>Who we are</Eyebrow>
+            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight text-kind-ink">
+              Who We Are
+            </h2>
+            <div className="mt-5 space-y-4 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+              <p>
                 At Radhe Radhe GPS Private Limited, we are more than just a business group — we are a dynamic entity with a strong commitment to learning, innovation, and excellence. Unlike companies that focus on a single niche, we operate across multiple industries, offering diverse, high-quality solutions that blend creativity with affordability.
               </p>
-              <p className="leading-relaxed text-base sm:text-lg pb-4 border-b border-secondary/10">
+              <p>
                 Our mission is simple yet powerful: to make luxury accessible to all. We believe that premium services and products should not be limited to a select few but should be available to everyone.
               </p>
-              <div>
-                <h3 className="text-xl sm:text-2xl font-bold text-secondary mb-2 sm:mb-3 mt-4 sm:mt-6">Our Journey</h3>
-                <p className="leading-relaxed text-sm sm:text-base">
-                  We started as an advertisement technology and signage startup, earning recognition from the DPIIT, Government of India. Over time, we expanded our expertise, and today, We proudly operate billboards and LED Videowall screens across North India.
-                </p>
-              </div>
             </div>
-          </motion.div>
-        </div>
-
-        {/* What We Do Section */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }} 
-          whileInView={{ opacity: 1, y: 0 }} 
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-20 md:mb-24 bg-secondary/5 rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-secondary/10"
-        >
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-secondary mb-3 sm:mb-4">What We Do</h2>
-            <div className="w-12 sm:w-16 h-1 bg-accent mx-auto rounded-full"></div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10">
-            <div className="bg-primary/50 p-5 sm:p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-accent/30 group">
-              <h3 className="text-lg sm:text-xl font-bold text-accent mb-3 sm:mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm shrink-0">1</span> 
-                <span>Advertising & Marketing</span>
-              </h3>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-secondary/70 group-hover:text-secondary/90 transition-colors">
-                <li>• Out-of-Home (DOH) Advertising</li>
-                <li>• Social Media Management</li>
-                <li>• Commercial Content Production</li>
-              </ul>
-            </div>
-            
-            <div className="bg-primary/50 p-5 sm:p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-accent/30 group">
-              <h3 className="text-lg sm:text-xl font-bold text-accent mb-3 sm:mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm shrink-0">2</span> 
-                <span>Digital Solutions & Tech</span>
-              </h3>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-secondary/70 group-hover:text-secondary/90 transition-colors">
-                <li>• Web Hosting & Development</li>
-                <li>• Digital Media Creation</li>
-              </ul>
-            </div>
-            
-            <div className="bg-primary/50 p-5 sm:p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-accent/30 group">
-              <h3 className="text-lg sm:text-xl font-bold text-accent mb-3 sm:mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm shrink-0">3</span> 
-                <span>Event Management</span>
-              </h3>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-secondary/70 group-hover:text-secondary/90 transition-colors">
-                <li>• Corporate & Cultural Events</li>
-                <li>• School of Creation - Innovation Hub</li>
-              </ul>
-            </div>
-            
-            <div className="bg-primary/50 p-5 sm:p-8 rounded-2xl hover:shadow-lg transition-all duration-300 border border-transparent hover:border-accent/30 group">
-              <h3 className="text-lg sm:text-xl font-bold text-accent mb-3 sm:mb-4 flex items-center gap-3">
-                <span className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-sm shrink-0">4</span> 
-                <span>Home & Lifestyle</span>
-              </h3>
-              <ul className="space-y-2 sm:space-y-3 text-sm sm:text-base text-secondary/70 group-hover:text-secondary/90 transition-colors">
-                <li>• Customised House Nameplates</li>
-                <li>• Elegant Canvas Art</li>
-              </ul>
+            <div className="mt-6 bg-kind-mist rounded-[20px] p-6">
+              <h3 className="font-heading font-bold text-kind-ink text-lg sm:text-xl">Our Journey</h3>
+              <p className="mt-2 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+                We started as an advertisement technology and signage startup, earning recognition from the DPIIT, Government of India. Over time, we expanded our expertise, and today, We proudly operate billboards and LED Videowall screens across North India.
+              </p>
             </div>
           </div>
         </motion.div>
 
-        {/* Core Values & Vision */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12">
-          <motion.section 
-            initial={{ opacity: 0, x: -30 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="bg-accent/10 p-6 sm:p-10 rounded-2xl sm:rounded-3xl border border-accent/20"
-          >
-            <h2 className="text-2xl sm:text-3xl font-heading font-bold text-secondary mb-6">Our Core Values</h2>
-            <ul className="space-y-5 text-sm sm:text-base text-secondary/80">
-              <li className="flex flex-col sm:flex-row gap-1 sm:gap-4">
-                 <strong className="text-accent sm:min-w-[120px]">Innovation</strong> 
-                 <p>We prioritise our clients' needs and continuously adapt.</p>
-              </li>
-              <li className="flex flex-col sm:flex-row gap-1 sm:gap-4">
-                 <strong className="text-accent sm:min-w-[120px]">Sustainability</strong> 
-                 <p>Ethical and sustainable business practices matter to us.</p>
-              </li>
-              <li className="flex flex-col sm:flex-row gap-1 sm:gap-4">
-                 <strong className="text-accent sm:min-w-[120px]">Community</strong> 
-                 <p>Nurturing collective advancement and growth for all.</p>
-              </li>
-              <li className="flex flex-col sm:flex-row gap-1 sm:gap-4">
-                 <strong className="text-accent sm:min-w-[120px]">Open Knowledge</strong> 
-                 <p>No holding patents, ensuring innovation is a communal asset.</p>
-              </li>
-            </ul>
-          </motion.section>
+        {/* ─── What we do ─── */}
+        <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="mt-14 sm:mt-20">
+          <KindSectionHead
+            eyebrow="What we do"
+            title="What We Do"
+            sub="Diverse, high-quality solutions across multiple industries — creative, digital and beyond."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10">
+            {WHAT_WE_DO.map((card, i) => (
+              <div
+                key={card.title}
+                className="bg-kind-mist rounded-[20px] p-6 flex flex-col gap-4 hover:-translate-y-1 transition-transform duration-300"
+              >
+                <span className="w-10 h-10 rounded-full bg-kind-forest text-kind-lime font-heading font-bold flex items-center justify-center">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="font-heading font-bold text-kind-ink">{card.title}</h3>
+                  <ul className="mt-3 space-y-2 text-sm text-kind-ink/70">
+                    {card.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-kind-forest shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
-          <motion.section 
-            initial={{ opacity: 0, x: 30 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="flex flex-col justify-center"
-          >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-heading font-bold text-accent mb-4 sm:mb-6">Our Vision</h2>
-            <p className="leading-relaxed text-base sm:text-lg text-secondary/80 mb-5 sm:mb-6">
+        {/* ─── Core values + Vision ─── */}
+        <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="mt-14 sm:mt-20">
+          <KindSectionHead
+            eyebrow="Values & vision"
+            title="Our Core Values"
+            sub="The principles that shape everything we build."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10">
+            {CORE_VALUES.map((value, i) => (
+              <div
+                key={value.title}
+                className={`rounded-[20px] p-6 hover:-translate-y-1 transition-transform duration-300 ${
+                  i % 2 === 0 ? 'bg-kind-lime text-kind-ink' : 'bg-kind-mint text-kind-ink'
+                }`}
+              >
+                <h3 className="font-heading font-bold">{value.title}</h3>
+                <p className="mt-2 text-sm text-kind-ink/70 leading-relaxed">{value.desc}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ─── Our Vision (forest panel) ─── */}
+        <motion.div
+          {...fadeUp}
+          transition={{ duration: 0.5 }}
+          className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white p-6 sm:p-10 lg:p-14 mt-10 sm:mt-14"
+        >
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 -right-20 w-72 h-72 rounded-full bg-kind-lime/10 blur-3xl" />
+            <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-kind-mint/10 blur-3xl" />
+          </div>
+          <div className="relative flex flex-col items-center text-center">
+            <Eyebrow dark>Our vision</Eyebrow>
+            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight">Our Vision</h2>
+            <p className="mt-4 text-sm sm:text-base text-kind-sage max-w-2xl leading-relaxed">
               We aim to bridge the divide between luxury and affordability, tradition and innovation, as well as creativity and practicality. Through advertising, digital media, home decor, and educational initiatives, our objective is to transform industries.
             </p>
-            <div className="p-4 sm:p-6 border-l-4 border-accent bg-secondary/5 rounded-r-xl sm:rounded-r-2xl italic text-secondary/90 font-medium text-base sm:text-lg shadow-sm">
+            <p className="mt-7 max-w-3xl text-lg sm:text-xl md:text-2xl font-heading font-medium leading-relaxed text-white">
               "We don't just provide services; we create experiences, cultivate opportunities, and empower individuals and businesses to flourish."
-            </div>
-          </motion.section>
-        </div>
-
+            </p>
+          </div>
+        </motion.div>
       </div>
+
+      {/* ─── Closing CTA ─── */}
+      <motion.div {...fadeUp} transition={{ duration: 0.5 }}>
+        <KindCTA />
+      </motion.div>
     </div>
   );
 };
 
 export default AboutUs;
-

@@ -24,7 +24,6 @@ const LINK_COLUMNS = [
       { name: 'Love', path: '/love' },
       { name: 'Partner', path: '/partner' },
       { name: 'Vision', path: '/vision' },
-      { name: 'Contact', path: '/contact' },
     ],
   },
   {

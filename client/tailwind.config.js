@@ -14,6 +14,20 @@ export default {
         'accent-dark': '#d14a1e',
         cream: '#FFF7E7',
         'cream-dark': '#f5edd8',
+        // "kind" palette — used only by the redesigned info/support pages.
+        // Layout is kindact.webflow.io-inspired but values map to the
+        // GPSFDK brand (cream / deep green / orange). Namespaced to avoid
+        // touching product/main page styles.
+        kind: {
+          paper: '#FFFFFF',
+          ink: '#06301E',
+          forest: '#0B5D3B',
+          mint: '#DFEDE2',
+          mist: '#F5EDD8',
+          sage: '#BBD6C7',
+          lime: '#F15A29',
+          limedark: '#d14a1e',
+        },
       },
       fontFamily: {
         sans: ['var(--font-sf)'],

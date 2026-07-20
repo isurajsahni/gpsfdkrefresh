@@ -1,9 +1,11 @@
 import { HiOutlineAcademicCap } from 'react-icons/hi';
 import ComingSoon from '../../components/common/ComingSoon';
+import heroImage from '../../assets/image/store page/Rectangle 174.webp';
 
 const SchoolOfLearning = () => (
   <ComingSoon
     Icon={HiOutlineAcademicCap}
+    image={heroImage}
     eyebrow="GPS School of Learning"
     title="School of Learning"
     tagline="Where curiosity meets craft."

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import SEO from '../seo/SEO';
-import WebflowButton from '../ui/WebflowButton';
+import { Eyebrow, KindButton } from '../kindact/KindUI';
 
 /**
  * Reusable "Coming Soon" brand page.
@@ -19,115 +19,123 @@ const ComingSoon = ({
   seoDescription,
   ctaText = 'Explore Our Canvas Collection',
   ctaTo = '/wall-canvas',
+  image,
 }) => {
   return (
-    <div className="relative min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary overflow-hidden">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO title={seoTitle || `${title} — Coming Soon | GPSFDK`} description={seoDescription || description} />
 
-      {/* Decorative background glows */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -left-24 w-72 h-72 sm:w-[28rem] sm:h-[28rem] rounded-full bg-accent/10 blur-3xl" />
-        <div className="absolute top-1/2 -right-24 w-72 h-72 sm:w-[28rem] sm:h-[28rem] rounded-full bg-secondary/10 blur-3xl" />
-      </div>
-
-      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 flex flex-col items-center text-center">
-
-        {/* Coming Soon badge */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-5">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2.5 rounded-full bg-secondary/5 border border-secondary/10 px-4 py-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-secondary/80"
+          transition={{ duration: 0.6 }}
+          className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white px-6 sm:px-10 lg:px-16 py-14 sm:py-20"
         >
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent" />
-          </span>
-          Coming Soon
-        </motion.div>
-
-        {/* Icon halo */}
-        {Icon && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="relative mt-8 sm:mt-10"
-          >
-            <div className="absolute inset-0 rounded-3xl bg-accent/20 blur-2xl" />
-            <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-secondary/5 border border-secondary/10 flex items-center justify-center shadow-lg">
-              <Icon className="w-12 h-12 sm:w-14 sm:h-14 text-accent" />
+          {image && (
+            <div aria-hidden className="pointer-events-none absolute inset-0">
+              <img src={image} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-kind-forest/85" />
             </div>
-          </motion.div>
-        )}
+          )}
 
-        {/* Eyebrow */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 sm:mt-10 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-accent"
-        >
-          {eyebrow}
-        </motion.p>
+          {/* Decorative glows */}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-kind-lime/10 blur-3xl" />
+            <div className="absolute -bottom-28 -left-20 w-80 h-80 rounded-full bg-kind-mint/10 blur-3xl" />
+          </div>
 
-        {/* Title */}
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.25 }}
-          className="mt-3 text-4xl sm:text-5xl md:text-6xl font-heading font-bold text-secondary tracking-wide leading-tight"
-        >
-          {title}
-        </motion.h1>
+          <div className="relative flex flex-col items-center text-center">
+            {/* Coming Soon badge */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="inline-flex items-center gap-2.5 rounded-full bg-white/10 border border-white/20 px-4 py-1.5 text-xs sm:text-sm font-semibold uppercase tracking-[0.15em] text-white/90"
+            >
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kind-lime opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-kind-lime" />
+              </span>
+              Coming Soon
+            </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="mt-5 w-24 sm:w-32 h-1 sm:h-1.5 bg-accent rounded-full shadow-lg shadow-accent/20"
-        />
+            {/* Icon halo */}
+            {Icon && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.15 }}
+                className="mt-8 sm:mt-10 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center"
+              >
+                <Icon className="w-10 h-10 sm:w-12 sm:h-12 text-kind-lime" />
+              </motion.div>
+            )}
 
-        {/* Tagline */}
-        {tagline && (
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-6 sm:mt-7 text-lg sm:text-xl md:text-2xl font-heading font-medium text-secondary/90"
-          >
-            {tagline}
-          </motion.p>
-        )}
+            {/* Eyebrow */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="mt-8 sm:mt-10"
+            >
+              <Eyebrow dark>{eyebrow}</Eyebrow>
+            </motion.div>
 
-        {/* Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.45 }}
-          className="mt-4 sm:mt-5 max-w-xl text-base sm:text-lg text-secondary/70 font-body leading-relaxed"
-        >
-          {description}
-        </motion.p>
+            {/* Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25 }}
+              className="mt-4 text-3xl sm:text-5xl lg:text-6xl font-heading font-bold leading-[1.08] max-w-3xl text-white"
+            >
+              {title}
+            </motion.h1>
 
-        {/* CTA → Canvas page */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.55 }}
-          className="mt-9 sm:mt-10"
-        >
-          <WebflowButton to={ctaTo}>{ctaText}</WebflowButton>
+            {/* Tagline */}
+            {tagline && (
+              <motion.p
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.35 }}
+                className="mt-6 text-lg sm:text-xl md:text-2xl font-heading font-medium text-kind-mint"
+              >
+                {tagline}
+              </motion.p>
+            )}
+
+            {/* Description */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-4 sm:mt-5 max-w-xl text-base sm:text-lg text-kind-sage leading-relaxed"
+            >
+              {description}
+            </motion.p>
+
+            {/* CTA → Canvas page */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="mt-9 sm:mt-10"
+            >
+              <KindButton to={ctaTo} variant="lime">
+                {ctaText}
+              </KindButton>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.65 }}
+              className="mt-6 text-sm text-kind-sage"
+            >
+              We're crafting something special — explore our handcrafted canvas art in the meantime.
+            </motion.p>
+          </div>
         </motion.div>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="mt-6 text-sm text-secondary/50 font-body"
-        >
-          We're crafting something special — explore our handcrafted canvas art in the meantime.
-        </motion.p>
       </div>
     </div>
   );

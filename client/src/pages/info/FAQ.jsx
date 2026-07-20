@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
 import faqImage from '../../assets/image/faq_demo.webp';
 import SEO from '../../components/seo/SEO';
+import { KindButton, KindHero } from '../../components/kindact/KindUI';
+import heroImage from '../../assets/image/faq_demo.webp';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -44,46 +46,48 @@ const FAQ = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary text-secondary overflow-hidden pt-[120px] pb-24">
-      <SEO 
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
+      <SEO
         title="Frequently Asked Questions | GPSFDK Support"
         description="Find answers to common questions about our premium canvases, custom nameplates, shipping, and returns."
         schema={faqSchema}
       />
-      <div className="max-w-6xl mx-auto px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 md:mb-16"
-        >
-          <h1 className="text-4xl md:text-6xl font-heading font-bold mb-6 text-secondary tracking-wide">Frequently Asked Questions</h1>
-          <div className="w-32 h-1.5 bg-accent mx-auto rounded-full shadow-lg shadow-accent/20"></div>
-          <p className="mt-6 text-lg md:text-xl text-secondary/70 font-body max-w-2xl mx-auto">
-             Find answers to common questions about our products and services.
-          </p>
-        </motion.div>
 
-        <div className="flex flex-col md:flex-row gap-10 md:gap-12 lg:gap-20 items-stretch">
-          
+      {/* ─── Hero ─── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <KindHero
+          image={heroImage}
+          crumb="Home / FAQs"
+          title={
+            <>
+              Your questions, <span className="text-kind-lime">answered.</span>
+            </>
+          }
+          description="Find answers to common questions about our products and services."
+        />
+      </motion.div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-5 mt-6 sm:mt-8">
+        <div className="flex flex-col md:flex-row gap-5 sm:gap-6 lg:gap-10 items-stretch">
+
           {/* Left Side Image */}
-          <motion.div 
-            initial={{ opacity: 0, x: -40 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="w-full md:w-5/12"
           >
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl h-full min-h-[250px] sm:min-h-[300px] md:min-h-[500px] group border border-secondary/10">
-              <div className="absolute inset-0 bg-accent/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-multiply"></div>
+            <div className="relative rounded-[24px] overflow-hidden h-full min-h-[250px] sm:min-h-[300px] md:min-h-[500px] group border border-kind-forest/10">
+              <div className="absolute inset-0 bg-kind-forest/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-multiply"></div>
               <img src={faqImage} alt="Customer Support" className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
             </div>
           </motion.div>
 
           {/* Right Side FAQ Accordion */}
-          <motion.div 
-            initial={{ opacity: 0, x: 40 }} 
-            whileInView={{ opacity: 1, x: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="w-full md:w-7/12 flex flex-col justify-center"
@@ -95,40 +99,51 @@ const FAQ = () => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
-                  className={`bg-primary/50 border ${openIndex === index ? 'border-accent' : 'border-secondary/10'} rounded-2xl overflow-hidden transition-all duration-300 hover:border-accent/50`}
+                  className="bg-kind-mist rounded-[20px] overflow-hidden transition-all duration-300"
                 >
                   <button
                     onClick={() => toggleFAQ(index)}
-                    className="w-full flex justify-between items-center p-5 md:p-6 text-left focus:outline-none"
+                    className="w-full flex justify-between items-center gap-4 p-5 md:p-6 text-left focus:outline-none"
                   >
-                    <h3 className={`text-lg md:text-xl font-heading font-bold ${openIndex === index ? 'text-accent' : 'text-secondary'} transition-colors pr-4`}>
+                    <h3 className="text-base md:text-lg font-heading font-bold text-kind-ink pr-2">
                       {faq.question}
                     </h3>
-                    <div className={`p-2 rounded-full flex-shrink-0 bg-secondary/5 text-secondary/70 transition-transform duration-300 ${openIndex === index ? 'rotate-180 bg-accent/10 text-accent' : ''}`}>
-                      <FaChevronDown size={14} className="md:w-4 md:h-4" />
-                    </div>
+                    <span
+                      className={`w-9 h-9 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center shrink-0 transition-transform duration-300 ${
+                        openIndex === index ? 'rotate-180' : ''
+                      }`}
+                    >
+                      <FaChevronDown size={13} />
+                    </span>
                   </button>
-                  
-                  <div 
+
+                  <div
                     className={`px-5 md:px-6 overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-48 pb-5 md:pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
                   >
-                    <p className="text-secondary/70 leading-relaxed text-sm md:text-base">{faq.answer}</p>
+                    <p className="text-kind-ink/70 leading-relaxed text-sm md:text-base">{faq.answer}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
 
-            <div className="mt-8 md:mt-10 p-5 md:p-6 bg-accent/10 border border-accent/20 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-secondary mb-1">Still have questions?</h4>
-                <p className="text-sm text-secondary/70">Our support team is ready to help.</p>
+            {/* Still have questions? — forest strip */}
+            <div className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white mt-8 md:mt-10 p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+              <div aria-hidden className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-kind-lime/10 blur-3xl" />
+                <div className="absolute -bottom-20 -left-12 w-56 h-56 rounded-full bg-kind-mint/10 blur-3xl" />
               </div>
-              <a href="/contact" className="px-6 py-2 bg-accent text-primary font-bold rounded-lg hover:bg-accent-dark transition-colors whitespace-nowrap">
-                Contact Us
-              </a>
+              <div className="relative">
+                <h4 className="font-heading font-bold text-lg mb-1">Still have questions?</h4>
+                <p className="text-sm text-kind-sage">Our support team is ready to help.</p>
+              </div>
+              <div className="relative shrink-0">
+                <KindButton to="/contact" variant="lime">
+                  Contact Us
+                </KindButton>
+              </div>
             </div>
           </motion.div>
-          
+
         </div>
       </div>
     </div>

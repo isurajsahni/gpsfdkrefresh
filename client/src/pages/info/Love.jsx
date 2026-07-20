@@ -1,9 +1,11 @@
 import { HiOutlineHeart } from 'react-icons/hi';
 import ComingSoon from '../../components/common/ComingSoon';
+import heroImage from '../../assets/image/store page/grandparent.webp';
 
 const Love = () => (
   <ComingSoon
     Icon={HiOutlineHeart}
+    image={heroImage}
     eyebrow="GPS Community"
     title="Love"
     tagline="Made with love, shared with everyone."

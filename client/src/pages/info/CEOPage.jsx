@@ -3,101 +3,144 @@ import { FaFacebook, FaInstagram, FaQuoteLeft } from 'react-icons/fa';
 
 import fimpyGargImage from '../../assets/image/fimpygarg.webp';
 import SEO from '../../components/seo/SEO';
+import { Eyebrow, KindHero } from '../../components/kindact/KindUI';
+
+const fadeUp = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+};
 
 const CEOPage = () => {
   return (
-    <div className="min-h-screen bg-primary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24 text-secondary overflow-hidden">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
         title="Meet the Founder | GPSFDK Premium Home Décor India"
         description="Meet the founder of GPSFDK and read the story behind India's premium custom canvas prints and house nameplate brand."
       />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="mb-12 sm:mb-16 md:mb-20 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold text-secondary mb-4 sm:mb-6 tracking-wide leading-tight">CEO's Message</h1>
-          <div className="w-24 sm:w-32 h-1 sm:h-1.5 bg-accent mx-auto rounded-full shadow-lg shadow-accent/20"></div>
-           <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-secondary/70 font-body max-w-2xl mx-auto px-2 sm:px-0">
-             A vision of growth, opportunity, and building a legacy.
-          </p>
-        </motion.div>
 
-        <div className="flex flex-col lg:flex-row gap-10 sm:gap-12 lg:gap-24 items-center">
-          
-          {/* Left Side: Image Profile */}
-          <motion.div 
-            initial={{ opacity: 0, x: -40 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="w-full lg:w-5/12 flex flex-col items-center"
-          >
-            <div className="relative w-full max-w-[280px] sm:max-w-sm md:max-w-md aspect-square md:aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group border-[3px] md:border-4 border-secondary/5">
-               <div className="absolute inset-0 bg-accent/20 group-hover:bg-transparent transition-colors duration-500 z-10 mix-blend-overlay"></div>
-               <img src={fimpyGargImage} alt="Fimpy Garg" className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-700" />
-               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-5 sm:p-6 md:p-8 z-20 translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold text-white">Fimpy Garg</h2>
-                  <p className="text-accent font-semibold text-sm sm:text-base md:text-lg mt-1">CEO & Founder</p>
-               </div>
-            </div>
-            
-            <div className="mt-6 sm:mt-8 flex gap-4 sm:gap-6 text-xl sm:text-2xl">
-              <a href="https://www.facebook.com/darsh.garg.39" target="_blank" rel="noreferrer" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary/5 flex items-center justify-center text-secondary hover:bg-accent hover:text-primary transition-all duration-300 shadow-sm">
-                <FaFacebook />
-              </a>
-              <a href="https://www.instagram.com/fimpygarg" target="_blank" rel="noreferrer" className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-secondary/5 flex items-center justify-center text-secondary hover:bg-accent hover:text-primary transition-all duration-300 shadow-sm">
-                <FaInstagram />
-              </a>
+      {/* ─── Hero ─── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <KindHero
+          crumb="Home / CEO"
+          title={
+            <>
+              A vision of growth, <span className="text-kind-lime">built to last.</span>
+            </>
+          }
+          description="A vision of growth, opportunity, and building a legacy."
+        />
+      </motion.div>
+
+      <div className="max-w-7xl mx-auto px-3 sm:px-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 mt-10 sm:mt-14 items-start">
+          {/* ─── Portrait card ─── */}
+          <motion.div {...fadeUp} transition={{ duration: 0.5 }} className="lg:col-span-5">
+            <div className="bg-kind-mist rounded-[24px] p-4 sm:p-5">
+              <div className="rounded-[20px] overflow-hidden">
+                <img
+                  src={fimpyGargImage}
+                  alt="Fimpy Garg"
+                  className="w-full aspect-square lg:aspect-[4/5] object-cover object-top hover:scale-105 transition-transform duration-700"
+                />
+              </div>
+              <div className="mt-5 px-1 pb-1 flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-heading font-bold text-kind-ink">Fimpy Garg</h2>
+                  <p className="text-kind-forest font-semibold text-sm sm:text-base mt-0.5">CEO &amp; Founder</p>
+                </div>
+                <div className="flex gap-3 shrink-0">
+                  <a
+                    href="https://www.facebook.com/darsh.garg.39"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Fimpy Garg on Facebook"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center hover:bg-kind-ink hover:scale-105 transition-all duration-300"
+                  >
+                    <FaFacebook className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </a>
+                  <a
+                    href="https://www.instagram.com/fimpygarg"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Fimpy Garg on Instagram"
+                    className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center hover:bg-kind-ink hover:scale-105 transition-all duration-300"
+                  >
+                    <FaInstagram className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </a>
+                </div>
+              </div>
             </div>
           </motion.div>
 
-          {/* Right Side: Message & Contact */}
-          <motion.div 
-            initial={{ opacity: 0, x: 40 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="w-full lg:w-7/12"
-          >
-            <div className="relative pt-6 sm:pt-0">
-              <FaQuoteLeft className="hidden sm:block absolute -top-8 -left-8 text-6xl text-secondary/5 z-0" />
-              <div className="relative z-10 prose prose-base sm:prose-lg prose-invert max-w-none font-body text-secondary/80">
-                <p className="text-lg sm:text-xl md:text-2xl font-medium leading-relaxed italic text-secondary mb-8 sm:mb-10 border-l-4 border-accent pl-4 sm:pl-6">
-                  "To be a soldier in a garden,<br />
-                  And a gardener in a war."
-                </p>
+          {/* ─── Message ─── */}
+          <motion.div {...fadeUp} transition={{ duration: 0.5, delay: 0.1 }} className="lg:col-span-7">
+            <Eyebrow>CEO&apos;s message</Eyebrow>
 
-                <p className="leading-relaxed mb-5 sm:mb-6 text-base sm:text-lg">
-                  Hello, I'm Fimpy Garg. I grew up in a business family and have known nothing but how a businessman can make it big! Not only by achieving his personal goals but by creating an aura of growth and opportunity all around, in ways one cannot even begin to comprehend.
-                </p>
-
-                <p className="leading-relaxed mb-8 sm:mb-12 text-base sm:text-lg font-medium text-secondary/90">
-                  GPS will be my life's work and I love being able to do it, be a part of it and you will love it even more!
-                </p>
-              </div>
+            <div className="mt-5 border-l-4 border-kind-lime pl-5 sm:pl-7">
+              <FaQuoteLeft className="text-kind-forest/20 text-2xl sm:text-3xl mb-3" />
+              <p className="text-xl sm:text-2xl md:text-3xl font-heading font-medium leading-snug text-kind-ink">
+                "To be a soldier in a garden,
+                <br />
+                And a gardener in a war."
+              </p>
             </div>
 
-            <div className="bg-primary/80 backdrop-blur-sm p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-secondary/10 shadow-xl mt-4 relative overflow-hidden group">
-              <div className="absolute top-0 left-0 w-1.5 sm:w-2 h-full bg-accent"></div>
-              <h3 className="text-xl sm:text-2xl font-heading font-bold text-secondary mb-6 sm:mb-8">
-                Get in Touch
-              </h3>
-              
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 group/item">
-                  <span className="font-bold text-accent sm:min-w-[80px] text-xs sm:text-sm uppercase tracking-wider">Email</span>
-                  <a href="mailto:fimpygarg2@gmail.com" className="text-secondary/80 hover:text-accent transition-colors text-base sm:text-lg break-all">fimpygarg2@gmail.com</a>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6 group/item">
-                  <span className="font-bold text-accent sm:min-w-[80px] text-xs sm:text-sm uppercase tracking-wider">Mobile</span>
-                  <a href="tel:+919646646063" className="text-secondary/80 hover:text-accent transition-colors text-base sm:text-lg">+91 96466-46063</a>
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 group/item pt-3 sm:pt-4 border-t border-secondary/5">
-                  <span className="font-bold text-accent sm:min-w-[80px] text-xs sm:text-sm uppercase tracking-wider mt-1">Office</span>
-                  <span className="text-secondary/80 text-base sm:text-lg leading-snug">GPS, Circular Road, Near More Store, Faridkot, Punjab 151203</span>
+            <div className="mt-8 space-y-5 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+              <p>
+                Hello, I'm Fimpy Garg. I grew up in a business family and have known nothing but how a businessman can make it big! Not only by achieving his personal goals but by creating an aura of growth and opportunity all around, in ways one cannot even begin to comprehend.
+              </p>
+              <p className="font-medium text-kind-ink/90">
+                GPS will be my life's work and I love being able to do it, be a part of it and you will love it even more!
+              </p>
+            </div>
+
+            {/* ─── Get in Touch (forest panel) ─── */}
+            <div className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white p-6 sm:p-10 mt-8 sm:mt-10">
+              <div aria-hidden className="pointer-events-none absolute inset-0">
+                <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-kind-lime/10 blur-3xl" />
+                <div className="absolute -bottom-20 -left-14 w-64 h-64 rounded-full bg-kind-mint/10 blur-3xl" />
+              </div>
+              <div className="relative">
+                <Eyebrow dark>Get in touch</Eyebrow>
+                <h3 className="mt-3 text-xl sm:text-2xl font-heading font-bold">Get in Touch</h3>
+
+                <div className="mt-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">
+                    <span className="font-semibold text-kind-sage sm:min-w-[80px] text-xs uppercase tracking-[0.15em]">
+                      Email
+                    </span>
+                    <a
+                      href="mailto:fimpygarg2@gmail.com"
+                      className="text-white/90 hover:text-kind-lime transition-colors text-base sm:text-lg break-all"
+                    >
+                      fimpygarg2@gmail.com
+                    </a>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">
+                    <span className="font-semibold text-kind-sage sm:min-w-[80px] text-xs uppercase tracking-[0.15em]">
+                      Mobile
+                    </span>
+                    <a
+                      href="tel:+919646646063"
+                      className="text-white/90 hover:text-kind-lime transition-colors text-base sm:text-lg"
+                    >
+                      +91 96466-46063
+                    </a>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 pt-4 border-t border-white/10">
+                    <span className="font-semibold text-kind-sage sm:min-w-[80px] text-xs uppercase tracking-[0.15em] sm:mt-1">
+                      Office
+                    </span>
+                    <span className="text-white/90 text-base sm:text-lg leading-snug">
+                      GPS, Circular Road, Near More Store, Faridkot, Punjab 151203
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </motion.div>
         </div>
-
       </div>
     </div>
   );

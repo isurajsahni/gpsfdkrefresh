@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  HiOutlineSupport,
   HiOutlineSearch,
   HiOutlineShoppingBag,
   HiOutlineCube,
@@ -12,6 +11,8 @@ import {
 } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 import SEO from '../../components/seo/SEO';
+import { Eyebrow, KindButton, KindHero, KindSectionHead } from '../../components/kindact/KindUI';
+import heroImage from '../../assets/image/faq_demo.webp';
 
 // The order-tracking journey, from checkout to doorstep. Step 2 is where the
 // Shiprocket webhook kicks in: the AWB lands in the customer's inbox and
@@ -71,122 +72,102 @@ const Support = () => {
     navigate('/track-order', { state: { orderId: cleanOrderId, contact: cleanContact } });
   };
 
+  const inputClasses =
+    'w-full bg-white text-kind-ink placeholder-kind-ink/40 border border-transparent rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-kind-lime transition-shadow';
+
   return (
-    <div className="min-h-screen bg-primary text-secondary pt-[100px] sm:pt-[120px] pb-16 sm:pb-24">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
         title="Support & Order Tracking | GPSFDK"
         description="Track your GPSFDK order with the AWB number sent to your email, browse shipping and returns policies, or reach our support team."
       />
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* ─── Hero ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10 sm:mb-14"
+      {/* ─── Hero + track form ─── */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <KindHero
+          image={heroImage}
+          crumb="Home / Support"
+          title={
+            <>
+              Help that&apos;s always <span className="text-kind-lime">within reach.</span>
+            </>
+          }
+          description="Track your order, understand how delivery works, or get in touch — all in one place. Use the Order ID from your confirmation email along with the email or phone number you used at checkout."
         >
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 text-accent flex items-center justify-center mx-auto mb-5">
-            <HiOutlineSupport className="w-7 h-7" />
-          </div>
-          <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold mb-4 sm:mb-6 tracking-wide leading-tight">
-            Support
-          </h1>
-          <div className="w-24 sm:w-32 h-1 sm:h-1.5 bg-accent mx-auto rounded-full shadow-lg shadow-accent/20"></div>
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-secondary/70 max-w-2xl mx-auto">
-            Track your order, understand how delivery works, or get in touch — all in one place.
-          </p>
-        </motion.div>
-
-        {/* ─── Track your order ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="bg-secondary/5 rounded-2xl sm:rounded-3xl border border-secondary/10 shadow-lg p-6 sm:p-10 mb-12 sm:mb-16"
-        >
-          <div className="flex flex-col md:flex-row md:items-center gap-8">
-            <div className="md:w-2/5">
-              <h2 className="text-2xl sm:text-3xl font-heading font-bold">Track your order</h2>
-              <p className="text-secondary/70 mt-3 text-sm sm:text-base leading-relaxed">
-                Use the Order ID from your confirmation email along with the email or phone number
-                you used at checkout. Once your shipment is created, your AWB tracking number and
-                live courier updates appear here too.
-              </p>
+          <form
+            onSubmit={handleTrack}
+            className="relative mt-8 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 max-w-2xl"
+          >
+            <div>
+              <label htmlFor="support-order-id" className="sr-only">
+                Order ID
+              </label>
+              <input
+                id="support-order-id"
+                type="text"
+                placeholder="Order ID — e.g. GPS-XYZ123"
+                value={orderId}
+                onChange={(e) => setOrderId(e.target.value)}
+                className={inputClasses}
+                required
+              />
             </div>
-            <form onSubmit={handleTrack} className="md:w-3/5 flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <label htmlFor="support-order-id" className="block text-sm font-medium text-secondary/80 mb-1">
-                  Order ID
-                </label>
-                <input
-                  id="support-order-id"
-                  type="text"
-                  placeholder="e.g. GPS-XYZ123"
-                  value={orderId}
-                  onChange={(e) => setOrderId(e.target.value)}
-                  className="w-full bg-primary/60 border border-secondary/20 rounded-xl px-4 py-3 focus:outline-none focus:border-accent transition-colors"
-                  required
-                />
-              </div>
-              <div className="flex-1">
-                <label htmlFor="support-contact" className="block text-sm font-medium text-secondary/80 mb-1">
-                  Email or Phone
-                </label>
-                <input
-                  id="support-contact"
-                  type="text"
-                  placeholder="Used during checkout"
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  className="w-full bg-primary/60 border border-secondary/20 rounded-xl px-4 py-3 focus:outline-none focus:border-accent transition-colors"
-                  required
-                />
-              </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto h-[50px] bg-accent hover:bg-accent/90 text-white font-medium rounded-xl px-8 flex items-center justify-center gap-2 transition-all"
-                >
-                  <HiOutlineSearch className="w-5 h-5" /> Track
-                </button>
-              </div>
-            </form>
-          </div>
-        </motion.div>
+            <div>
+              <label htmlFor="support-contact" className="sr-only">
+                Email or Phone
+              </label>
+              <input
+                id="support-contact"
+                type="text"
+                placeholder="Email or phone used at checkout"
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+                className={inputClasses}
+                required
+              />
+            </div>
+            <KindButton type="submit" variant="lime">
+              <span className="inline-flex items-center gap-2">
+                <HiOutlineSearch className="w-4 h-4" /> Track
+              </span>
+            </KindButton>
+          </form>
+        </KindHero>
+      </motion.div>
 
+      <div className="max-w-7xl mx-auto px-3 sm:px-5">
         {/* ─── How order tracking works ─── */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-12 sm:mb-16"
+          className="mt-14 sm:mt-20"
         >
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold text-center mb-8 sm:mb-12">
-            How order tracking works
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <KindSectionHead
+            eyebrow="Our process"
+            title="How order tracking works"
+            sub="From checkout to your doorstep — every step updates automatically."
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10">
             {TRACKING_STEPS.map((step, i) => (
-              <div
-                key={step.title}
-                className="relative bg-primary/50 rounded-2xl sm:rounded-3xl border border-secondary/10 hover:border-accent/30 transition-colors p-6"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-8 h-8 rounded-full bg-accent/15 text-accent text-sm font-bold flex items-center justify-center shrink-0">
-                    {i + 1}
+              <div key={step.title} className="bg-kind-mist rounded-[20px] p-6 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="w-11 h-11 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center">
+                    <step.Icon className="w-5 h-5" />
                   </span>
-                  <step.Icon className="w-6 h-6 text-accent" />
+                  <span className="text-3xl font-heading font-bold text-kind-forest/20">0{i + 1}</span>
                 </div>
-                <h3 className="font-heading font-bold text-lg mb-2">{step.title}</h3>
-                <p className="text-secondary/70 text-sm leading-relaxed">{step.text}</p>
+                <div>
+                  <h3 className="font-heading font-bold text-kind-ink mb-1.5">{step.title}</h3>
+                  <p className="text-kind-ink/60 text-sm leading-relaxed">{step.text}</p>
+                </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-secondary/60 text-sm mt-6 max-w-2xl mx-auto">
+          <p className="text-center text-kind-ink/60 text-sm mt-7 max-w-2xl mx-auto">
             Signed in when you ordered? Your AWB tracking number is also shown on each order in{' '}
-            <Link to="/dashboard" className="text-accent font-semibold hover:underline">
+            <Link to="/dashboard" className="text-kind-forest font-semibold hover:underline">
               your dashboard
             </Link>{' '}
             as soon as it&apos;s assigned.
@@ -199,24 +180,36 @@ const Support = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
+          className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white p-6 sm:p-10 lg:p-14 mt-14 sm:mt-20"
         >
-          <h2 className="text-2xl sm:text-3xl font-heading font-bold text-center mb-8 sm:mb-10">
-            Need something else?
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {HELP_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="group bg-secondary/5 rounded-2xl border border-secondary/10 hover:border-accent/40 p-6 transition-colors"
-              >
-                <h3 className="font-heading font-bold text-lg flex items-center justify-between">
-                  {link.label}
-                  <HiOutlineArrowRight className="w-4 h-4 text-accent opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
-                </h3>
-                <p className="text-secondary/60 text-sm mt-1.5">{link.blurb}</p>
-              </Link>
-            ))}
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-24 -right-20 w-72 h-72 rounded-full bg-kind-lime/10 blur-3xl" />
+            <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-kind-mint/10 blur-3xl" />
+          </div>
+          <div className="relative">
+            <div className="text-center flex flex-col items-center">
+              <Eyebrow dark>More help</Eyebrow>
+              <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight">
+                Need something else?
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10">
+              {HELP_LINKS.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className="group bg-white/5 border border-white/10 rounded-[20px] p-6 hover:bg-white/10 transition-colors"
+                >
+                  <h3 className="font-heading font-bold flex items-center justify-between gap-2">
+                    {link.label}
+                    <span className="w-8 h-8 rounded-full bg-kind-lime text-kind-ink flex items-center justify-center shrink-0">
+                      <HiOutlineArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                    </span>
+                  </h3>
+                  <p className="text-kind-sage text-sm mt-2">{link.blurb}</p>
+                </Link>
+              ))}
+            </div>
           </div>
         </motion.div>
       </div>

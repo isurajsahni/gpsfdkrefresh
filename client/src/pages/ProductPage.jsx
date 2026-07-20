@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
+import ArViewer from '../components/product/ArViewer';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
@@ -26,6 +27,19 @@ const ProductPage = () => {
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  const [arSlugs, setArSlugs] = useState([]);
+
+  // AR catalog ids decide which products get real AR vs the 2D camera overlay
+  useEffect(() => {
+    const catalogUrl = import.meta.env.VITE_AR_CATALOG_URL;
+    if (!catalogUrl) return;
+    let alive = true;
+    fetch(catalogUrl)
+      .then((r) => r.json())
+      .then((d) => { if (alive) setArSlugs(d.artworks.map((a) => a.id)); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -539,14 +553,42 @@ const ProductPage = () => {
         </div>
       )}
 
-      {/* View on Wall AR Modal */}
-      {product && (
+      {/* View on Wall — real AR (model-viewer) for products in the AR catalog, legacy 2D camera overlay for everything else */}
+      {product && (arSlugs.includes(product.slug) ? (
+        isWallPreviewOpen && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setIsWallPreviewOpen(false)}
+          >
+            <div
+              className="bg-white rounded-2xl p-6 w-full max-w-[640px] max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-secondary">View on Your Wall</h3>
+                <button
+                  onClick={() => setIsWallPreviewOpen(false)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <HiOutlineX className="w-5 h-5" />
+                </button>
+              </div>
+              {/* key: remount on slug change so ArViewer's internal format/size state resets */}
+              <ArViewer
+                key={product.slug}
+                productId={product.slug}
+                catalogUrl={import.meta.env.VITE_AR_CATALOG_URL}
+              />
+            </div>
+          </div>
+        )
+      ) : (
         <ViewOnWallModal
           isOpen={isWallPreviewOpen}
           onClose={() => setIsWallPreviewOpen(false)}
           imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)}
         />
-      )}
+      ))}
 
       {/* Fullscreen HD Zoom Modal */}
       <AnimatePresence>

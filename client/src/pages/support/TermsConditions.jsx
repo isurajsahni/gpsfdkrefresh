@@ -20,7 +20,7 @@ const TermsConditions = () => {
           }
           description="Terms and conditions for shopping premium canvas prints and custom house nameplates at GPSFDK."
         >
-          <p className="mt-5 text-kind-sage text-sm">Last updated: {new Date().toLocaleDateString()}</p>
+          <p className="apple-caption mt-5 text-kind-sage">Last updated: {new Date().toLocaleDateString()}</p>
         </KindHero>
       </motion.div>
 

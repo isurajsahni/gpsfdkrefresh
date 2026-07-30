@@ -75,10 +75,10 @@ const AboutUs = () => {
 
           <div>
             <Eyebrow>Who we are</Eyebrow>
-            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight text-kind-ink">
+            <h2 className="apple-headline mt-3 font-heading text-kind-ink">
               Who We Are
             </h2>
-            <div className="mt-5 space-y-4 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+            <div className="apple-body mt-5 space-y-4 text-kind-ink/70">
               <p>
                 At Radhe Radhe GPS Private Limited, we are more than just a business group — we are a dynamic entity with a strong commitment to learning, innovation, and excellence. Unlike companies that focus on a single niche, we operate across multiple industries, offering diverse, high-quality solutions that blend creativity with affordability.
               </p>
@@ -87,8 +87,8 @@ const AboutUs = () => {
               </p>
             </div>
             <div className="mt-6 bg-kind-mist rounded-[20px] p-6">
-              <h3 className="font-heading font-bold text-kind-ink text-lg sm:text-xl">Our Journey</h3>
-              <p className="mt-2 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+              <h3 className="apple-tile-title font-heading text-kind-ink">Our Journey</h3>
+              <p className="apple-body mt-2 text-kind-ink/70">
                 We started as an advertisement technology and signage startup, earning recognition from the DPIIT, Government of India. Over time, we expanded our expertise, and today, We proudly operate billboards and LED Videowall screens across North India.
               </p>
             </div>
@@ -112,7 +112,7 @@ const AboutUs = () => {
                   {i + 1}
                 </span>
                 <div>
-                  <h3 className="font-heading font-bold text-kind-ink">{card.title}</h3>
+                  <h3 className="apple-body font-heading font-semibold text-kind-ink">{card.title}</h3>
                   <ul className="mt-3 space-y-2 text-sm text-kind-ink/70">
                     {card.items.map((item) => (
                       <li key={item} className="flex items-start gap-2">
@@ -142,8 +142,8 @@ const AboutUs = () => {
                   i % 2 === 0 ? 'bg-kind-lime text-kind-ink' : 'bg-kind-mint text-kind-ink'
                 }`}
               >
-                <h3 className="font-heading font-bold">{value.title}</h3>
-                <p className="mt-2 text-sm text-kind-ink/70 leading-relaxed">{value.desc}</p>
+                <h3 className="apple-body font-heading font-semibold">{value.title}</h3>
+                <p className="apple-caption mt-2 text-kind-ink/70">{value.desc}</p>
               </div>
             ))}
           </div>
@@ -161,11 +161,11 @@ const AboutUs = () => {
           </div>
           <div className="relative flex flex-col items-center text-center">
             <Eyebrow dark>Our vision</Eyebrow>
-            <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight">Our Vision</h2>
-            <p className="mt-4 text-sm sm:text-base text-kind-sage max-w-2xl leading-relaxed">
+            <h2 className="apple-headline mt-3 font-heading">Our Vision</h2>
+            <p className="apple-body mt-4 text-kind-sage max-w-2xl">
               We aim to bridge the divide between luxury and affordability, tradition and innovation, as well as creativity and practicality. Through advertising, digital media, home decor, and educational initiatives, our objective is to transform industries.
             </p>
-            <p className="mt-7 max-w-3xl text-lg sm:text-xl md:text-2xl font-heading font-medium leading-relaxed text-white">
+            <p className="apple-intro mt-7 max-w-3xl font-heading text-white">
               "We don't just provide services; we create experiences, cultivate opportunities, and empower individuals and businesses to flourish."
             </p>
           </div>

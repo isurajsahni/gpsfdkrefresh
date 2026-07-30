@@ -87,7 +87,7 @@ const ComingSoon = ({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
-              className="mt-4 text-3xl sm:text-5xl lg:text-6xl font-heading font-bold leading-[1.08] max-w-3xl text-white"
+              className="apple-title mt-4 font-heading max-w-3xl text-white"
             >
               {title}
             </motion.h1>
@@ -98,7 +98,7 @@ const ComingSoon = ({
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.35 }}
-                className="mt-6 text-lg sm:text-xl md:text-2xl font-heading font-medium text-kind-mint"
+                className="apple-intro mt-6 font-heading text-kind-mint"
               >
                 {tagline}
               </motion.p>
@@ -109,7 +109,7 @@ const ComingSoon = ({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="mt-4 sm:mt-5 max-w-xl text-base sm:text-lg text-kind-sage leading-relaxed"
+              className="apple-lead mt-4 sm:mt-5 max-w-xl text-kind-sage"
             >
               {description}
             </motion.p>

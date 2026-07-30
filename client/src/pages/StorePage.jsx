@@ -152,8 +152,8 @@ const ArtworkVideo = ({ src, isUnmuted }) => {
 
 // Two-tone heading: bold dark phrase followed by a lighter trailing phrase.
 const Heading = ({ bold, light, action }) => (
-  <div className="flex flex-wrap items-end justify-between gap-3 mb-7 sm:mb-9">
-    <h2 className="font-heading text-[28px] font-semibold leading-[1.4] tracking-tight">
+  <div className="flex flex-wrap items-end justify-between gap-3 mb-6 sm:mb-8 lg:mb-10">
+    <h2 className="apple-headline font-heading">
       <span className="text-[#1D1D1F]">{bold}</span>{' '}
       <span className="text-[#686868]">{light}</span>
     </h2>
@@ -191,7 +191,7 @@ const ArrowUpRight = () => (
 const ArrowLink = ({ to, children }) => (
   <Link
     to={to}
-    className="inline-flex items-center gap-1 text-accent text-base font-normal hover:gap-2 transition-all"
+    className="apple-link inline-flex items-center gap-1 text-accent hover:gap-2 transition-all"
   >
     {children}
     <ArrowUpRight />
@@ -229,8 +229,8 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
     <BlurBand height={160} gradient={gradient}>
-      <h3 className={`font-heading font-medium text-xl sm:text-[28px] leading-[1.4] ${dark ? 'text-[#1D1D1F]' : 'text-white'}`}>{title}</h3>
-      <p className={`text-sm mt-2.5 leading-snug ${dark ? 'text-[#1D1D1F]' : 'text-white/90'}`}>{blurb}</p>
+      <h3 className={`apple-tile-title font-heading ${dark ? 'text-[#1D1D1F]' : 'text-white'}`}>{title}</h3>
+      <p className={`apple-caption mt-2.5 ${dark ? 'text-[#1D1D1F]' : 'text-white/90'}`}>{blurb}</p>
     </BlurBand>
   </div>
 );
@@ -253,7 +253,7 @@ const StorePage = () => {
   }, []);
 
   return (
-    <div className="bg-white min-h-screen font-sans text-[14px] font-normal leading-[1.5] text-[#1D1D1F]">
+    <div className="store-apple bg-white min-h-screen font-sans text-[#1D1D1F]">
       <SEO
         title="Store | Art, Experiences & Personalized Creations | GPSFDK"
         description="Discover GPSFDK's curated store: museum-grade canvases, custom nameplates, workshops, retreats, and personalized gifts — all in one place."
@@ -263,11 +263,11 @@ const StorePage = () => {
       {/* pt-[130px] = 60px fixed navbar + 70px visual gap */}
       <section className="pt-[130px] pb-[50px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="text-6xl sm:text-7xl md:text-[100px] font-heading font-medium text-[#1D1D1F] !leading-[0.9]">
+          <h1 className="apple-hero font-heading text-[#1D1D1F]">
             Store
           </h1>
           <div className="sm:text-right">
-            <p className="text-[#1D1D1F] font-bold text-xl sm:text-[28px] leading-[1.4] sm:ml-auto">
+            <p className="apple-intro text-[#1D1D1F] sm:ml-auto">
               The best way to buy the <br /> products you love.
             </p>
             <div className="mt-1 sm:flex sm:justify-end">
@@ -313,7 +313,7 @@ const StorePage = () => {
                   style={{ width: o.width }}
                   className="h-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
                 />
-                <span className="text-[#1D1D1F] text-sm mt-4 font-medium group-hover:text-accent transition-colors">
+                <span className="apple-body text-[#1D1D1F] mt-4 font-medium group-hover:text-accent transition-colors">
                   {o.label}
                 </span>
               </Link>
@@ -344,10 +344,10 @@ const StorePage = () => {
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute top-0 left-0 right-0 p-[30px]">
-                <h3 className="font-heading font-medium text-white text-xl sm:text-[28px] leading-[1.4]">
+                <h3 className="apple-tile-title font-heading text-white">
                   Our most gifted items
                 </h3>
-                <span className="mt-2 inline-flex items-center gap-1.5 text-accent text-base group-hover:gap-2.5 transition-all">
+                <span className="apple-link mt-2 inline-flex items-center gap-1.5 text-accent group-hover:gap-2.5 transition-all">
                   Visit Collection
                   <FigmaChevron className="w-[7px] h-auto mt-1" />
                 </span>
@@ -356,14 +356,14 @@ const StorePage = () => {
 
             {/* Right: upload widget (Figma "Upload your photo") */}
             <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_6px_36px_rgba(0,0,0,0.12)] p-6 sm:p-10 flex flex-col items-center justify-center text-center h-full">
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-8 text-[11px] font-bold tracking-widest uppercase text-accent">
+              <div className="apple-eyebrow flex flex-wrap items-center justify-center gap-3 sm:gap-8 uppercase text-accent">
                 <span>Step 1: Upload</span>
                 <span>Step 2: Customize</span>
               </div>
-              <h3 className="font-heading text-xl sm:text-[28px] leading-[1.4] font-medium text-[#1D1D1F] mt-4">
+              <h3 className="apple-tile-title font-heading text-[#1D1D1F] mt-4">
                 Upload your photo
               </h3>
-              <p className="text-[#1D1D1F] text-sm mt-2.5 max-w-xs">
+              <p className="apple-body text-[#1D1D1F] mt-2.5 max-w-xs">
                 Upload a photo. Choose your style. We'll create the masterpiece.
               </p>
 
@@ -377,8 +377,8 @@ const StorePage = () => {
                     <HiPlus className="w-3 h-3 text-white" />
                   </span>
                 </div>
-                <p className="text-[#1D1D1F] text-sm mt-1">or drag and drop here</p>
-                <p className="text-[#1D1D1F] text-[11px] tracking-wide">
+                <p className="apple-body text-[#1D1D1F] mt-1">or drag and drop here</p>
+                <p className="apple-caption text-[#1D1D1F]">
                   JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
                 </p>
               </Link>

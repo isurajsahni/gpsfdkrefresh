@@ -72,10 +72,10 @@ const Vision = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 mt-8 sm:mt-10">
             {/* Mission — lime card */}
             <div className="bg-kind-lime text-kind-ink rounded-[20px] p-6 sm:p-10 flex flex-col justify-center">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-heading font-bold leading-tight">
+              <h2 className="apple-headline font-heading">
                 Transforming industries, one experience at a time
               </h2>
-              <p className="mt-4 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+              <p className="apple-body mt-4 text-kind-ink/70">
                 We aim to bridge the divide between luxury and affordability, tradition and
                 innovation, as well as creativity and practicality. Through advertising, digital
                 media, home decor, and educational initiatives, our objective is to transform
@@ -86,7 +86,7 @@ const Vision = () => {
             {/* Pull quote — mint card */}
             <div className="bg-kind-mint text-kind-ink rounded-[20px] p-6 sm:p-10 flex flex-col justify-center">
               <FaQuoteLeft className="text-kind-forest text-2xl sm:text-3xl mb-4 sm:mb-5" />
-              <p className="text-lg sm:text-xl md:text-2xl font-heading font-medium leading-relaxed">
+              <p className="apple-intro font-heading">
                 We don't just provide services; we create experiences, cultivate opportunities, and
                 empower individuals and businesses to flourish.
               </p>
@@ -115,8 +115,8 @@ const Vision = () => {
                   <value.Icon className="w-5 h-5" />
                 </span>
                 <div>
-                  <h3 className="font-heading font-bold text-kind-ink">{value.title}</h3>
-                  <p className="mt-2 text-sm text-kind-ink/60 leading-relaxed">{value.desc}</p>
+                  <h3 className="apple-body font-heading font-semibold text-kind-ink">{value.title}</h3>
+                  <p className="apple-caption mt-2 text-kind-ink/60">{value.desc}</p>
                 </div>
               </motion.div>
             ))}

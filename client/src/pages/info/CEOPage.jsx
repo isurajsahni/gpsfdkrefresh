@@ -46,8 +46,8 @@ const CEOPage = () => {
               </div>
               <div className="mt-5 px-1 pb-1 flex items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-xl sm:text-2xl font-heading font-bold text-kind-ink">Fimpy Garg</h2>
-                  <p className="text-kind-forest font-semibold text-sm sm:text-base mt-0.5">CEO &amp; Founder</p>
+                  <h2 className="apple-tile-title font-heading text-kind-ink">Fimpy Garg</h2>
+                  <p className="apple-body text-kind-forest font-semibold mt-0.5">CEO &amp; Founder</p>
                 </div>
                 <div className="flex gap-3 shrink-0">
                   <a
@@ -79,14 +79,14 @@ const CEOPage = () => {
 
             <div className="mt-5 border-l-4 border-kind-lime pl-5 sm:pl-7">
               <FaQuoteLeft className="text-kind-forest/20 text-2xl sm:text-3xl mb-3" />
-              <p className="text-xl sm:text-2xl md:text-3xl font-heading font-medium leading-snug text-kind-ink">
+              <p className="apple-intro font-heading text-kind-ink">
                 "To be a soldier in a garden,
                 <br />
                 And a gardener in a war."
               </p>
             </div>
 
-            <div className="mt-8 space-y-5 text-sm sm:text-base text-kind-ink/70 leading-relaxed">
+            <div className="apple-body mt-8 space-y-5 text-kind-ink/70">
               <p>
                 Hello, I'm Fimpy Garg. I grew up in a business family and have known nothing but how a businessman can make it big! Not only by achieving his personal goals but by creating an aura of growth and opportunity all around, in ways one cannot even begin to comprehend.
               </p>
@@ -103,7 +103,7 @@ const CEOPage = () => {
               </div>
               <div className="relative">
                 <Eyebrow dark>Get in touch</Eyebrow>
-                <h3 className="mt-3 text-xl sm:text-2xl font-heading font-bold">Get in Touch</h3>
+                <h3 className="apple-tile-title mt-3 font-heading">Get in Touch</h3>
 
                 <div className="mt-6 space-y-5">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-6">

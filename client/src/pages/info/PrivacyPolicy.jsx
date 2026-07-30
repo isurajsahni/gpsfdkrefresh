@@ -20,7 +20,7 @@ const PrivacyPolicy = () => {
           }
           description="How Radhe Radhe GPS Private Limited collects, uses and safeguards your personal information when you shop with us."
         >
-          <p className="mt-5 text-kind-sage text-sm">Last updated on March 25th 2026</p>
+          <p className="apple-caption mt-5 text-kind-sage">Last updated on March 25th 2026</p>
         </KindHero>
       </motion.div>
 

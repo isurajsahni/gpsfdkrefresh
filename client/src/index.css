@@ -34,6 +34,153 @@
   --font-sf: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Apple Store type scale — scoped to StorePage (root .store-apple).
+   Values are Apple's real apple.com (SF Pro) tokens: exact font-size,
+   line-height, and letter-spacing per size step. Large sizes carry negative
+   tracking, mid sizes slight positive, body the signature -0.022em — this is
+   what makes copy read as "Apple". COLOR is intentionally never set here; the
+   store keeps the existing GPSFDK palette (white bg, #1D1D1F ink, #686868
+   secondary, orange accent). Only rhythm changes.
+   ───────────────────────────────────────────────────────────────────────── */
+.store-apple {
+  font-size: 17px;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  font-weight: 400;
+}
+
+/* Body / paragraph — apple.com body copy */
+.apple-body {
+  font-size: 17px;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  font-weight: 400;
+}
+/* Caption / legal / fine meta */
+.apple-caption {
+  font-size: 12px;
+  line-height: 1.33337;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+}
+/* Eyebrow / small uppercase label */
+.apple-eyebrow {
+  font-size: 12px;
+  line-height: 1.33337;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+/* Inline link / call-to-action text */
+.apple-link {
+  font-size: 17px;
+  line-height: 1.29412;
+  letter-spacing: -0.022em;
+  font-weight: 400;
+}
+/* Product-tile title */
+.apple-tile-title {
+  font-size: 21px;
+  line-height: 1.19048;
+  letter-spacing: 0.011em;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .apple-tile-title {
+    font-size: 24px;
+    line-height: 1.16667;
+    letter-spacing: 0.009em;
+  }
+}
+/* Section chapter headline (two-tone) — 28 → 32 → 40px */
+.apple-headline {
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: 0.004em;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .apple-headline {
+    font-size: 32px;
+    line-height: 1.09375;
+  }
+}
+@media (min-width: 1024px) {
+  .apple-headline {
+    font-size: 40px;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+}
+/* Hero page title — 48 → 64 → 80px */
+.apple-hero {
+  font-size: 48px;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .apple-hero {
+    font-size: 64px;
+    letter-spacing: -0.02em;
+  }
+}
+@media (min-width: 768px) {
+  .apple-hero {
+    font-size: 80px;
+    letter-spacing: -0.025em;
+  }
+}
+/* Page / hero title (sub-pages) — 32 → 40 → 48px */
+.apple-title {
+  font-size: 32px;
+  line-height: 1.09375;
+  letter-spacing: 0.004em;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .apple-title {
+    font-size: 40px;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .apple-title {
+    font-size: 48px;
+    line-height: 1.08333;
+    letter-spacing: -0.003em;
+  }
+}
+/* Lead paragraph under a hero — 19 → 21px */
+.apple-lead {
+  font-size: 19px;
+  line-height: 1.42105;
+  letter-spacing: 0.012em;
+  font-weight: 400;
+}
+@media (min-width: 640px) {
+  .apple-lead {
+    font-size: 21px;
+    line-height: 1.381;
+    letter-spacing: 0.011em;
+  }
+}
+/* Lead / intro paragraph beside the hero — 21 → 28px */
+.apple-intro {
+  font-size: 21px;
+  line-height: 1.19048;
+  letter-spacing: 0.011em;
+  font-weight: 600;
+}
+@media (min-width: 640px) {
+  .apple-intro {
+    font-size: 28px;
+    line-height: 1.14286;
+    letter-spacing: 0.007em;
+  }
+}
+
 
 
 

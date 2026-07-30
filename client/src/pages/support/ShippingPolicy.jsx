@@ -37,7 +37,7 @@ const ShippingPolicy = () => {
         </div>
 
         <div className="bg-kind-mist rounded-[20px] p-6 sm:p-8">
-          <p className="text-sm sm:text-base text-kind-ink/80 leading-relaxed">
+          <p className="apple-body text-kind-ink/80">
             At GPSFDK, we aim to deliver your premium canvases and nameplates safely and promptly.
           </p>
         </div>

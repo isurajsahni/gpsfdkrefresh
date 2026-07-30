@@ -159,13 +159,13 @@ const Support = () => {
                   <span className="text-3xl font-heading font-bold text-kind-forest/20">0{i + 1}</span>
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-kind-ink mb-1.5">{step.title}</h3>
-                  <p className="text-kind-ink/60 text-sm leading-relaxed">{step.text}</p>
+                  <h3 className="apple-body font-heading font-semibold text-kind-ink mb-1.5">{step.title}</h3>
+                  <p className="apple-caption text-kind-ink/60">{step.text}</p>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-center text-kind-ink/60 text-sm mt-7 max-w-2xl mx-auto">
+          <p className="apple-body text-center text-kind-ink/60 mt-7 max-w-2xl mx-auto">
             Signed in when you ordered? Your AWB tracking number is also shown on each order in{' '}
             <Link to="/dashboard" className="text-kind-forest font-semibold hover:underline">
               your dashboard
@@ -189,7 +189,7 @@ const Support = () => {
           <div className="relative">
             <div className="text-center flex flex-col items-center">
               <Eyebrow dark>More help</Eyebrow>
-              <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight">
+              <h2 className="apple-headline mt-3 font-heading">
                 Need something else?
               </h2>
             </div>
@@ -200,13 +200,13 @@ const Support = () => {
                   to={link.to}
                   className="group bg-white/5 border border-white/10 rounded-[20px] p-6 hover:bg-white/10 transition-colors"
                 >
-                  <h3 className="font-heading font-bold flex items-center justify-between gap-2">
+                  <h3 className="apple-body font-heading font-semibold flex items-center justify-between gap-2">
                     {link.label}
                     <span className="w-8 h-8 rounded-full bg-kind-lime text-kind-ink flex items-center justify-center shrink-0">
                       <HiOutlineArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </span>
                   </h3>
-                  <p className="text-kind-sage text-sm mt-2">{link.blurb}</p>
+                  <p className="apple-caption text-kind-sage mt-2">{link.blurb}</p>
                 </Link>
               ))}
             </div>

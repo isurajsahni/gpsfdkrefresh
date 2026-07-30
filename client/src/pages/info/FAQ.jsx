@@ -105,7 +105,7 @@ const FAQ = () => {
                     onClick={() => toggleFAQ(index)}
                     className="w-full flex justify-between items-center gap-4 p-5 md:p-6 text-left focus:outline-none"
                   >
-                    <h3 className="text-base md:text-lg font-heading font-bold text-kind-ink pr-2">
+                    <h3 className="apple-body font-heading font-semibold text-kind-ink pr-2">
                       {faq.question}
                     </h3>
                     <span
@@ -120,7 +120,7 @@ const FAQ = () => {
                   <div
                     className={`px-5 md:px-6 overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-48 pb-5 md:pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
                   >
-                    <p className="text-kind-ink/70 leading-relaxed text-sm md:text-base">{faq.answer}</p>
+                    <p className="apple-body text-kind-ink/70">{faq.answer}</p>
                   </div>
                 </motion.div>
               ))}
@@ -133,8 +133,8 @@ const FAQ = () => {
                 <div className="absolute -bottom-20 -left-12 w-56 h-56 rounded-full bg-kind-mint/10 blur-3xl" />
               </div>
               <div className="relative">
-                <h4 className="font-heading font-bold text-lg mb-1">Still have questions?</h4>
-                <p className="text-sm text-kind-sage">Our support team is ready to help.</p>
+                <h4 className="apple-tile-title font-heading mb-1">Still have questions?</h4>
+                <p className="apple-body text-kind-sage">Our support team is ready to help.</p>
               </div>
               <div className="relative shrink-0">
                 <KindButton to="/contact" variant="lime">

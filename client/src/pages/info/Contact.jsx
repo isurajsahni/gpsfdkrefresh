@@ -156,7 +156,7 @@ const Contact = () => {
           }
           description="Whether it's a custom canvas idea, a bulk enquiry, or a question about your order — our team is here to help. Drop us a line, call, or message us on WhatsApp."
         >
-          <p className="relative mt-7 text-sm sm:text-base text-white/90">
+          <p className="apple-body relative mt-7 text-white/90">
             <a
               href="mailto:support@gpsfdk.com"
               onClick={() => fireContactPixel('Email')}
@@ -194,8 +194,8 @@ const Contact = () => {
                 <channel.Icon className="w-5 h-5" />
               </span>
               <div>
-                <h3 className="font-heading font-bold text-kind-ink">{channel.title}</h3>
-                <p className="text-kind-ink/60 text-sm mt-0.5">{channel.blurb}</p>
+                <h3 className="apple-body font-heading font-semibold text-kind-ink">{channel.title}</h3>
+                <p className="apple-caption text-kind-ink/60 mt-0.5">{channel.blurb}</p>
                 {channel.href ? (
                   <a
                     href={channel.href}
@@ -229,10 +229,10 @@ const Contact = () => {
           <div className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
             <div className="lg:col-span-2">
               <Eyebrow dark>Get in touch</Eyebrow>
-              <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight">
+              <h2 className="apple-headline mt-3 font-heading">
                 Send us a message
               </h2>
-              <p className="mt-4 text-kind-sage text-sm sm:text-base leading-relaxed">
+              <p className="apple-body mt-4 text-kind-sage">
                 Tell us about your idea, your wall, or your order. We usually reply within one
                 business day.
               </p>
@@ -344,13 +344,13 @@ const Contact = () => {
                 to={link.to}
                 className="group bg-kind-mist rounded-[20px] p-6 hover:-translate-y-1 transition-transform duration-300"
               >
-                <h3 className="font-heading font-bold text-kind-ink flex items-center justify-between gap-2">
+                <h3 className="apple-body font-heading font-semibold text-kind-ink flex items-center justify-between gap-2">
                   {link.label}
                   <span className="w-8 h-8 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
                     <HiOutlineArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                   </span>
                 </h3>
-                <p className="text-kind-ink/60 text-sm mt-2">{link.blurb}</p>
+                <p className="apple-caption text-kind-ink/60 mt-2">{link.blurb}</p>
               </Link>
             ))}
           </div>

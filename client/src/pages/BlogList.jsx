@@ -80,7 +80,7 @@ const BlogList = () => {
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-heading font-bold text-kind-ink text-lg md:text-xl leading-snug line-clamp-3">
+                    <h3 className="apple-tile-title font-heading text-kind-ink line-clamp-3">
                       {blog.title}
                     </h3>
 

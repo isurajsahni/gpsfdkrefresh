@@ -131,11 +131,11 @@ export const KindHero = ({ crumb, title, description, center = false, image, chi
 
       <div className={`relative ${center ? 'flex flex-col items-center' : ''}`}>
         {crumb && <Eyebrow dark>{crumb}</Eyebrow>}
-        <h1 className={`mt-4 text-3xl sm:text-5xl lg:text-6xl font-heading font-bold leading-[1.08] max-w-3xl ${center ? 'mx-auto' : ''}`}>
+        <h1 className={`apple-title mt-4 font-heading max-w-3xl ${center ? 'mx-auto' : ''}`}>
           {title}
         </h1>
         {description && (
-          <p className={`mt-5 text-base sm:text-lg text-kind-sage max-w-2xl leading-relaxed ${center ? 'mx-auto' : ''}`}>
+          <p className={`apple-lead mt-5 text-kind-sage max-w-2xl ${center ? 'mx-auto' : ''}`}>
             {description}
           </p>
         )}
@@ -149,11 +149,11 @@ export const KindHero = ({ crumb, title, description, center = false, image, chi
 export const KindSectionHead = ({ eyebrow, title, sub, center = true, dark = false, className = '' }) => (
   <div className={`${center ? 'text-center flex flex-col items-center' : ''} ${className}`}>
     {eyebrow && <Eyebrow dark={dark}>{eyebrow}</Eyebrow>}
-    <h2 className={`mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold leading-tight ${dark ? 'text-white' : 'text-kind-ink'}`}>
+    <h2 className={`apple-headline mt-3 font-heading ${dark ? 'text-white' : 'text-kind-ink'}`}>
       {title}
     </h2>
     {sub && (
-      <p className={`mt-3 text-sm sm:text-base max-w-2xl leading-relaxed ${dark ? 'text-kind-sage' : 'text-kind-ink/60'} ${center ? 'mx-auto' : ''}`}>
+      <p className={`apple-body mt-3 max-w-2xl ${dark ? 'text-kind-sage' : 'text-kind-ink/60'} ${center ? 'mx-auto' : ''}`}>
         {sub}
       </p>
     )}
@@ -183,8 +183,8 @@ export const KindCTA = ({
       </div>
       <div className="relative flex flex-col items-center">
         <Eyebrow dark>{eyebrow}</Eyebrow>
-        <h2 className="mt-3 text-2xl sm:text-3xl md:text-4xl font-heading font-bold max-w-2xl leading-tight">{title}</h2>
-        <p className="mt-4 text-sm sm:text-base text-kind-sage max-w-xl leading-relaxed">{text}</p>
+        <h2 className="apple-headline mt-3 font-heading max-w-2xl">{title}</h2>
+        <p className="apple-body mt-4 text-kind-sage max-w-xl">{text}</p>
         <div className="mt-7">
           <KindButton to={to} variant="lime">
             {cta}
@@ -198,7 +198,7 @@ export const KindCTA = ({
 /** Numbered content block for policy pages. */
 export const PolicySection = ({ index, title, children }) => (
   <section className="bg-white/70 rounded-[20px] border border-kind-forest/10 p-6 sm:p-8">
-    <h2 className="text-lg sm:text-xl font-heading font-bold text-kind-ink mb-3 sm:mb-4 flex items-center gap-3">
+    <h2 className="apple-tile-title font-heading text-kind-ink mb-3 sm:mb-4 flex items-center gap-3">
       {index != null && (
         <span className="w-8 h-8 rounded-full bg-kind-lime text-kind-ink text-sm font-bold flex items-center justify-center shrink-0">
           {index}
@@ -206,6 +206,6 @@ export const PolicySection = ({ index, title, children }) => (
       )}
       {title}
     </h2>
-    <div className="text-sm sm:text-base text-kind-ink/70 leading-relaxed space-y-3">{children}</div>
+    <div className="apple-body text-kind-ink/70 space-y-3">{children}</div>
   </section>
 );

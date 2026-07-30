@@ -21,6 +21,7 @@ const Order = require('../models/Order');
 const sendEmail = require('../utils/sendEmail');
 const { orderShipped, orderDelivered, orderCancelled, awbAssigned } = require('../utils/orderEmailTemplates');
 const { restoreStockForOrder } = require('./orderController');
+const erp = require('../utils/erpWebhook');
 
 // ─── Shiprocket status string → internal status map ───
 // Normalised to UPPER CASE for matching. Covers both underscore and
@@ -400,6 +401,10 @@ exports.handleTrackingUpdate = async (req, res) => {
     if (shouldSendAwbEmail) {
       sendAwbEmail(order);
     }
+
+    // ERP push (fire-and-forget, opt-in) — carries the new shipped/delivered
+    // status + AWB/courier so the ERP reflects fulfilment in real time.
+    erp.sendOrderEvent('order.updated', order);
 
     return res.status(200).json({ success: true });
 

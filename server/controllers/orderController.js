@@ -6,6 +6,7 @@ const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
+const erp = require('../utils/erpWebhook');
 const { detectCountry } = require('../utils/geoPricing');
 
 // Helper: send Meta CAPI Purchase event. Fire-and-forget so it never blocks
@@ -165,6 +166,10 @@ const triggerNewOrderNotifications = async (order) => {
     // ─── Send Customer Confirmation Email ───
     // Sent AFTER Shiprocket so the order object now has AWB/tracking data
     sendOrderEmail(order, 'pending');
+
+    // ─── ERP push (fire-and-forget, opt-in) ───
+    // After Shiprocket so the pushed payload carries AWB/courier if assigned.
+    erp.sendOrderEvent('order.created', order);
 
   } catch (err) {
     console.error('Failed to trigger order notifications:', err.message);
@@ -705,6 +710,9 @@ exports.updateOrderStatus = async (req, res, next) => {
       sendOrderEmail(order, req.body.status);
     }
 
+    // ERP push (fire-and-forget, opt-in)
+    erp.sendOrderEvent('order.updated', order);
+
     res.json(order);
   } catch (error) {
     next(error);
@@ -787,6 +795,9 @@ exports.cancelOrder = async (req, res, next) => {
 
     // Send cancellation email
     sendOrderEmail(order, 'cancelled');
+
+    // ERP push (fire-and-forget, opt-in)
+    erp.sendOrderEvent('order.updated', order);
 
     res.json({ message: 'Order cancelled successfully', order });
   } catch (error) {

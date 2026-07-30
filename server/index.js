@@ -124,6 +124,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/products', require('./routes/products'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
+app.use('/api/integrations', require('./routes/integrations')); // ERP order feed (x-api-key)
 app.use('/api/leads', require('./routes/leads'));
 app.use('/api', require('./routes/payments'));
 app.use('/api/analytics', require('./routes/analytics'));

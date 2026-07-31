@@ -94,29 +94,10 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Security: Sanitize MongoDB queries (prevent NoSQL injection) ───
-// Inline sanitizer (express-mongo-sanitize is incompatible with Express 5)
-const sanitize = (obj) => {
-  if (obj && typeof obj === 'object') {
-    for (const key of Object.keys(obj)) {
-      if (key.startsWith('$') || key.includes('.')) {
-        delete obj[key];
-      } else if (typeof obj[key] === 'object') {
-        sanitize(obj[key]);
-      }
-    }
-  }
-  return obj;
-};
-app.use((req, res, next) => {
-  // Skip sanitization for Meta WhatsApp webhook — Meta sends dotted query keys
-  // (hub.mode, hub.verify_token, hub.challenge) that the sanitizer would strip,
-  // causing verification to fail. Webhook handlers never feed query into Mongo,
-  // so the NoSQL-injection risk doesn't apply here.
-  if (req.path.startsWith('/webhook')) return next();
-  if (req.body) sanitize(req.body);
-  if (req.query) sanitize(req.query);
-  next();
-});
+// Extracted to middleware/sanitizeRequest.js so the control is unit-testable —
+// its previous inline form silently failed to sanitize `req.query` under
+// Express 5 (see the file header for the getter behaviour that caused it).
+app.use(require('./middleware/sanitizeRequest'));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

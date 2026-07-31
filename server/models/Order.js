@@ -122,7 +122,12 @@ orderSchema.index({ status: 1 });
 // Payment-idempotency check (verifyRazorpay deduplicates by paymentResult.id).
 orderSchema.index({ 'paymentResult.id': 1 });
 // Shiprocket webhook lookups by AWB / shiprocket id / shipment id.
+// The webhook resolves an order by $or-ing every identifier the payload can
+// carry, so each branch needs its own index — an unindexed branch forces a
+// collection scan for the whole $or.
 orderSchema.index({ awb: 1 });
+orderSchema.index({ awbCode: 1 });
+orderSchema.index({ trackingNumber: 1 });
 orderSchema.index({ shiprocketOrderId: 1 });
 orderSchema.index({ shipmentId: 1 });
 // Guest dashboard / abandoned-cart matching.

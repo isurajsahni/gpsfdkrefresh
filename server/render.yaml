@@ -41,3 +41,7 @@ services:
         sync: false
       - key: SHIPROCKET_PICKUP_LOCATION
         sync: false
+      # Shared secret for the inbound Shiprocket tracking webhook. Without it the
+      # route fails closed (500) and no tracking update ever lands.
+      - key: SHIPROCKET_WEBHOOK_SECRET
+        sync: false

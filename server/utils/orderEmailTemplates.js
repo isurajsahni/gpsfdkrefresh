@@ -220,11 +220,31 @@ const orderProcessing = (order, customerName) => {
   return emailWrapper(content, `Your order ${order.orderNumber} is being prepared!`);
 };
 
+// Direct courier tracking page for an AWB. Stored on the order by the Shiprocket
+// webhook; recomputed here as a fallback for orders saved before that existed.
+// Unlike our own /track-order form — which asks for the order number AND the
+// email/phone on the order — this opens straight to the shipment from the
+// inbox, so it's the primary call-to-action in tracking emails.
+const courierTrackingUrl = (order, awb) => {
+  if (order.trackingUrl) return order.trackingUrl;
+  if (!awb) return '';
+  const base = process.env.SHIPROCKET_TRACKING_BASE_URL || 'https://shiprocket.co/tracking';
+  return `${base}/${encodeURIComponent(awb)}`;
+};
+
+// Two-button tracking block: courier page first, our order page as a fallback.
+const trackingButtons = (courierLink, siteLink) => `
+    <div style="text-align: center; margin-bottom: 25px;">
+      ${courierLink ? `<a href="${courierLink}" class="btn" style="display: inline-block; background: ${brandColor}; color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">Track Your Shipment →</a>` : ''}
+      ${siteLink ? `<div style="margin-top: 14px;"><a href="${siteLink}" style="color: #666; font-size: 13px; text-decoration: underline;">Or view full order details on gpsfdk.com</a></div>` : ''}
+    </div>`;
+
 // 3. ORDER SHIPPED / DISPATCHED
 const orderShipped = (order, customerName) => {
   const awb = order.awbCode || order.trackingNumber || '';
   // orderId prefills the tracking form; ?awb= is not read by the page.
   const trackingLink = awb ? `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?orderId=${encodeURIComponent(order.orderNumber)}` : '';
+  const courierLink = courierTrackingUrl(order, awb);
 
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
@@ -248,10 +268,7 @@ const orderShipped = (order, customerName) => {
       </div>
     </div>
 
-    ${awb ? `
-    <div style="text-align: center; margin-bottom: 25px;">
-      <a href="${trackingLink}" class="btn" style="display: inline-block; background: ${brandColor}; color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">Track Your Order →</a>
-    </div>` : ''}
+    ${awb ? trackingButtons(courierLink, trackingLink) : ''}
 
     ${renderAddress(order.shippingAddress)}
 
@@ -273,6 +290,7 @@ const orderShipped = (order, customerName) => {
 const awbAssigned = (order, customerName) => {
   const awb = order.awb || order.awbCode || order.trackingNumber || '';
   const trackingLink = `${process.env.CLIENT_URL || 'https://gpsfdk.com'}/track-order?orderId=${encodeURIComponent(order.orderNumber)}`;
+  const courierLink = courierTrackingUrl(order, awb);
 
   const content = `
     <div style="text-align: center; margin-bottom: 30px;">
@@ -291,12 +309,10 @@ const awbAssigned = (order, customerName) => {
       </div>
     </div>
 
-    <div style="text-align: center; margin-bottom: 25px;">
-      <a href="${trackingLink}" class="btn" style="display: inline-block; background: ${brandColor}; color: #ffffff !important; text-decoration: none; padding: 14px 35px; border-radius: 8px; font-weight: 600; font-size: 14px;">Track Your Order →</a>
-    </div>
+    ${trackingButtons(courierLink, trackingLink)}
 
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">What's Next?</h3>
-    <p style="color: #666; font-size: 14px; line-height: 1.6;">Your package will be picked up by the courier shortly. This tracking number is also visible in your order dashboard on our website. We'll email you again the moment your order is on the move.</p>
+    <p style="color: #666; font-size: 14px; line-height: 1.6;">Your package will be picked up by the courier shortly. Scans can take a few hours to appear after pickup, so don't worry if tracking looks quiet at first. This tracking number is also visible in your order dashboard on our website, and we'll email you again the moment your order is on the move.</p>
 
     <div class="divider"></div>
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items in Your Order</h3>

@@ -28,20 +28,39 @@ const erp = require('../utils/erpWebhook');
 // space-separated variants that Shiprocket sends across webhook types.
 const STATUS_STRING_MAP = {
   // → processing
-  'NEW':               'processing',
-  'PICKUP GENERATED':  'processing',
-  'PICKUP_GENERATED':  'processing',
-  'READY TO SHIP':     'processing',
-  'PICKED UP':         'processing',
-  'PICKED_UP':         'processing',
+  'NEW':                 'processing',
+  'AWB ASSIGNED':        'processing',
+  'AWB_ASSIGNED':        'processing',
+  'LABEL GENERATED':     'processing',
+  'MANIFEST GENERATED':  'processing',
+  'PICKUP GENERATED':    'processing',
+  'PICKUP_GENERATED':    'processing',
+  'PICKUP SCHEDULED':    'processing',
+  'PICKUP QUEUED':       'processing',
+  'PICKUP RESCHEDULED':  'processing',
+  'OUT FOR PICKUP':      'processing',
+  'READY TO SHIP':       'processing',
+  'PICKED UP':           'processing',
+  'PICKED_UP':           'processing',
 
   // → shipped
-  'IN TRANSIT':        'shipped',
-  'IN_TRANSIT':        'shipped',
-  'SHIPPED':           'shipped',
-  'DISPATCHED':        'shipped',
-  'OUT FOR DELIVERY':  'shipped',
-  'OUT_FOR_DELIVERY':  'shipped',
+  'IN TRANSIT':          'shipped',
+  'IN_TRANSIT':          'shipped',
+  // Delhivery (and others) report transit as "IN TRANSIT-EN-ROUTE" — seen live
+  // on this account's shipments, and previously unmapped.
+  'IN TRANSIT-EN-ROUTE': 'shipped',
+  'IN TRANSIT EN ROUTE': 'shipped',
+  'SHIPPED':             'shipped',
+  'DISPATCHED':          'shipped',
+  'OUT FOR DELIVERY':    'shipped',
+  'OUT_FOR_DELIVERY':    'shipped',
+  'REACHED AT DESTINATION HUB': 'shipped',
+  'REACHED DESTINATION HUB':    'shipped',
+  'MISROUTED':           'shipped',
+  // Still physically in the courier network — a failed attempt or delay is not
+  // a terminal state, so these must not regress or cancel the order.
+  'UNDELIVERED':         'shipped',
+  'DELAYED':             'shipped',
 
   // → delivered
   'DELIVERED':         'delivered',
@@ -49,6 +68,10 @@ const STATUS_STRING_MAP = {
   // → cancelled
   'RTO INITIATED':     'cancelled',
   'RTO_INITIATED':     'cancelled',
+  'RTO IN TRANSIT':    'cancelled',
+  'RTO ACKNOWLEDGED':  'cancelled',
+  'RTO NDR':           'cancelled',
+  'RTO OFD':           'cancelled',
   'RTO DELIVERED':     'cancelled',
   'RTO_DELIVERED':     'cancelled',
   'CANCELLED':         'cancelled',
@@ -104,6 +127,25 @@ const STATUS_MESSAGE_MAP = {
   'OUT FOR DELIVERY':  'Shipment out for delivery',
   'OUT_FOR_DELIVERY':  'Shipment out for delivery',
   'DELIVERED':         'Shipment delivered successfully',
+  'AWB ASSIGNED':      'Tracking number assigned',
+  'AWB_ASSIGNED':      'Tracking number assigned',
+  'LABEL GENERATED':   'Shipping label generated',
+  'MANIFEST GENERATED':'Manifest generated',
+  'PICKUP SCHEDULED':  'Pickup scheduled',
+  'PICKUP QUEUED':     'Pickup queued',
+  'PICKUP RESCHEDULED':'Pickup rescheduled',
+  'OUT FOR PICKUP':    'Courier out for pickup',
+  'IN TRANSIT-EN-ROUTE': 'Shipment in transit',
+  'IN TRANSIT EN ROUTE': 'Shipment in transit',
+  'REACHED AT DESTINATION HUB': 'Reached destination hub',
+  'REACHED DESTINATION HUB':    'Reached destination hub',
+  'MISROUTED':         'Shipment misrouted — courier re-routing',
+  'UNDELIVERED':       'Delivery attempt unsuccessful',
+  'DELAYED':           'Shipment delayed',
+  'RTO IN TRANSIT':    'Return to origin in transit',
+  'RTO ACKNOWLEDGED':  'Return to origin acknowledged',
+  'RTO NDR':           'Return to origin — delivery issue',
+  'RTO OFD':           'Return to origin out for delivery',
   'RTO INITIATED':     'Return to origin initiated',
   'RTO_INITIATED':     'Return to origin initiated',
   'RTO DELIVERED':     'Return to origin completed',
@@ -199,17 +241,57 @@ const sendAwbEmail = async (order) => {
   }
 };
 
+// ─── Helper: Public courier tracking URL for an AWB ───
+// Shiprocket's public tracking page is store-branded ("GPSFDK - Order Tracking")
+// and needs nothing but the AWB — no login, no order number, no email — so it's
+// the one link a customer can always open straight from their inbox.
+const SR_TRACKING_BASE = process.env.SHIPROCKET_TRACKING_BASE_URL || 'https://shiprocket.co/tracking';
+const buildTrackingUrl = (awb) => (awb ? `${SR_TRACKING_BASE}/${encodeURIComponent(awb)}` : '');
+
+// ─── Helper: Persist shipment metadata onto the order ───
+// Only ever FILLS empty fields, so a later event can't overwrite the AWB that
+// the customer has already been emailed. Returns whether this call introduced
+// the order's first AWB (the trigger for the tracking-number email) and whether
+// anything changed at all (so callers can skip a pointless save).
+const captureShipmentMeta = (order, { awb, courierName, srOrderId, shipmentId }) => {
+  const isFirstAwb = !!awb && !order.awb && !order.awbCode && !order.trackingNumber;
+  let changed = false;
+
+  if (awb && !order.awb)                     { order.awb = awb; changed = true; }
+  if (awb && !order.awbCode)                 { order.awbCode = awb; changed = true; }
+  if (awb && !order.trackingNumber)          { order.trackingNumber = awb; changed = true; }
+  if (courierName && !order.courierName)     { order.courierName = courierName; changed = true; }
+  // `trackingUrl` is read by the account dashboard's "Track Status" button and
+  // the tracking email, but nothing ever populated it — derive it from the AWB.
+  if (awb && !order.trackingUrl)             { order.trackingUrl = buildTrackingUrl(awb); changed = true; }
+  if (shipmentId && !order.shipmentId)       { order.shipmentId = shipmentId; changed = true; }
+  // Backfill Shiprocket's own order id when we learn it from a webhook — orders
+  // shipped or cloned from the Shiprocket panel never got one at creation time.
+  if (srOrderId && !order.shiprocketOrderId) { order.shiprocketOrderId = srOrderId; changed = true; }
+
+  return { isFirstAwb, changed };
+};
+
 // ─── Main Webhook Handler ───
 exports.handleTrackingUpdate = async (req, res) => {
   try {
     const body = req.body;
 
-    // Extract identifiers from the payload
-    const awb           = body.awb ? String(body.awb) : '';
-    const orderId       = body.order_id ? String(body.order_id) : '';
-    const shipmentId    = body.shipment_id ? String(body.shipment_id) : '';
-    const channelOrderId = body.channel_order_id ? String(body.channel_order_id) : '';
-    const courierName   = body.courier_name || '';
+    // ─── Extract identifiers from the payload ───
+    // Field semantics, per Shiprocket's published webhook body:
+    //   order_id    → the SELLER's (channel) order id — i.e. our `orderNumber`
+    //   sr_order_id → Shiprocket's own internal order id — our `shiprocketOrderId`
+    //   awb         → tracking number; present on every event once assigned
+    // The tracking payload contains NO `channel_order_id` and NO `shipment_id`.
+    // Reading those two (and treating `order_id` as the Shiprocket id) meant the
+    // $or below could only ever match on an AWB we had already stored — which
+    // only this handler ever writes. That chicken-and-egg made every first event
+    // fall through to "Order not found", silently, for every order.
+    const awb            = body.awb ? String(body.awb).trim() : '';
+    const channelOrderId = body.order_id ? String(body.order_id).trim() : '';
+    const srOrderId      = body.sr_order_id ? String(body.sr_order_id).trim() : '';
+    const shipmentId     = body.shipment_id ? String(body.shipment_id).trim() : '';
+    const courierName    = body.courier_name || '';
     // Shiprocket sends `scans` as an ARRAY of scan objects, so reading
     // `body.scans.location` was always undefined. Prefer current_city, then the
     // most recent scan's location (last element), falling back to the first.
@@ -224,7 +306,63 @@ exports.handleTrackingUpdate = async (req, res) => {
     const statusId   = body.shipment_status_id || body.current_status_id;
     const statusUpper = String(statusRaw).toUpperCase().trim();
 
-    console.log(`📥 [Shiprocket Webhook] Received: { awb: "${awb}", order_id: "${orderId}", shipment_id: "${shipmentId}", current_status: "${statusRaw}", status_id: ${statusId || 'N/A'} }`);
+    console.log(`📥 [Shiprocket Webhook] Received: { awb: "${awb}", order_id: "${channelOrderId}", sr_order_id: "${srOrderId}", current_status: "${statusRaw}", status_id: ${statusId || 'N/A'} }`);
+
+    // ─── Resolve the order number Shiprocket is referring to ───
+    // Shiprocket does not always echo our order number verbatim:
+    //   • some channels prefix it with their own id → "1373900_GPS-ABC-123"
+    //   • re-shipping a cancelled order via "Clone Order" appends a clone marker
+    //     → "GPS-ABC-123-C". The clone is a brand-new Shiprocket order with a new
+    //     sr_order_id/AWB, so the ONLY link back to our record is this suffixed
+    //     order number — without stripping it, every re-shipped order goes dark.
+    const orderNumberCandidates = [];
+    const addCandidate = (v) => {
+      const s = (v || '').trim();
+      if (s && !orderNumberCandidates.includes(s)) orderNumberCandidates.push(s);
+      const up = s.toUpperCase();
+      if (up && !orderNumberCandidates.includes(up)) orderNumberCandidates.push(up);
+    };
+    if (channelOrderId) {
+      addCandidate(channelOrderId);
+      const noPrefix = channelOrderId.includes('_')
+        ? channelOrderId.slice(channelOrderId.indexOf('_') + 1)
+        : '';
+      addCandidate(noPrefix);
+      for (const base of [channelOrderId, noPrefix]) {
+        const m = (base || '').match(/^(.*?)-C\d*$/i);
+        if (m) addCandidate(m[1]);
+      }
+    }
+
+    // ─── Find matching order ───
+    // Done BEFORE status mapping: an unrecognised status must not stop us from
+    // recording the AWB, which is the whole point of the tracking-number email.
+    const lookupConditions = [];
+    if (awb) {
+      lookupConditions.push({ awb }, { awbCode: awb }, { trackingNumber: awb });
+    }
+    if (srOrderId)  lookupConditions.push({ shiprocketOrderId: srOrderId });
+    if (shipmentId) lookupConditions.push({ shipmentId });
+    if (orderNumberCandidates.length) {
+      lookupConditions.push({ orderNumber: { $in: orderNumberCandidates } });
+      lookupConditions.push({ shiprocketOrderId: { $in: orderNumberCandidates } });
+    }
+
+    if (lookupConditions.length === 0) {
+      console.warn(`⚠️ [Shiprocket Webhook] No identifiers in payload — cannot look up order`);
+      return res.status(200).json({ success: true, ignored: true, reason: 'No order identifiers' });
+    }
+
+    const order = await Order.findOne({ $or: lookupConditions });
+
+    if (!order) {
+      console.warn(`🚫 [Shiprocket Webhook] Order not found for: awb=${awb}, order_id=${channelOrderId}, sr_order_id=${srOrderId}, tried orderNumbers=[${orderNumberCandidates.join(', ')}]`);
+      // Acknowledge (200), don't 404: a shipment we don't recognise will never
+      // become findable, so a non-2xx just makes Shiprocket retry it forever (F6).
+      return res.status(200).json({ success: true, ignored: true, reason: 'Order not found' });
+    }
+
+    console.log(`📦 [Shiprocket Webhook] Order found: ${order.orderNumber} (current status: ${order.status})`);
 
     // ─── Map to internal status ───
     let mappedStatus = STATUS_STRING_MAP[statusUpper] || null;
@@ -241,35 +379,23 @@ exports.handleTrackingUpdate = async (req, res) => {
     }
 
     if (!mappedStatus) {
-      console.log(`⚠️ [Shiprocket Webhook] Unknown/unmapped status: "${statusRaw}" (id: ${statusId || 'N/A'}) — ignoring`);
+      // Unknown status: don't touch order.status or the timeline, but DO capture
+      // the AWB/courier and notify the customer. Shiprocket keeps adding status
+      // strings, and an unmapped one must never cost the customer their tracking
+      // number — that was the old behaviour and it failed silently.
+      console.log(`⚠️ [Shiprocket Webhook] Unknown/unmapped status: "${statusRaw}" (id: ${statusId || 'N/A'}) — recording shipment metadata only`);
+      const captured = captureShipmentMeta(order, { awb, courierName, srOrderId, shipmentId });
+      if (captured.changed) {
+        if (!Array.isArray(order.notifiedStatuses)) order.notifiedStatuses = [];
+        const notifyAwb = captured.isFirstAwb && !order.notifiedStatuses.includes('awb_assigned');
+        if (notifyAwb) order.notifiedStatuses.push('awb_assigned');
+        await order.save();
+        if (notifyAwb) sendAwbEmail(order);
+      }
       return res.status(200).json({ success: true, ignored: true, reason: `Unmapped status: ${statusRaw}` });
     }
 
     console.log(`🔄 [Shiprocket Webhook] Mapped: ${statusRaw} → ${mappedStatus}`);
-
-    // ─── Find matching order ───
-    const lookupConditions = [];
-    if (awb)            lookupConditions.push({ awb });
-    if (awb)            lookupConditions.push({ awbCode: awb });
-    if (orderId)        lookupConditions.push({ shiprocketOrderId: orderId });
-    if (shipmentId)     lookupConditions.push({ shipmentId });
-    if (channelOrderId) lookupConditions.push({ orderNumber: channelOrderId });
-
-    if (lookupConditions.length === 0) {
-      console.warn(`⚠️ [Shiprocket Webhook] No identifiers in payload — cannot look up order`);
-      return res.status(200).json({ success: true, ignored: true, reason: 'No order identifiers' });
-    }
-
-    const order = await Order.findOne({ $or: lookupConditions });
-
-    if (!order) {
-      console.warn(`🚫 [Shiprocket Webhook] Order not found for: awb=${awb}, order_id=${orderId}, shipment_id=${shipmentId}, channel_order_id=${channelOrderId}`);
-      // Acknowledge (200), don't 404: a shipment we don't recognise will never
-      // become findable, so a non-2xx just makes Shiprocket retry it forever (F6).
-      return res.status(200).json({ success: true, ignored: true, reason: 'Order not found' });
-    }
-
-    console.log(`📦 [Shiprocket Webhook] Order found: ${order.orderNumber} (current status: ${order.status})`);
 
     // Belt-and-braces: Mongoose hydrates missing array paths as [], but a
     // throw here would 500 → Shiprocket retry storm, so guard explicitly.
@@ -316,13 +442,9 @@ exports.handleTrackingUpdate = async (req, res) => {
     }
 
     // ─── Update shipping metadata ───
-    // First time we see an AWB for this order? (checked before assignment below)
-    const isFirstAwb = !!awb && !order.awb && !order.awbCode && !order.trackingNumber;
-    if (awb && !order.awb) order.awb = awb;
-    if (awb && !order.awbCode) order.awbCode = awb;
-    if (awb && !order.trackingNumber) order.trackingNumber = awb;
-    if (courierName && !order.courierName) order.courierName = courierName;
-    if (shipmentId && !order.shipmentId) order.shipmentId = shipmentId;
+    // `isFirstAwb` = this event introduced the tracking number, and is what
+    // gates the AWB-assigned email further down.
+    const { isFirstAwb } = captureShipmentMeta(order, { awb, courierName, srOrderId, shipmentId });
 
     // ─── Update order status (forward-only, per willAdvance above) ───
     if (willAdvance) {

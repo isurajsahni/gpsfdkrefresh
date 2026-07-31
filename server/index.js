@@ -58,36 +58,10 @@ app.use(globalLimiter);
 app.use('/api/webhook', express.json(), require('./routes/shiprocketWebhook'));
 
 // ─── Security: CORS ───
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://gpsfdkrefresh.vercel.app',
-  'https://gpsfdk.com',
-  'https://www.gpsfdk.com',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-    if (!origin) return callback(null, true);
-    
-    // Check if origin matches allowed list or is a Vercel staging/preview/production subdomain
-    const isAllowed = allowedOrigins.includes(origin) || 
-                      origin.endsWith('.vercel.app') || 
-                      origin.includes('localhost') || 
-                      origin.includes('127.0.0.1');
-                      
-    if (isAllowed) {
-      callback(null, true);
-    } else {
-      console.warn(`Origin ${origin} blocked by CORS`);
-      callback(null, false);
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key'],
-}));
+// Policy lives in config/corsOptions.js so the origin predicate is testable —
+// the previous inline version substring-matched the Origin header, admitting
+// hosts like `localhost.evil.com` and any `*.vercel.app` deployment.
+app.use(cors(require('./config/corsOptions')));
 
 // ─── Body parsers ───
 app.use(express.json({ limit: '10mb' }));

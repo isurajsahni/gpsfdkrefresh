@@ -10,6 +10,23 @@ const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
 const isPlaceholder = (val) =>
   !val || PLACEHOLDER_PATTERNS.some((p) => val.includes(p));
 
+// Constant-time compare for secret-derived values (here: the Razorpay HMAC
+// signature). A plain `===` on strings short-circuits at the first differing
+// byte, which leaks — in principle — how many leading hex chars of the expected
+// HMAC a guess got right. Same helper/shape as `safeEqual` in
+// routes/shiprocketWebhook.js and middleware/serviceKey.js; kept local so this
+// file has no new cross-module dependency. Returns false (never throws) on
+// non-strings or length mismatch, because `crypto.timingSafeEqual` requires
+// two equal-length Buffers — a non-string signature (e.g. a JSON array smuggled
+// in the body) must be a clean rejection, not a 500.
+const safeEqual = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ab.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ab, bb);
+};
+
 // Razorpay's API can throw transient 5xx / network errors — most commonly on
 // the FIRST call from a freshly-started (cold) Render container, before DNS/TLS
 // to api.razorpay.com is warmed up. That single failure surfaced to the buyer
@@ -55,8 +72,16 @@ exports.getRazorpayConfig = (req, res) => {
 };
 
 // Ops probe: attempts a ₹1 order create (unpaid stub, no money moves) and
-// reports a sanitized outcome, so gateway failures on the host can be
-// diagnosed without access to its logs. Never leaks the key secret.
+// reports the outcome, so gateway failures on the host can be diagnosed
+// without access to its logs. Never leaks the key secret.
+//
+// ADMIN-ONLY — mounted behind `protect, admin` in routes/payments.js. Two
+// reasons it can never be public: the response body carries gateway internals
+// (key-id prefix, gateway error code/description), and the ₹1 order it creates
+// is REAL and payable, i.e. a payable order id that did not come from the
+// checkout price calculation. verifyRazorpay now verifies the captured amount
+// against `rzpOrder.amount` so such an order can no longer be redeemed against
+// a large cart, but there is no reason to hand them out to anonymous callers.
 exports.getPaymentHealth = async (req, res) => {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -221,7 +246,7 @@ exports.verifyRazorpay = async (req, res, next) => {
       .update(sign.toString())
       .digest('hex');
     
-    if (expectedSign === razorpay_signature) {
+    if (safeEqual(expectedSign, razorpay_signature)) {
       // 0. IDEMPOTENCY — if this payment has already been recorded as an order
       // (e.g., the user double-clicked, the network retried, or Razorpay redelivered
       // a webhook), short-circuit and return the existing order. This prevents
@@ -254,11 +279,88 @@ exports.verifyRazorpay = async (req, res, next) => {
       });
       const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpay_order_id));
       
-      // The Razorpay order was created with geo-pricing already applied.
-      // Verify the stored INR total from the order notes matches our recalculated price.
+      // ─── Amount verification — fails CLOSED ───
+      // `rzpOrder.amount` (paise) is the figure Razorpay itself holds for this
+      // order. createRazorpayOrder derived it from a server-side price
+      // calculation, so the client can never influence it. It is the
+      // authoritative amount; `notes.inr_total` is only a convenience copy.
+      //
+      // This check used to key SOLELY off `notes.inr_total`, and skipped
+      // verification entirely when that note was missing or "0". Every order
+      // minted by createRazorpayOrder carries the note, which made the skip look
+      // harmless — but createRazorpayOrder is not the only thing minting
+      // payable orders on this key. The /api/payment-health probe mints a real
+      // ₹1 order whose notes are `{ purpose: 'gateway-health-probe' }` with no
+      // inr_total. Anyone holding such an order id could pay ₹1 through the
+      // public checkout, receive a genuine Razorpay signature for it, and POST
+      // that to /verify-payment with an arbitrarily large cart: the note was
+      // absent, the amount check was skipped, and a ₹4,000 order was created
+      // for ₹1. Comparing against `amount` closes that for good, regardless of
+      // what notes any out-of-band order happens to carry.
+      //
+      // Why this is safe for real buyers: for an order created by
+      // createRazorpayOrder, `amount === round(inr_total * 100)` by
+      // construction, so any checkout that passed the old note comparison
+      // passes this one identically. The ±₹1 tolerance is preserved so
+      // sub-rupee rounding drift between checkout and verification still goes
+      // through. The only newly-rejected requests are ones whose captured
+      // amount genuinely does not match the cart being claimed.
+      //
+      // The currency guard exists because comparing paise across currencies is
+      // meaningless: createRazorpayOrder hardcodes INR (Razorpay only supports
+      // INR for Indian merchant accounts — see the geo-pricing note there), so
+      // a non-INR order here cannot have come from our checkout.
+      const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
+      const paidInr = Number(rzpOrder?.amount) / 100;
+      if (
+        paidCurrency !== 'INR' ||
+        !Number.isFinite(paidInr) ||
+        paidInr <= 0 ||
+        Math.abs(paidInr - prices.totalPrice) > 1
+      ) {
+        console.error(
+          '[Razorpay] verify: amount/currency mismatch — refusing to create order:',
+          JSON.stringify({
+            razorpay_order_id,
+            razorpay_payment_id,
+            orderAmountPaise: rzpOrder?.amount ?? null,
+            orderCurrency: rzpOrder?.currency ?? null,
+            recalculatedTotal: prices.totalPrice,
+          })
+        );
+        return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
+      }
+
+      // Secondary cross-check against the note written at order creation. Kept
+      // as defence in depth (it would catch an order whose amount was somehow
+      // right but whose recorded INR total was not); still advisory-only when
+      // the note is absent, since the authoritative check above already ran.
       const storedInrTotal = parseFloat(rzpOrder.notes?.inr_total || '0');
       if (storedInrTotal > 0 && Math.abs(storedInrTotal - prices.totalPrice) > 1) {
         return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
+      }
+
+      // ─── Capture state: LOG ONLY, never a rejection ───
+      // Deliberate decision, do not "harden" this into a hard 400. A valid
+      // signature is itself proof that Razorpay processed a successful payment
+      // on this order (only Razorpay can produce the HMAC), so an unpaid order
+      // cannot reach this point anyway. Meanwhile `status` legitimately lags or
+      // sits at 'attempted' when the account/payment is on manual capture
+      // (authorized, captured later) or when the fetch races the capture
+      // propagating. Rejecting on that would take the buyer's money and create
+      // no order — the exact failure this whole path is built to avoid (F1).
+      // So we record the anomaly for reconciliation and continue.
+      if (rzpOrder?.status !== 'paid' || Number(rzpOrder?.amount_paid) < Number(rzpOrder?.amount)) {
+        console.warn(
+          '[Razorpay] verify: signature valid but order not shown as fully paid — proceeding anyway:',
+          JSON.stringify({
+            razorpay_order_id,
+            razorpay_payment_id,
+            status: rzpOrder?.status ?? null,
+            amount: rzpOrder?.amount ?? null,
+            amount_paid: rzpOrder?.amount_paid ?? null,
+          })
+        );
       }
 
       // 2. Create the final Database Order securely

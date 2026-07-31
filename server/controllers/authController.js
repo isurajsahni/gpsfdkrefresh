@@ -352,7 +352,10 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     // ── Email update (requires emailVerifiedToken from Email OTP) ──
-    if (req.body.email && req.body.email.trim().toLowerCase() !== user.email) {
+    // Normalised once, exactly as `requestEmailUpdateOtp` normalises the address
+    // it stores on the OTP session, so the comparison below is apples-to-apples.
+    const requestedEmail = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    if (requestedEmail && requestedEmail !== user.email) {
       const { emailVerifiedToken } = req.body;
       if (!emailVerifiedToken) {
         return res.status(400).json({ message: 'Email verification required. Please verify via OTP first.' });
@@ -362,12 +365,22 @@ exports.updateProfile = async (req, res, next) => {
         if (!decoded.emailVerified || decoded.userId !== req.user._id.toString()) {
           return res.status(400).json({ message: 'Invalid email verification token.' });
         }
+        // The token proves ownership of `decoded.newEmail` specifically — it is
+        // not a blank cheque to set any address. Without this check a user could
+        // complete the OTP flow for an address they DO own, then replay that
+        // token while submitting a different, unverified address and have the
+        // server bind it to their account. The `emailInUse` check below only
+        // stops addresses that are already registered, so any unregistered
+        // address could be claimed with no proof at all, defeating the OTP flow.
+        if (decoded.newEmail !== requestedEmail) {
+          return res.status(400).json({ message: 'Invalid email verification token.' });
+        }
         // Check if new email is already used
-        const emailInUse = await User.findOne({ email: req.body.email.trim().toLowerCase(), _id: { $ne: req.user._id } });
+        const emailInUse = await User.findOne({ email: requestedEmail, _id: { $ne: req.user._id } });
         if (emailInUse) {
           return res.status(400).json({ message: 'This email is already linked to another account.' });
         }
-        user.email = req.body.email.trim().toLowerCase();
+        user.email = requestedEmail;
       } catch (e) {
         return res.status(400).json({ message: 'Email verification token expired or invalid.' });
       }

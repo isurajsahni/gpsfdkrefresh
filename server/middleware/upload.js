@@ -1,3 +1,4 @@
+const path = require('path');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -52,7 +53,26 @@ const csvDiskStorage = multer.diskStorage({
     cb(null, 'uploads');
   },
   filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    // Defence in depth against path traversal. multer resolves the value we
+    // return here with path.join(destination, filename), so any '../' that
+    // survives into it walks out of uploads/ - and because the timestamp
+    // prefix absorbs exactly one '..' segment, '../../../evil.js' lands in the
+    // server's CWD, i.e. overwriting application .js files (RCE on restart).
+    //
+    // Today that is not reachable: multer is configured without preservePath,
+    // so busboy already runs basename() on the wire filename before we ever
+    // see it (verified against multer 2.2.0 / busboy 1.6.0). But that
+    // containment is an undocumented default in a transitive dependency - one
+    // `preservePath: true` or one parser swap and the hole is live. Sanitise
+    // here so correctness does not depend on it.
+    //
+    // basename() strips any directory component; the character allowlist then
+    // removes what is left (path separators, ':' which would create an NTFS
+    // alternate data stream on Windows, control chars). Only the on-disk temp
+    // name is affected - importProducts reads req.file.path and never looks at
+    // the original name, so mangling here breaks nothing.
+    const safeName = path.basename(file.originalname || '').replace(/[^\w.\-]/g, '_');
+    cb(null, `${Date.now()}-${safeName}`);
   }
 });
 

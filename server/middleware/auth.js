@@ -8,6 +8,18 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select('-password');
+      // A JWT stays valid for its full 7-day life even if the account is deleted
+      // in the meantime, in which case findById resolves to null. Without this
+      // guard the request continued with req.user === null and every handler
+      // that reaches for req.user._id (getMe, addAddress, createOrder, ...)
+      // threw a TypeError and surfaced as a 500. The admin/marketing guards
+      // already fail safe via `req.user && ...`, so this is about turning a
+      // crash into the correct 401 for routes that only use `protect`.
+      // NOTE: optionalAuth below deliberately does NOT do this - public routes
+      // must still serve anonymous shoppers when the user is missing.
+      if (!req.user) {
+        return res.status(401).json({ message: 'Not authorized, user no longer exists' });
+      }
       return next();
     } catch (error) {
       return res.status(401).json({ message: 'Not authorized, token failed' });

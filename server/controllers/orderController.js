@@ -689,25 +689,52 @@ exports.updateOrderStatus = async (req, res, next) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const previousStatus = order.status;
+    const nextStatus = req.body.status;
 
-    if (req.body.status) order.status = req.body.status;
+    if (nextStatus) order.status = nextStatus;
     if (req.body.trackingNumber) order.trackingNumber = req.body.trackingNumber;
-    if (req.body.status === 'delivered') order.deliveredAt = Date.now();
+    if (nextStatus === 'delivered') order.deliveredAt = Date.now();
     if (req.body.isPaid !== undefined) {
       order.isPaid = req.body.isPaid;
       if (req.body.isPaid) order.paidAt = Date.now();
     }
 
+    // ─── Email idempotency (shared with the Shiprocket webhook) ───
+    // Shiprocket now drives shipped/delivered/cancelled automatically, so the
+    // same status can be reached from here AND from a webhook. Both paths must
+    // consult the same `notifiedStatuses` ledger, otherwise marking an order
+    // Shipped by hand emails the customer, and the courier's own "IN TRANSIT"
+    // event a few hours later emails them the exact same thing again.
+    // `pending`/`processing` have no webhook counterpart, so they are left to
+    // notify on every change as before.
+    const statusChanged = !!nextStatus && nextStatus !== previousStatus;
+    const dedupedStatuses = ['shipped', 'delivered', 'cancelled'];
+    if (!Array.isArray(order.notifiedStatuses)) order.notifiedStatuses = [];
+
+    let shouldSendEmail = statusChanged;
+    if (statusChanged && dedupedStatuses.includes(nextStatus)) {
+      const alreadyNotified =
+        order.notifiedStatuses.includes(nextStatus) ||
+        (nextStatus === 'shipped' && order.trackingEmailSent); // legacy flag
+      shouldSendEmail = !alreadyNotified;
+      // Recorded before the save below, so the ledger persists atomically with
+      // the status change and a concurrent webhook can't slip a duplicate in.
+      if (shouldSendEmail) {
+        order.notifiedStatuses.push(nextStatus);
+        if (nextStatus === 'shipped') order.trackingEmailSent = true;
+      }
+    }
+
     await order.save();
 
     // If transitioning to 'cancelled' from a non-cancelled state, restore stock.
-    if (req.body.status === 'cancelled' && previousStatus !== 'cancelled') {
+    if (nextStatus === 'cancelled' && previousStatus !== 'cancelled') {
       await restoreStockForOrder(order);
     }
 
-    // Send email if status changed
-    if (req.body.status && req.body.status !== previousStatus) {
-      sendOrderEmail(order, req.body.status);
+    // Send email if status changed and the customer hasn't already been told.
+    if (shouldSendEmail) {
+      sendOrderEmail(order, nextStatus);
     }
 
     // ERP push (fire-and-forget, opt-in)

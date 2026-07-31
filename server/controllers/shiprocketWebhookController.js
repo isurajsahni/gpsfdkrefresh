@@ -245,6 +245,12 @@ const sendAwbEmail = async (order) => {
 // Shiprocket's public tracking page is store-branded ("GPSFDK - Order Tracking")
 // and needs nothing but the AWB — no login, no order number, no email — so it's
 // the one link a customer can always open straight from their inbox.
+// Announcing a tracking number is pointless once the parcel has already landed
+// or the order is dead — e.g. an order marked Delivered by hand, whose AWB only
+// reaches us on a later webhook, must not then be told "here's your tracking
+// number". Status emails are unaffected; this gates the AWB email only.
+const AWB_EMAIL_BLOCKED_STATUSES = ['delivered', 'cancelled'];
+
 const SR_TRACKING_BASE = process.env.SHIPROCKET_TRACKING_BASE_URL || 'https://shiprocket.co/tracking';
 const buildTrackingUrl = (awb) => (awb ? `${SR_TRACKING_BASE}/${encodeURIComponent(awb)}` : '');
 
@@ -387,7 +393,10 @@ exports.handleTrackingUpdate = async (req, res) => {
       const captured = captureShipmentMeta(order, { awb, courierName, srOrderId, shipmentId });
       if (captured.changed) {
         if (!Array.isArray(order.notifiedStatuses)) order.notifiedStatuses = [];
-        const notifyAwb = captured.isFirstAwb && !order.notifiedStatuses.includes('awb_assigned');
+        const notifyAwb =
+          captured.isFirstAwb &&
+          !order.notifiedStatuses.includes('awb_assigned') &&
+          !AWB_EMAIL_BLOCKED_STATUSES.includes(order.status);
         if (notifyAwb) order.notifiedStatuses.push('awb_assigned');
         await order.save();
         if (notifyAwb) sendAwbEmail(order);
@@ -497,7 +506,8 @@ exports.handleTrackingUpdate = async (req, res) => {
     const shouldSendAwbEmail =
       isFirstAwb &&
       !shouldSendEmail &&
-      !order.notifiedStatuses.includes('awb_assigned');
+      !order.notifiedStatuses.includes('awb_assigned') &&
+      !AWB_EMAIL_BLOCKED_STATUSES.includes(order.status);
     if (shouldSendAwbEmail) {
       order.notifiedStatuses.push('awb_assigned');
     }

@@ -183,6 +183,10 @@ exports.triggerNewOrderNotifications = triggerNewOrderNotifications;
 // Recalculate all prices from the database to prevent price manipulation.
 // Also returns `stockOps` — the atomic stock-decrement instructions that the
 // caller should apply once the order is confirmed (via decrementStockForOrder).
+// Per-item sanity cap. Deliberately generous — this is not the security control
+// (that is the `>= 1` integer check below); it just stops absurd orders.
+const MAX_ITEM_QUANTITY = 100;
+
 // `options.allowOversell` is set by the post-payment path (verifyRazorpay): once
 // Razorpay has captured the money we MUST create the order, so a product that went
 // inactive or out of stock in the seconds between checkout and payment can no longer
@@ -195,6 +199,30 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   const stockOps = []; // [{ productId, variationId, qty }] — applied post-order
 
   for (const item of items) {
+    // ─── Validate quantity BEFORE it reaches any arithmetic ───
+    // `quantity` comes straight from the request body. Unvalidated, a negative
+    // value drives the subtotal negative; `Math.max(total, 0)` then clamps it to
+    // exactly 0, and a 0 total is treated as a fully-paid free order. The same
+    // value is later fed to the stock decrement, where `$gte: quantity` is
+    // trivially true for negatives and `$inc: -quantity` *raises* stock.
+    // This is the single choke point for every order path (createOrder,
+    // createGuestOrder, createRazorpayOrder, verifyRazorpay), so validating
+    // here covers all of them.
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      throw new Error(`Invalid quantity: each item must have a whole quantity of at least 1`);
+    }
+    // Upper bound is a sanity guard, not a security control, so it is relaxed
+    // post-payment for the same reason as the stock check above — never strand a
+    // captured payment. Tampering is still caught by the amount comparison in
+    // verifyRazorpay, which comes from the Razorpay order, not the request.
+    if (quantity > MAX_ITEM_QUANTITY) {
+      if (!allowOversell) {
+        throw new Error(`Invalid quantity: at most ${MAX_ITEM_QUANTITY} units per item`);
+      }
+      console.warn(`[quantity] Post-payment order exceeds per-item cap: product=${item.product} qty=${quantity}`);
+    }
+
     let product = await Product.findById(item.product).catch(() => null);
     
     // Fallback for custom uploads: use a template product for price verification
@@ -252,15 +280,15 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     // Post-payment (allowOversell) we record the order anyway and let the atomic
     // decrement no-op — overselling is a fulfilment problem, not a reason to keep
     // a paying customer's money with no order.
-    if (!item.uploadedImageUrl && variation.stock < item.quantity) {
+    if (!item.uploadedImageUrl && variation.stock < quantity) {
       if (!allowOversell) {
         throw new Error(`Insufficient stock for ${product.name} (${variation.size})`);
       }
-      console.warn(`[oversell] Order proceeding post-payment despite low stock: product=${product._id} variation=${variation.size} need=${item.quantity} have=${variation.stock}`);
+      console.warn(`[oversell] Order proceeding post-payment despite low stock: product=${product._id} variation=${variation.size} need=${quantity} have=${variation.stock}`);
     }
 
     const serverPrice = variation.price;
-    calculatedItemsPrice += serverPrice * item.quantity;
+    calculatedItemsPrice += serverPrice * quantity;
 
     // Record the stock-decrement op the caller must run AFTER the order is
     // confirmed. Custom-print uploads are made-to-order (no inventory).
@@ -268,7 +296,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       stockOps.push({
         productId: product._id,
         variationId: variation._id,
-        qty: item.quantity,
+        qty: quantity,
       });
     }
 
@@ -290,7 +318,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       // Cost snapshot from the DB variation (never client-supplied); plays no
       // part in totals so it can never change what the customer pays.
       costPrice: variation.costPrice || 0,
-      quantity: item.quantity,
+      quantity,
     });
   }
 
@@ -510,7 +538,7 @@ exports.createOrder = async (req, res, next) => {
 
     res.status(201).json(order);
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Invalid quantity') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message });
     }
     next(error);
@@ -596,7 +624,7 @@ exports.createGuestOrder = async (req, res, next) => {
 
     res.status(201).json(order);
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Invalid quantity') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message });
     }
     next(error);

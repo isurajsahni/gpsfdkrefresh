@@ -195,6 +195,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
       error.message.includes('not found') ||
       error.message.includes('not available') ||
       error.message.includes('Invalid variation') ||
+      error.message.includes('Invalid quantity') ||
       error.message.includes('Insufficient stock') ||
       error.message.includes('Coupon')
     ) {
@@ -363,7 +364,7 @@ exports.verifyRazorpay = async (req, res, next) => {
       res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Invalid quantity') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
       return res.status(400).json({ message: error.message, success: false });
     }
     console.error('Razorpay Verification Error:', error);

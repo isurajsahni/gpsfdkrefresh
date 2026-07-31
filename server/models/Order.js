@@ -22,7 +22,11 @@ const orderItemSchema = new mongoose.Schema({
   // — orders must never fail because a product has no cost configured, and
   // legacy orders predate this field.
   costPrice: { type: Number, default: 0 },
-  quantity: { type: Number, required: true, default: 1 },
+  // Defence in depth behind the validation in `calculateOrderPrices` — a negative
+  // quantity there clamps the order total to zero, which the code reads as a paid
+  // free order. Verified against production data before adding: no existing order
+  // has a quantity below 1, so this cannot fail validation on an existing document.
+  quantity: { type: Number, required: true, default: 1, min: 1 },
 });
 
 const orderSchema = new mongoose.Schema({

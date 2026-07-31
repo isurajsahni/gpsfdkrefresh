@@ -701,20 +701,58 @@ exports.verifyOtp = async (req, res, next) => {
 exports.resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;
-    
-    // Verify OTP again just in case
-    const user = await User.findOne({ 
-      email, 
-      resetPasswordOtp: otp,
-      resetPasswordExpire: { $gt: Date.now() } 
-    });
 
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    // Type safety — `resetPasswordValidation` currently blocks non-strings, but
+    // this controller must not depend on a route's middleware list staying the
+    // way it is. An object `otp` becomes an operator query below, and an object
+    // `newPassword` sails past a `.length` check (`undefined < 8` is false) and
+    // then explodes as a Mongoose CastError (a 500 instead of a 400).
+    if (typeof email !== 'string' || typeof otp !== 'string' || typeof newPassword !== 'string') {
+      return res.status(400).json({ message: 'Invalid input format' });
     }
 
     if (newPassword.length < 8) {
       return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    // Look the account up by email + a live reset window ONLY — deliberately
+    // NOT by the submitted code. Matching on `resetPasswordOtp: otp` (which is
+    // what this did) makes a wrong code indistinguishable from "no reset
+    // pending": there is no user document to count the miss against, so
+    // verifyOtp's 5-strike lockout is skipped entirely by posting straight
+    // here. The per-account counter below is the only thing bounding guesses
+    // for a given account; the IP rate limiter on the route does not bound a
+    // distributed attacker.
+    const user = await User.findOne({ email, resetPasswordExpire: { $gt: Date.now() } });
+
+    if (!user || !user.resetPasswordOtp) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Same counter and lockout as verifyOtp. BOTH entry points must burn
+    // attempts, otherwise whichever one doesn't becomes the free oracle.
+    if (!user.otpAttempts) user.otpAttempts = 0;
+    user.otpAttempts += 1;
+
+    if (user.otpAttempts > 5) {
+      user.resetPasswordOtp = undefined;
+      user.resetPasswordExpire = undefined;
+      user.otpAttempts = 0;
+      await user.save();
+      return res.status(400).json({ message: 'Too many failed attempts. Please request a new code.' });
+    }
+
+    // Length-checked constant-time compare — timingSafeEqual throws on a length
+    // mismatch, and an early-exit `!==` leaks how much of the code was right.
+    const submitted = Buffer.from(otp);
+    const expected = Buffer.from(String(user.resetPasswordOtp));
+    const otpMatches = submitted.length === expected.length && crypto.timingSafeEqual(submitted, expected);
+
+    if (!otpMatches) {
+      // Persist the incremented attempt count — same message as the "no reset
+      // pending" branch above so this endpoint stays a non-oracle.
+      await user.save();
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
     // Update password

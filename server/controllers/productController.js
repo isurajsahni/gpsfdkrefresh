@@ -48,8 +48,20 @@ exports.getProducts = async (req, res, next) => {
     
     const andConditions = [];
 
-    // By default only show active products; admin can pass all=true to see everything
-    if (all !== 'true') andConditions.push({ isActive: true });
+    // Single source of truth for "is this caller staff?" — same roles as the
+    // `admin` middleware in middleware/auth.js. It gates BOTH the visibility of
+    // inactive products (below) and the internal variations.costPrice field
+    // (further down). Keep it as one flag so the two can't drift apart.
+    const isAdmin = !!(req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing'));
+
+    // By default only show active products. `?all=true` lifts that filter, but
+    // ONLY for admins: this route is mounted with `optionalAuth` (routes/products.js),
+    // so req.user is simply undefined for anonymous callers — without the role
+    // check anyone could append ?all=true and read unpublished drafts and
+    // deactivated products. The admin catalogue UI
+    // (client/src/pages/admin/AdminProducts.jsx) sends all=true with a Bearer
+    // token, so it still sees everything.
+    if (all !== 'true' || !isAdmin) andConditions.push({ isActive: true });
     
     if (category) andConditions.push({ category });
     
@@ -130,10 +142,8 @@ exports.getProducts = async (req, res, next) => {
     
     const finalQuery = andConditions.length > 0 ? { $and: andConditions } : {};
 
-    // variations.costPrice is internal — only admins (same roles as the
-    // `admin` middleware) get it back; public callers never see it
-    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing');
-
+    // variations.costPrice is internal — only admins (see the isAdmin flag
+    // computed above) get it back; public callers never see it
     const total = await Product.countDocuments(finalQuery);
     const products = await Product.find(finalQuery)
       .select(isAdmin ? {} : { 'variations.costPrice': 0 })

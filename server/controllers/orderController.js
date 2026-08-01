@@ -136,28 +136,30 @@ const triggerNewOrderNotifications = async (order) => {
     if (order.isPaid || order.paymentMethod === 'cod') {
       try {
         console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
-        // Weight & dimensions are auto-calculated from item variation size
-        // via weightMapping.js — no need to populate product weight fields
 
         const shipData = await shiprocket.createShipment(order);
         
-        if (shipData && shipData.shipment_id) {
-          order.shipmentId = shipData.shipment_id;
-          order.awbCode = shipData.awb_code || '';
+        if (shipData && (shipData.shipment_id || shipData.order_id)) {
+          order.shipmentId = shipData.shipment_id ? String(shipData.shipment_id) : '';
           order.shiprocketOrderId = shipData.order_id ? String(shipData.order_id) : '';
+          order.awbCode = shipData.awb_code || '';
           order.awb = shipData.awb_code ? String(shipData.awb_code) : '';
           order.courierName = shipData.courier_name || '';
+          order.shiprocketSyncStatus = 'synced';
+          order.shiprocketError = '';
           await order.save();
-          console.log(`✅ [Shiprocket] Order created: ${order.orderNumber}, Shipment ID: ${order.shipmentId}, AWB: ${order.awbCode || 'pending'}`);
-        } else if (shipData && shipData.order_id) {
-          // Shiprocket accepted the order but hasn't assigned shipment yet
-          console.log(`⚠️ [Shiprocket] Order ${order.orderNumber} accepted (SR Order ID: ${shipData.order_id}) but no shipment_id yet. Full response:`, JSON.stringify(shipData));
+          console.log(`✅ [Shiprocket] Order created: ${order.orderNumber}, SR Order ID: ${order.shiprocketOrderId}, Shipment ID: ${order.shipmentId || 'pending'}, AWB: ${order.awbCode || 'pending'}`);
         } else {
           console.error(`❌ [Shiprocket] Unexpected response for ${order.orderNumber}:`, JSON.stringify(shipData));
+          order.shiprocketSyncStatus = 'failed';
+          order.shiprocketError = `Unexpected response from Shiprocket API: ${JSON.stringify(shipData)}`;
+          await order.save();
         }
       } catch (shipErr) {
         console.error(`❌ [Shiprocket] Automation FAILED for ${order.orderNumber}:`, shipErr.message);
-        // We still have the internal order, so admin can manually retry in Shiprocket panel.
+        order.shiprocketSyncStatus = 'failed';
+        order.shiprocketError = shipErr.message || 'Shiprocket API call failed';
+        await order.save().catch(saveErr => console.error('Failed saving shiprocket failure state:', saveErr.message));
       }
     } else {
       console.log(`[Shiprocket] Skipping for order ${order.orderNumber} — isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod}`);
@@ -1028,3 +1030,54 @@ exports.getShiprocketOrderDetails = async (req, res, next) => {
     next(error);
   }
 };
+
+// POST /api/orders/:id/sync-shiprocket (admin / manager)
+exports.syncShiprocketOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    console.log(`[Shiprocket] Manual sync initiated by admin for order: ${order.orderNumber}`);
+
+    try {
+      const shipData = await shiprocket.createShipment(order);
+
+      if (shipData && (shipData.shipment_id || shipData.order_id)) {
+        order.shipmentId = shipData.shipment_id ? String(shipData.shipment_id) : '';
+        order.shiprocketOrderId = shipData.order_id ? String(shipData.order_id) : '';
+        order.awbCode = shipData.awb_code || '';
+        order.awb = shipData.awb_code ? String(shipData.awb_code) : '';
+        order.courierName = shipData.courier_name || '';
+        order.shiprocketSyncStatus = 'synced';
+        order.shiprocketError = '';
+        await order.save();
+
+        console.log(`✅ [Shiprocket] Manual sync SUCCESS for order ${order.orderNumber}`);
+        return res.json({
+          message: 'Order synced with Shiprocket successfully',
+          success: true,
+          order,
+        });
+      } else {
+        const errorMsg = `Unexpected response structure from Shiprocket: ${JSON.stringify(shipData)}`;
+        order.shiprocketSyncStatus = 'failed';
+        order.shiprocketError = errorMsg;
+        await order.save();
+        return res.status(400).json({ message: errorMsg, success: false });
+      }
+    } catch (shipErr) {
+      console.error(`❌ [Shiprocket] Manual sync FAILED for ${order.orderNumber}:`, shipErr.message);
+      order.shiprocketSyncStatus = 'failed';
+      order.shiprocketError = shipErr.message || 'Shiprocket API call failed';
+      await order.save();
+      return res.status(400).json({
+        message: shipErr.message || 'Failed to sync with Shiprocket',
+        success: false,
+        shiprocketError: order.shiprocketError
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+

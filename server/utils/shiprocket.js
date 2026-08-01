@@ -180,8 +180,20 @@ class ShiprocketService {
     } catch (error) {
       // Extract detailed error info from Shiprocket API
       if (error.response) {
-        console.error(`❌ [Shiprocket] API Error (HTTP ${error.response.status}):`, JSON.stringify(error.response.data, null, 2));
-        throw new Error(`Shiprocket API error (${error.response.status}): ${JSON.stringify(error.response.data)}`);
+        const data = error.response.data;
+        let detailMsg = '';
+        if (typeof data === 'string') {
+          detailMsg = data;
+        } else if (data && data.message) {
+          detailMsg = data.message;
+          if (data.errors) {
+            detailMsg += ' - ' + (typeof data.errors === 'object' ? JSON.stringify(data.errors) : data.errors);
+          }
+        } else {
+          detailMsg = JSON.stringify(data);
+        }
+        console.error(`❌ [Shiprocket] API Error (HTTP ${error.response.status}):`, JSON.stringify(data, null, 2));
+        throw new Error(`Shiprocket API Error (${error.response.status}): ${detailMsg}`);
       }
       console.error('❌ [Shiprocket] Create Order Error:', error.message);
       throw error;

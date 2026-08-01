@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { 
   createOrder, createGuestOrder, getOrders, getOrderById, updateOrderStatus, 
   getOrderStats, cancelOrder, deleteOrder, trackOrder, getShipmentTracking,
-  getShiprocketOrderDetails
+  getShiprocketOrderDetails, syncShiprocketOrder
 } = require('../controllers/orderController');
 const { protect, admin, authorizeRoles } = require('../middleware/auth');
 const { guestOrderValidation, guestOrderLimiter, orderTrackingLimiter } = require('../middleware/validators');
@@ -18,6 +18,7 @@ router.get('/stats', protect, authorizeRoles('order_manager'), getOrderStats);
 router.get('/shiprocket/:id', protect, authorizeRoles('order_manager'), getShiprocketOrderDetails);
 router.get('/:id', protect, getOrderById);
 router.put('/:id', protect, authorizeRoles('order_manager'), updateOrderStatus);
+router.post('/:id/sync-shiprocket', protect, authorizeRoles('order_manager'), syncShiprocketOrder);
 router.put('/:id/cancel', protect, cancelOrder);
 router.delete('/:id', protect, admin, deleteOrder); // Only admin can delete
 

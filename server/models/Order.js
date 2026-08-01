@@ -83,6 +83,12 @@ const orderSchema = new mongoose.Schema({
   awb: { type: String, default: '' },
   courierName: { type: String, default: '' },
   trackingUrl: { type: String, default: '' },
+  shiprocketSyncStatus: {
+    type: String,
+    enum: ['pending', 'synced', 'failed'],
+    default: 'pending'
+  },
+  shiprocketError: { type: String, default: '' },
   deliveredAt: Date,
   notes: { type: String, default: '' },
   trackingEmailSent: { type: Boolean, default: false },

@@ -1,0 +1,2 @@
+# Pin index.html to LF so the CSP sha256 script hashes in vercel.json stay valid
+index.html text eol=lf

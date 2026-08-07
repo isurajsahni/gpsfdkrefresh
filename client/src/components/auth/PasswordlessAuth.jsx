@@ -71,7 +71,17 @@ const PasswordlessAuth = ({ isRegister = false }) => {
       setStep('otp');
       setCooldown(30);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send OTP');
+      if (err.response?.status === 429) {
+        // Anti-brute-force limiter tripped. Honour the server's Retry-After so
+        // the client resend cooldown stays in sync with the server limiter and
+        // the user gets a specific message instead of a generic failure toast.
+        const retryAfter = parseInt(err.response.headers?.['retry-after'], 10);
+        const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60;
+        setCooldown(wait);
+        toast.error(`Too many requests — please try again in ${wait} seconds.`);
+      } else {
+        toast.error(err.response?.data?.message || 'Failed to send OTP');
+      }
     }
     setLoading(false);
   };

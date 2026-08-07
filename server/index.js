@@ -92,6 +92,7 @@ app.use('/api/share', require('./routes/share')); // OG previews for social link
 app.use('/webhook', require('./routes/webhook'));
 app.use('/api/whatsapp-otp', require('./routes/whatsappOtp'));
 app.use('/api/pricing', require('./routes/pricing'));
+app.use('/api/csp-report', require('./routes/cspReport'));
 
 // Root route
 app.get('/', (req, res) => res.send('GPSFDK Ecommerce API is running 🚀'));

@@ -1,43 +1,63 @@
 import { useEffect, useState } from 'react';
+import { getArCatalog, findArArtwork, resolveArSelection, AR_MODEL_BASE } from '../../utils/arCatalog';
 
 /**
  * AR "View on your wall" preview for GPSFDK product pages.
  *
  * Usage:
- *   <ArViewer productId={product.slug} catalogUrl={import.meta.env.VITE_AR_CATALOG_URL} />
+ *   <ArViewer productId={product.slug} material={v.material} size={v.size} />
  *
  * - Matches the product by slug against catalog.json "id"
- * - Renders nothing if the product has no AR models yet (safe on every page)
+ * - Opens on the format/size the shopper selected on the product page
  * - Requires the model-viewer script in client/index.html:
  *   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+ *   (client/vercel.json's CSP must allow that origin and the AR model host)
  */
-export default function ArViewer({ productId, catalogUrl }) {
+// `size`/`material` are renamed on destructure — `size` and `product` are used
+// below for the currently displayed AR model.
+export default function ArViewer({ productId, material: selectedMaterial, size: selectedSize }) {
   const [artwork, setArtwork] = useState(null);
-  const [baseUrl, setBaseUrl] = useState('');
-  const [notFound, setNotFound] = useState(false);
+  const [failed, setFailed] = useState(false);
   const [pi, setPi] = useState(0);
   const [si, setSi] = useState(0);
 
   useEffect(() => {
-    if (!catalogUrl || !productId) return;
+    if (!productId) return;
     let alive = true;
-    fetch(catalogUrl)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!alive) return;
-        const found = d.artworks.find((a) => a.id === productId);
-        if (!found) { setNotFound(true); return; }
-        // models are served from the same folder as catalog.json
-        setBaseUrl(catalogUrl.replace(/catalog\.json.*$/, ''));
-        setArtwork(found);
-      })
-      .catch(() => setNotFound(true));
+    getArCatalog().then((catalog) => {
+      if (!alive) return;
+      const found = findArArtwork(catalog, productId);
+      if (!found) { setFailed(true); return; }
+      // Open on whatever the shopper picked on the page, not always canvas 12x18
+      const { productIndex, sizeIndex } = resolveArSelection(found, selectedMaterial, selectedSize);
+      setPi(productIndex);
+      setSi(sizeIndex);
+      setArtwork(found);
+      setFailed(false);
+    });
     return () => { alive = false; };
-  }, [catalogUrl, productId]);
+  }, [productId, selectedMaterial, selectedSize]);
 
-  // No AR for this product → render nothing (keeps the page clean)
-  if (notFound || !artwork) return null;
+  // The catalog is unreachable or has no models for this product. The modal is
+  // already open at this point, so say so rather than showing an empty box.
+  if (failed) {
+    return (
+      <p style={{ padding: '32px 8px', textAlign: 'center', color: '#777', fontSize: 14, lineHeight: 1.6 }}>
+        The wall preview isn’t available for this product right now.
+        <br />Please try again in a moment.
+      </p>
+    );
+  }
 
+  if (!artwork) {
+    return (
+      <p style={{ padding: '32px 8px', textAlign: 'center', color: '#999', fontSize: 14 }}>
+        Loading preview…
+      </p>
+    );
+  }
+
+  const baseUrl = AR_MODEL_BASE;
   const product = artwork.products[pi];
   const size = product.sizes[si];
   const specLabel =

@@ -10,6 +10,7 @@ import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
 import ArViewer from '../components/product/ArViewer';
+import { getArCatalog } from '../utils/arCatalog';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
@@ -29,15 +30,13 @@ const ProductPage = () => {
   const [isDesktop, setIsDesktop] = useState(true);
   const [arSlugs, setArSlugs] = useState([]);
 
-  // AR catalog ids decide which products get real AR vs the 2D camera overlay
+  // AR catalog ids decide which products get real AR vs the 2D camera overlay.
+  // Shared with ArViewer, so the catalog is fetched once per session.
   useEffect(() => {
-    const catalogUrl = import.meta.env.VITE_AR_CATALOG_URL;
-    if (!catalogUrl) return;
     let alive = true;
-    fetch(catalogUrl)
-      .then((r) => r.json())
-      .then((d) => { if (alive) setArSlugs(d.artworks.map((a) => a.id)); })
-      .catch(() => {});
+    getArCatalog().then((catalog) => {
+      if (alive) setArSlugs(catalog.map((a) => a.id));
+    });
     return () => { alive = false; };
   }, []);
 
@@ -577,7 +576,8 @@ const ProductPage = () => {
               <ArViewer
                 key={product.slug}
                 productId={product.slug}
-                catalogUrl={import.meta.env.VITE_AR_CATALOG_URL}
+                material={selectedVariation.material}
+                size={selectedVariation.size}
               />
             </div>
           </div>

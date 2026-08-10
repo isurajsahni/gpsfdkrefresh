@@ -15,6 +15,9 @@ const CATALOG_URL = import.meta.env.VITE_AR_CATALOG_URL || '';
 /** Models are served from the same folder as catalog.json. */
 export const AR_MODEL_BASE = CATALOG_URL.replace(/catalog\.json.*$/, '');
 
+/** Origin of the standalone AR viewer app (the desktop fallback target). */
+export const AR_SITE_BASE = CATALOG_URL.replace(/\/models\/catalog\.json.*$/, '');
+
 let catalogPromise = null;
 
 /**
@@ -73,4 +76,36 @@ export function resolveArSelection(artwork, material, size) {
     // Whether AR is showing the exact size the shopper picked.
     exact: si >= 0,
   };
+}
+
+/**
+ * Absolute model URLs for the shopper's current selection — what the AR launch
+ * hands to Quick Look (usdz) and Scene Viewer (glb).
+ */
+export function getArModelUrls(artwork, material, size) {
+  const { productIndex, sizeIndex, exact } = resolveArSelection(artwork, material, size);
+  const prod = artwork.products[productIndex];
+  const s = prod.sizes[sizeIndex];
+  if (!s) return null;
+  return {
+    glb: AR_MODEL_BASE + s.glb,
+    usdz: AR_MODEL_BASE + s.usdz,
+    format: prod.id,
+    label: s.label,
+    exact,
+  };
+}
+
+/**
+ * Deep link into the standalone AR viewer, landing on this exact artwork,
+ * format and size. Used where in-page AR isn't possible (desktop), and as the
+ * Scene Viewer fallback when a device has no ARCore.
+ */
+export function arViewerDeepLink(slug, format, sizeLabel) {
+  const q = [
+    `art=${encodeURIComponent(slug)}`,
+    format ? `format=${encodeURIComponent(format)}` : '',
+    sizeLabel ? `size=${encodeURIComponent(sizeLabel)}` : '',
+  ].filter(Boolean).join('&');
+  return `${AR_SITE_BASE}/?${q}`;
 }

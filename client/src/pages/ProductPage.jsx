@@ -9,8 +9,8 @@ import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
-import ArViewer from '../components/product/ArViewer';
-import { getArCatalog } from '../utils/arCatalog';
+import { getArCatalog, findArArtwork, getArModelUrls, arViewerDeepLink } from '../utils/arCatalog';
+import { launchAr } from '../utils/arLaunch';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
@@ -28,14 +28,14 @@ const ProductPage = () => {
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
-  const [arSlugs, setArSlugs] = useState([]);
+  const [arCatalog, setArCatalog] = useState([]);
 
-  // AR catalog ids decide which products get real AR vs the 2D camera overlay.
-  // Shared with ArViewer, so the catalog is fetched once per session.
+  // The AR catalog decides which products launch real AR vs the 2D camera
+  // overlay, and supplies the model files for the selected format/size.
   useEffect(() => {
     let alive = true;
     getArCatalog().then((catalog) => {
-      if (alive) setArSlugs(catalog.map((a) => a.id));
+      if (alive) setArCatalog(catalog);
     });
     return () => { alive = false; };
   }, []);
@@ -99,6 +99,29 @@ const ProductPage = () => {
 
   // Determine if this is a nameplate product (show custom text only for nameplates)
   const isNameplate = product.category?.name?.toLowerCase().includes('nameplate');
+
+  // Products with AR models launch the device's AR viewer straight from the
+  // button, already set to the format and size selected above. Anything else
+  // (and any device without AR) keeps the 2D camera overlay.
+  const arArtwork = findArArtwork(arCatalog, product.slug);
+
+  const handleViewOnWall = () => {
+    const model = arArtwork
+      ? getArModelUrls(arArtwork, selectedVariation.material, selectedVariation.size)
+      : null;
+
+    if (!model) {
+      setIsWallPreviewOpen(true);
+      return;
+    }
+
+    launchAr({
+      glb: model.glb,
+      usdz: model.usdz,
+      title: `${product.name} — ${model.label}`,
+      fallbackUrl: arViewerDeepLink(product.slug, model.format, model.label),
+    });
+  };
 
   // Cascading variation options: Material → Frame → Size → Color
   // Materials: always show all available
@@ -407,7 +430,7 @@ const ProductPage = () => {
               {/* Only show 'View on Your Wall' for wall-related products instead of applying it to all products */}
               {['wall-canvas', 'house-nameplates', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
                 <button
-                  onClick={() => setIsWallPreviewOpen(true)}
+                  onClick={handleViewOnWall}
                   className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
                 >
                   <HiEye className="w-5 h-5" /> View on Your Wall
@@ -552,43 +575,16 @@ const ProductPage = () => {
         </div>
       )}
 
-      {/* View on Wall — real AR (model-viewer) for products in the AR catalog, legacy 2D camera overlay for everything else */}
-      {product && (arSlugs.includes(product.slug) ? (
-        isWallPreviewOpen && (
-          <div
-            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setIsWallPreviewOpen(false)}
-          >
-            <div
-              className="bg-white rounded-2xl p-6 w-full max-w-[640px] max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-secondary">View on Your Wall</h3>
-                <button
-                  onClick={() => setIsWallPreviewOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <HiOutlineX className="w-5 h-5" />
-                </button>
-              </div>
-              {/* key: remount on slug change so ArViewer's internal format/size state resets */}
-              <ArViewer
-                key={product.slug}
-                productId={product.slug}
-                material={selectedVariation.material}
-                size={selectedVariation.size}
-              />
-            </div>
-          </div>
-        )
-      ) : (
+      {/* Products with AR launch the device viewer directly from the button, so
+          the overlay is only for products without AR models (and as the
+          fallback when the catalog is unreachable). */}
+      {product && (
         <ViewOnWallModal
           isOpen={isWallPreviewOpen}
           onClose={() => setIsWallPreviewOpen(false)}
           imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)}
         />
-      ))}
+      )}
 
       {/* Fullscreen HD Zoom Modal */}
       <AnimatePresence>

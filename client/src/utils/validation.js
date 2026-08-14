@@ -35,7 +35,9 @@ export const validators = {
     if (!val) return 'Full name is required';
     if (val.length < 2) return 'Name must be at least 2 characters';
     if (val.length > 50) return 'Name must be under 50 characters';
-    if (!/^[a-zA-Z\s.'-]+$/.test(val)) return 'Name can only contain letters and spaces';
+    // \p{L} accepts accented/non-Latin letters so international customers
+    // (e.g. "José", "Zoë") can check out; still blocks digits/symbols.
+    if (!/^[\p{L}\s.'-]+$/u.test(val)) return 'Name can only contain letters and spaces';
     return '';
   },
 
@@ -77,7 +79,18 @@ export const validators = {
   city: (v) => {
     const val = (v || '').trim();
     if (!val) return 'City is required';
-    if (!/^[a-zA-Z\s'-]+$/.test(val)) return 'City can only contain letters';
+    // \p{L} allows accented/non-Latin city names (e.g. "São Paulo", "Zürich").
+    if (!/^[\p{L}\s'.-]+$/u.test(val)) return 'City can only contain letters';
+    return '';
+  },
+
+  // International postal / ZIP code — deliberately permissive since formats vary
+  // wildly (US "94105", UK "SW1A 1AA", CA "K1A 0B1", or none at all in a few
+  // countries). Indian orders use the stricter `pincode` validator instead.
+  postalCode: (v) => {
+    const val = (v || '').trim();
+    if (!val) return 'Postal / ZIP code is required';
+    if (!/^[A-Za-z0-9][A-Za-z0-9\s-]{1,11}$/.test(val)) return 'Enter a valid postal / ZIP code';
     return '';
   },
 
@@ -113,14 +126,26 @@ export const validators = {
 };
 
 // ─── Validate an entire address object ───
+// Country-aware: India keeps the strict pincode + state-dropdown rules; other
+// countries get free-text state/province and a relaxed postal-code check so
+// international customers can actually complete checkout.
 export const validateAddress = (addr) => {
   const errors = {};
+  const domestic = (addr.country || 'India').toString().trim().toLowerCase();
+  const isIndia = domestic === 'india' || domestic === 'in';
+
   errors.fullName = validators.fullName(addr.fullName);
   errors.phone = validators.phone(addr.phone);
   errors.addressLine1 = validators.addressLine1(addr.addressLine1);
   errors.city = validators.city(addr.city);
-  errors.state = validators.state(addr.state);
-  errors.pincode = validators.pincode(addr.pincode);
+
+  if (isIndia) {
+    errors.state = validators.state(addr.state);
+    errors.pincode = validators.pincode(addr.pincode);
+  } else {
+    errors.state = (addr.state || '').trim() ? '' : 'State / Province / Region is required';
+    errors.pincode = validators.postalCode(addr.pincode);
+  }
   // Remove empty (valid) entries
   Object.keys(errors).forEach(k => { if (!errors[k]) delete errors[k]; });
   return errors;
@@ -135,11 +160,18 @@ export const formatters = {
   pincode: (v) => {
     return v.replace(/\D/g, '').slice(0, 6);
   },
+  // International postal code: keep letters/digits/spaces/hyphens, uppercase it,
+  // cap length. Used for non-India addresses (the strict `pincode` formatter
+  // would strip letters and break e.g. UK/Canada codes).
+  postalCode: (v) => {
+    return v.replace(/[^A-Za-z0-9\s-]/g, '').toUpperCase().slice(0, 12);
+  },
   name: (v) => {
-    // Auto-capitalize first letter of each word, strip numbers and special chars
+    // Auto-capitalize first letter of each word, strip digits/symbols but keep
+    // accented/non-Latin letters so international names survive typing.
     return v
-      .replace(/[^a-zA-Z\s.'-]/g, '')
-      .replace(/\b\w/g, c => c.toUpperCase())
+      .replace(/[^\p{L}\s.'-]/gu, '')
+      .replace(/(^|\s)\p{L}/gu, c => c.toUpperCase())
       .slice(0, 50);
   },
   otp: (v) => {
@@ -147,8 +179,8 @@ export const formatters = {
   },
   city: (v) => {
     return v
-      .replace(/[^a-zA-Z\s'-]/g, '')
-      .replace(/\b\w/g, c => c.toUpperCase())
+      .replace(/[^\p{L}\s'.-]/gu, '')
+      .replace(/(^|\s)\p{L}/gu, c => c.toUpperCase())
       .slice(0, 50);
   },
 };

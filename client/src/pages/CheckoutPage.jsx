@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
+import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
@@ -99,25 +100,58 @@ const CheckoutPage = () => {
   const [otpModalOpen, setOtpModalOpen] = useState(false);
   const [addressErrors, setAddressErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
+  // Tracks whether the shopper picked the country themselves, so the IP-based
+  // auto-select below never overrides a manual choice.
+  const [countryTouched, setCountryTouched] = useState(false);
 
   const handleAddressBlur = (field) => {
+    // Blur validation is field-specific; state/pincode rules depend on country,
+    // so route them through the country-aware validators here.
+    if (field === 'state') {
+      const err = isIndia(address.country)
+        ? validators.state(address.state)
+        : (address.state || '').trim() ? '' : 'State / Province / Region is required';
+      setAddressErrors(prev => ({ ...prev, state: err }));
+      return;
+    }
+    if (field === 'pincode') {
+      const err = isIndia(address.country)
+        ? validators.pincode(address.pincode)
+        : validators.postalCode(address.pincode);
+      setAddressErrors(prev => ({ ...prev, pincode: err }));
+      return;
+    }
     if (!validators[field]) return;
     const error = validators[field](address[field]);
     setAddressErrors(prev => ({ ...prev, [field]: error }));
   };
 
+  // Change the shipping country: reset state/pincode (their formats differ per
+  // country) and remember that the user chose it.
+  const handleCountryChange = (value) => {
+    setCountryTouched(true);
+    setAddress(prev => ({ ...prev, country: value, state: '', pincode: '' }));
+    setAddressErrors(prev => ({ ...prev, country: '', state: '', pincode: '' }));
+  };
+
   const handleAddressChange = async (field, value) => {
+    const indiaAddr = isIndia(address.country);
     let formattedValue = value;
-    if (formatters[field]) formattedValue = formatters[field](value);
+    if (field === 'pincode') {
+      // India: strict 6-digit formatter. Elsewhere: keep alphanumeric postal codes.
+      formattedValue = indiaAddr ? formatters.pincode(value) : formatters.postalCode(value);
+    } else if (formatters[field]) {
+      formattedValue = formatters[field](value);
+    }
 
     const newAddress = { ...address, [field]: formattedValue };
     setAddress(newAddress);
-    
+
     // Clear error
     if (addressErrors[field]) setAddressErrors(prev => ({ ...prev, [field]: '' }));
 
-    // Pincode lookup logic
-    if (field === 'pincode' && formattedValue.length === 6) {
+    // Pincode → city/state autofill: India Post lookup only, 6-digit PINs only.
+    if (field === 'pincode' && indiaAddr && formattedValue.length === 6) {
       setPincodeLoading(true);
       try {
         const data = await lookupPincode(formattedValue);
@@ -199,6 +233,18 @@ const CheckoutPage = () => {
     fetchAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // Auto-select the shipping country from the visitor's IP-detected location
+  // (geo lookup lives in CurrencyContext). Only pre-fills a fresh new-address
+  // form and never overrides a country the shopper picked themselves.
+  useEffect(() => {
+    if (countryTouched || !showNewForm) return;
+    const detected = countryNameFromCode(country);
+    if (detected && detected !== address.country) {
+      setAddress(prev => ({ ...prev, country: detected }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country, showNewForm, countryTouched]);
 
   const getSelectedAddress = useCallback(() => {
     if (showNewForm) return address;
@@ -805,9 +851,30 @@ const CheckoutPage = () => {
                         />
                       </div>
 
-                      {/* Pincode */}
+                      {/* Country (auto-selected from the visitor's location; editable) */}
+                      <div className="md:col-span-2">
+                        <label htmlFor="country" className="block text-sm font-semibold text-secondary mb-1">Country *</label>
+                        <select
+                          id="country"
+                          name="country"
+                          autoComplete="country-name"
+                          value={address.country}
+                          onChange={(e) => handleCountryChange(e.target.value)}
+                          className="w-full px-4 py-3 bg-primary border border-gray-200 rounded-xl focus:outline-none focus:border-accent appearance-none"
+                        >
+                          {/* Keep any legacy/saved value selectable even if not in the list */}
+                          {!COUNTRIES.some(c => c.name === address.country) && address.country && (
+                            <option value={address.country}>{address.country}</option>
+                          )}
+                          {COUNTRIES.map(c => <option key={c.code} value={c.name}>{c.name}</option>)}
+                        </select>
+                      </div>
+
+                      {/* Pincode / Postal code (label + rules depend on country) */}
                       <div>
-                        <label htmlFor="pincode" className="block text-sm font-semibold text-secondary mb-1">Pincode *</label>
+                        <label htmlFor="pincode" className="block text-sm font-semibold text-secondary mb-1">
+                          {isIndia(address.country) ? 'Pincode *' : 'Postal / ZIP code *'}
+                        </label>
                         <div className="relative">
                           <input
                             type="text"
@@ -818,7 +885,7 @@ const CheckoutPage = () => {
                             onChange={(e) => handleAddressChange('pincode', e.target.value)}
                             onBlur={() => handleAddressBlur('pincode')}
                             className={`w-full px-4 py-3 bg-primary border ${addressErrors.pincode ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
-                            placeholder="6-digit PIN"
+                            placeholder={isIndia(address.country) ? '6-digit PIN' : 'e.g. 94105 / SW1A 1AA'}
                           />
                           {pincodeLoading && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -880,21 +947,37 @@ const CheckoutPage = () => {
                         {addressErrors.city && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.city}</p>}
                       </div>
 
-                      {/* State */}
+                      {/* State — dropdown of Indian states for India, free text otherwise */}
                       <div>
-                        <label htmlFor="state" className="block text-sm font-semibold text-secondary mb-1">State *</label>
-                        <select
-                          id="state"
-                          name="state"
-                          autoComplete="address-level1"
-                          value={address.state}
-                          onChange={(e) => handleAddressChange('state', e.target.value)}
-                          onBlur={() => handleAddressBlur('state')}
-                          className={`w-full px-4 py-3 bg-primary border ${addressErrors.state ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent appearance-none`}
-                        >
-                          <option value="">Select State</option>
-                          {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                        <label htmlFor="state" className="block text-sm font-semibold text-secondary mb-1">
+                          {isIndia(address.country) ? 'State *' : 'State / Province / Region *'}
+                        </label>
+                        {isIndia(address.country) ? (
+                          <select
+                            id="state"
+                            name="state"
+                            autoComplete="address-level1"
+                            value={address.state}
+                            onChange={(e) => handleAddressChange('state', e.target.value)}
+                            onBlur={() => handleAddressBlur('state')}
+                            className={`w-full px-4 py-3 bg-primary border ${addressErrors.state ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent appearance-none`}
+                          >
+                            <option value="">Select State</option>
+                            {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                        ) : (
+                          <input
+                            type="text"
+                            id="state"
+                            name="state"
+                            autoComplete="address-level1"
+                            value={address.state}
+                            onChange={(e) => handleAddressChange('state', e.target.value)}
+                            onBlur={() => handleAddressBlur('state')}
+                            className={`w-full px-4 py-3 bg-primary border ${addressErrors.state ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:border-accent`}
+                            placeholder="State / Province / Region"
+                          />
+                        )}
                         {addressErrors.state && <p className="text-red-500 text-xs mt-1 font-medium">{addressErrors.state}</p>}
                       </div>
                     </div>

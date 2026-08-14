@@ -59,7 +59,22 @@ const guestOrderValidation = [
   body('shippingAddress.addressLine1').trim().isLength({ min: 5 }).withMessage('Address too short'),
   body('shippingAddress.city').trim().notEmpty().withMessage('City is required'),
   body('shippingAddress.state').trim().notEmpty().withMessage('State is required'),
-  body('shippingAddress.pincode').matches(/^\d{6}$/).withMessage('Invalid pincode'),
+  body('shippingAddress.country').optional().trim(),
+  // Country-aware postal validation: India keeps the strict 6-digit PIN rule;
+  // other countries get a relaxed alphanumeric postal-code check so
+  // international orders aren't rejected (COD is still blocked abroad in the
+  // controller, so international is prepaid-only).
+  body('shippingAddress.pincode').custom((value, { req }) => {
+    const country = (req.body?.shippingAddress?.country || 'India').toString().trim().toLowerCase();
+    const india = country === 'india' || country === 'in';
+    const val = (value || '').toString().trim();
+    if (india) {
+      if (!/^\d{6}$/.test(val)) throw new Error('Invalid pincode');
+    } else if (!/^[A-Za-z0-9][A-Za-z0-9\s-]{1,11}$/.test(val)) {
+      throw new Error('Invalid postal / ZIP code');
+    }
+    return true;
+  }),
   body('paymentMethod').isIn(['razorpay', 'cod']).withMessage('Invalid payment method'),
   validate,
 ];

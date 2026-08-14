@@ -119,7 +119,10 @@ const Navbar = () => {
                             <Link to="/dashboard" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
                               My Orders
                             </Link>
-                            {(user.role === 'admin' || user.role === 'admin_marketing') && (
+                            {/* Same roles ProtectedRoute lets into /admin — order/coupon
+                                managers get a scoped sidebar there (AdminLayout filters it),
+                                so they shouldn't have to type the URL by hand. */}
+                            {['admin', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(user.role) && (
                               <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
                                 Admin Panel
                               </Link>

@@ -11,10 +11,32 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const stored = localStorage.getItem('user');
+    let parsed = null;
     if (stored) {
-      setUser(JSON.parse(stored));
+      try { parsed = JSON.parse(stored); } catch { parsed = null; }
+      if (parsed) setUser(parsed);
     }
     setLoading(false);
+
+    // Refresh role/profile from the server on load. A user's role is changed
+    // admin-side (PUT /auth/users/:id/role) and the JWT only carries the user
+    // id — the role is NOT in the token — so a role change would otherwise not
+    // reach the person's browser until they manually log out and back in. That
+    // left, e.g., a demoted admin still seeing the "Admin Panel" nav link from
+    // their stale localStorage copy. Re-fetch /auth/me and merge, preserving the
+    // token (getMe doesn't return one). Silent + best-effort: offline or a
+    // transient error just keeps the cached user.
+    if (parsed?.token) {
+      API.get('/auth/me', { silent: true })
+        .then(({ data }) => {
+          if (data && data._id) {
+            const merged = { ...parsed, ...data, token: parsed.token };
+            localStorage.setItem('user', JSON.stringify(merged));
+            setUser(merged);
+          }
+        })
+        .catch(() => { /* keep cached user on network/transient failure */ });
+    }
   }, []);
 
   // Sync React state when the API layer detects a 401 and clears localStorage.

@@ -39,18 +39,51 @@ const retryTransient = async (fn, { retries = 2, delayMs = 1500 } = {}) => {
   throw lastErr;
 };
 
+const RAZORPAY_SDK_URL = 'https://checkout.razorpay.com/v1/checkout.js';
+// Some networks (corporate proxies, VPNs, privacy/ad-blocking DNS) silently
+// stall requests to payment domains instead of failing fast, which left the
+// Pay button spinning forever. Cap the wait and report a clean failure.
+const RAZORPAY_SDK_TIMEOUT_MS = 15000;
+
 let razorpayScriptPromise = null;
 const loadRazorpayScript = () => {
   if (window.Razorpay) return Promise.resolve(true);
   if (razorpayScriptPromise) return razorpayScriptPromise;
+
   razorpayScriptPromise = new Promise((resolve) => {
-    const existing = document.querySelector('script[src*="checkout.razorpay.com"]');
-    if (existing) { resolve(true); return; }
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => { razorpayScriptPromise = null; resolve(false); };
-    document.body.appendChild(script);
+    let settled = false;
+    const finish = (ok, scriptEl) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (!ok) {
+        // Drop the dead tag and the cached promise so the next attempt really
+        // re-fetches. Previously the failed <script> stayed in the DOM and the
+        // "already present" check below resolved true on retry — the caller
+        // then created a real Razorpay order server-side and crashed on
+        // `new window.Razorpay(...)`, orphaning that order.
+        if (scriptEl && scriptEl.parentNode) scriptEl.parentNode.removeChild(scriptEl);
+        razorpayScriptPromise = null;
+      }
+      // Only trust a load event that actually produced the global.
+      resolve(ok && Boolean(window.Razorpay));
+    };
+
+    // Reuse a tag that's already in flight rather than assuming it succeeded.
+    const existing = document.querySelector(`script[src="${RAZORPAY_SDK_URL}"]`);
+    const script = existing || document.createElement('script');
+    const timer = setTimeout(() => finish(false, script), RAZORPAY_SDK_TIMEOUT_MS);
+
+    script.addEventListener('load', () => finish(true, script));
+    script.addEventListener('error', () => finish(false, script));
+
+    if (!existing) {
+      script.src = RAZORPAY_SDK_URL;
+      script.async = true;
+      document.body.appendChild(script);
+    } else if (window.Razorpay) {
+      finish(true, script);
+    }
   });
   return razorpayScriptPromise;
 };
@@ -545,7 +578,14 @@ const CheckoutPage = () => {
 
           const isLoaded = await loadRazorpayScript();
           if (!isLoaded) {
-            toast.error('Razorpay SDK failed to load. Please check your connection.');
+            // The request to checkout.razorpay.com was blocked or timed out.
+            // In practice this is almost never the shopper's connection — it's
+            // a VPN, ad/tracker blocker, or corporate network filtering the
+            // payment domain. Say so, so they can actually fix it.
+            toast.error(
+              'Could not load the payment gateway. If you are on a VPN or using an ad blocker, please disable it for this site and try again.',
+              { duration: 7000 }
+            );
             setLoading(false);
             return;
           }

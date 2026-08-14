@@ -140,21 +140,34 @@ const setCachedCountry = (ip, country) => {
  *   4. Free ipinfo.io API lookup
  *   5. Fallback to "IN"
  */
-const detectCountry = async (req) => {
-  // 1. Manual override via query param (useful for testing)
-  if (req.query.country && /^[A-Z]{2}$/i.test(req.query.country)) {
-    return req.query.country.toUpperCase();
+const detectCountry = async (req, options = {}) => {
+  // `trusted: true` = the answer decides money or eligibility (what we charge,
+  // whether COD is offered). Such calls MUST ignore anything the caller can set.
+  const { trusted = false } = options;
+
+  // 1./2. Caller-supplied hints — DISPLAY ONLY.
+  // The browser talks to this API directly (gpsfdkrefresh.onrender.com), not
+  // through Vercel or Cloudflare, so `cf-ipcountry` and `x-vercel-ip-country`
+  // are ordinary request headers anyone can set, exactly like `?country=`.
+  // They're fine for "show me prices in my currency" but must never influence
+  // the charged amount — otherwise an international shopper sends `?country=IN`
+  // and pays the 1x domestic price.
+  if (!trusted) {
+    if (req.query.country && /^[A-Z]{2}$/i.test(req.query.country)) {
+      return req.query.country.toUpperCase();
+    }
+    const cfCountry = req.headers['cf-ipcountry'];
+    if (cfCountry && cfCountry !== 'XX') return cfCountry.toUpperCase();
+
+    const vercelCountry = req.headers['x-vercel-ip-country'];
+    if (vercelCountry) return vercelCountry.toUpperCase();
   }
 
-  // 2. CDN/Proxy headers
-  const cfCountry = req.headers['cf-ipcountry'];
-  if (cfCountry && cfCountry !== 'XX') return cfCountry.toUpperCase();
-
-  const vercelCountry = req.headers['x-vercel-ip-country'];
-  if (vercelCountry) return vercelCountry.toUpperCase();
-
-  // 3. Render provides the real IP via x-forwarded-for
-  const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip;
+  // 3. Real client IP. Use req.ip — Express derives it from X-Forwarded-For
+  // honouring `trust proxy` (set to 1 for Render's edge), so it resolves to the
+  // address Render appended. Reading the LEFTMOST XFF entry, as this used to,
+  // returns whatever the client prepended.
+  const ip = req.ip || (req.headers['x-forwarded-for'] || '').split(',').pop().trim();
 
   // Skip lookup for localhost / private IPs
   if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
@@ -245,9 +258,42 @@ const convertPrice = (baseINR, countryCode) => {
   };
 };
 
+/**
+ * Price multiplier for a country: India pays the base INR price, the rest of
+ * the world pays the international price. Single source of truth — the storefront
+ * quotes `base * multiplier * exchangeRate`, so the charge must use the SAME
+ * multiplier or the customer is billed a different number than they were shown.
+ */
+const INTERNATIONAL_PRICE_MULTIPLIER = 10;
+const getPriceMultiplier = (countryCode) =>
+  countryCode === 'IN' ? 1 : INTERNATIONAL_PRICE_MULTIPLIER;
+
+/**
+ * Scale a calculateOrderPrices() result by a multiplier, keeping every component
+ * coherent (items + shipping + tax - discount still equals total, and line-item
+ * unit prices match the totals recorded on the order).
+ */
+const applyPriceMultiplier = (prices, multiplier) => {
+  const m = Number(multiplier) || 1;
+  if (m === 1) return prices;
+  const scale = (n) => Math.round((Number(n) || 0) * m);
+  return {
+    ...prices,
+    verifiedItems: (prices.verifiedItems || []).map((it) => ({ ...it, price: scale(it.price) })),
+    itemsPrice: scale(prices.itemsPrice),
+    shippingPrice: scale(prices.shippingPrice),
+    taxPrice: scale(prices.taxPrice),
+    discountPrice: scale(prices.discountPrice),
+    totalPrice: scale(prices.totalPrice),
+  };
+};
+
 module.exports = {
   detectCountry,
   getCurrency,
+  getPriceMultiplier,
+  applyPriceMultiplier,
+  INTERNATIONAL_PRICE_MULTIPLIER,
   convertPrice,
   roundClean,
   COUNTRY_CURRENCY_MAP,

@@ -478,7 +478,9 @@ exports.createOrder = async (req, res, next) => {
 
     // Enforce region check for Cash on Delivery (COD)
     if (paymentMethod === 'cod') {
-      const country = await detectCountry(req);
+      // trusted: this gates COD eligibility, so it must ignore caller-supplied
+      // country hints (?country=, cf-ipcountry, x-vercel-ip-country).
+      const country = await detectCountry(req, { trusted: true });
       const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
       if (country !== 'IN' && !isShippingToIndia) {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
@@ -561,7 +563,9 @@ exports.createGuestOrder = async (req, res, next) => {
 
     // Enforce region check for Cash on Delivery (COD)
     if (paymentMethod === 'cod') {
-      const country = await detectCountry(req);
+      // trusted: this gates COD eligibility, so it must ignore caller-supplied
+      // country hints (?country=, cf-ipcountry, x-vercel-ip-country).
+      const country = await detectCountry(req, { trusted: true });
       const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
       if (country !== 'IN' && !isShippingToIndia) {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });

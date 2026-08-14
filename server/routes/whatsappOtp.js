@@ -14,6 +14,19 @@ const { protect, admin } = require('../middleware/auth');
 // circular-import the controller.
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+// Compare two phone numbers ignoring formatting (spaces, +country prefix).
+// Matches the last-10-digit convention already used for Shiprocket payloads.
+const normalizePhone = (v) => {
+  const digits = String(v || '').replace(/\D/g, '');
+  return digits.length > 10 ? digits.slice(-10) : digits;
+};
+// A blank/short stored phone can never match — an account with no phone on file
+// is therefore never unlocked by a phone OTP.
+const samePhone = (a, b) => {
+  const x = normalizePhone(a);
+  return x.length >= 10 && x === normalizePhone(b);
+};
+
 // Aggressive per-IP limits — OTP send/verify is a common abuse vector
 // (SMS pumping on WhatsApp template costs, spamming inboxes). The 60-second
 // per-phone cooldown is enforced inside /send too, but that uses the phone
@@ -255,9 +268,23 @@ router.post('/verify', verifyOtpLimiter, async (req, res) => {
     }
 
     // ─── Mode 2: auto-account + auto-login ─────────────────────────────────
-    // Prefer the email captured at OTP send time (already validated by send flow)
-    // and fall back to the one on userData.
-    const email = String(userData.email || otpEmail || '').toLowerCase().trim();
+    // SECURITY — read before changing any of this.
+    // /send delivers the SAME code to the phone (WhatsApp) *and* to whatever
+    // email the caller supplied. Holding the code therefore proves control of
+    // the PHONE only; the email is caller-supplied on both requests and proves
+    // nothing. Two rules follow, and both are load-bearing:
+    //   1. Look the account up by the email captured at send time — NEVER by
+    //      `userData.email` from this request body. Trusting that let anyone
+    //      OTP their own number, name a victim's email here, and receive a
+    //      valid 7-day session for that account, admins included.
+    //   2. Only unlock an EXISTING account when its stored phone matches the
+    //      number this OTP was delivered to. Rule 1 alone is not enough: the
+    //      attacker also chooses `email` at /send time, so the stored otpEmail
+    //      can be the victim's just as easily.
+    // Net effect: creating a NEW account is unchanged, and a returning customer
+    // whose phone is on file still auto-logs-in. Anyone else is told the code
+    // was verified but gets no session and no write to the account.
+    const email = String(otpEmail || '').toLowerCase().trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       // Verified successfully, but we can't create an account without an email.
       // Still return success so checkout proceeds as guest.
@@ -284,11 +311,20 @@ router.post('/verify', verifyOtpLimiter, async (req, res) => {
       });
       createdAccount = true;
       console.log(`👤 Auto-created account for ${email} during checkout`);
+    } else if (!samePhone(user.phone, phoneNumber)) {
+      // The code proves control of `phoneNumber`, which is NOT the number on
+      // this account (or the account has none). Whoever is calling has not
+      // proven they own this account, so: no token, and no write to the record.
+      // Returning the same generic success as the no-email path keeps this from
+      // doubling as an "is this email registered / what is its phone" oracle.
+      console.warn(
+        `⛔ OTP verify: phone ${normalizePhone(phoneNumber)} does not match the account on file for ${email} — no session issued`
+      );
+      return res.status(200).json({ success: true, message: 'OTP verified successfully' });
     } else {
-      // Existing account — keep the phone/name fresh, append the new address if
-      // it isn't already on file (avoid duplicates from repeat guest checkouts).
+      // Existing account AND the verified phone matches the one on file, so the
+      // caller has proven ownership. Safe to refresh details and issue a token.
       let dirty = false;
-      if (!user.phone && phoneNumber) { user.phone = phoneNumber; dirty = true; }
       if (!user.name && name) { user.name = name; dirty = true; }
       if (address && address.addressLine1) {
         const exists = (user.addresses || []).some(a =>

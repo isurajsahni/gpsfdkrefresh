@@ -76,7 +76,39 @@ class ShiprocketService {
       let totalWeight = 0;
       let maxLength = 0, maxBreadth = 0, maxHeight = 0;
 
-      const orderItems = order.items.map(item => {
+      // ─── Coupon/discount reconciliation (COD over-collection fix) ───
+      // Shiprocket derives the collectable amount (what the courier charges the
+      // customer on COD) from the order_items line totals, NOT from sub_total.
+      // Sending every item at full selling_price with discount:0 while a coupon
+      // reduced the order makes Shiprocket collect the FULL pre-discount amount
+      // (e.g. ₹3000) instead of what the customer actually owes (e.g. ₹400).
+      // So distribute the order-level discount across the lines proportionally
+      // via each item's `discount` field. The last line absorbs any rounding
+      // remainder so the sum of line discounts equals order.discountPrice exactly.
+      const lineGross = order.items.map(
+        (it) => (Number(it.price) || 0) * (Number(it.quantity) || 0)
+      );
+      const totalGross = lineGross.reduce((a, b) => a + b, 0);
+      // Never discount below the line's own value; never exceed the goods total.
+      const cappedDiscount = Math.min(
+        Math.max(0, Number(order.discountPrice) || 0),
+        totalGross
+      );
+      let discountAllocated = 0;
+      const lineDiscounts = lineGross.map((gross, i) => {
+        let d;
+        if (i === lineGross.length - 1) {
+          d = +(cappedDiscount - discountAllocated).toFixed(2); // absorb rounding
+        } else if (totalGross > 0) {
+          d = +((cappedDiscount * gross) / totalGross).toFixed(2);
+          discountAllocated += d;
+        } else {
+          d = 0;
+        }
+        return Math.min(Math.max(d, 0), gross); // clamp to [0, line value]
+      });
+
+      const orderItems = order.items.map((item, idx) => {
         // Get the variation size from the order item
         const size = item.variation?.size || '';
 
@@ -98,7 +130,7 @@ class ShiprocketService {
           sku: item.variation?.sku || item.product?._id?.toString() || `SKU-${Date.now()}`,
           units: item.quantity,
           selling_price: item.price,
-          discount: 0,
+          discount: lineDiscounts[idx],
           tax: 0,
           hsn: 0,
         };

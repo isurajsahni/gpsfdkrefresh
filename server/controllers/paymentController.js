@@ -132,17 +132,28 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const { calculateOrderPrices } = require('./orderController');
     const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
 
-    // ─── Geo-Pricing: charge what the storefront quoted ───
+    // ─── Geo-Pricing ───
     // NOTE: Razorpay only supports INR for Indian merchant accounts, so the
-    // order is always denominated in INR. The storefront quotes international
-    // visitors `base * multiplier * exchangeRate`; previously the server charged
-    // the raw base INR, so a shopper shown $119 was billed ₹999 (~$12) and we
-    // collected about a tenth of the quoted price. Apply the SAME multiplier
-    // here so the amount charged matches the amount quoted.
-    // `trusted` because this decides money — see detectCountry.
+    // order is always denominated in INR.
+    //
+    // The international 10x multiplier is DELIBERATELY NOT APPLIED here.
+    // It was, briefly, to close the "shown $119 / charged ~$12" gap (H-3) — but
+    // the storefront decides the displayed multiplier from its own /api/pricing
+    // call while this decided it from a fresh server-side geo lookup, and the
+    // two can disagree: /api/pricing is served with `Cache-Control: public,
+    // max-age=3600`, so a shopper (or a shared cache) can hold an INR quote
+    // while the server now resolves them as international. The result was a
+    // customer shown ₹499 and billed ₹4,990.
+    //
+    // Overcharging a real buyer 10x is far worse than under-collecting on
+    // international orders, so the charge is pinned back to the quoted INR
+    // total. Re-applying the multiplier requires the DISPLAYED total and the
+    // CHARGED total to come from one server-side computation — see the note in
+    // verifyRazorpay, which still honours the multiplier recorded on orders
+    // created while it was live.
     const country = await detectCountry(req, { trusted: true });
     const currency = getCurrency(country);
-    const priceMultiplier = getPriceMultiplier(country);
+    const priceMultiplier = 1;
     const chargedPrices = applyPriceMultiplier(prices, priceMultiplier);
 
     // Always charge in INR (Razorpay requirement for Indian merchants)

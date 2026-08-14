@@ -64,7 +64,17 @@ app.use('/api/webhook', express.json(), require('./routes/shiprocketWebhook'));
 app.use(cors(require('./config/corsOptions')));
 
 // ─── Body parsers ───
-app.use(express.json({ limit: '10mb' }));
+// Keep the raw body for the Meta WhatsApp webhook only — its X-Hub-Signature-256
+// is an HMAC over the exact bytes, which are unrecoverable once parsed. Scoped
+// by path so we don't retain a buffer for every request (e.g. 10 MB uploads).
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    if (req.originalUrl && req.originalUrl.startsWith('/webhook/whatsapp')) {
+      req.rawBody = buf;
+    }
+  },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // ─── Security: Sanitize MongoDB queries (prevent NoSQL injection) ───

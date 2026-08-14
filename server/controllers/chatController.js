@@ -5,11 +5,22 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
  * Model: gemini-1.5-flash
  */
 
+// Input caps. Without these, `message` and `history` are bounded only by the
+// 10 MB body limit, so one host inside the rate limit can push megabytes per
+// request straight to Gemini — a billing problem, not just an abuse one.
+// Generous enough that no real shopper question is affected.
+const MAX_MESSAGE_CHARS = 2000;
+const MAX_HISTORY_TURNS = 10;
+const MAX_HISTORY_CHARS = 1000;
+
 exports.handleChat = async (req, res) => {
   const { message, history } = req.body;
 
-  if (!message) {
+  if (!message || typeof message !== 'string') {
     return res.status(400).json({ message: 'Message is required' });
+  }
+  if (message.length > MAX_MESSAGE_CHARS) {
+    return res.status(400).json({ message: `Message is too long (max ${MAX_MESSAGE_CHARS} characters).` });
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
@@ -47,9 +58,11 @@ GUIDELINES:
     // Transform history to Gemini format
     const contents = [];
     if (history && Array.isArray(history)) {
-      const recentHistory = history.slice(-10).map(msg => ({
+      // Cap the number of turns AND each turn's length — slice(-10) alone still
+      // allowed 10 arbitrarily large entries through.
+      const recentHistory = history.slice(-MAX_HISTORY_TURNS).map(msg => ({
         role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content || '' }]
+        parts: [{ text: String(msg.content || '').slice(0, MAX_HISTORY_CHARS) }]
       }));
       contents.push(...recentHistory);
     }

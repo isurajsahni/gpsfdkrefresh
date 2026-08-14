@@ -1,5 +1,15 @@
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
+
+// Length-safe constant-time string compare. timingSafeEqual throws on unequal
+// lengths, and a plain === leaks how much of a secret matched via timing.
+const safeEqual = (a, b) => {
+  const x = Buffer.from(String(a ?? ''), 'utf8');
+  const y = Buffer.from(String(b ?? ''), 'utf8');
+  if (x.length !== y.length) return false;
+  return crypto.timingSafeEqual(x, y);
+};
 
 /**
  * Meta WhatsApp Cloud API Webhook
@@ -33,7 +43,7 @@ router.get('/whatsapp', (req, res) => {
     return res.sendStatus(500);
   }
 
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+  if (mode === 'subscribe' && safeEqual(token, VERIFY_TOKEN)) {
     console.log('✅ WhatsApp webhook verified — echoing challenge.');
     // Meta expects the raw challenge string (not JSON) with status 200.
     return res.status(200).send(challenge);
@@ -44,7 +54,31 @@ router.get('/whatsapp', (req, res) => {
 });
 
 // ─── 2. POST /webhook/whatsapp — inbound events ───
-router.post('/whatsapp', (req, res) => {
+// Meta signs every delivery with X-Hub-Signature-256 = HMAC-SHA256(app secret,
+// raw body). Without checking it, anyone who learns this URL can post forged
+// events. Enforced whenever META_APP_SECRET is configured; if it isn't, we log
+// loudly and continue so the existing (log-only) integration keeps working —
+// set the env var to turn enforcement on, no code change needed.
+const verifyMetaSignature = (req, res, next) => {
+  const appSecret = process.env.META_APP_SECRET || process.env.WHATSAPP_APP_SECRET;
+  if (!appSecret) {
+    console.warn('⚠️ [WhatsApp webhook] META_APP_SECRET not set — accepting unverified payload. Set it to enforce signature checks.');
+    return next();
+  }
+  const header = req.get('x-hub-signature-256') || '';
+  if (!req.rawBody) {
+    console.error('❌ [WhatsApp webhook] raw body unavailable — cannot verify signature; rejecting.');
+    return res.sendStatus(403);
+  }
+  const expected = 'sha256=' + crypto.createHmac('sha256', appSecret).update(req.rawBody).digest('hex');
+  if (!safeEqual(header, expected)) {
+    console.warn('❌ [WhatsApp webhook] invalid X-Hub-Signature-256 — rejecting.');
+    return res.sendStatus(403);
+  }
+  return next();
+};
+
+router.post('/whatsapp', verifyMetaSignature, (req, res) => {
   try {
     console.log('📥 WhatsApp Webhook Payload:', JSON.stringify(req.body, null, 2));
 

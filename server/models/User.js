@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, default: '' },
   addresses: [addressSchema],
   avatar: { type: String, default: '' },
+  // Cloudinary public_id of the CURRENT uploaded avatar, set server-side from
+  // the upload result — never from client input. Deletion of the previous
+  // avatar keys off this field, so a client-supplied `avatar` string can no
+  // longer steer cloudinary.uploader.destroy() at an arbitrary asset.
+  avatarPublicId: { type: String, default: '' },
   resetPasswordOtp: String,
   resetPasswordExpire: Date,
   otpAttempts: { type: Number, default: 0 },

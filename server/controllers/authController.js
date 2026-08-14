@@ -328,7 +328,21 @@ exports.updateProfile = async (req, res, next) => {
     
     // ── Free updates (no OTP required) ──
     if (req.body.name) user.name = req.body.name.trim();
-    if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
+    // `avatar` is dual-purpose: an emoji picked in the dashboard, or the URL of
+    // an image uploaded via /auth/upload-avatar. Accept those two shapes only.
+    // Deletion no longer parses this string (see uploadAvatar), so this is
+    // defence in depth — it stops the field being used to point at arbitrary
+    // remote images. Anything else is rejected rather than silently stored.
+    if (req.body.avatar !== undefined) {
+      const next = String(req.body.avatar || '').trim();
+      const isUrl = /^https?:\/\//i.test(next);
+      const isOurCloudinary = /^https:\/\/res\.cloudinary\.com\//i.test(next);
+      if (next === '' || (!isUrl && next.length <= 8) || isOurCloudinary) {
+        user.avatar = next;
+      } else {
+        return res.status(400).json({ message: 'Invalid avatar' });
+      }
+    }
 
     if (req.body.password) {
       if (req.body.password.length < 8) {
@@ -412,21 +426,25 @@ exports.uploadAvatar = async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // If user already has a Cloudinary avatar URL, delete the old image
-    if (user.avatar && user.avatar.startsWith('http') && user.avatar.includes('cloudinary')) {
+    // Delete the previous avatar using the public_id WE recorded at upload time.
+    // This used to parse a public_id back out of `user.avatar`, which
+    // updateProfile accepts verbatim from the client — so any logged-in
+    // customer could point it at a product image (public_id is exposed by
+    // GET /api/products) and have this call destroy the catalogue's assets.
+    // Keying off a server-set field means we can only ever delete an asset this
+    // endpoint itself created in the avatars folder.
+    if (user.avatarPublicId) {
       try {
-        // Extract public_id from URL: https://res.cloudinary.com/.../gpsfdk-avatars/abc123.jpg
-        const parts = user.avatar.split('/');
-        const folderAndFile = parts.slice(-2).join('/'); // e.g. "gpsfdk-avatars/abc123"
-        const publicId = folderAndFile.replace(/\.[^.]+$/, ''); // remove extension
-        await cloudinary.uploader.destroy(publicId);
+        await cloudinary.uploader.destroy(user.avatarPublicId);
       } catch (e) {
         console.error('Failed to delete old avatar from Cloudinary:', e.message);
       }
     }
 
-    // Save the new Cloudinary URL
-    user.avatar = req.file.path; // multer-storage-cloudinary sets this to the Cloudinary URL
+    // Save the new Cloudinary URL + its public_id (multer-storage-cloudinary
+    // sets `path` to the secure URL and `filename` to the public_id).
+    user.avatar = req.file.path;
+    user.avatarPublicId = req.file.filename || req.file.public_id || '';
     await user.save();
 
     res.json({

@@ -975,57 +975,6 @@ exports.verifyPasswordlessOtp = async (req, res, next) => {
   }
 };
 
-exports.verifyFirebaseToken = async (req, res, next) => {
-  try {
-    const { idToken } = req.body;
-    if (!idToken) return res.status(400).json({ message: 'Firebase token required.' });
-
-    const axios = require('axios');
-    // Firebase Web API key — MUST be set in env. Hard-coding bypasses rotation
-    // and disclosure controls. Rotate the previously-committed key in the
-    // Firebase console; do NOT reuse it here.
-    const apiKey = process.env.FIREBASE_WEB_API_KEY;
-    if (!apiKey) {
-      console.error('FIREBASE_WEB_API_KEY env var is not set');
-      return res.status(500).json({ message: 'Authentication service misconfigured' });
-    }
-    const response = await axios.post(
-      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`,
-      { idToken }
-    );
-
-    const firebaseUser = response.data.users[0];
-    if (!firebaseUser || !firebaseUser.phoneNumber) {
-      return res.status(400).json({ message: 'Invalid Firebase token or no phone number found.' });
-    }
-
-    const phone = firebaseUser.phoneNumber;
-    const phoneDigits = phone.replace(/\D/g, '').slice(-10);
-    // End-anchored last-10-digit match — see verifyPasswordlessOtp note above.
-    const user = await User.findOne({ phone: { $regex: phoneDigits + '$' } });
-
-    if (user) {
-      return res.json({
-        isNewUser: false,
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        avatar: user.avatar || '',
-        addresses: user.addresses || [],
-        token: generateToken(user._id),
-      });
-    } else {
-      const tempToken = jwt.sign({ identifier: phone, isEmail: false, verified: true }, process.env.JWT_SECRET, { expiresIn: '15m' });
-      return res.json({ isNewUser: true, tempToken, identifier: phone, isEmail: false });
-    }
-  } catch (error) {
-    console.error('Firebase verify error:', error.response?.data || error.message);
-    next(new Error('Failed to verify Firebase token.'));
-  }
-};
-
 exports.completePasswordlessRegistration = async (req, res, next) => {
   try {
     const { tempToken, name, email, phone } = req.body;

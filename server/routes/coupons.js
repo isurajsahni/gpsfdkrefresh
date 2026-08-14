@@ -8,7 +8,7 @@ const {
   validateCoupon,
   getAllCouponUsage
 } = require('../controllers/couponController');
-const { protect, admin, authorizeRoles } = require('../middleware/auth');
+const { protect, admin, authorizeRoles, optionalAuth } = require('../middleware/auth');
 const { publicEndpointLimiter } = require('../middleware/validators');
 
 router.route('/')
@@ -18,7 +18,11 @@ router.route('/')
 router.get('/usage', protect, authorizeRoles('coupon_manager'), getAllCouponUsage);
 // Rate-limit /validate so attackers can't brute-force valid codes
 // (10 req/min/IP is enough for any real shopper).
-router.post('/validate', publicEndpointLimiter, validateCoupon);
+// optionalAuth so validateCoupon can see `req.user` when the shopper is logged
+// in — it enforces maxUsesPerUser against it. Without it userId was always null,
+// so a customer who had already used up a coupon was told it was valid and only
+// hit the rejection at order placement. Still public: guests validate too.
+router.post('/validate', publicEndpointLimiter, optionalAuth, validateCoupon);
 
 
 router.route('/:id')

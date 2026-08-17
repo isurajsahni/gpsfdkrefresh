@@ -334,10 +334,36 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   let discountPrice = 0;
 
   // 3. Apply Coupon Discount (Capped and Validated)
+  //
+  // FAIL CLOSED. Every "a coupon was supplied but we could not apply it" branch
+  // below used to fall through silently, leaving discountPrice at 0 — so the
+  // order was booked at FULL price while the shopper had agreed to a discounted
+  // total. On COD there is no payment gateway to surface the real figure, so the
+  // customer was billed the undiscounted amount on delivery (F-1).
+  //
+  // `allowOversell` is set ONLY by the post-payment verification path. Coupon
+  // problems must never throw there: the money is already captured, and failing
+  // would leave the buyer paid with no order — the exact outcome this file's
+  // other post-payment relaxations exist to prevent. Pre-payment (COD, free,
+  // Razorpay order creation) we reject with a message the shopper can act on.
+  const couponBlocked = (message) => {
+    if (!allowOversell) throw new Error(message);
+    console.warn(`[coupon] post-payment recompute could not apply "${couponCode}": ${message}`);
+  };
+
   if (couponCode) {
     const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
-    if (coupon && (!coupon.expiryDate || new Date() <= new Date(coupon.expiryDate))) {
-      
+    // NOTE: these messages must contain the word "Coupon" — createOrder,
+    // createGuestOrder and createRazorpayOrder all surface an error to the
+    // shopper as a clean 400 only when its message matches that (case-sensitive)
+    // allow-list. Without it the global handler masks it as a generic 500 in
+    // production and the shopper learns nothing actionable.
+    if (!coupon) {
+      couponBlocked('Coupon is no longer valid — please remove it and try again.');
+    } else if (coupon.expiryDate && new Date() > new Date(coupon.expiryDate)) {
+      couponBlocked('Coupon has expired — please remove it and try again.');
+    } else {
+
       // Validate usage limits
       let isLimitReached = false;
       let limitMessage = 'Coupon is invalid';
@@ -379,8 +405,13 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
         throw new Error(limitMessage);
       }
 
-      // Check min order value against itemsPrice
-      if (calculatedItemsPrice >= coupon.minOrderValue) {
+      // Check min order value against itemsPrice. Coerce the threshold: an
+      // undefined minOrderValue made `itemsPrice >= undefined` false, which
+      // silently skipped the discount entirely — another F-1 path.
+      const minOrderValue = Number(coupon.minOrderValue) || 0;
+      if (calculatedItemsPrice < minOrderValue) {
+        couponBlocked(`Coupon requires a minimum order value of ₹${minOrderValue}.`);
+      } else {
         if (coupon.discountType === 'percentage') {
           discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;
           // Apply percentage cap
@@ -390,7 +421,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
         } else {
           discountPrice = coupon.discountValue;
         }
-        
+
         // FINAL SAFETY: Discount must NOT exceed subtotal
         discountPrice = Math.min(discountPrice, calculatedItemsPrice);
       }

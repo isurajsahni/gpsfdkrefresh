@@ -857,9 +857,13 @@ exports.cancelOrder = async (req, res, next) => {
     const order = await Order.findById(req.params.id).populate('items.product', 'slug');
     if (!order) return res.status(404).json({ message: 'Order not found' });
     
-    // Check authorization: must be admin/manager or order owner
-    const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
-    if (!isManagerOrAdmin && order.user?.toString() !== req.user._id.toString()) {
+    // Check authorization: must be admin or the order owner.
+    // order_manager is deliberately NOT here: it is a read-only role. This
+    // route is only `protect`ed (no admin guard), so this list is the real
+    // gate — leaving order_manager in let a manager cancel anyone's order.
+    // A manager can still cancel their own order via the owner check below.
+    const isAdmin = ['admin', 'admin_marketing'].includes(req.user.role);
+    if (!isAdmin && order.user?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to cancel this order' });
     }
 

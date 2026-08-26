@@ -17,8 +17,8 @@ router.get('/track-awb/:awb', orderTrackingLimiter, getShipmentTracking);
 router.get('/stats', protect, authorizeRoles('order_manager'), getOrderStats);
 router.get('/shiprocket/:id', protect, authorizeRoles('order_manager'), getShiprocketOrderDetails);
 router.get('/:id', protect, getOrderById);
-router.put('/:id', protect, authorizeRoles('order_manager'), updateOrderStatus);
-router.post('/:id/sync-shiprocket', protect, authorizeRoles('order_manager'), syncShiprocketOrder);
+router.put('/:id', protect, admin, updateOrderStatus); // Admin only — order_manager is read-only
+router.post('/:id/sync-shiprocket', protect, admin, syncShiprocketOrder); // Admin only — order_manager is read-only
 router.put('/:id/cancel', protect, cancelOrder);
 router.delete('/:id', protect, admin, deleteOrder); // Only admin can delete
 

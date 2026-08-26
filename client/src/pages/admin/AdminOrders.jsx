@@ -21,6 +21,10 @@ const statusColors = {
 
 const AdminOrders = () => {
   const { user } = useAuth();
+  // order_manager gets a read-only panel: it can browse and inspect every
+  // order but not change one. The server enforces this too (orders routes are
+  // admin-gated) — this only keeps controls that would 403 off the screen.
+  const canManage = ['admin', 'admin_marketing'].includes(user?.role);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -216,36 +220,44 @@ const AdminOrders = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {/* Manual Shiprocket Sync Button */}
-                      <button
-                        onClick={(e) => handleSyncShiprocket(order._id, e)}
-                        disabled={syncingId === order._id}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors flex items-center gap-1 cursor-pointer ${
-                          isSynced 
-                            ? 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                            : isFailed
-                            ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                            : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                        }`}
-                        title="Sync order details with Shiprocket"
-                      >
-                        <HiOutlineRefresh className={`w-3.5 h-3.5 ${syncingId === order._id ? 'animate-spin' : ''}`} />
-                        {syncingId === order._id ? 'Syncing…' : (isSynced ? 'Re-sync Shiprocket' : 'Sync to Shiprocket')}
-                      </button>
+                      {canManage && (
+                        <button
+                          onClick={(e) => handleSyncShiprocket(order._id, e)}
+                          disabled={syncingId === order._id}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors flex items-center gap-1 cursor-pointer ${
+                            isSynced
+                              ? 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                              : isFailed
+                              ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                              : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                          }`}
+                          title="Sync order details with Shiprocket"
+                        >
+                          <HiOutlineRefresh className={`w-3.5 h-3.5 ${syncingId === order._id ? 'animate-spin' : ''}`} />
+                          {syncingId === order._id ? 'Syncing…' : (isSynced ? 'Re-sync Shiprocket' : 'Sync to Shiprocket')}
+                        </button>
+                      )}
 
-                      <select
-                        value={order.status}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => updateStatus(order._id, e.target.value)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border-0 cursor-pointer ${statusColors[order.status] || 'bg-gray-100'}`}
-                      >
-                        {['payment_pending', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
-                          <option key={s} value={s}>{s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
-                        ))}
-                      </select>
+                      {canManage ? (
+                        <select
+                          value={order.status}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateStatus(order._id, e.target.value)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border-0 cursor-pointer ${statusColors[order.status] || 'bg-gray-100'}`}
+                        >
+                          {['payment_pending', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
+                            <option key={s} value={s}>{s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-semibold ${statusColors[order.status] || 'bg-gray-100'}`}>
+                          {(order.status || '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                        </span>
+                      )}
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>
-                      
+
                       {/* Delete Button - Admin Only */}
-                      {(user?.role === 'admin' || user?.role === 'admin_marketing') && (
+                      {canManage && (
                         <button 
                           onClick={(e) => deleteOrder(order._id, e)}
                           className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -436,16 +448,18 @@ const AdminOrders = () => {
                                 </div>
                               )}
 
-                              <div className="pt-2">
-                                <button
-                                  onClick={(e) => handleSyncShiprocket(order._id, e)}
-                                  disabled={syncingId === order._id}
-                                  className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                                >
-                                  <HiOutlineRefresh className={`w-4 h-4 ${syncingId === order._id ? 'animate-spin' : ''}`} />
-                                  {syncingId === order._id ? 'Syncing with Shiprocket…' : (isSynced ? 'Re-sync Order to Shiprocket' : 'Sync Order to Shiprocket')}
-                                </button>
-                              </div>
+                              {canManage && (
+                                <div className="pt-2">
+                                  <button
+                                    onClick={(e) => handleSyncShiprocket(order._id, e)}
+                                    disabled={syncingId === order._id}
+                                    className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                  >
+                                    <HiOutlineRefresh className={`w-4 h-4 ${syncingId === order._id ? 'animate-spin' : ''}`} />
+                                    {syncingId === order._id ? 'Syncing with Shiprocket…' : (isSynced ? 'Re-sync Order to Shiprocket' : 'Sync Order to Shiprocket')}
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>

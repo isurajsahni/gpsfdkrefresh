@@ -10,7 +10,10 @@ const addressSchema = new mongoose.Schema({
   state: String,
   pincode: String,
   country: { type: String, default: 'India' },
-  isDefault: { type: Boolean, default: false }
+  isDefault: { type: Boolean, default: false },
+  // Optional user-facing tag for the address (e.g. 'Home', 'Work'). Shown on the
+  // app's checkout bar; previously the app kept this on-device for lack of a field.
+  label: { type: String, default: '', trim: true, maxlength: 30 }
 });
 
 const userSchema = new mongoose.Schema({
@@ -31,6 +34,12 @@ const userSchema = new mongoose.Schema({
   otpAttempts: { type: Number, default: 0 },
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date },
+  // Self-serve account deletion (Apple 5.1.1(v)). We anonymise rather than
+  // hard-delete: the user document is kept so their Order.user references stay
+  // valid (GST / accounting records must survive), but every personal field is
+  // overwritten and this timestamp is set. A non-null deletedAt excludes the
+  // account from login (via `protect`) and from admin user lists.
+  deletedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 // Mongoose 7+ async hooks do NOT receive next() — just use async/await

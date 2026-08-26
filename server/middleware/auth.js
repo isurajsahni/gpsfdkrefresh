@@ -20,6 +20,12 @@ const protect = async (req, res, next) => {
       if (!req.user) {
         return res.status(401).json({ message: 'Not authorized, user no longer exists' });
       }
+      // A JWT minted before self-serve deletion stays valid for its full 7-day
+      // life. The document still exists (we anonymise, not hard-delete), so the
+      // null-check above passes — reject the token explicitly instead.
+      if (req.user.deletedAt) {
+        return res.status(401).json({ message: 'Not authorized, account deleted' });
+      }
       return next();
     } catch (error) {
       return res.status(401).json({ message: 'Not authorized, token failed' });

@@ -584,7 +584,8 @@ exports.getUsers = async (req, res, next) => {
     if (req.query.paginate === 'true') {
       const page = Math.max(1, parseInt(req.query.page, 10) || 1);
       const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
-      const filter = {};
+      // Hide anonymised (self-deleted) accounts from admin lists.
+      const filter = { deletedAt: null };
       if (req.query.search) {
         const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const rx = new RegExp(escape(String(req.query.search)), 'i');
@@ -597,7 +598,7 @@ exports.getUsers = async (req, res, next) => {
       ]);
       return res.json({ users, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) || 1 });
     }
-    const users = await User.find({}).select('-password').sort('-createdAt').limit(500);
+    const users = await User.find({ deletedAt: null }).select('-password').sort('-createdAt').limit(500);
     res.json(users);
   } catch (error) {
     next(error);
@@ -607,7 +608,7 @@ exports.getUsers = async (req, res, next) => {
 // GET /api/auth/users/count — lightweight count for dashboards.
 exports.getUsersCount = async (req, res, next) => {
   try {
-    const count = await User.countDocuments();
+    const count = await User.countDocuments({ deletedAt: null });
     res.json({ count });
   } catch (error) {
     next(error);
@@ -621,6 +622,51 @@ exports.deleteUser = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     await user.deleteOne();
     res.json({ message: 'User removed' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// DELETE /api/auth/me — self-serve account deletion (Apple guideline 5.1.1(v)).
+// Anonymises rather than hard-deletes: the document and its _id are kept so
+// existing Order.user references stay valid and GST/accounting history is not
+// orphaned, but every personal field is overwritten and deletedAt is stamped.
+// email/phone are rewritten (not blanked) because email is required+unique —
+// rewriting them also frees the real address/number for a fresh sign-up later.
+exports.deleteOwnAccount = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    // protect already 401s a missing/anonymised user, so reaching here with an
+    // already-deleted account shouldn't happen — but stay idempotent just in case.
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.deletedAt) return res.json({ message: 'Account already deleted' });
+
+    // Best-effort removal of the uploaded avatar asset (mirrors uploadAvatar).
+    // Fire-and-forget: never block deletion on Cloudinary.
+    if (user.avatarPublicId) {
+      cloudinary.uploader.destroy(user.avatarPublicId).catch(() => {});
+    }
+
+    const anonId = user._id.toString();
+    user.name = 'Deleted user';
+    // Unique, syntactically-valid, non-routable address tied to the _id.
+    user.email = `deleted-${anonId}@deleted.invalid`;
+    user.phone = '';
+    user.addresses = [];
+    user.avatar = '';
+    user.avatarPublicId = '';
+    // Invalidate password login — random value the user can never reproduce.
+    // isModified('password') is true so the pre-save hook re-hashes it.
+    user.password = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpire = undefined;
+    user.otpAttempts = 0;
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    user.deletedAt = new Date();
+    await user.save();
+
+    res.json({ message: 'Your account has been deleted' });
   } catch (error) {
     next(error);
   }
@@ -793,8 +839,8 @@ exports.addAddress = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Whitelist only allowed address fields — prevent mass assignment
-    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country } = req.body;
-    const newAddress = { fullName, phone, addressLine1, addressLine2, city, state, pincode, country };
+    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country, label } = req.body;
+    const newAddress = { fullName, phone, addressLine1, addressLine2, city, state, pincode, country, label };
 
     // If this is the first address, mark it as default
     if (user.addresses.length === 0) newAddress.isDefault = true;
@@ -842,8 +888,8 @@ exports.updateAddress = async (req, res, next) => {
     if (addressIndex === -1) return res.status(404).json({ message: 'Address not found' });
 
     // Update with whitelisted fields
-    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country, isDefault } = req.body;
-    
+    const { fullName, phone, addressLine1, addressLine2, city, state, pincode, country, isDefault, label } = req.body;
+
     const addr = user.addresses[addressIndex];
     if (fullName) addr.fullName = fullName;
     if (phone) addr.phone = phone;
@@ -854,6 +900,7 @@ exports.updateAddress = async (req, res, next) => {
     if (pincode) addr.pincode = pincode;
     if (country) addr.country = country;
     if (isDefault !== undefined) addr.isDefault = isDefault;
+    if (label !== undefined) addr.label = label;
 
     await user.save();
     res.json(user.addresses);

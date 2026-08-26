@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { getProducts, getProductBySlug, createProduct, updateProduct, deleteProduct, bulkDeleteProducts, importProducts, getHotSellingProducts } = require('../controllers/productController');
+const { getProductReviews, upsertReview, deleteOwnReview } = require('../controllers/reviewController');
 const { protect, admin, optionalAuth } = require('../middleware/auth');
 const { csvUpload } = require('../middleware/upload');
 
@@ -25,5 +26,13 @@ router.post('/bulk-delete', protect, admin, bulkDeleteProducts);
 router.get('/:slug', optionalAuth, getProductBySlug);
 router.put('/:id', protect, admin, updateProduct);
 router.delete('/:id', protect, admin, deleteProduct);
+
+// ─── Product reviews ───
+// Two-segment paths — do not collide with the single-segment '/:slug' route.
+// GET is public; writing/removing a review requires login (one review per user
+// per product, enforced by the unique index on the Review model).
+router.get('/:productId/reviews', getProductReviews);
+router.post('/:productId/reviews', protect, upsertReview);
+router.delete('/:productId/reviews', protect, deleteOwnReview);
 
 module.exports = router;

@@ -18,7 +18,7 @@ All new endpoints follow the existing conventions:
 
 | # | Request | Status |
 |---|---------|--------|
-| 1 | Non-production backend | **Your side** — Render/Mongo/Razorpay dashboard setup. Suraj has a step-by-step guide. |
+| 1 | Non-production backend | **Your side** — Render/Mongo dashboard setup. See `STAGING_SETUP.md`. **Razorpay is deferred** — staging runs without it; the app team tests the full order pipeline via **COD** / free orders (prepaid returns a clean 503 until test keys are added later). |
 | 2 | `DELETE /api/auth/me` | ✅ Done — anonymises, keeps orders. |
 | 3 | `source` on Order | ✅ Done — send `source` on order create. |
 | 4 | Video uploads | ✅ Done — admin `POST /api/upload` now accepts mp4. |

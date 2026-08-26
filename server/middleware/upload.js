@@ -15,6 +15,11 @@ const allowedImageMimeTypes = [
   'image/jpeg', 'image/png', 'image/webp', 'image/gif'
 ];
 
+// Video MIME types allowed ONLY on the admin product-media upload (mediaUpload
+// below). Kept separate from images so the public/guest image endpoints and the
+// avatar endpoint stay image-only — a video must never be accepted there.
+const allowedVideoMimeTypes = ['video/mp4'];
+
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -118,4 +123,45 @@ const avatarUpload = multer({
   },
 });
 
-module.exports = { cloudinary, upload, csvUpload, avatarUpload };
+// Admin product-media upload — accepts the same images as `upload`, PLUS mp4
+// video (stored on Cloudinary with resource_type 'video'). Used only on the
+// admin-protected POST /api/upload route so product reels can be attached to
+// Product.videos. The 10 MB cap is unchanged (existing reels are 1.3–4.3 MB).
+const mediaStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const isImage = allowedImageMimeTypes.includes(file.mimetype);
+    const isVideo = allowedVideoMimeTypes.includes(file.mimetype);
+    if (!isImage && !isVideo) {
+      throw new Error(`File type ${file.mimetype} not allowed. Only JPEG, PNG, WebP, GIF images and MP4 video are accepted.`);
+    }
+    if (isVideo) {
+      return {
+        folder: 'gpsfdk',
+        resource_type: 'video',
+        allowed_formats: ['mp4'],
+        format: 'mp4',
+      };
+    }
+    const ext = file.mimetype.split('/')[1] || 'jpg';
+    return {
+      folder: 'gpsfdk',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+      format: ext === 'jpeg' ? 'jpg' : ext,
+    };
+  },
+});
+
+const mediaUpload = multer({
+  storage: mediaStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max per file (images and mp4)
+  fileFilter: (req, file, cb) => {
+    if (allowedImageMimeTypes.includes(file.mimetype) || allowedVideoMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not allowed`), false);
+    }
+  },
+});
+
+module.exports = { cloudinary, upload, csvUpload, avatarUpload, mediaUpload };

@@ -410,6 +410,7 @@ exports.verifyRazorpay = async (req, res, next) => {
         shippingAddress: orderData.shippingAddress,
         billingAddress: orderData.billingAddress,
         paymentMethod: 'razorpay',
+        source: orderController.normalizeOrderSource(orderData.source),
         itemsPrice: expectedPrices.itemsPrice,
         shippingPrice: expectedPrices.shippingPrice,
         taxPrice: expectedPrices.taxPrice,

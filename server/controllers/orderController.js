@@ -9,6 +9,11 @@ const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
 const { detectCountry } = require('../utils/geoPricing');
 
+// Which client placed an order. Coerce any caller-supplied hint to a known value,
+// defaulting to 'web', so an unexpected string never fails schema validation.
+const ORDER_SOURCES = ['web', 'ios', 'android'];
+const normalizeOrderSource = (value) => (ORDER_SOURCES.includes(value) ? value : 'web');
+
 // Helper: send Meta CAPI Purchase event. Fire-and-forget so it never blocks
 // the order response. The browser pixel fires the same event with the same
 // event_id; Meta dedupes them.
@@ -528,6 +533,9 @@ exports.createOrder = async (req, res, next) => {
       shippingAddress,
       billingAddress,
       paymentMethod: finalPaymentMethod,
+      // Normalise defensively — an unrecognised client hint must never throw a
+      // schema validation error and fail an otherwise-valid order.
+      source: normalizeOrderSource(req.body.source),
       itemsPrice: prices.itemsPrice,
       shippingPrice: prices.shippingPrice,
       taxPrice: prices.taxPrice,
@@ -614,6 +622,7 @@ exports.createGuestOrder = async (req, res, next) => {
       shippingAddress,
       billingAddress,
       paymentMethod: finalPaymentMethod,
+      source: normalizeOrderSource(req.body.source),
       itemsPrice: prices.itemsPrice,
       shippingPrice: prices.shippingPrice,
       taxPrice: prices.taxPrice,
@@ -913,6 +922,7 @@ exports.deleteOrder = async (req, res, next) => {
 };
 
 exports.calculateOrderPrices = calculateOrderPrices;
+exports.normalizeOrderSource = normalizeOrderSource;
 
 // GET /api/orders/track
 exports.trackOrder = async (req, res, next) => {

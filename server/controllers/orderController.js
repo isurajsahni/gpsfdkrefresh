@@ -14,10 +14,22 @@ const { detectCountry } = require('../utils/geoPricing');
 const ORDER_SOURCES = ['web', 'ios', 'android'];
 const normalizeOrderSource = (value) => (ORDER_SOURCES.includes(value) ? value : 'web');
 
+// Meta CAPI is a website-only signal. Orders and checkouts that originate in the
+// iOS/Android apps are excluded from it entirely, so the apps send Meta nothing
+// at all — which is what keeps App Tracking Transparency out of the App Store
+// submission. Takes the raw client hint rather than a saved Order because the
+// Razorpay InitiateCheckout event fires before the order document exists.
+// Anything that is not exactly 'ios'/'android' counts as web, mirroring
+// normalizeOrderSource's fail-to-web behaviour.
+const isAppSource = (value) => value === 'ios' || value === 'android';
+
 // Helper: send Meta CAPI Purchase event. Fire-and-forget so it never blocks
 // the order response. The browser pixel fires the same event with the same
 // event_id; Meta dedupes them.
 const sendMetaPurchaseEvent = (req, order, prices, eventId) => {
+  // App orders never reach Meta (see isAppSource). Guarded inside the helper
+  // rather than at each call site so a future order path cannot forget it.
+  if (isAppSource(order?.source)) return;
   try {
     const ctx = metaCapi.extractClientContext(req);
     const shipping = order.shippingAddress || {};
@@ -923,6 +935,7 @@ exports.deleteOrder = async (req, res, next) => {
 
 exports.calculateOrderPrices = calculateOrderPrices;
 exports.normalizeOrderSource = normalizeOrderSource;
+exports.isAppSource = isAppSource;
 
 // GET /api/orders/track
 exports.trackOrder = async (req, res, next) => {

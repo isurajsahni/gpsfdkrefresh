@@ -205,35 +205,41 @@ exports.createRazorpayOrder = async (req, res, next) => {
 
     // Server-side InitiateCheckout — dedupes with the browser pixel via eventId.
     // Fire-and-forget: never block the order on Meta's API.
-    try {
-      const ctx = metaCapi.extractClientContext(req);
-      const shipping = orderData.shippingAddress || {};
-      metaCapi.sendEvent({
-        eventName: 'InitiateCheckout',
-        eventId: orderData.eventIdInitiateCheckout,
-        eventSourceUrl: req.headers.referer || req.headers.referrer,
-        userData: {
-          email: orderData.guestEmail || req.user?.email,
-          phone: orderData.guestPhone || shipping.phone || req.user?.phone,
-          firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
-          lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
-          city: shipping.city,
-          state: shipping.state,
-          zip: shipping.pincode,
-          country: shipping.country || 'India',
-          externalId: req.user?._id?.toString(),
-          ...ctx,
-        },
-        customData: {
-          value: prices.totalPrice,
-          currency: 'INR',
-          num_items: orderData.items.length,
-          content_ids: orderData.items.map((i) => i.product),
-          content_type: 'product',
-          contents: orderData.items.map((i) => ({ id: i.product, quantity: i.quantity, item_price: i.price })),
-        },
-      }).catch(() => {});
-    } catch (_) { /* never block order creation */ }
+    // Skipped for app checkouts: the apps send Meta nothing at all, which is
+    // what keeps App Tracking Transparency off the App Store submission. No
+    // order document exists yet, so this reads the same client hint that
+    // verifyRazorpay persists as Order.source.
+    if (!orderController.isAppSource(orderData.source)) {
+      try {
+        const ctx = metaCapi.extractClientContext(req);
+        const shipping = orderData.shippingAddress || {};
+        metaCapi.sendEvent({
+          eventName: 'InitiateCheckout',
+          eventId: orderData.eventIdInitiateCheckout,
+          eventSourceUrl: req.headers.referer || req.headers.referrer,
+          userData: {
+            email: orderData.guestEmail || req.user?.email,
+            phone: orderData.guestPhone || shipping.phone || req.user?.phone,
+            firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
+            lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
+            city: shipping.city,
+            state: shipping.state,
+            zip: shipping.pincode,
+            country: shipping.country || 'India',
+            externalId: req.user?._id?.toString(),
+            ...ctx,
+          },
+          customData: {
+            value: prices.totalPrice,
+            currency: 'INR',
+            num_items: orderData.items.length,
+            content_ids: orderData.items.map((i) => i.product),
+            content_type: 'product',
+            contents: orderData.items.map((i) => ({ id: i.product, quantity: i.quantity, item_price: i.price })),
+          },
+        }).catch(() => {});
+      } catch (_) { /* never block order creation */ }
+    }
 
     // Return the Razorpay PUBLIC key alongside the order so the client can
     // open the checkout modal without needing VITE_RAZORPAY_KEY_ID in its
@@ -469,36 +475,41 @@ exports.verifyRazorpay = async (req, res, next) => {
       // authoritative signal: it fires only after the DB write succeeds, so
       // Meta's reported revenue stays in sync with real orders. The browser
       // pixel fires the same event with the same event_id; Meta dedupes.
-      try {
-        const ctx = metaCapi.extractClientContext(req);
-        const shipping = orderData.shippingAddress || {};
-        metaCapi.sendEvent({
-          eventName: 'Purchase',
-          eventId: orderData.eventIdPurchase,
-          eventSourceUrl: req.headers.referer || req.headers.referrer,
-          userData: {
-            email: newOrder.guestEmail || req.user?.email,
-            phone: newOrder.guestPhone || shipping.phone || req.user?.phone,
-            firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
-            lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
-            city: shipping.city,
-            state: shipping.state,
-            zip: shipping.pincode,
-            country: shipping.country || 'India',
-            externalId: (req.user?._id || newOrder._id).toString(),
-            ...ctx,
-          },
-          customData: {
-            value: prices.totalPrice,
-            currency: 'INR',
-            num_items: prices.verifiedItems.length,
-            content_ids: prices.verifiedItems.map((i) => String(i.product)),
-            content_type: 'product',
-            contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
-            order_id: newOrder.orderNumber,
-          },
-        }).catch(() => {});
-      } catch (_) { /* never block the order response */ }
+      // Skipped for app orders: the apps send Meta nothing at all, which is what
+      // keeps App Tracking Transparency off the App Store submission.
+      // newOrder.source was normalized by Order.create above.
+      if (!orderController.isAppSource(newOrder.source)) {
+        try {
+          const ctx = metaCapi.extractClientContext(req);
+          const shipping = orderData.shippingAddress || {};
+          metaCapi.sendEvent({
+            eventName: 'Purchase',
+            eventId: orderData.eventIdPurchase,
+            eventSourceUrl: req.headers.referer || req.headers.referrer,
+            userData: {
+              email: newOrder.guestEmail || req.user?.email,
+              phone: newOrder.guestPhone || shipping.phone || req.user?.phone,
+              firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
+              lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
+              city: shipping.city,
+              state: shipping.state,
+              zip: shipping.pincode,
+              country: shipping.country || 'India',
+              externalId: (req.user?._id || newOrder._id).toString(),
+              ...ctx,
+            },
+            customData: {
+              value: prices.totalPrice,
+              currency: 'INR',
+              num_items: prices.verifiedItems.length,
+              content_ids: prices.verifiedItems.map((i) => String(i.product)),
+              content_type: 'product',
+              contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
+              order_id: newOrder.orderNumber,
+            },
+          }).catch(() => {});
+        } catch (_) { /* never block the order response */ }
+      }
 
       res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id, orderNumber: newOrder.orderNumber });
     } else {

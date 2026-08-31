@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineTrendingUp } from 'react-icons/hi';
+import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineHeart, HiOutlineTrendingUp } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import SEO from '../seo/SEO';
 
@@ -12,6 +12,7 @@ const navItems = [
   { path: '/admin/users', icon: HiOutlineUsers, label: 'Users' },
   { path: '/admin/coupons', icon: HiOutlineTicket, label: 'Coupons' },
   { path: '/admin/abandoned-carts', icon: HiOutlineShoppingCart, label: 'Abandoned Carts' },
+  { path: '/admin/wishlist', icon: HiOutlineHeart, label: 'Liked Products' },
   { path: '/admin/leads', icon: HiOutlineMail, label: 'Leads' },
   { path: '/admin/analytics', icon: HiOutlineChartPie, label: 'Analytics' },
   { path: '/admin/marketing-performance', icon: HiOutlineTrendingUp, label: 'Marketing' },

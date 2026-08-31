@@ -4,16 +4,20 @@ import { HiOutlineShoppingCart, HiOutlineTrash, HiOutlineMail } from 'react-icon
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
+import SourceBadge from '../../components/admin/SourceBadge';
+import SourceFilter from '../../components/admin/SourceFilter';
 
 const AdminAbandonedCarts = () => {
   const [carts, setCarts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sourceFilter, setSourceFilter] = useState('all');
 
   useEffect(() => {
     const controller = new AbortController();
     const fetchCarts = async () => {
       try {
-        const { data } = await API.get('/abandoned-carts', { signal: controller.signal });
+        const qs = sourceFilter === 'all' ? '' : '?source=' + sourceFilter;
+        const { data } = await API.get('/abandoned-carts' + qs, { signal: controller.signal });
         setCarts(data);
       } catch (err) {
         // Ignore cancellations — they happen on every unmount and re-render.
@@ -28,7 +32,7 @@ const AdminAbandonedCarts = () => {
     };
     fetchCarts();
     return () => controller.abort();
-  }, []);
+  }, [sourceFilter]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this cart record?')) return;
@@ -50,6 +54,7 @@ const AdminAbandonedCarts = () => {
           <h1 className="text-3xl font-heading font-bold text-secondary">Abandoned Carts</h1>
           <p className="text-gray-500 mt-1">Monitor and recover incomplete checkouts</p>
         </div>
+        <SourceFilter value={sourceFilter} onChange={setSourceFilter} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -67,6 +72,7 @@ const AdminAbandonedCarts = () => {
                   <div className="bg-red-50 text-red-500 p-2 rounded-full">
                     <HiOutlineShoppingCart className="w-5 h-5" />
                   </div>
+                  <SourceBadge source={cart.source} />
                   <div>
                     <h3 className="font-semibold text-secondary">{cart.name || 'Anonymous Guest'}</h3>
                     <p className="text-xs text-gray-400">

@@ -1,361 +1,400 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  HiOutlineMail,
-  HiOutlinePhone,
-  HiOutlineLocationMarker,
-  HiOutlineArrowRight,
+  HiOutlineViewGrid,
+  HiOutlineLightBulb,
+  HiOutlinePuzzle,
+  HiOutlineEye,
+  HiArrowRight,
 } from 'react-icons/hi';
-import { FaWhatsapp } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 import API from '../../utils/api';
-import { validators, formatters } from '../../utils/validation';
+import { formatters } from '../../utils/validation';
 import SEO from '../../components/seo/SEO';
-import { Eyebrow, KindButton, KindHero, KindSectionHead } from '../../components/kindact/KindUI';
-import heroImage from '../../assets/image/wallcanvas_poster_1.webp';
+import heroConsultation from '../../assets/image/hero section consultation.png';
+import approachImage from '../../assets/image/second-image-cosutation.png';
 
-// Helper: fire Meta Pixel Contact event (once per click)
-const fireContactPixel = (method) => {
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', 'Contact', { content_name: method });
-    console.log(`[Meta Pixel] Contact event fired (${method})`);
-  }
+// Alternating chip tones, matching the peach / green rhythm across the row.
+const NEEDS = [
+  {
+    Icon: HiOutlineViewGrid,
+    tone: 'peach',
+    title: 'Too many choices',
+    body: 'Feeling overwhelmed by options and needing help to narrow down the best path.',
+  },
+  {
+    Icon: HiOutlineLightBulb,
+    tone: 'green',
+    title: 'A good idea without a clear direction',
+    body: 'You have a vision but lack the practical steps to bring it to life.',
+  },
+  {
+    Icon: HiOutlinePuzzle,
+    tone: 'peach',
+    title: 'A space that feels incomplete',
+    body: 'Missing that final touch or cohesive element to tie everything together.',
+  },
+  {
+    Icon: HiOutlineEye,
+    tone: 'green',
+    title: 'A project that needs perspective',
+    body: 'Seeking an objective, professional eye to review and refine your plans.',
+  },
+];
+
+const STEPS = [
+  {
+    title: 'Listen',
+    body: 'We start by understanding your context, your constraints, and what truly matters to you. No assumptions.',
+  },
+  {
+    title: 'Clarify',
+    body: 'We distill the complex into the simple, helping you define the core problem or opportunity.',
+  },
+  {
+    title: 'Shape',
+    body: 'We outline a tangible path forward, providing recommendations that are actionable and inspiring.',
+  },
+];
+
+const INTERESTS = [
+  'Space Curation',
+  'Wall Canvas Selection',
+  'Custom House Nameplate',
+  'Gifting or Bulk Order',
+  'Something Else',
+];
+
+const MESSAGE_MIN = 10;
+
+const fieldClasses =
+  'w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-[#1D1D1F] placeholder:text-gray-400 outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20';
+const labelClasses = 'block text-sm font-semibold text-[#1D1D1F] mb-1.5';
+
+const reveal = {
+  initial: { opacity: 0, y: 24 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.2 },
+  transition: { duration: 0.6, ease: 'easeOut' },
 };
 
-const CONTACT_CHANNELS = [
-  {
-    Icon: HiOutlineMail,
-    title: 'Email',
-    blurb: 'For orders, bulk enquiries and support',
-    label: 'support@gpsfdk.com',
-    href: 'mailto:support@gpsfdk.com',
-    pixel: 'Email',
-  },
-  {
-    Icon: HiOutlinePhone,
-    title: 'Phone',
-    blurb: 'Mon–Sat, 10am to 7pm IST',
-    label: '+91 62803-10103',
-    href: 'tel:+916280310103',
-    pixel: 'Phone',
-  },
-  {
-    Icon: FaWhatsapp,
-    title: 'WhatsApp',
-    blurb: 'Quickest way to reach us',
-    label: 'Chat on WhatsApp',
-    href: 'https://wa.me/916280310103',
-    external: true,
-    pixel: 'WhatsApp',
-  },
-  {
-    Icon: HiOutlineLocationMarker,
-    title: 'Visit us',
-    blurb: 'GPS, Circular Road, Near More Store',
-    label: 'Faridkot, Punjab 151203',
-  },
-];
-
-const QUICK_LINKS = [
-  { to: '/support', label: 'Support & Order Tracking', blurb: 'Track your order live with your Order ID' },
-  { to: '/faq', label: 'FAQ', blurb: 'Answers to common questions' },
-  { to: '/shipping-policy', label: 'Shipping Policy', blurb: 'Delivery timelines and charges' },
-  { to: '/returns-refunds', label: 'Returns & Refunds', blurb: 'How to return or replace an item' },
-];
+// Small orange four-point sparkle used ahead of the section eyebrow.
+const Sparkle = ({ className = '' }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+    <path d="M12 0c.5 6.2 5.8 11.5 12 12-6.2.5-11.5 5.8-12 12-.5-6.2-5.8-11.5-12-12C6.2 11.5 11.5 6.2 12 0z" />
+  </svg>
+);
 
 const Contact = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
-  const [errors, setErrors] = useState({});
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    interest: '',
+    message: '',
+  });
   const [loading, setLoading] = useState(false);
 
-  const validateField = (field, value) => {
-    if (field === 'name') return validators.fullName(value);
-    // Phone is optional on the contact form — only validate when provided.
-    if (field === 'phone') return value.trim() ? validators.phone(value) : '';
-    return validators[field] ? validators[field](value) : '';
-  };
-
-  const handleBlur = (field, value) => {
-    setErrors((prev) => ({ ...prev, [field]: validateField(field, value) }));
-  };
-
-  const handleChange = (field, value) => {
-    let formattedValue = value;
-    if (field === 'name') formattedValue = formatters.name(value);
-    if (field === 'phone') formattedValue = formatters.phone(value);
-    setFormData((prev) => ({ ...prev, [field]: formattedValue }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
+  const update = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
 
-    const newErrors = {
-      name: validateField('name', formData.name),
-      email: validateField('email', formData.email),
-      phone: validateField('phone', formData.phone),
-      message: validateField('message', formData.message),
-    };
-    if (Object.values(newErrors).some((err) => err !== '')) {
-      setErrors(newErrors);
-      toast.error('Please fix the errors in the form');
+    const message = form.message.trim();
+    if (message.length < MESSAGE_MIN) {
+      toast.error(`Please tell us a little more — at least ${MESSAGE_MIN} characters.`);
       return;
     }
 
     setLoading(true);
     try {
-      // Server-side validation rejects an empty-string phone, so omit it when blank.
+      // The Lead model has no `interest` column, so the selection is folded into
+      // the message rather than being silently dropped on the way in.
       const payload = {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        message: formData.message.trim(),
-        ...(formData.phone.trim() ? { phone: formData.phone.trim() } : {}),
+        name: form.name.trim(),
+        email: form.email.trim(),
+        message: form.interest ? `Looking for: ${form.interest}\n\n${message}` : message,
       };
+      // `phone` is optional server-side, but express-validator only skips the
+      // rule when the key is absent — sending '' would fail the format check.
+      const phone = formatters.phone(form.phone);
+      if (phone) payload.phone = phone;
+
       await API.post('/leads', payload);
-      toast.success("Message sent! We'll get back to you soon.");
-      // Meta Pixel: Lead event on successful contact form submission
+
       if (typeof window.fbq === 'function') {
         window.fbq('track', 'Lead', {
-          content_name: 'Contact Form',
-          content_category: 'Contact Page',
+          content_name: form.interest || 'Consultancy Enquiry',
+          content_category: 'Consultancy',
         });
-        console.log('[Meta Pixel] Lead event fired (Contact Page)');
       }
-      setFormData({ name: '', email: '', phone: '', message: '' });
-      setErrors({});
+
+      toast.success("Thanks — we'll be in touch shortly.");
+      setForm({ name: '', email: '', phone: '', interest: '', message: '' });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Something went wrong. Please try again.');
     }
     setLoading(false);
   };
 
-  const inputClasses = (field) =>
-    `w-full bg-white text-kind-ink placeholder-kind-ink/40 border ${
-      errors[field] ? 'border-red-400' : 'border-transparent'
-    } rounded-2xl px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-kind-lime transition-shadow`;
-
-  const labelClasses = 'block text-sm font-medium text-white/90 mb-1.5 pl-2';
-
+  // pt-[60px] clears the fixed navbar (see StorePage for the same offset); the
+  // hero image then sits directly beneath it, matching the design, and the copy
+  // column adds its own vertical breathing room on top of that.
   return (
-    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
+    <div className="bg-white pt-[60px]">
       <SEO
-        title="Contact GPSFDK | Custom Canvas & Nameplate Experts India"
-        description="Get in touch with GPSFDK for custom canvas prints, house nameplate orders, bulk enquiries and support. Call, WhatsApp or email our team in India."
+        title="Consultancy & Personalized Guidance | GPSFDK"
+        description="Bring us an idea, a requirement or a problem you're trying to solve. GPSFDK helps you find a clearer direction and shape a solution around what matters to you."
       />
 
       {/* ─── Hero ─── */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-        <KindHero
-          image={heroImage}
-          crumb="Home / Contact us"
-          title={
-            <>
-              Have a question? We&apos;re just <span className="text-kind-lime">a form away.</span>
-            </>
-          }
-          description="Whether it's a custom canvas idea, a bulk enquiry, or a question about your order — our team is here to help. Drop us a line, call, or message us on WhatsApp."
-        >
-          <p className="apple-body relative mt-7 text-white/90">
-            <a
-              href="mailto:support@gpsfdk.com"
-              onClick={() => fireContactPixel('Email')}
-              className="font-semibold hover:text-kind-lime transition-colors"
-            >
-              support@gpsfdk.com
-            </a>
-            <span className="mx-3 text-kind-sage">/</span>
-            <a
-              href="tel:+916280310103"
-              onClick={() => fireContactPixel('Phone')}
-              className="font-semibold hover:text-kind-lime transition-colors"
-            >
-              +91 62803-10103
-            </a>
-          </p>
-        </KindHero>
-      </motion.div>
+      <section className="grid lg:grid-cols-2 lg:items-stretch">
+        <div className="section-padding flex items-center py-14 sm:py-20 lg:py-28">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="w-full max-w-xl"
+          >
+            <span className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-secondary">
+              <Sparkle className="w-3 h-3 text-accent shrink-0" />
+              Consultancy / Personalized Guidance
+            </span>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-5">
-        {/* ─── Contact channels ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-6 sm:mt-8"
-        >
-          {CONTACT_CHANNELS.map((channel) => (
-            <div
-              key={channel.title}
-              className="bg-kind-mist rounded-[20px] p-6 flex flex-col gap-3 hover:-translate-y-1 transition-transform duration-300"
-            >
-              <span className="w-11 h-11 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center">
-                <channel.Icon className="w-5 h-5" />
-              </span>
-              <div>
-                <h3 className="apple-body font-heading font-semibold text-kind-ink">{channel.title}</h3>
-                <p className="apple-caption text-kind-ink/60 mt-0.5">{channel.blurb}</p>
-                {channel.href ? (
-                  <a
-                    href={channel.href}
-                    {...(channel.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className="inline-block mt-2 text-kind-forest font-semibold text-sm hover:underline break-words"
-                    onClick={() => channel.pixel && fireContactPixel(channel.pixel)}
-                  >
-                    {channel.label}
-                  </a>
-                ) : (
-                  <p className="mt-2 text-kind-ink/80 text-sm font-medium">{channel.label}</p>
-                )}
-              </div>
+            <h1 className="mt-5 text-[2.25rem] sm:text-5xl lg:text-[3.4rem] font-heading font-bold text-[#1D1D1F] leading-[1.06] tracking-tight">
+              Ideas, Spaces, And Decisions Made Clearer.
+            </h1>
+
+            <p className="mt-5 text-base text-gray-600 leading-relaxed max-w-md">
+              Bring us an idea, a requirement, or simply a problem you're trying to solve. We help
+              you find a clearer direction and shape a solution around what matters to you.
+            </p>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <a
+                href="#inquiry"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark active:scale-95"
+              >
+                Start a Consultation
+                <HiArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </a>
+              <a
+                href="#approach"
+                className="inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-7 py-3.5 text-sm font-semibold text-[#1D1D1F] transition-all duration-300 hover:border-gray-400 hover:bg-gray-50 active:scale-95"
+              >
+                Explore Our Approach
+              </a>
             </div>
-          ))}
+          </motion.div>
+        </div>
+
+        <div className="h-[280px] sm:h-[400px] lg:h-auto lg:min-h-[600px]">
+          <img
+            src={heroConsultation}
+            alt="Two people reviewing and signing project documents during a GPSFDK consultation"
+            className="w-full h-full object-cover"
+            fetchPriority="high"
+            width="712"
+            height="684"
+          />
+        </div>
+      </section>
+
+      {/* ─── What we help with ─── */}
+      <section className="section-padding section-spacing">
+        <motion.div {...reveal} className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-heading font-bold text-[#1D1D1F] leading-tight tracking-tight">
+            Not sure where to start? That's where we come in.
+          </h2>
+          <p className="mt-4 text-base text-gray-600 leading-relaxed max-w-xl mx-auto">
+            Sometimes the challenge isn't having an idea. It's knowing what to do with it. We help
+            you navigate the ambiguity and find a clear path forward.
+          </p>
         </motion.div>
 
-        {/* ─── Message form (forest panel) ─── */}
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+          {NEEDS.map(({ Icon, tone, title, body }, i) => (
+            <motion.article
+              {...reveal}
+              transition={{ duration: 0.5, delay: i * 0.08, ease: 'easeOut' }}
+              key={title}
+              className="h-full rounded-2xl border border-gray-200 bg-white p-6 transition-shadow duration-300 hover:shadow-md"
+            >
+              <span
+                className={`flex items-center justify-center w-11 h-11 rounded-full ${
+                  tone === 'peach' ? 'bg-accent/10 text-accent' : 'bg-secondary/10 text-secondary'
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+              </span>
+              <h3 className="mt-5 text-base font-heading font-bold text-[#1D1D1F] leading-snug">
+                {title}
+              </h3>
+              <p className="mt-2.5 text-sm text-gray-600 leading-relaxed">{body}</p>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Approach ─── */}
+      <section id="approach" className="section-padding pb-16 md:pb-24 scroll-mt-24">
+        <div className="max-w-6xl mx-auto grid gap-10 lg:gap-16 lg:grid-cols-2 lg:items-center">
+          <motion.div {...reveal}>
+            <img
+              src={approachImage}
+              alt="A team mapping out ideas on sticky notes during a planning session"
+              className="w-full h-[280px] sm:h-[380px] lg:h-[430px] object-cover rounded-2xl"
+              loading="lazy"
+              width="583"
+              height="571"
+            />
+          </motion.div>
+
+          <motion.div {...reveal}>
+            <h2 className="text-3xl sm:text-4xl lg:text-[2.5rem] font-heading font-bold text-[#1D1D1F] leading-tight tracking-tight">
+              You bring the idea. We help shape the direction.
+            </h2>
+
+            <ol className="mt-8 space-y-7">
+              {STEPS.map(({ title, body }, i) => (
+                <li key={title} className="flex gap-4">
+                  <span
+                    aria-hidden="true"
+                    className="flex items-center justify-center w-8 h-8 shrink-0 rounded-full bg-accent text-white text-sm font-bold"
+                  >
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="text-lg font-heading font-bold text-[#1D1D1F]">{title}</h3>
+                    <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">{body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ─── Inquiry ─── */}
+      <section id="inquiry" className="section-padding section-spacing bg-primary scroll-mt-24">
+        <motion.div {...reveal} className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-heading font-bold text-[#1D1D1F] leading-tight tracking-tight">
+            Have an idea? Let's talk.
+          </h2>
+          <p className="mt-4 text-base text-gray-600 leading-relaxed">
+            Reach out to start a conversation. We'll get back to you to schedule an initial
+            consultation.
+          </p>
+        </motion.div>
+
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="relative overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-forest text-white p-6 sm:p-10 lg:p-14 mt-10 sm:mt-14"
+          {...reveal}
+          className="mt-10 max-w-2xl mx-auto rounded-2xl bg-white p-6 sm:p-8 shadow-sm"
         >
-          <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-24 -right-20 w-72 h-72 rounded-full bg-kind-lime/10 blur-3xl" />
-            <div className="absolute -bottom-24 -left-16 w-72 h-72 rounded-full bg-kind-mint/10 blur-3xl" />
-          </div>
-
-          <div className="relative grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
-            <div className="lg:col-span-2">
-              <Eyebrow dark>Get in touch</Eyebrow>
-              <h2 className="apple-headline mt-3 font-heading">
-                Send us a message
-              </h2>
-              <p className="apple-body mt-4 text-kind-sage">
-                Tell us about your idea, your wall, or your order. We usually reply within one
-                business day.
-              </p>
-              <p className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-kind-lime">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-kind-lime opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-kind-lime" />
-                </span>
-                We&apos;ll be in touch within 24 hours
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="lg:col-span-3 space-y-4" noValidate>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="contact-name" className={labelClasses}>
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    id="contact-name"
-                    name="name"
-                    autoComplete="name"
-                    value={formData.name}
-                    onChange={(e) => handleChange('name', e.target.value)}
-                    onBlur={(e) => handleBlur('name', e.target.value)}
-                    className={inputClasses('name')}
-                    placeholder="Your full name"
-                  />
-                  {errors.name && <p className="text-red-300 text-xs mt-1.5 pl-2 font-medium">{errors.name}</p>}
-                </div>
-                <div>
-                  <label htmlFor="contact-email" className={labelClasses}>
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    id="contact-email"
-                    name="email"
-                    autoComplete="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange('email', e.target.value)}
-                    onBlur={(e) => handleBlur('email', e.target.value)}
-                    className={inputClasses('email')}
-                    placeholder="your@email.com"
-                  />
-                  {errors.email && <p className="text-red-300 text-xs mt-1.5 pl-2 font-medium">{errors.email}</p>}
-                </div>
-              </div>
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <label htmlFor="contact-phone" className={labelClasses}>
-                  Phone <span className="text-white/50 font-normal">(optional)</span>
+                <label htmlFor="name" className={labelClasses}>
+                  Name
                 </label>
                 <input
-                  type="tel"
-                  id="contact-phone"
-                  name="phone"
-                  autoComplete="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  onBlur={(e) => handleBlur('phone', e.target.value)}
-                  className={inputClasses('phone')}
-                  placeholder="+91 98765 43210"
+                  id="name"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={50}
+                  autoComplete="name"
+                  value={form.name}
+                  onChange={update('name')}
+                  placeholder="Your full name"
+                  className={fieldClasses}
                 />
-                {errors.phone && <p className="text-red-300 text-xs mt-1.5 pl-2 font-medium">{errors.phone}</p>}
               </div>
+
               <div>
-                <label htmlFor="contact-message" className={labelClasses}>
-                  Message
+                <label htmlFor="email" className={labelClasses}>
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={form.email}
+                  onChange={update('email')}
+                  placeholder="your@email.com"
+                  className={fieldClasses}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className={labelClasses}>
+                  Phone <span className="font-normal text-gray-400">(Optional)</span>
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={form.phone}
+                  // Formatted on the way in so the value always matches the
+                  // digits-and-plus format the API accepts.
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, phone: formatters.phone(e.target.value) }))
+                  }
+                  placeholder="+91 62803 10103"
+                  className={fieldClasses}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="interest" className={labelClasses}>
+                  What are you looking for?
+                </label>
+                <select
+                  id="interest"
+                  value={form.interest}
+                  onChange={update('interest')}
+                  className={`${fieldClasses} ${form.interest ? '' : 'text-gray-400'}`}
+                >
+                  <option value="">Select an option</option>
+                  {INTERESTS.map((option) => (
+                    <option key={option} value={option} className="text-[#1D1D1F]">
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label htmlFor="message" className={labelClasses}>
+                  Tell us more
                 </label>
                 <textarea
-                  id="contact-message"
-                  name="message"
-                  rows="5"
-                  value={formData.message}
-                  onChange={(e) => handleChange('message', e.target.value)}
-                  onBlur={(e) => handleBlur('message', e.target.value)}
-                  className={`${inputClasses('message')} resize-none`}
-                  placeholder="How can we help?"
-                ></textarea>
-                {errors.message && <p className="text-red-300 text-xs mt-1.5 pl-2 font-medium">{errors.message}</p>}
+                  id="message"
+                  required
+                  rows={4}
+                  minLength={MESSAGE_MIN}
+                  maxLength={2000}
+                  value={form.message}
+                  onChange={update('message')}
+                  placeholder="Briefly describe your idea or challenge..."
+                  className={`${fieldClasses} resize-y min-h-[110px]`}
+                />
               </div>
-              <div className="pt-1">
-                <KindButton type="submit" variant="lime" disabled={loading} fullWidth>
-                  {loading ? 'Sending...' : 'Send Message'}
-                </KindButton>
-              </div>
-            </form>
-          </div>
-        </motion.div>
+            </div>
 
-        {/* ─── Quick help links ─── */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="mt-14 sm:mt-20"
-        >
-          <KindSectionHead
-            eyebrow="Quick help"
-            title="Looking for something specific?"
-            sub="Skip the inbox — these pages answer the most common questions straight away."
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mt-8 sm:mt-10">
-            {QUICK_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="group bg-kind-mist rounded-[20px] p-6 hover:-translate-y-1 transition-transform duration-300"
-              >
-                <h3 className="apple-body font-heading font-semibold text-kind-ink flex items-center justify-between gap-2">
-                  {link.label}
-                  <span className="w-8 h-8 rounded-full bg-kind-forest text-kind-lime flex items-center justify-center shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
-                    <HiOutlineArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                </h3>
-                <p className="apple-caption text-kind-ink/60 mt-2">{link.blurb}</p>
-              </Link>
-            ))}
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-6 w-full rounded-lg bg-accent py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:bg-accent-dark active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Sending…' : 'Submit Inquiry'}
+            </button>
+          </form>
         </motion.div>
-      </div>
+      </section>
     </div>
   );
 };

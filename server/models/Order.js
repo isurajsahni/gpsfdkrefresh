@@ -34,6 +34,10 @@ const orderSchema = new mongoose.Schema({
   guestEmail: { type: String, default: '' },
   guestPhone: { type: String, default: '' },
   orderNumber: { type: String, unique: true },
+  // Which client placed the order. Lets reporting separate app revenue from web,
+  // filter out app test orders, and suppress the Meta purchase event on app orders.
+  // Defaults to 'web' so every existing order (created before this field) reads as web.
+  source: { type: String, enum: ['web', 'ios', 'android'], default: 'web' },
   items: [orderItemSchema],
   shippingAddress: {
     fullName: String,
@@ -142,5 +146,7 @@ orderSchema.index({ shiprocketOrderId: 1 });
 orderSchema.index({ shipmentId: 1 });
 // Guest dashboard / abandoned-cart matching.
 orderSchema.index({ guestEmail: 1 });
+// Reporting: filter/count orders by originating client (web vs app).
+orderSchema.index({ source: 1 });
 
 module.exports = mongoose.model('Order', orderSchema);

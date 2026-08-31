@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, getUsers, getUsersCount, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, completePasswordlessRegistration } = require('../controllers/authController');
+const { register, login, getMe, updateProfile, deleteOwnAccount, getUsers, getUsersCount, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, completePasswordlessRegistration } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const {
@@ -20,6 +20,8 @@ router.post('/verify-registration-otp', otpLimiter, verifyRegistrationOtp);
 
 router.post('/login', authLimiter, loginValidation, login);
 router.get('/me', protect, getMe);
+// Self-serve account deletion (Apple 5.1.1(v)) — anonymises the account.
+router.delete('/me', protect, deleteOwnAccount);
 router.put('/profile', protect, updateProfile);
 router.post('/upload-avatar', protect, avatarUpload.single('avatar'), uploadAvatar);
 router.get('/users', protect, admin, getUsers);

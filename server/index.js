@@ -87,6 +87,9 @@ app.use(require('./middleware/sanitizeRequest'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/products', require('./routes/products'));
+app.use('/api/wishlist', require('./routes/wishlist'));
+app.use('/api/announcements', require('./routes/announcements'));
+app.use('/api/devices', require('./routes/devices'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/integrations', require('./routes/integrations')); // ERP order feed (x-api-key)

@@ -703,6 +703,11 @@ exports.getOrders = async (req, res, next) => {
       const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
       const filter = {};
       if (req.query.status && req.query.status !== 'all') filter.status = req.query.status;
+      // 'app' folds the two mobile platforms together, which is how the panel
+      // asks the question; ios and android stay individually selectable.
+      const src = String(req.query.source || 'all');
+      if (src === 'app') filter.source = { $in: ['ios', 'android'] };
+      else if (src !== 'all' && ORDER_SOURCES.includes(src)) filter.source = src;
       if (req.query.search) {
         // Search by orderNumber, guestEmail, or guestPhone (case-insensitive).
         // Escape regex meta-chars to prevent ReDoS / accidental wildcards.
@@ -934,6 +939,7 @@ exports.deleteOrder = async (req, res, next) => {
 };
 
 exports.calculateOrderPrices = calculateOrderPrices;
+exports.ORDER_SOURCES = ORDER_SOURCES;
 exports.normalizeOrderSource = normalizeOrderSource;
 exports.isAppSource = isAppSource;
 

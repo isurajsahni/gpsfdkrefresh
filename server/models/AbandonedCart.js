@@ -18,6 +18,9 @@ const abandonedCartSchema = new mongoose.Schema({
   ],
   cartTotal: { type: Number, default: 0 },
   status: { type: String, enum: ['abandoned', 'recovered'], default: 'abandoned' },
+  // Which client the cart was built in. Mirrors Order.source so the admin panel
+  // can compare app and website drop-off on the same terms.
+  source: { type: String, enum: ['web', 'ios', 'android'], default: 'web', index: true },
   lastActive: { type: Date, default: Date.now }
 }, { timestamps: true });
 

@@ -137,7 +137,7 @@ const FAQ = () => {
                 <p className="apple-body text-kind-sage">Our support team is ready to help.</p>
               </div>
               <div className="relative shrink-0">
-                <KindButton to="/contact" variant="lime">
+                <KindButton to="/consultancy" variant="lime">
                   Contact Us
                 </KindButton>
               </div>

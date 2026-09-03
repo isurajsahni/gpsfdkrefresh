@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
@@ -230,7 +230,13 @@ function App() {
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />
                 <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
                 <Route path="/vision" element={<><Vision /><Footer /></>} />
-                <Route path="/contact" element={<><Contact /><Footer /></>} />
+                {/* The page here is the Consultancy landing page (hero, approach,
+                    enquiry form) — it lived at /contact, so the URL contradicted
+                    both the link labels and the page's own heading. Renamed to
+                    match; /contact 301s here in vercel.json, and this client-side
+                    redirect covers local dev and any hit that skips that rule. */}
+                <Route path="/consultancy" element={<><Contact /><Footer /></>} />
+                <Route path="/contact" element={<Navigate to="/consultancy" replace />} />
                 <Route path="/faq" element={<><FAQ /><Footer /></>} />
                 <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
                 <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />

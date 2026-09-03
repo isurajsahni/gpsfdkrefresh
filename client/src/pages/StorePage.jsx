@@ -89,9 +89,9 @@ const GalleryImage = ({ src, width }) => (
 const OFFER = [
   { label: 'Canvas', img: offerCanvas, to: '/wall-canvas', width: 160 },
   { label: 'Nameplates', img: offerNameplate, to: '/house-nameplates', width: 150 },
-  { label: 'Consultancy', img: offerConsultancy, to: '/contact', width: 135 },
-  { label: 'Getaway', img: offerGetaway, to: '/contact', width: 156 },
-  { label: 'Events', img: offerEvents, to: '/contact', width: 160 },
+  { label: 'Consultancy', img: offerConsultancy, to: '/consultancy', width: 135 },
+  { label: 'Getaway', img: offerGetaway, to: '/consultancy', width: 156 },
+  { label: 'Events', img: offerEvents, to: '/consultancy', width: 160 },
 ];
 
 const COLLABORATE_CARDS = [
@@ -271,7 +271,7 @@ const StorePage = () => {
               The best way to buy the <br /> products you love.
             </p>
             <div className="mt-1 sm:flex sm:justify-end">
-              <ArrowLink to="/contact">Connect with a Specialist</ArrowLink>
+              <ArrowLink to="/consultancy">Connect with a Specialist</ArrowLink>
             </div>
           </div>
         </div>

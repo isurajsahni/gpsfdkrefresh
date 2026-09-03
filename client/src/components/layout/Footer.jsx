@@ -13,8 +13,11 @@ const fireContactPixel = (method) => {
   }
 };
 
-// Figma footer link columns. Consultancy/Getaway/Events/Careers have no
-// dedicated pages yet, so they route to the contact form like the store page.
+// Figma footer link columns. Getaway/Events/Careers/Contact us have no
+// dedicated pages yet, so they route to the consultancy enquiry form like the
+// store page. That page used to sit at /contact, which made every one of these
+// links land on a URL that matched neither the label nor the page's own
+// heading; it is /consultancy now (old URL 301s there).
 const LINK_COLUMNS = [
   {
     title: 'Shop and Learn',
@@ -31,9 +34,9 @@ const LINK_COLUMNS = [
     links: [
       { name: 'Canvases', path: '/wall-canvas' },
       { name: 'Nameplates', path: '/house-nameplates' },
-      { name: 'Consultancy', path: '/contact' },
-      { name: 'Getaway', path: '/contact' },
-      { name: 'Events', path: '/contact' },
+      { name: 'Consultancy', path: '/consultancy' },
+      { name: 'Getaway', path: '/consultancy' },
+      { name: 'Events', path: '/consultancy' },
     ],
   },
   {
@@ -42,8 +45,8 @@ const LINK_COLUMNS = [
       { name: 'About GPS', path: '/about' },
       { name: 'CEO', path: '/ceo' },
       { name: 'Blog', path: '/blog' },
-      { name: 'Careers', path: '/contact' },
-      { name: 'Contact us', path: '/contact' },
+      { name: 'Careers', path: '/consultancy' },
+      { name: 'Contact us', path: '/consultancy' },
     ],
   },
   {

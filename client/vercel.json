@@ -9,6 +9,7 @@
     { "source": "/shop/(.*)", "destination": "/store", "permanent": true },
     { "source": "/product/:slug((?:aa|c|cas|ma|pt|sc|sp)-\\d+(?:-\\d+)?)", "destination": "/wall-canvas", "permanent": true },
     { "source": "/staging-page", "destination": "/", "permanent": true },
+    { "source": "/contact", "destination": "/consultancy", "permanent": true },
     { "source": "/wp/blog/(.*)", "destination": "/blog/$1", "permanent": true },
     { "source": "/category/(.*)", "destination": "/$1", "permanent": true },
     { "source": "/author/(.*)", "destination": "/about", "permanent": true },

@@ -78,7 +78,9 @@ router.get('/', async (req, res) => {
       '/blog',
       '/about',
       '/ceo',
-      '/contact',
+      // Renamed from /contact, which 301s here — a sitemap must list the
+      // destination, never the redirect, or Search Console flags every hit.
+      '/consultancy',
       '/faq',
       '/customize-canvas',
       '/premium-wall-canvas-india',

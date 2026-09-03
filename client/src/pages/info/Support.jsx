@@ -44,7 +44,7 @@ const HELP_LINKS = [
   { to: '/shipping-policy', label: 'Shipping Policy', blurb: 'Delivery timelines and charges' },
   { to: '/returns-refunds', label: 'Returns & Refunds', blurb: 'How to return or replace an item' },
   { to: '/faq', label: 'FAQ', blurb: 'Answers to common questions' },
-  { to: '/consultancy', label: 'Contact Us', blurb: 'Talk to a real human' },
+  { to: '/contact', label: 'Contact Us', blurb: 'Talk to a real human' },
 ];
 
 const Support = () => {

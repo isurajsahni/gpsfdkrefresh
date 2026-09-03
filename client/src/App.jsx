@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
@@ -39,7 +39,10 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const AboutUs = lazy(() => import('./pages/info/AboutUs'));
+// Contact.jsx is the consultancy landing page (routed at /consultancy);
+// ContactUs.jsx is the general contact page at /contact.
 const Contact = lazy(() => import('./pages/info/Contact'));
+const ContactUs = lazy(() => import('./pages/info/ContactUs'));
 const FAQ = lazy(() => import('./pages/info/FAQ'));
 const ShippingPolicy = lazy(() => import('./pages/support/ShippingPolicy'));
 const ReturnsRefunds = lazy(() => import('./pages/support/ReturnsRefunds'));
@@ -230,13 +233,12 @@ function App() {
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />
                 <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
                 <Route path="/vision" element={<><Vision /><Footer /></>} />
-                {/* The page here is the Consultancy landing page (hero, approach,
-                    enquiry form) — it lived at /contact, so the URL contradicted
-                    both the link labels and the page's own heading. Renamed to
-                    match; /contact 301s here in vercel.json, and this client-side
-                    redirect covers local dev and any hit that skips that rule. */}
+                {/* Two distinct pages. /consultancy is the services pitch with its
+                    own enquiry funnel (it used to sit at /contact, which is what
+                    made the URL contradict the label); /contact is general
+                    contact — channels, a message form, and self-serve links. */}
                 <Route path="/consultancy" element={<><Contact /><Footer /></>} />
-                <Route path="/contact" element={<Navigate to="/consultancy" replace />} />
+                <Route path="/contact" element={<><ContactUs /><Footer /></>} />
                 <Route path="/faq" element={<><FAQ /><Footer /></>} />
                 <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
                 <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />

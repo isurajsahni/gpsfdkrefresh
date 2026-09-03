@@ -7,6 +7,7 @@ const { getAuthEmail } = require('../utils/emailTemplates');
 const { cloudinary } = require('../middleware/upload');
 const { createOtpStore } = require('../utils/otpSessionStore');
 const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
+const { getDemoLogin, isDemoIdentifier } = require('../utils/demoLogin');
 
 // ─── OTP / verification session stores (Mongo-backed, TTL-purged) ─────────────
 // These used to be in-memory Maps. That made every OTP session non-recoverable
@@ -922,6 +923,14 @@ exports.sendPasswordlessOtp = async (req, res, next) => {
     const isEmail = identifier.includes('@');
     const normalizedId = identifier.trim().toLowerCase();
 
+    // App-store reviewer demo account: send nothing and store no session —
+    // verify accepts the fixed DEMO_LOGIN_OTP instead. The response is byte-
+    // identical to a real email send so the address isn't distinguishable from
+    // outside. Inert unless both demo env vars are set; see utils/demoLogin.js.
+    if (isDemoIdentifier(normalizedId)) {
+      return res.json({ success: true, message: 'OTP sent via Email' });
+    }
+
     const existing = await passwordlessOtpSessions.get(normalizedId);
     if (existing && Date.now() - existing.sentAt < 30000) {
       return res.status(429).json({ message: 'Please wait 30 seconds before requesting again.' });
@@ -969,26 +978,36 @@ exports.verifyPasswordlessOtp = async (req, res, next) => {
     if (!identifier || !otp) return res.status(400).json({ message: 'Identifier and OTP required.' });
 
     const normalizedId = identifier.trim().toLowerCase();
-    const session = await passwordlessOtpSessions.get(normalizedId);
 
-    if (!session) return res.status(400).json({ message: 'OTP session not found or expired.' });
-    if (Date.now() - session.sentAt > 10 * 60 * 1000) {
-      await passwordlessOtpSessions.delete(normalizedId);
-      return res.status(400).json({ message: 'OTP expired.' });
-    }
+    // App-store reviewer demo account (see sendPasswordlessOtp and
+    // utils/demoLogin.js): the fixed code stands in for a stored session. Any
+    // OTHER code typed for this identifier still falls through to the checks
+    // below and fails there, because the send step never stored a session.
+    const demo = getDemoLogin();
+    const isDemoLogin = !!demo && normalizedId === demo.email && otp === demo.otp;
 
-    if (session.otp !== otp) {
-      session.attempts = (session.attempts || 0) + 1;
-      if (session.attempts >= 5) {
+    if (!isDemoLogin) {
+      const session = await passwordlessOtpSessions.get(normalizedId);
+
+      if (!session) return res.status(400).json({ message: 'OTP session not found or expired.' });
+      if (Date.now() - session.sentAt > 10 * 60 * 1000) {
         await passwordlessOtpSessions.delete(normalizedId);
-      } else {
-        // Persist incremented attempts so the next try sees the new count.
-        await passwordlessOtpSessions.set(normalizedId, session);
+        return res.status(400).json({ message: 'OTP expired.' });
       }
-      return res.status(400).json({ message: 'Invalid OTP.' });
-    }
 
-    await passwordlessOtpSessions.delete(normalizedId);
+      if (session.otp !== otp) {
+        session.attempts = (session.attempts || 0) + 1;
+        if (session.attempts >= 5) {
+          await passwordlessOtpSessions.delete(normalizedId);
+        } else {
+          // Persist incremented attempts so the next try sees the new count.
+          await passwordlessOtpSessions.set(normalizedId, session);
+        }
+        return res.status(400).json({ message: 'Invalid OTP.' });
+      }
+
+      await passwordlessOtpSessions.delete(normalizedId);
+    }
 
     // Find User
     const isEmail = normalizedId.includes('@');
@@ -998,7 +1017,22 @@ exports.verifyPasswordlessOtp = async (req, res, next) => {
     // prefixes (e.g. "+91…") while preventing false matches.
     const phoneDigits = normalizedId.replace(/\D/g, '').slice(-10);
     const query = isEmail ? { email: normalizedId } : { phone: { $regex: phoneDigits + '$' } };
-    const user = await User.findOne(query);
+    let user = await User.findOne(query);
+
+    // The reviewer's whole task is to delete this account, and deletion
+    // anonymises the address — so re-provision it on the next demo login.
+    // Without this, a second review round (a resubmitted build, a re-test)
+    // lands on the registration screen instead of a working sign-in.
+    if (!user && isDemoLogin) {
+      user = await User.create({
+        name: 'App Review',
+        email: demo.email,
+        // Never used — the demo account signs in by OTP only. Random so the
+        // published demo code can't also unlock a password login.
+        password: crypto.randomBytes(32).toString('hex'),
+        role: 'user',
+      });
+    }
 
     if (user) {
       return res.json({

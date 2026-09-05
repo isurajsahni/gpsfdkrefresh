@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 const Wishlist = require('../models/Wishlist');
 const Product = require('../models/Product');
+// Reuses the order enum/normaliser rather than declaring a second copy, so a
+// like and an order can never disagree about what 'ios' means.
+const { normalizeOrderSource } = require('./orderController');
 
 // GET /api/wishlist — the current user's wishlist, populated with product cards,
 // newest first. Entries whose product was since deleted are skipped.
@@ -39,9 +42,11 @@ exports.addToWishlist = async (req, res, next) => {
     const product = await Product.findById(productId).select('_id');
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
+    // $setOnInsert, so `source` records where the like was FIRST made and a
+    // repeat add from another client stays the no-op it already was.
     await Wishlist.updateOne(
       { user: req.user._id, product: productId },
-      { $setOnInsert: { user: req.user._id, product: productId } },
+      { $setOnInsert: { user: req.user._id, product: productId, source: normalizeOrderSource(req.body?.source) } },
       { upsert: true },
     );
     res.json({ message: 'Added to wishlist', productId });

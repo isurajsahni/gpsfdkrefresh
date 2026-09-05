@@ -9,8 +9,12 @@
 // default identifier and no default code, so this is inert on production and
 // on every dev machine until someone deliberately sets them:
 //
-//   DEMO_LOGIN_EMAIL=appreview@gpsfdk.com
-//   DEMO_LOGIN_OTP=147852
+//   DEMO_LOGIN_EMAIL=<the review address>
+//   DEMO_LOGIN_OTP=<the 6-digit code you hand App Review>
+//
+// Both are set in the Render dashboard and never written down here: this
+// repository is public, so a real pair committed beside the code that accepts
+// it is a published sign-in. Any value that has ever been committed is burnt.
 //
 // The code is long-lived, so it is deliberately NOT exempted from otpLimiter
 // (5 verify attempts / 10 min / IP) — that rate limit is the only thing

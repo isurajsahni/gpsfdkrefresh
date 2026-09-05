@@ -2,19 +2,12 @@ import { Link } from 'react-router-dom';
 import { FaInstagram, FaWhatsapp, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import { HiChevronRight } from 'react-icons/hi';
 import logo from '../../assets/vite.webp';
+import { CONTACT, fireContactPixel } from '../../utils/contactChannels';
 
-// Helper: fire Meta Pixel Contact event (once per click)
-const fireContactPixel = (method) => {
-  if (typeof window.fbq === 'function') {
-    window.fbq('track', 'Contact', {
-      content_name: method,
-    });
-    console.log(`[Meta Pixel] Contact event fired (${method})`);
-  }
-};
-
-// Figma footer link columns. Consultancy/Getaway/Events/Careers have no
-// dedicated pages yet, so they route to the contact form like the store page.
+// Figma footer link columns. Two destinations do double duty: /consultancy is
+// the services pitch (Getaway and Events have no pages of their own, so they
+// land on its enquiry form), and /contact is general contact — which is where
+// Careers goes too, since its form carries a Careers subject.
 const LINK_COLUMNS = [
   {
     title: 'Shop and Learn',
@@ -31,9 +24,9 @@ const LINK_COLUMNS = [
     links: [
       { name: 'Canvases', path: '/wall-canvas' },
       { name: 'Nameplates', path: '/house-nameplates' },
-      { name: 'Consultancy', path: '/contact' },
-      { name: 'Getaway', path: '/contact' },
-      { name: 'Events', path: '/contact' },
+      { name: 'Consultancy', path: '/consultancy' },
+      { name: 'Getaway', path: '/consultancy' },
+      { name: 'Events', path: '/consultancy' },
     ],
   },
   {
@@ -67,8 +60,8 @@ const LINK_COLUMNS = [
 ];
 
 const SOCIALS = [
-  { icon: FaInstagram, href: 'https://www.instagram.com/canvas.gps/', label: 'Instagram' },
-  { icon: FaWhatsapp, href: 'https://wa.me/916280310103', label: 'WhatsApp' },
+  { icon: FaInstagram, href: CONTACT.instagram, label: 'Instagram' },
+  { icon: FaWhatsapp, href: CONTACT.whatsapp, label: 'WhatsApp' },
 ];
 
 // Thin vertical separator between bottom-bar items (Figma), desktop only.
@@ -136,12 +129,12 @@ const Footer = () => (
           ))}
         </div>
         <a
-          href="tel:+916280310103"
+          href={`tel:${CONTACT.phoneDial}`}
           className="flex items-center gap-2 text-xs font-normal text-[#424245] hover:text-accent transition-colors"
           onClick={() => fireContactPixel('Phone')}
         >
           <FaPhoneAlt className="w-4 h-4" />
-          +91 62803-10103
+          {CONTACT.phoneDisplay}
         </a>
       </div>
     </div>
@@ -155,12 +148,12 @@ const Footer = () => (
     <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-5">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-x-6 gap-y-3 text-xs font-normal text-[#424245]">
         <a
-          href="mailto:support@gpsfdk.com"
+          href={`mailto:${CONTACT.email}`}
           className="flex items-center gap-2 hover:text-accent transition-colors"
           onClick={() => fireContactPixel('Email')}
         >
           <FaEnvelope className="w-4 h-4" />
-          support@gpsfdk.com
+          {CONTACT.email}
         </a>
         <BarDivider />
         <p className="text-center">

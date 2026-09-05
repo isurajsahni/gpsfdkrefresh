@@ -78,6 +78,9 @@ router.get('/', async (req, res) => {
       '/blog',
       '/about',
       '/ceo',
+      // Two separate pages: /consultancy is the services pitch (it used to be
+      // served at /contact), /contact is general contact.
+      '/consultancy',
       '/contact',
       '/faq',
       '/customize-canvas',

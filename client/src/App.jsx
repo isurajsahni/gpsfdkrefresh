@@ -39,7 +39,10 @@ const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
 const AboutUs = lazy(() => import('./pages/info/AboutUs'));
+// Contact.jsx is the consultancy landing page (routed at /consultancy);
+// ContactUs.jsx is the general contact page at /contact.
 const Contact = lazy(() => import('./pages/info/Contact'));
+const ContactUs = lazy(() => import('./pages/info/ContactUs'));
 const FAQ = lazy(() => import('./pages/info/FAQ'));
 const ShippingPolicy = lazy(() => import('./pages/support/ShippingPolicy'));
 const ReturnsRefunds = lazy(() => import('./pages/support/ReturnsRefunds'));
@@ -67,6 +70,7 @@ const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
 const AdminAbandonedCarts = lazy(() => import('./pages/admin/AdminAbandonedCarts'));
+const AdminWishlist = lazy(() => import('./pages/admin/AdminWishlist'));
 const AdminLeads = lazy(() => import('./pages/admin/AdminLeads'));
 const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
 const AdminMarketingPerformance = lazy(() => import('./pages/admin/AdminMarketingPerformance'));
@@ -230,7 +234,12 @@ function App() {
                 <Route path="/about" element={<><AboutUs /><Footer /></>} />
                 <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
                 <Route path="/vision" element={<><Vision /><Footer /></>} />
-                <Route path="/contact" element={<><Contact /><Footer /></>} />
+                {/* Two distinct pages. /consultancy is the services pitch with its
+                    own enquiry funnel (it used to sit at /contact, which is what
+                    made the URL contradict the label); /contact is general
+                    contact — channels, a message form, and self-serve links. */}
+                <Route path="/consultancy" element={<><Contact /><Footer /></>} />
+                <Route path="/contact" element={<><ContactUs /><Footer /></>} />
                 <Route path="/faq" element={<><FAQ /><Footer /></>} />
                 <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
                 <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />
@@ -260,6 +269,7 @@ function App() {
                 <Route path="categories" element={<AdminCategories />} />
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
+                <Route path="wishlist" element={<AdminWishlist />} />
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="marketing-performance" element={<AdminMarketingPerformance />} />

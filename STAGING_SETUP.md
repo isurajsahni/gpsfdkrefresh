@@ -110,6 +110,26 @@ New → Web Service → same repo, then:
   `WHATSAPP_VERIFY_TOKEN`, and/or `MSG91_AUTH_KEY`, `MSG91_TEMPLATE_ID`.
 - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — only if you seed (Part B).
 
+### 🍎 App Store review demo login
+App Review has to sign in to reach account deletion (Guideline 5.1.1(v)), but the
+app's login mails a random OTP — and a reviewer can't read our mailbox. Set both
+of these and one fixed address/code pair signs in without any mail:
+
+| Key | Value |
+|-----|-------|
+| `DEMO_LOGIN_EMAIL` | e.g. `appreview@gpsfdk.com` — does **not** have to be a real mailbox |
+| `DEMO_LOGIN_OTP` | the 6-digit code you hand Apple |
+
+Give App Store Connect → *App Review Information* the same two values. The
+account is created on first sign-in and re-created if the reviewer deletes it,
+so a second review round still works.
+
+**Both** vars must be set — leave either unset (as on production, unless you
+deliberately want it there) and the bypass doesn't exist at all. The code is
+long-lived, so it is deliberately still behind `otpLimiter` (5 verify attempts
+per 10 min per IP); that rate limit is what keeps a leaked address from being
+brute-forced. Rotate `DEMO_LOGIN_OTP` after each review round.
+
 ---
 
 ## Part E — Deploy & verify (no payment needed)

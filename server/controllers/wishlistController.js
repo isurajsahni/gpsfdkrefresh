@@ -68,3 +68,41 @@ exports.removeFromWishlist = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET /api/wishlist/top — most-liked products, for the admin panel.
+//
+// This is demand that hasn't converted: what customers saved but didn't buy.
+// Aggregated in Mongo rather than by loading every user's wishlist, because the
+// collection grows with customers × saves and the panel only wants the head of
+// the list.
+//
+// There is no app-vs-website split here: unlike Order, the Wishlist model does
+// not record where a like happened. Adding a `source` field would make that
+// possible, and would cost one line on the model plus one on addToWishlist.
+exports.getTopWishlisted = async (req, res, next) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 25, 100);
+
+    const rows = await Wishlist.aggregate([
+      { $group: { _id: '$product', likes: { $sum: 1 }, lastLikedAt: { $max: '$createdAt' } } },
+      { $sort: { likes: -1, lastLikedAt: -1 } },
+      { $limit: limit },
+      { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'product' } },
+      { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          likes: 1,
+          lastLikedAt: 1,
+          name: '$product.name',
+          slug: '$product.slug',
+          image: { $arrayElemAt: ['$product.images.url', 0] },
+        },
+      },
+    ]);
+
+    res.json(rows);
+  } catch (error) {
+    next(error);
+  }
+};

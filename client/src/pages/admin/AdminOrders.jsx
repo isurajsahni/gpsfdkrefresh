@@ -9,6 +9,8 @@ import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
 import { useAuth } from '../../context/AuthContext';
+import SourceBadge from '../../components/admin/SourceBadge';
+import SourceFilter from '../../components/admin/SourceFilter';
 
 const statusColors = {
   payment_pending: 'bg-orange-100 text-orange-700',
@@ -34,6 +36,7 @@ const AdminOrders = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [search, setSearch] = useState('');
   const PAGE_SIZE = 50;
 
@@ -47,6 +50,7 @@ const AdminOrders = () => {
         limit: String(PAGE_SIZE),
       });
       if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+      if (sourceFilter && sourceFilter !== 'all') params.set('source', sourceFilter);
       if (search.trim()) params.set('search', search.trim());
       const { data } = await API.get(`/orders?${params.toString()}`, { signal });
       // Defensive: server returns {orders,total,page,...} on paginate=true;
@@ -67,7 +71,7 @@ const AdminOrders = () => {
     return () => controller.abort();
     // Re-fetch on page/filter/search change (search is debounced by user inertia).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statusFilter, search]);
+  }, [page, statusFilter, sourceFilter, search]);
 
   const updateStatus = async (id, status) => {
     try {
@@ -153,6 +157,7 @@ const AdminOrders = () => {
               <option key={s} value={s}>{s.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
             ))}
           </select>
+          <SourceFilter value={sourceFilter} onChange={(v) => { setSourceFilter(v); setPage(1); }} />
         </div>
       </div>
       {loading ? (
@@ -185,6 +190,7 @@ const AdminOrders = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-heading font-semibold text-secondary">{order.orderNumber}</h3>
+                        <SourceBadge source={order.source} />
                         {customer.isGuest && (
                           <span className="text-[10px] font-bold bg-accent/10 text-accent px-2 py-0.5 rounded-full">GUEST</span>
                         )}

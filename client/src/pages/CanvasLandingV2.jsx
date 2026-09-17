@@ -117,7 +117,7 @@ const Shell = ({ className = '', children }) => (
 );
 
 const SectionHeading = ({ children }) => (
-  <h2 className="text-[20px] font-semibold tracking-[-0.02em] sm:text-[24px]" style={{ color: INK }}>
+  <h2 className="text-[20px] font-semibold tracking-[-0.02em] sm:text-[24px] lg:text-[40px]" style={{ color: INK }}>
     {children}
   </h2>
 );
@@ -128,7 +128,7 @@ function Hero() {
     <section className="relative">
       {/* 394px is the exported band height at 1440. Narrow screens get a taller
           band so the overlaid copy keeps its own room. */}
-      <div className="relative min-h-[460px] sm:min-h-[394px] sm:h-[394px]">
+      <div className="relative min-h-[500px] pt-[150px]">
         <img src={heroImage} alt="" aria-hidden="true"
              className="absolute inset-0 h-full w-full object-cover object-[72%_center] sm:object-right" />
 
@@ -140,7 +140,7 @@ function Hero() {
         <div className="absolute inset-0 hidden sm:block"
              style={{ background: 'linear-gradient(90deg, rgba(250,246,240,0.94) 0%, rgba(250,246,240,0.78) 28%, rgba(250,246,240,0) 56%)' }} />
 
-        <Shell className="relative flex min-h-[460px] items-center sm:min-h-0 sm:h-full">
+        <Shell className="relative flex min-h-[500px] items-center sm:min-h-0 sm:h-full">
           <motion.div initial="hidden" animate="show" variants={fadeUp} className="max-w-[460px] py-12 sm:py-0">
             <p className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] sm:text-[11px]"
                style={{ color: INK }}>
@@ -148,7 +148,7 @@ function Hero() {
               <span className="h-[2px] w-7 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} />
             </p>
 
-            <h1 className="mt-4 text-[30px] font-bold leading-[1.12] tracking-[-0.03em] sm:text-[38px]"
+            <h1 className="mt-4 text-[30px] font-bold leading-[1.12] tracking-[-0.03em] sm:text-[38px] lg:text-[48px]"
                 style={{ color: INK }}>
               Art that makes your<br />
               <span className="relative inline-block">
@@ -178,7 +178,7 @@ function Hero() {
 /* ── Find your art style ──────────────────────────────────────────────────── */
 function ArtStyles() {
   return (
-    <section className="py-12 sm:py-16">
+    <section className="py-12 sm:py-16 lg:py-24">
       <Shell>
         <SectionHeading>Find your art style</SectionHeading>
 
@@ -219,13 +219,11 @@ function ArtStyles() {
    sits above it and its built-in heading is suppressed. */
 function ArtInRealLife() {
   return (
-    <section>
+    <section className="pt-12 sm:pt-16 lg:pt-24 bg-[#fafaf9]">
       <Shell>
         <SectionHeading>Art in real life</SectionHeading>
       </Shell>
-      <div className="-mt-4 sm:-mt-6">
-        <VideoShowcase showHeading={false} />
-      </div>
+      <VideoShowcase showHeading={false} paddingClass="pt-[30px] pb-20 md:pb-28" />
     </section>
   );
 }
@@ -266,7 +264,7 @@ function ProductGrid() {
   }, []);
 
   return (
-    <section className="pb-12 sm:pb-16">
+    <section className="py-12 sm:py-16 lg:py-24">
       <Shell>
         <SectionHeading>Find your next favourite</SectionHeading>
 
@@ -315,13 +313,13 @@ function ProductGrid() {
                   className="group overflow-hidden rounded-2xl bg-white ring-1 ring-black/[0.06] transition-shadow duration-300 hover:shadow-[0_14px_44px_rgba(0,0,0,0.10)]"
                 >
                   <Link to={`/product/${p.slug}`} className="block">
-                    <div className="aspect-[4/3] overflow-hidden bg-black/[0.04]">
+                    <div className="overflow-hidden bg-black/[0.04]">
                       <img
                         src={optimizeImage(p.images?.[0]?.url, 600)}
                         onError={handleImageError}
                         alt={p.name}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                        className="block w-full transition-transform duration-500 group-hover:scale-[1.04]"
                       />
                     </div>
 
@@ -364,7 +362,7 @@ function Faq() {
   const [open, setOpen] = useState(0);
 
   return (
-    <section className="pb-12 sm:pb-16">
+    <section className="py-12 sm:py-16 lg:py-24">
       <Shell>
         <div className="grid gap-8 lg:grid-cols-[340px_1fr] lg:gap-16">
           <div>
@@ -435,7 +433,7 @@ function Faq() {
 /* ── Closing CTA banner ───────────────────────────────────────────────────── */
 function CtaBanner() {
   return (
-    <section className="pb-14 sm:pb-20">
+    <section className="pb-14 sm:pb-20 lg:pb-28">
       <Shell>
         {/* 1248x326 export — the artwork already carries the gradient, framed
             print and foliage, so only the copy is layered on top. The banner is

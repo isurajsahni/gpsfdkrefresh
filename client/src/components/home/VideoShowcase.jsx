@@ -92,7 +92,7 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle }) => {
   );
 };
 
-const VideoShowcase = ({ showHeading = true }) => {
+const VideoShowcase = ({ showHeading = true, paddingClass = 'py-20 md:py-28' }) => {
   const [mutedStates, setMutedStates] = useState([true, true, true, true]);
 
   const videosData = [
@@ -135,7 +135,7 @@ const VideoShowcase = ({ showHeading = true }) => {
   const cardProps = { mutedStates, handleMuteToggle };
 
   return (
-    <section className="py-20 md:py-28 bg-[#fafaf9] overflow-hidden">
+    <section className={`${paddingClass} bg-[#fafaf9] overflow-hidden`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Heading */}
         {showHeading && (

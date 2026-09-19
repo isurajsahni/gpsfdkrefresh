@@ -41,8 +41,10 @@ const REELS = [
    ultrawide fits nine of these cards, so the six reels go round twice. */
 const SLIDES = [0, 1].flatMap((copy) => REELS.map((reel) => ({ ...reel, key: `${reel.slug}-${copy}` })));
 
+/* Arrows are md+ only: on phones the track is swiped, and the next card peeking
+   in at the right edge already says there's more. */
 const ARROW =
-  'absolute top-[calc(50%-28px)] z-10 grid size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
+  'absolute top-[calc(50%-28px)] z-10 hidden size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 md:grid';
 
 function ReelCard({ name, slug, src }) {
   const videoRef = useRef(null);

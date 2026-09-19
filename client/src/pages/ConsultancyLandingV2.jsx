@@ -130,8 +130,10 @@ const SCOPES = [
   { title: 'Full Residence', detail: 'Cohesive spatial vision', image: scopeFullResidence, icon: scopeResidenceIcon },
 ];
 
-/* The design only writes out the first answer. Answers 2–5 are PLACEHOLDER
-   copy that stays generic on purpose — confirm them before this goes live. */
+/* The design only writes out the first answer. The rest follow this page's
+   own focus areas and scope list; the commercial answer rests on the site's
+   office and corporate work (the office-lobby and corporate-retreat
+   testimonials, and the Contact page's bulk or corporate order option). */
 const FAQS = [
   {
     q: 'Is the interior design consultation really free?',
@@ -139,19 +141,19 @@ const FAQS = [
   },
   {
     q: 'What can I ask during the consultation?',
-    a: 'Anything about your space — layout, materials, colour, lighting, furniture or art. Bring photos, measurements or a quote you are weighing up and we will talk it through.',
+    a: 'Anything to do with your space: materials and finishes, colours, layout and proportion, sourcing, styling and the art on your walls. If you already have a quote, drawing or furniture list, we’ll go through it with you before you commit.',
   },
   {
     q: 'Can you help with an existing room or renovation?',
-    a: 'Yes. We can help refresh a room you already live in, or guide a renovation from early layout decisions through to final styling.',
+    a: 'Yes. Whether you’re refreshing a single room or renovating the whole home, we can help with everything from layout and proportion to the final styling.',
   },
   {
     q: 'Can I get advice for a commercial space?',
-    a: 'Yes. Tell us how the space is used and who it is for, and we will shape the guidance around it.',
+    a: 'Yes. As well as homes, we work with offices and other workspaces, from art for a reception or lobby to bulk and corporate orders. Tell us how the space is used and we’ll shape the advice around it.',
   },
   {
     q: 'What should I prepare before the consultation?',
-    a: 'A few photos of the space, rough measurements, and any inspiration you like. A budget range and timeline help us keep suggestions practical.',
+    a: 'A few photos of the space, rough measurements and anything you’ve saved for inspiration. If you have a quote, drawing or furniture list, bring that too; a budget range and timeline help us keep suggestions practical.',
   },
 ];
 

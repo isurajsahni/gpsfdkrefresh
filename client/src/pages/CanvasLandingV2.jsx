@@ -24,9 +24,11 @@ import FaqSection from '../components/landing/FaqSection';
    Consultancy page uses — Figma lays both out identically.
    ─────────────────────────────────────────────────────────────────────────── */
 
-/* The design writes out only the first answer. Returns and framing follow the
-   live FAQ page; payment methods and international shipping are PLACEHOLDER —
-   confirm those two before this goes anywhere real. */
+/* The design writes out only the first answer. The rest are taken from the
+   site itself: returns from /returns-refunds, payment options from checkout
+   (Razorpay for everyone, Cash on Delivery for Indian orders only — the order
+   API enforces it), the hanging kit from the product page's "in the box", and
+   worldwide delivery from checkout's country list and local-currency pricing. */
 const FAQS = [
   {
     q: 'How long does shipping take?',
@@ -37,19 +39,19 @@ const FAQS = [
   },
   {
     q: 'What is your return policy?',
-    a: 'Returns are accepted within 7 days of delivery. If your order arrives damaged, or we get a customisation wrong, we will replace it or refund you in full.',
+    a: 'Non-customised items can be returned within 7 days of delivery. If your order arrives damaged, or we get a customisation wrong, we’ll replace it or refund you in full.',
   },
   {
     q: 'What payment methods do you accept?',
-    a: 'All major credit and debit cards, UPI, net banking and popular wallets are accepted at checkout.',
+    a: 'UPI, credit and debit cards and net banking, all through Razorpay’s secure checkout. Cash on Delivery is also available on orders within India.',
   },
   {
     q: 'Are the canvases framed?',
-    a: 'Every canvas is stretched by hand over a durable wooden frame and arrives ready to hang — no separate framing needed.',
+    a: 'Yes. Every canvas is stretched over a durable wooden frame and comes with a hanging kit, so it’s ready for your wall with no extra framing.',
   },
   {
     q: 'Do you ship internationally?',
-    a: 'We currently ship across India. For international orders, write to us and we will arrange a quote for your location.',
+    a: 'Yes, we deliver worldwide. Just enter your address at checkout: prices are shown in your local currency, and every order comes with a tracking link. Cash on Delivery is only available within India.',
   },
 ];
 

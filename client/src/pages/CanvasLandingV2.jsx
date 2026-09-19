@@ -18,9 +18,10 @@ import FaqSection from '../components/landing/FaqSection';
    Sizes, colours, radii and gaps are read from the Figma layers via the Figma
    MCP. Each section lives in components/canvas-v2 and starts at its heading's
    line box; the gaps below are the frame's own spacing between sections
-   (measured from where the site's 60px navbar ends, where Figma's is 50px).
-   The FAQ is the same component the Consultancy page uses — Figma lays both
-   out identically.
+   (measured from where the site's 60px navbar ends, where Figma's is 50px),
+   except around "Art in real life", which is deliberately roomier than the
+   frame's 88 / 91px. The FAQ is the same component the Consultancy page
+   uses — Figma lays both out identically.
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* The design writes out only the first answer. Returns and framing follow the
@@ -66,10 +67,10 @@ export default function CanvasLandingV2() {
       <div className="mt-14 lg:mt-[90px]">
         <ArtStyleGrid />
       </div>
-      <div className="mt-16 lg:mt-[88px]">
+      <div className="mt-20 lg:mt-[120px]">
         <ArtInRealLife />
       </div>
-      <div className="mt-16 lg:mt-[91px]">
+      <div className="mt-20 lg:mt-[120px]">
         <ProductGrid />
       </div>
       <FaqSection

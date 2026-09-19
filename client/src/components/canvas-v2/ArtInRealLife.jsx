@@ -10,12 +10,14 @@ import felinePreference from '../../assets/videos/Feline-Preference.mp4';
 import dreamingInColors from '../../assets/videos/Dreaming-In-Colors.mp4';
 import palmSpringsProwl from '../../assets/videos/Palm-Springs-Prowl.mp4';
 import theSentinel from '../../assets/videos/The-Sentinel.mp4';
+import bubblegumRebellion from '../../assets/videos/Bubblegum Rebellion.mp4';
+import wolfOfWallStreet from '../../assets/videos/The Wolf of Wall Street.mp4';
 import nextCircle from '../../assets/image/canvas-v2/icons/carousel-next-circle.svg';
 import nextChevron from '../../assets/image/canvas-v2/icons/carousel-chevron.svg';
 
 /* ── Art in real life ─────────────────────────────────────────────────────────
    The frame's 277.5x450 grey cards (radius 20, 30px apart) are placeholders
-   for the product reels, so the four VideoShowcase clips fill them. Measured
+   for the product reels, so the store's artwork clips fill them. Measured
    from the heading's line box top at 1440: cards at 76.4, section bottom at
    526.4 (the cards' bottom).
 
@@ -23,18 +25,24 @@ import nextChevron from '../../assets/image/canvas-v2/icons/carousel-chevron.svg
    runs off the right of the screen, so the track starts at the column's left
    edge and ends at the viewport's right edge, clipped at both. The next circle
    sits 1239px into the track (x=1359 at 1440, on the fifth card) and centres
-   on the cards; the frame has no previous button. */
+   on the cards. The frame has no previous button; ours mirrors the next one,
+   25px in from the track's left edge as the next is from its right at 1440. */
 
 const REELS = [
   { name: 'Feline Preference', slug: 'feline-preference', src: felinePreference },
   { name: 'Dreaming in Colors', slug: 'dreaming-in-colors', src: dreamingInColors },
   { name: 'Palm Springs Prowl', slug: 'palm-springs-prowl', src: palmSpringsProwl },
   { name: 'The Sentinel', slug: 'the-sentinel', src: theSentinel },
+  { name: 'Bubblegum Rebellion', slug: 'bubblegum-rebellion', src: bubblegumRebellion },
+  { name: 'The Wolf of Wall Street', slug: 'the-wolf-of-wall-street', src: wolfOfWallStreet },
 ];
 
 /* Swiper's loop needs at least one more slide than fits in the track. A 3440px
-   ultrawide fits nine of these cards, so the four reels go round three times. */
-const SLIDES = [0, 1, 2].flatMap((copy) => REELS.map((reel) => ({ ...reel, key: `${reel.slug}-${copy}` })));
+   ultrawide fits nine of these cards, so the six reels go round twice. */
+const SLIDES = [0, 1].flatMap((copy) => REELS.map((reel) => ({ ...reel, key: `${reel.slug}-${copy}` })));
+
+const ARROW =
+  'absolute top-[calc(50%-28px)] z-10 grid size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2';
 
 function ReelCard({ name, slug, src }) {
   const videoRef = useRef(null);
@@ -116,16 +124,28 @@ export default function ArtInRealLife() {
         className="-mr-5 mt-6 pl-[max(0px,calc((100%-1200px)/2))] sm:-mr-8 sm:mt-7 lg:mt-[31.18px]"
       >
         <div className="relative" onFocus={revealFocusedCard}>
-          {/* 1239px into the track at 1440 and up (on the fifth card). Where
-              the track is narrower than 1320px it stays 25px inside the
+          {/* Both arrows come first in the DOM so the tab order reaches them
+              before the cards. Previous: 25px in from the track's left edge
+              (over the first card), at every width. */}
+          <button
+            type="button"
+            aria-label="Previous"
+            onClick={() => swiperRef.current?.slidePrev()}
+            className={`${ARROW} left-[25px]`}
+          >
+            <img src={nextCircle} alt="" aria-hidden="true" className="pointer-events-none col-start-1 row-start-1" />
+            <img src={nextChevron} alt="" aria-hidden="true" className="pointer-events-none col-start-1 row-start-1 rotate-180" />
+          </button>
+
+          {/* Next: 1239px into the track at 1440 and up (on the fifth card).
+              Where the track is narrower than 1320px it stays 25px inside the
               viewport's right edge instead, as at 1440, so it's always on
-              screen. First in the DOM so the tab order reaches it before the
-              cards. */}
+              screen. */}
           <button
             type="button"
             aria-label="Next"
             onClick={() => swiperRef.current?.slideNext()}
-            className="absolute left-[min(1239px,calc(100%-81px))] top-[calc(50%-28px)] z-10 grid size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            className={`${ARROW} left-[min(1239px,calc(100%-81px))]`}
           >
             <img src={nextCircle} alt="" aria-hidden="true" className="pointer-events-none col-start-1 row-start-1" />
             <img src={nextChevron} alt="" aria-hidden="true" className="pointer-events-none col-start-1 row-start-1" />

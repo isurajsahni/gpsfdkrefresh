@@ -17,9 +17,10 @@ import velocitySuite from '../../assets/image/canvas-v2/styles/velocity-suite.pn
 import afterHourSuite from '../../assets/image/canvas-v2/styles/after-hour-suite.png';
 import celestialFrontier from '../../assets/image/canvas-v2/styles/celestial-frontier.png';
 import etherealGaze from '../../assets/image/canvas-v2/styles/ethereal-gaze.png';
+import customCanvas from '../../assets/image/canvas-v2/styles/custom-canvas.jpg';
 
 /* ── Find your art style ──────────────────────────────────────────────────────
-   Two rows of 80px circles, 8 then 6, on a 160px pitch: at 1440 they sit at
+   Two rows of 80px circles, 8 then 7, on a 160px pitch: at 1440 they sit at
    x = 124 + 160k, 4px inside the 1200 column (so the eighth ends 4px past it,
    as in the frame). Measured from the heading's line box top: row 1 circles at
    76.4, row 2 at 243.4 (167px pitch), each label's line box 11.5px under its
@@ -29,7 +30,10 @@ import etherealGaze from '../../assets/image/canvas-v2/styles/ethereal-gaze.png'
    is centred on it and overhangs both sides equally. */
 
 /* Label lines as the frame breaks them. The frame spells it "Glided"; the
-   catalogue collection is "Gilded". */
+   catalogue collection is "Gilded". Custom Canvas isn't in the frame: it
+   follows the fourteen styles, links to the customiser rather than the store,
+   and its thumbnail is the printed photo from the home page's customise shot
+   (square, so the circle clip rounds it). */
 const STYLES = [
   { image: inkAndInterval, lines: ['Ink &', 'Interval'] },
   { image: sassyClassic, lines: ['The Sassy', 'Classic'] },
@@ -46,6 +50,7 @@ const STYLES = [
   { image: afterHourSuite, lines: ['The After Hour', 'Suite'] },
   { image: celestialFrontier, lines: ['The Celestial', 'Frontier'] },
   { image: etherealGaze, lines: ['The Ethereal', 'Gaze'] },
+  { image: customCanvas, lines: ['Custom', 'Canvas'], to: '/customize-canvas' },
 ];
 
 export default function ArtStyleGrid() {
@@ -57,20 +62,20 @@ export default function ArtStyleGrid() {
         </motion.div>
 
         {/* xl: eight fixed 80px tracks with 80px gaps, so rows 1 and 2 land on
-            the frame's columns exactly (row 2 fills the first six). Below xl
-            the circles centre in equal columns — 8 on laptops, 7 (two rows of
-            seven) on tablets, 5 on large phones, 4 on phones and 3 under
+            the frame's columns exactly (row 2 fills the first seven). Below
+            xl the circles centre in equal columns — 8 on laptops, 5 on tablets
+            and large phones (three full rows of five), 4 on phones and 3 under
             360px — which keeps the overhanging labels clear of each other. */}
         <motion.ul
           {...inView}
           variants={stagger(0.04)}
-          className="mt-6 grid grid-cols-3 gap-y-6 min-[360px]:grid-cols-4 sm:mt-7 sm:grid-cols-5 sm:gap-y-8 md:grid-cols-7 lg:mt-[31.18px] lg:grid-cols-8 lg:gap-y-[42.18px] xl:grid-cols-[repeat(8,80px)] xl:gap-x-20 xl:pl-1"
+          className="mt-6 grid grid-cols-3 gap-y-6 min-[360px]:grid-cols-4 sm:mt-7 sm:grid-cols-5 sm:gap-y-8 lg:mt-[31.18px] lg:grid-cols-8 lg:gap-y-[42.18px] xl:grid-cols-[repeat(8,80px)] xl:gap-x-20 xl:pl-1"
         >
-          {STYLES.map(({ image, lines, rotated }) => {
+          {STYLES.map(({ image, lines, rotated, to = '/store' }) => {
             const name = lines.join(' ');
             return (
               <motion.li key={name} variants={fadeUp}>
-                <Link to="/store" className="group flex flex-col items-center focus-visible:outline-none">
+                <Link to={to} className="group flex flex-col items-center focus-visible:outline-none">
                   {/* The PNGs are already round; the clip keeps the hover zoom
                       inside the circle (isolate stops Safari dropping the clip
                       mid-transition). */}

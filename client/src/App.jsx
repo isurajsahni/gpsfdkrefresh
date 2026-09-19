@@ -61,6 +61,8 @@ const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
 const CustomizeCanvasPage = lazy(() => import('./pages/CustomizeCanvasPage'));
 // Canvas Page v2 — internal demo of the Figma rebuild. Not linked from nav, noindex.
 const CanvasLandingV2 = lazy(() => import('./pages/CanvasLandingV2'));
+// Consultancy v2 — internal demo of the Figma "Consultancy" frame. Not linked from nav, noindex.
+const ConsultancyLandingV2 = lazy(() => import('./pages/ConsultancyLandingV2'));
 const SEO_PremiumWallCanvasIndia = lazy(() => import('./pages/SEO_PremiumWallCanvasIndia'));
 const WhatsAppLogin = lazy(() => import('./pages/WhatsAppLogin'));
 
@@ -291,6 +293,10 @@ function App() {
 
               {/* Canvas Page v2 — internal demo only. Not linked from nav; SEO noindex. */}
               <Route path="/canvas-v2-demo" element={<><CanvasLandingV2 /><Footer /></>} />
+
+              {/* Consultancy v2 — internal demo only. Not linked from nav; SEO noindex.
+                  The live /consultancy page and its enquiry form are unchanged. */}
+              <Route path="/consultancy-v2-demo" element={<><ConsultancyLandingV2 /><Footer /></>} />
 
               {/* Category pages — MUST be last (catch-all pattern) */}
               <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />

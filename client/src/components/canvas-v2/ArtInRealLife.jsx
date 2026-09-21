@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import { Shell, SectionHeading } from './Layout';
 import { inView } from './motion';
+import { useCurrency } from '../../context/CurrencyContext';
 
 import felinePreference from '../../assets/videos/Feline-Preference.mp4';
 import dreamingInColors from '../../assets/videos/Dreaming-In-Colors.mp4';
@@ -25,8 +27,14 @@ import nextChevron from '../../assets/image/canvas-v2/icons/carousel-chevron.svg
    runs off the right of the screen, so the track starts at the column's left
    edge and ends at the viewport's right edge, clipped at both. The next circle
    sits 1239px into the track (x=1359 at 1440, on the fifth card) and centres
-   on the cards. The frame has no previous button; ours mirrors the next one,
-   25px in from the track's left edge as the next is from its right at 1440. */
+   on the clips — 225 - 28 = 197px down, not 50% of the slide, since the name
+   and price sit below them. The frame has no previous button; ours mirrors the
+   next one, 25px in from the track's left edge as the next is from its right
+   at 1440.
+
+   The frame's cards are silent and unlabelled. Ours carry the store's sound
+   toggle in the top right and, under each clip, the reel's name and the price
+   range a canvas of it spans, set like the product grid's cards below. */
 
 const REELS = [
   { name: 'Feline Preference', slug: 'feline-preference', src: felinePreference },
@@ -37,6 +45,12 @@ const REELS = [
   { name: 'The Wolf of Wall Street', slug: 'the-wolf-of-wall-street', src: wolfOfWallStreet },
 ];
 
+/* What a canvas costs across every size and finish, as the store lists them.
+   The reels aren't loaded from the API, so the range is the catalogue's rather
+   than each product's; formatPrice converts it for overseas visitors. */
+const PRICE_FROM = 149;
+const PRICE_TO = 7999;
+
 /* Swiper's loop needs at least one more slide than fits in the track. A 3440px
    ultrawide fits nine of these cards, so the six reels go round twice. */
 const SLIDES = [0, 1].flatMap((copy) => REELS.map((reel) => ({ ...reel, key: `${reel.slug}-${copy}` })));
@@ -44,14 +58,19 @@ const SLIDES = [0, 1].flatMap((copy) => REELS.map((reel) => ({ ...reel, key: `${
 /* Arrows are md+ only: on phones the track is swiped, and the next card peeking
    in at the right edge already says there's more. */
 const ARROW =
-  'absolute top-[calc(50%-28px)] z-10 hidden size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 md:grid';
+  'absolute top-[197px] z-10 hidden size-14 place-items-center rounded-full transition-transform duration-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 md:grid';
 
-function ReelCard({ name, slug, src }) {
+/* Same top-right badge as the store's artwork carousel. */
+const SOUND_BUTTON =
+  'absolute right-3 top-3 z-20 grid size-9 place-items-center rounded-full border border-white/20 bg-black/40 text-white shadow-lg backdrop-blur-md transition duration-300 hover:scale-110 hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white';
+
+function ReelCard({ name, slug, src, unmuted, onToggleSound, formatPrice }) {
   const videoRef = useRef(null);
 
   // Play only while on screen, as VideoShowcase does: with preload="metadata"
   // a clip downloads once it scrolls or slides into view, and cards clipped
-  // off either end of the track stay paused.
+  // off either end of the track stay paused — which also silences an unmuted
+  // clip the moment it slides out of the track.
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return undefined;
@@ -67,33 +86,74 @@ function ReelCard({ name, slug, src }) {
     return () => observer.disconnect();
   }, []);
 
+  // Set on the element rather than through the attribute: React doesn't
+  // reliably update `muted` on a video that's already playing.
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = !unmuted;
+  }, [unmuted]);
+
   return (
-    // draggable={false}: otherwise a mouse drag picks up the link itself and
-    // the browser cancels Swiper's swipe. The focus ring is drawn inside the
-    // card (on ::after, above the video) because the track clips anything
-    // outside it.
-    <Link
-      to={`/product/${slug}`}
-      aria-label={name}
-      draggable={false}
-      className="relative isolate block h-[357px] overflow-hidden rounded-[20px] bg-[#d9d9d9] after:pointer-events-none after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-accent md:h-[450px]"
-    >
-      <video
-        ref={videoRef}
-        src={src}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        aria-hidden="true"
-        className="h-full w-full object-cover"
-      />
-    </Link>
+    <div className="relative">
+      <div className="isolate h-[357px] overflow-hidden rounded-[20px] bg-[#d9d9d9] md:h-[450px]">
+        <video
+          ref={videoRef}
+          src={src}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="h-full w-full object-cover"
+        />
+      </div>
+
+      {/* Above the name's stretched hit area, so it toggles sound instead of
+          opening the product. */}
+      <button
+        type="button"
+        onClick={onToggleSound}
+        aria-label={unmuted ? `Mute ${name}` : `Unmute ${name}`}
+        title={unmuted ? 'Mute' : 'Unmute'}
+        className={SOUND_BUTTON}
+      >
+        {unmuted ? <HiVolumeUp className="size-4" /> : <HiVolumeOff className="size-4" />}
+      </button>
+
+      {/* Name and price as the product grid sets them, one size down to suit
+          the narrower card. The link stretches over the clip as well, so the
+          whole card opens the product from a single tab stop; draggable={false}
+          keeps a mouse drag from picking the link up and cancelling the swipe.
+          Its focus ring is drawn inside the card because the track clips
+          anything outside it. */}
+      <h3 className="mt-[14px] text-[16px] font-medium leading-[1.19] text-black md:text-[20px]">
+        <Link
+          to={`/product/${slug}`}
+          draggable={false}
+          className="block after:absolute after:inset-0 after:rounded-[20px] focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-inset focus-visible:after:ring-accent"
+        >
+          {/* The clipping sits on the span: `truncate` on the link or the
+              heading would be an overflow ancestor of the stretched ::after. */}
+          <span className="block truncate">{name}</span>
+        </Link>
+      </h3>
+      <p className="mt-[6px] truncate text-[14px] font-normal leading-[1.19] text-accent md:text-[16px]">
+        {formatPrice(PRICE_FROM)} – {formatPrice(PRICE_TO)}
+      </p>
+    </div>
   );
 }
 
 export default function ArtInRealLife() {
   const swiperRef = useRef(null);
+  const { formatPrice } = useCurrency();
+
+  // The key of the one card playing with sound (null = all muted), so two
+  // clips never talk over each other — including the two copies of a reel the
+  // loop needs, which is why this keys on the slide and not the product.
+  const [unmutedKey, setUnmutedKey] = useState(null);
+  const toggleSound = useCallback((key) => {
+    setUnmutedKey((current) => (current === key ? null : key));
+  }, []);
 
   // Tabbing onto a card outside the track's clip would leave focus somewhere
   // you can't see (Swiper doesn't follow focus), so bring that card to the
@@ -170,7 +230,12 @@ export default function ArtInRealLife() {
           >
             {SLIDES.map(({ key, ...reel }) => (
               <SwiperSlide key={key} className="!w-[220px] md:!w-[277.5px]">
-                <ReelCard {...reel} />
+                <ReelCard
+                  {...reel}
+                  formatPrice={formatPrice}
+                  unmuted={unmutedKey === key}
+                  onToggleSound={() => toggleSound(key)}
+                />
               </SwiperSlide>
             ))}
           </Swiper>

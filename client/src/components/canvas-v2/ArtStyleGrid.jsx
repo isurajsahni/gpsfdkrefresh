@@ -29,27 +29,35 @@ import customCanvas from '../../assets/image/canvas-v2/styles/custom-canvas.jpg'
    Labels keep the frame's two lines and are wider than the circle, so each one
    is centred on it and overhangs both sides equally. */
 
+/* Every style is a collection of the Wall Canvas category, so a card opens that
+   collection's listing at /wall-canvas/<slug>. `collection` is the catalogue's
+   own name for it — the frame's label isn't always the same ("The Millionaire
+   Art" is filed as "Millionaire Art") — and it's slugged exactly as CategoryPage
+   slugs the chips it matches the URL against, so the two can't drift apart. */
+const collectionPath = (name) =>
+  `/wall-canvas/${name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')}`;
+
 /* Label lines as the frame breaks them. The frame spells it "Glided"; the
    catalogue collection is "Gilded". Custom Canvas isn't in the frame: it
-   follows the fourteen styles, links to the customiser rather than the store,
-   and its thumbnail is the printed photo from the home page's customise shot
-   (square, so the circle clip rounds it). */
+   follows the fourteen styles, links to the customiser rather than a
+   collection, and its thumbnail is the printed photo from the home page's
+   customise shot (square, so the circle clip rounds it). */
 const STYLES = [
-  { image: inkAndInterval, lines: ['Ink &', 'Interval'] },
-  { image: sassyClassic, lines: ['The Sassy', 'Classic'] },
-  { image: botanicalMuse, lines: ['The Botanical', 'Muse'] },
+  { image: inkAndInterval, lines: ['Ink &', 'Interval'], collection: 'Ink & Interval' },
+  { image: sassyClassic, lines: ['The Sassy', 'Classic'], collection: 'The Sassy Classic' },
+  { image: botanicalMuse, lines: ['The Botanical', 'Muse'], collection: 'The Botanical Muse' },
   // The frame turns this thumbnail -90°.
-  { image: tetheredHorizons, lines: ['Tethered', 'Horizons'], rotated: true },
-  { image: gazeOfPower, lines: ['The Gaze', 'Of Power'] },
-  { image: wildEccentrics, lines: ['The Wild', 'Eccentrics'] },
-  { image: modernLegend, lines: ['The Modern', 'Legend'] },
-  { image: nostalgiaNoir, lines: ['Nostalgia', 'Noir'] },
-  { image: millionaireArt, lines: ['The', 'Millionaire Art'] },
-  { image: gildedBloom, lines: ['The Gilded', 'Bloom'] },
-  { image: velocitySuite, lines: ['The Velocity', 'Suite'] },
-  { image: afterHourSuite, lines: ['The After Hour', 'Suite'] },
-  { image: celestialFrontier, lines: ['The Celestial', 'Frontier'] },
-  { image: etherealGaze, lines: ['The Ethereal', 'Gaze'] },
+  { image: tetheredHorizons, lines: ['Tethered', 'Horizons'], collection: 'Tethered Horizons', rotated: true },
+  { image: gazeOfPower, lines: ['The Gaze', 'Of Power'], collection: 'The Gaze of Power' },
+  { image: wildEccentrics, lines: ['The Wild', 'Eccentrics'], collection: 'The Wild Eccentrics' },
+  { image: modernLegend, lines: ['The Modern', 'Legend'], collection: 'The Modern Legend' },
+  { image: nostalgiaNoir, lines: ['Nostalgia', 'Noir'], collection: 'Nostalgia Noir' },
+  { image: millionaireArt, lines: ['The', 'Millionaire Art'], collection: 'Millionaire Art' },
+  { image: gildedBloom, lines: ['The Gilded', 'Bloom'], collection: 'The Gilded Bloom' },
+  { image: velocitySuite, lines: ['The Velocity', 'Suite'], collection: 'The Velocity Suite' },
+  { image: afterHourSuite, lines: ['The After Hour', 'Suite'], collection: 'The After Hour Suite' },
+  { image: celestialFrontier, lines: ['The Celestial', 'Frontier'], collection: 'The Celestial Frontier' },
+  { image: etherealGaze, lines: ['The Ethereal', 'Gaze'], collection: 'The Ethereal Gaze' },
   { image: customCanvas, lines: ['Custom', 'Canvas'], to: '/customize-canvas' },
 ];
 
@@ -71,7 +79,7 @@ export default function ArtStyleGrid() {
           variants={stagger(0.04)}
           className="mt-6 grid grid-cols-3 gap-y-6 min-[360px]:grid-cols-4 sm:mt-7 sm:grid-cols-5 sm:gap-y-8 lg:mt-[31.18px] lg:grid-cols-8 lg:gap-y-[42.18px] xl:grid-cols-[repeat(8,80px)] xl:gap-x-20 xl:pl-1"
         >
-          {STYLES.map(({ image, lines, rotated, to = '/store' }) => {
+          {STYLES.map(({ image, lines, rotated, collection, to = collectionPath(collection) }) => {
             const name = lines.join(' ');
             return (
               <motion.li key={name} variants={fadeUp}>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
@@ -12,12 +13,23 @@ const SEO = ({
   type = "website",
   image = DEFAULT_IMAGE,
   schema = null,
-  noindex = false
+  noindex = false,
+  // Overrides the URL-derived canonical for a page served at more than one
+  // path (StorePage renders at both / and /store).
+  canonicalPath = null
 }) => {
   const { pathname } = useLocation();
+
+  // index.html ships homepage title/description/OG tags (marked data-static-seo)
+  // for crawlers that don't run JavaScript. Once a page renders its own, drop
+  // those so the head doesn't carry two titles and two descriptions.
+  useEffect(() => {
+    document.head.querySelectorAll('[data-static-seo]').forEach((el) => el.remove());
+  }, []);
+
   // Normalize the pathname: strip trailing slash(es) except for the root path,
   // so /about/ and /about canonicalize to the same URL.
-  const normalizedPath = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+  const normalizedPath = canonicalPath || (pathname === '/' ? '/' : pathname.replace(/\/+$/, ''));
   const url = `${SITE_URL}${normalizedPath}`;
 
   // Social crawlers require absolute image URLs: prefix site-relative paths with

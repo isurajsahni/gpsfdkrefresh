@@ -3,6 +3,7 @@ import shippingImage from '../../assets/image/shipping_demo.webp';
 import SEO from '../../components/seo/SEO';
 import { KindHero, KindCTA, PolicySection } from '../../components/kindact/KindUI';
 import heroImage from '../../assets/image/shipping_demo.webp';
+import { FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING_FEE } from '../../utils/shipping';
 
 const ShippingPolicy = () => {
   return (
@@ -51,10 +52,14 @@ const ShippingPolicy = () => {
         <PolicySection index={2} title="Shipping Times & Costs">
           <ul className="list-disc pl-5 space-y-2">
             <li>
-              <strong>Standard Shipping:</strong> Usually takes 5-7 business days across India. Cost varies by location and weight, calculated at checkout.
+              <strong>Standard Shipping:</strong> Usually takes 5-7 business days across India.
+            </li>
+            {/* Same rule checkout charges (utils/shipping.js, mirrored on the server) */}
+            <li>
+              <strong>Free Shipping:</strong> On all orders of ₹{FREE_SHIPPING_THRESHOLD} or more within India. Orders below that carry a flat ₹{FLAT_SHIPPING_FEE} shipping fee.
             </li>
             <li>
-              <strong>Free Shipping:</strong> Often available on orders over a certain threshold (e.g., ₹2000). Check the banner on our homepage for current promotions.
+              <strong>International Shipping:</strong> We deliver worldwide. Enter your address at checkout to see prices in your local currency. Cash on Delivery is only available within India.
             </li>
           </ul>
         </PolicySection>

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
+import { ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '../utils/siteSchema';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
 
@@ -254,9 +255,13 @@ const StorePage = () => {
 
   return (
     <div className="store-apple bg-white min-h-screen font-sans text-[#1D1D1F]">
+      {/* The Store is the homepage. It also renders at /store, which canonicalizes
+          here so the two URLs don't compete as duplicates. */}
       <SEO
-        title="Store | Art, Experiences & Personalized Creations | GPSFDK"
+        title="GPSFDK Store | Canvas Wall Art, Experiences & Personalized Creations"
         description="Discover GPSFDK's curated store: museum-grade canvases, custom nameplates, workshops, retreats, and personalized gifts — all in one place."
+        canonicalPath="/"
+        schema={[ORGANIZATION_SCHEMA, WEBSITE_SCHEMA]}
       />
 
       {/* ─── Hero header ─── */}

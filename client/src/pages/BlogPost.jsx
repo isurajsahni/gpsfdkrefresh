@@ -8,6 +8,7 @@ import blogs from '../content/blogs/index';
 import { optimizeImage } from '../utils/imageOptimizer';
 import API from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
+import NotFoundPage from './NotFoundPage';
 
 const BESTSELLER_LABELS = [
   'Best Seller',
@@ -61,13 +62,10 @@ const BlogPost = () => {
     if (blog) fetchProducts();
   }, [slug, blog]);
 
+  // The shared 404 carries noindex; a bare "not found" block would be indexed
+  // as a soft 404 with the homepage's title.
   if (!blog) {
-    return (
-      <div className="min-h-screen bg-primary flex flex-col items-center justify-center pt-[60px]">
-        <h2 className="text-2xl font-heading text-secondary">Blog post not found</h2>
-        <Link to="/blog" className="btn-primary mt-4">Back to Blog</Link>
-      </div>
-    );
+    return <NotFoundPage />;
   }
 
   // Related blogs — same category or random picks, excluding current

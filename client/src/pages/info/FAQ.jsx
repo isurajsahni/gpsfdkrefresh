@@ -5,18 +5,41 @@ import faqImage from '../../assets/image/faq_demo.webp';
 import SEO from '../../components/seo/SEO';
 import { KindButton, KindHero } from '../../components/kindact/KindUI';
 import heroImage from '../../assets/image/faq_demo.webp';
+import { FREE_SHIPPING_THRESHOLD, FLAT_SHIPPING_FEE } from '../../utils/shipping';
 
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
+  // Every answer here also feeds the FAQPage schema below, which answer engines
+  // quote directly. Keep them in step with the policy pages and the catalogue.
   const faqs = [
     {
       question: 'What materials do you use for canvases?',
-      answer: 'We use high-quality, fade-resistant canvas material stretched over durable wooden frames to ensure your art lasts for years.'
+      answer: 'Our canvases are printed on 350 GSM canvas with eco-solvent inks, which are environment-friendly and long-lasting. You can order a canvas rolled, or stretched over a wooden frame and ready to hang.'
+    },
+    {
+      question: 'What sizes are available?',
+      answer: 'Canvases come in sizes from 12x18 to 36x60 inches (square designs from 12x12 to 48x48 inches), rolled or stretched. Posters come in A4 and A3, as a sticker or on soft board. Each product page lists its exact sizes and prices.'
     },
     {
       question: 'How long does shipping take?',
       answer: 'Standard shipping usually takes 5-7 business days within India. Custom nameplates might require an additional 2-3 days for crafting.'
+    },
+    {
+      question: 'Is shipping free?',
+      answer: `Within India, shipping is free on orders of ₹${FREE_SHIPPING_THRESHOLD} or more. Orders below that carry a flat ₹${FLAT_SHIPPING_FEE} shipping fee.`
+    },
+    {
+      question: 'Do you ship internationally?',
+      answer: 'Yes, we deliver worldwide. Just enter your address at checkout: prices are shown in your local currency, and every order comes with a tracking link. Cash on Delivery is only available within India.'
+    },
+    {
+      question: 'What payment methods do you accept?',
+      answer: 'UPI, credit and debit cards and net banking, all through Razorpay’s secure checkout. Cash on Delivery is also available on orders within India.'
+    },
+    {
+      question: 'How can I track my order?',
+      answer: 'Once your order is dispatched, you’ll get a tracking link by email or SMS. You can also check its status on our Track Order page with your order ID and email or phone number.'
     },
     {
       question: 'Can I customize my house nameplate?',
@@ -118,7 +141,7 @@ const FAQ = () => {
                   </button>
 
                   <div
-                    className={`px-5 md:px-6 overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-48 pb-5 md:pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
+                    className={`px-5 md:px-6 overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-96 pb-5 md:pb-6 opacity-100' : 'max-h-0 opacity-0'}`}
                   >
                     <p className="apple-body text-kind-ink/70">{faq.answer}</p>
                   </div>

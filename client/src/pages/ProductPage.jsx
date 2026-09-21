@@ -11,6 +11,7 @@ import SEO from '../components/seo/SEO';
 import ViewOnWallModal from '../components/product/ViewOnWallModal';
 import ArViewer from '../components/product/ArViewer';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
+import { productSeoTitle, productSeoDescription, productSchemaDescription } from '../utils/productSeo';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -171,7 +172,7 @@ const ProductPage = () => {
     "@type": "Product",
     "name": product.name,
     "image": product.images?.map(img => img.url) || [],
-    "description": product.description,
+    "description": productSchemaDescription(product),
     "sku": product.sku || product._id,
     "brand": {
       "@type": "Brand",
@@ -220,8 +221,8 @@ const ProductPage = () => {
     <div className="min-h-screen bg-white pt-28 pb-0">
       {product && (
         <SEO
-          title={product.metaTitle || `${product.name} | Custom Designs by GPSFDK`}
-          description={product.metaDescription || product.description?.substring(0, 160)}
+          title={productSeoTitle(product)}
+          description={productSeoDescription(product)}
           image={optimizeImage(product.images?.[0]?.url, 800)}
           schema={[productSchema, breadcrumbSchema]}
           type="product"

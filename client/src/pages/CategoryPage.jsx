@@ -30,7 +30,10 @@ const CategoryPage = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isNotFound, setIsNotFound] = useState(false);
-  
+  // True only when the listing loaded and has no products; a failed request
+  // must never mark the page noindex.
+  const [isEmpty, setIsEmpty] = useState(false);
+
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   
   const { addToCart } = useCart();
@@ -43,14 +46,21 @@ const CategoryPage = () => {
     ? SUBCATEGORIES.find(s => generateSlug(s) === subcategorySlug)
     : null;
 
-  const displaySubcategory = exactSubcategory || (subcategorySlug ? subcategorySlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : null);
+  // Only the collections in SUBCATEGORIES exist. Any other /:slug/:subcategory
+  // is a 404 rather than an indexable, empty "collection" for whatever was typed.
+  const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory;
+  const displaySubcategory = exactSubcategory;
 
   useEffect(() => {
+    if (isUnknownSubcategory) return;
     const fetchProducts = async () => {
       setLoading(true);
       setIsNotFound(false);
+      setIsEmpty(false);
 
-      if (!category) {
+      // Refetch when the slug changes: the component is reused across category
+      // routes, so a stale category would title /house-nameplates "Wall Canvas".
+      if (category?.slug !== slug) {
         try {
           const catRes = await API.get(`/categories/${slug}`);
           setCategory(catRes.data);
@@ -70,10 +80,10 @@ const CategoryPage = () => {
       };
 
       if (exactSubcategory) params.subCategoryExact = exactSubcategory;
-      else if (subcategorySlug) params.subCategory = subcategorySlug;
 
       try {
         const { data } = await API.get('/products', { params });
+        setIsEmpty(data.total === 0);
         setTotalProducts(data.total);
         setTotalPages(data.pages);
         setProducts(data.products);
@@ -110,7 +120,7 @@ const CategoryPage = () => {
     sessionStorage.setItem(`scroll_${location.pathname}${location.search}`, window.scrollY.toString());
   };
 
-  if (isNotFound) {
+  if (isNotFound || isUnknownSubcategory) {
     return <NotFoundPage />;
   }
 
@@ -130,7 +140,9 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-[60px] pb-12">
-      <SEO title={dynamicTitle} description={dynamicDescription} />
+      {/* An empty listing is a soft 404; it becomes indexable again on its own
+          once products are added. */}
+      <SEO title={dynamicTitle} description={dynamicDescription} noindex={isEmpty} />
       
       {/* Header Area */}
       {slug === 'wall-canvas' ? (

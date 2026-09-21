@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import SEO from '../components/seo/SEO';
@@ -7,6 +7,9 @@ import FeaturesSection from '../components/home/FeaturesSection';
 import API from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
+import { CONTACT } from '../utils/contactChannels';
+import { FREE_SHIPPING_THRESHOLD } from '../utils/shipping';
+import NotFoundPage from './NotFoundPage';
 
 const BESTSELLER_LABELS = [
   'Best Seller',
@@ -31,74 +34,42 @@ const getBestsellerLabel = (id) => {
 
 const LOCATION_DATA = {
   'delhi': {
-    delivery: 'Delivered to Delhi in 3-4 days',
-    shippingSpeed: 'Express Metro Air Delivery',
     popularStyles: 'Modern Golden Acrylic Name Plates & Contemporary Canvas Art',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Delhi%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Delivering Premium Museum-Grade Canvases & Entrance Statement Pieces to the Nation\'s Capital.',
     popularProductsTitle: 'Curated Delhi Favorites',
   },
   'mumbai': {
-    delivery: 'Delivered to Mumbai in 4-5 days',
-    shippingSpeed: 'Express Coastal Air Delivery',
     popularStyles: 'Minimalist Japandi Canvas Art & Premium Waterproof House Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Mumbai%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Bringing Sophisticated, Ready-to-Hang Modern Art to the City of Dreams.',
     popularProductsTitle: 'Curated Mumbai Favorites',
   },
   'punjab': {
-    delivery: 'Delivered to Punjab in 1-2 days',
-    shippingSpeed: 'Next-Day Punjab Local Delivery',
     popularStyles: 'Traditional Lord Ganesha & Trishula Acrylic Name Plates, Bold Motivational Work Canvases',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Punjab%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Handcrafted Local Excellence, Delivered Straight from Our Faridkot Workshops.',
     popularProductsTitle: 'Curated Punjab Favorites',
   },
   'himachal-pradesh': {
-    delivery: 'Delivered to Himachal Pradesh in 3-5 days',
-    shippingSpeed: 'Express Hill Area Shipping',
     popularStyles: 'Breathtaking Nature Landscapes, Celestial Galaxy Split Canvases, Classic Stretched Wood Designs',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Himachal%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Bringing Archival Quality, Weather-Protected Forest & Mountain Landscapes to the Hills.',
     popularProductsTitle: 'Curated Himachal Favorites',
   },
   'bangalore': {
-    delivery: 'Delivered to Bangalore in 3-4 days',
-    shippingSpeed: 'Express South India Air Delivery',
     popularStyles: 'Abstract Minimalist Canvas Art for Apartments & Brushed Gold Acrylic Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Bangalore%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Statement Wall Art & Modern Name Plates for the Garden City\'s Apartments, Villas & Studios.',
     popularProductsTitle: 'Curated Bangalore Favorites',
   },
   'hyderabad': {
-    delivery: 'Delivered to Hyderabad in 3-4 days',
-    shippingSpeed: 'Express Deccan Air Delivery',
     popularStyles: 'Royal Heritage-Motif Canvases & Elegant Golden Acrylic House Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Hyderabad%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Regal Canvas Art & Entrance Name Plates Worthy of the City of Pearls.',
     popularProductsTitle: 'Curated Hyderabad Favorites',
   },
   'chennai': {
-    delivery: 'Delivered to Chennai in 4-5 days',
-    shippingSpeed: 'Express Tamil Nadu Air Delivery',
     popularStyles: 'Tanjore-Inspired Canvas Art & Humidity-Resistant Weatherproof Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Chennai%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Coastal-Proof Premium Canvases & Name Plates Built for Chennai Homes.',
     popularProductsTitle: 'Curated Chennai Favorites',
   },
   'pune': {
-    delivery: 'Delivered to Pune in 3-4 days',
-    shippingSpeed: 'Express West India Air Delivery',
     popularStyles: 'Serene Sahyadri Landscape Canvases & Contemporary Marathi Calligraphy Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: 'https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20Pune%20and%20looking%20for%20custom%20decor.',
     curatedHeadline: 'Modern Wall Canvases & Designer Name Plates for Pune\'s Heritage & New-Age Homes.',
     popularProductsTitle: 'Curated Pune Favorites',
   }
@@ -117,31 +88,20 @@ const LocationPage = () => {
     return str.replace(/-/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
   
-  const indianStates = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
-    "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", 
-    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
-    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", 
-    "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", 
-    "Uttarakhand", "West Bengal", "Delhi"
-  ];
-  
-  const cityName = formatCity(city);
   const normalized = city?.toLowerCase();
+  const cityName = formatCity(normalized);
 
-  // Get tailored local data or robust national default
-  const localData = LOCATION_DATA[normalized] || {
-    delivery: `Delivered to ${cityName} in 4-6 days`,
-    shippingSpeed: 'Free Insured Courier Shipping across India',
-    popularStyles: 'Museum-Grade Custom Photo Canvases & Handcrafted House Name Plates',
-    phone: '+91 96466-46063',
-    whatsapp: `https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20${encodeURIComponent(cityName)}%20and%20looking%20for%20custom%20decor.`,
-    curatedHeadline: `Premium Handcrafted Decor, Safely Packaged and Shipped Directly to Your Home in ${cityName}.`,
-    popularProductsTitle: `Curated ${cityName} Favorites`,
-  };
+  // Only the cities in LOCATION_DATA have pages. Any other /location/:city is a
+  // 404 (see below) rather than a templated page for a place we have nothing
+  // specific to say about — those near-duplicates read as doorway pages.
+  const localData = LOCATION_DATA[normalized];
+
+  // Same support line as the footer and contact page, with the city prefilled.
+  const whatsappLink = `${CONTACT.whatsapp}?text=${encodeURIComponent(`Hi GPSFDK, I am from ${cityName} and looking for custom decor.`)}`;
 
   // Meta Pixel: ViewContent event for location landing pages
   useEffect(() => {
+    if (!localData) return;
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'ViewContent', {
         content_name: `Location Page - ${cityName}`,
@@ -149,10 +109,11 @@ const LocationPage = () => {
       });
       console.log(`[Meta Pixel] ViewContent event fired (Location: ${cityName})`);
     }
-  }, [cityName]);
+  }, [cityName, localData]);
 
   // Load all products to select the best 6-8 designs dynamically
   useEffect(() => {
+    if (!localData) return;
     const fetchProducts = async () => {
       setLoading(true);
       try {
@@ -167,7 +128,7 @@ const LocationPage = () => {
       }
     };
     fetchProducts();
-  }, [city]);
+  }, [city, localData]);
 
   // City-specific catalog curation algorithm
   const getCuratedProducts = () => {
@@ -208,27 +169,18 @@ const LocationPage = () => {
   
   const title = `Premium Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
   const description = `Looking for Custom Canvas Prints in ${cityName}? GPSFDK offers Gallery Wrapped Canvas, Aesthetic Wall Decor, and premium Photo to Canvas services across ${cityName}.`;
-  
-  const localBusinessSchema = {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": `GPSFDK Decor ${cityName}`,
-    "image": "https://www.gpsfdk.com/logo.webp",
-    "url": `https://www.gpsfdk.com/location/${city}`,
-    "telephone": "+91-9646646063",
-    "address": {
-      "@type": "PostalAddress",
-      "addressLocality": cityName,
-      "addressCountry": "IN"
-    }
-  };
 
+  if (!localData) return <NotFoundPage />;
+  // One URL per city: /location/Delhi → /location/delhi
+  if (city !== normalized) return <Navigate to={`/location/${normalized}`} replace />;
+
+  // No LocalBusiness schema here: GPSFDK has no premises in these cities, and
+  // structured data claiming a local business in each one is misleading.
   return (
     <div className="min-h-screen bg-primary">
-      <SEO 
-        title={title} 
-        description={description} 
-        schema={localBusinessSchema}
+      <SEO
+        title={title}
+        description={description}
       />
       
       {/* Hero Section tailored to the location */}
@@ -247,7 +199,8 @@ const LocationPage = () => {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 text-accent animate-bounce">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.02-1.661L3 12m18 3.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.5a1.125 1.125 0 001.12-1.012L22.5 12m-2.25 3.75h-2.25M3 12l1.03-3.21a1.5 1.5 0 011.405-1.04h11.599a1.5 1.5 0 011.405 1.04L21 12M3 12h18" />
               </svg>
-              {localData.delivery} · {localData.shippingSpeed}
+              {/* Same timeline as the shipping policy and FAQs */}
+              Delivered to {cityName} in 5–7 business days · Free shipping from ₹{FREE_SHIPPING_THRESHOLD}
             </div>
 
             <h1 className="text-4xl md:text-6xl font-heading font-bold text-white mb-6 leading-tight">
@@ -259,11 +212,13 @@ const LocationPage = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/house-nameplates" className="btn-primary w-full sm:w-auto text-lg px-8 py-3.5">
-                Shop Name Plates
+              {/* Points at canvases while the House Nameplates catalog is empty; switch
+                  back to /house-nameplates ("Shop Name Plates") once it's restocked. */}
+              <Link to="/wall-canvas" className="btn-primary w-full sm:w-auto text-lg px-8 py-3.5">
+                Shop Canvases
               </Link>
-              <a 
-                href={localData.whatsapp}
+              <a
+                href={whatsappLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-3.5 rounded-full font-heading font-bold uppercase tracking-wider text-sm bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 w-full sm:w-auto flex items-center justify-center gap-2"
@@ -372,7 +327,7 @@ const LocationPage = () => {
                         Details
                       </Link>
                       <a 
-                        href={`https://wa.me/919646646063?text=Hi%20GPSFDK,%20I%20am%20from%20${encodeURIComponent(cityName)}%20and%20interested%20in%20${encodeURIComponent(product.name)}`}
+                        href={`${CONTACT.whatsapp}?text=Hi%20GPSFDK,%20I%20am%20from%20${encodeURIComponent(cityName)}%20and%20interested%20in%20${encodeURIComponent(product.name)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 text-center py-2.5 rounded-lg bg-accent text-white text-[10px] font-heading font-bold uppercase tracking-wider hover:bg-accent-dark transition-all duration-200 flex items-center justify-center gap-1"
@@ -389,10 +344,12 @@ const LocationPage = () => {
       </section>
 
       {/* Featured sliders as supplementary browse */}
-      <div className="py-12 bg-primary/40 border-t border-[#0B5D3B]/5">
+      {/* Temporarily hidden until the House Nameplates catalog is restocked — the
+          slider renders its heading even with no products. To re-enable, uncomment. */}
+      {/* <div className="py-12 bg-primary/40 border-t border-[#0B5D3B]/5">
         <ProductSlider title={`Trending Name Plates in ${cityName}`} categorySlug="house-nameplates" featured={true} />
-      </div>
-      
+      </div> */}
+
       <div className="py-12 bg-secondary/5">
         <ProductSlider title={`Popular Canvas Art in ${cityName}`} categorySlug="wall-canvas" featured={true} />
       </div>
@@ -409,8 +366,8 @@ const LocationPage = () => {
            </p>
            
            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-10">
-             <a 
-               href={localData.whatsapp}
+             <a
+               href={whatsappLink}
                target="_blank"
                rel="noopener noreferrer"
                className="btn-primary px-8 py-4 text-lg w-full sm:w-auto flex items-center justify-center gap-2"
@@ -419,38 +376,35 @@ const LocationPage = () => {
                Chat with {cityName} Specialist
              </a>
              <a 
-               href={`tel:${localData.phone}`}
+               href={`tel:${CONTACT.phoneDial}`}
                className="px-8 py-4 rounded-full font-heading font-bold uppercase tracking-wider text-sm bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 w-full sm:w-auto flex items-center justify-center gap-2"
                onClick={() => { if (typeof window.fbq === 'function') { window.fbq('track', 'Contact', { content_name: `Location Phone - ${cityName}` }); } }}
              >
-               Call support: {localData.phone}
+               Call support: {CONTACT.phoneDisplay}
              </a>
            </div>
         </div>
       </section>
 
-      {/* Internal SEO Links for 29 States */}
+      {/* Links to the other city pages — only cities that have one */}
       <section className="py-20 max-w-7xl mx-auto px-6 border-t border-gray-200">
         <h3 className="text-2xl font-heading font-bold text-secondary text-center mb-10">
           Canvas & Name Plates Delivered Across India
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
-          {indianStates.map((state) => {
-            const stateSlug = state.toLowerCase().replace(/\s+/g, '-');
-            return (
-              <Link 
-                key={state} 
-                to={`/location/${stateSlug}`}
-                className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
-                  cityName.toLowerCase() === state.toLowerCase() 
-                    ? 'bg-accent text-white shadow-lg' 
-                    : 'bg-white border border-gray-200 text-gray-600 hover:border-accent hover:text-accent shadow-sm'
-                }`}
-              >
-                {state}
-              </Link>
-            )
-          })}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          {Object.keys(LOCATION_DATA).map((slug) => (
+            <Link
+              key={slug}
+              to={`/location/${slug}`}
+              className={`py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                slug === normalized
+                  ? 'bg-accent text-white shadow-lg'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:border-accent hover:text-accent shadow-sm'
+              }`}
+            >
+              {formatCity(slug)}
+            </Link>
+          ))}
         </div>
       </section>
 

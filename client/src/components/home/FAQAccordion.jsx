@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiChevronDown } from 'react-icons/hi';
+import { FREE_SHIPPING_THRESHOLD } from '../../utils/shipping';
 
+// Keep these in step with the shipping and returns policy pages and the FAQ page;
+// answer engines quote them, so a contradiction gets repeated as fact.
 const faqData = [
-  { q: 'How long does shipping take?', a: 'We typically deliver within 5-7 business days across India. Express delivery is available for select PIN codes within 2-3 days.' },
-  { q: 'What is your return policy?', a: 'We offer a 7-day return policy for damaged or defective products. Custom-made nameplates are non-returnable as they are made to order.' },
-  { q: 'Can I customize my nameplate?', a: 'Absolutely! All our house nameplates are fully customizable. You can choose the color, size, and enter your family name during checkout.' },
-  { q: 'What payment methods do you accept?', a: 'We accept Razorpay (UPI, Cards, Net Banking), Stripe (International Cards), and Cash on Delivery for orders within India.' },
+  { q: 'How long does shipping take?', a: `We typically deliver within 5-7 business days across India, and every order comes with a tracking link. Shipping is free on orders of ₹${FREE_SHIPPING_THRESHOLD} or more.` },
+  { q: 'What is your return policy?', a: 'Non-customised items can be returned within 7 days of delivery. If your order arrives damaged, or we get a customisation wrong, we’ll replace it or refund you in full.' },
+  { q: 'Can I customize my nameplate?', a: 'Absolutely! All our house nameplates are fully customizable. You can choose the color, size, and enter your family name on the product page.' },
+  { q: 'What payment methods do you accept?', a: 'UPI, credit and debit cards and net banking, all through Razorpay’s secure checkout. Cash on Delivery is also available on orders within India.' },
   { q: 'Are the canvases framed?', a: 'We offer multiple options: Poster (paper/sticker/soft board), Rolled Canvas, and Stretched Canvas (gallery-wrapped on wooden frame). Choose your preference on the product page.' },
-  { q: 'Do you ship internationally?', a: 'Currently we ship across India. International shipping will be available soon. Subscribe to our newsletter for updates!' },
+  { q: 'Do you ship internationally?', a: 'Yes, we deliver worldwide. Just enter your address at checkout: prices are shown in your local currency, and every order comes with a tracking link. Cash on Delivery is only available within India.' },
 ];
 
 const FAQAccordion = () => {

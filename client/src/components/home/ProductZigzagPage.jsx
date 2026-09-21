@@ -10,10 +10,14 @@ const ProductZigzagPage = ({ category, slug }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(16);
+  // True only when the listing loaded and has no products; a failed request
+  // must never mark the page noindex.
+  const [isEmpty, setIsEmpty] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setIsEmpty(false);
       try {
         const { data } = await API.get('/products', {
           params: { limit: 1000 }
@@ -22,6 +26,7 @@ const ProductZigzagPage = ({ category, slug }) => {
           p => p.category?.slug === slug
         );
         setProducts(filtered);
+        setIsEmpty(filtered.length === 0);
       } catch (err) {
         console.error(err);
       }
@@ -106,7 +111,9 @@ const ProductZigzagPage = ({ category, slug }) => {
 
   return (
     <div className="min-h-screen bg-cream pb-12 w-full">
-      <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} />
+      {/* Empty (e.g. while nameplates are out of stock) is a soft 404; the page
+          becomes indexable again on its own once products are added. */}
+      <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} noindex={isEmpty} />
 
       {/* Hero Header - 100vh 50/50 Split */}
       <div className="relative w-full h-[100vh] flex flex-col md:flex-row overflow-hidden bg-secondary">

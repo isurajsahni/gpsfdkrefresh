@@ -68,9 +68,13 @@ router.get('/', async (req, res) => {
     // Fetch dynamic data (images included so product entries can carry
     // <image:image> tags for Google Images indexing)
     const [products, categories] = await Promise.all([
-      Product.find({ isActive: true }).select('slug updatedAt images').lean(),
+      Product.find({ isActive: true }).select('slug updatedAt images category').lean(),
       Category.find({ isActive: true }).select('slug updatedAt').lean()
     ]);
+
+    // An empty category page is a soft 404 (the client marks it noindex), so
+    // only list categories that currently have active products.
+    const stockedCategoryIds = new Set(products.map((p) => String(p.category)));
 
     // Static pages
     const staticPages = [
@@ -122,7 +126,7 @@ router.get('/', async (req, res) => {
     });
 
     // Add categories
-    categories.forEach((category) => {
+    categories.filter((category) => stockedCategoryIds.has(String(category._id))).forEach((category) => {
       xml += `
   <url>
     <loc>${baseUrl}/${category.slug}</loc>

@@ -239,19 +239,21 @@ const ProductPage = () => {
         </nav>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
-          {/* Images — thumbnails below on mobile, left column on desktop */}
+          {/* Images — thumbnails below on mobile, left column on desktop.
+              Nameplates are landscape, so they get a 2:1.5 main image with the
+              thumbnail strip stacked underneath it at every width. */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col md:flex-row gap-3"
+            className={`flex flex-col gap-3 ${isNameplate ? 'self-start' : 'md:flex-row'}`}
           >
             {/* Thumbnails — horizontal on mobile, vertical on desktop */}
             {product.images?.length > 1 && (
-              <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto scrollbar-hide order-2 md:order-1 md:w-20 shrink-0">
+              <div className={`flex gap-2 overflow-x-auto scrollbar-hide order-2 ${isNameplate ? '' : 'md:flex-col md:overflow-y-auto md:order-1 md:w-20 shrink-0'}`}>
                 {product.images.map((img, index) => (
                   <div
                     key={index}
-                    className={`aspect-square w-16 md:w-20 flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent shadow-md' : 'border-gray-200 hover:border-accent/40'
+                    className={`${isNameplate ? 'aspect-[4/3] w-24 md:w-28' : 'aspect-square w-16 md:w-20'} flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${selectedImage === index ? 'border-accent shadow-md' : 'border-gray-200 hover:border-accent/40'
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
@@ -263,13 +265,13 @@ const ProductPage = () => {
 
             {/* Main Image */}
             <div
-              className="flex-1 order-1 md:order-2 rounded-2xl overflow-hidden relative group cursor-zoom-in"
+              className={`order-1 rounded-2xl overflow-hidden relative group cursor-zoom-in ${isNameplate ? 'w-full' : 'flex-1 md:order-2'}`}
               onMouseMove={isDesktop ? handleMouseMove : undefined}
               onMouseEnter={() => isDesktop && setIsZooming(true)}
               onMouseLeave={() => setIsZooming(false)}
               onClick={() => setIsFullscreenZoom(true)}
             >
-              <div className="aspect-[4/5] w-full relative overflow-hidden rounded-2xl bg-white">
+              <div className={`${isNameplate ? 'aspect-[4/3]' : 'aspect-[4/5]'} w-full relative overflow-hidden rounded-2xl bg-white`}>
                 <motion.img
                   key={selectedImage}
                   initial={{ opacity: 0 }}

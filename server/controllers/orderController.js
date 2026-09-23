@@ -786,6 +786,31 @@ exports.getOrderById = async (req, res, next) => {
   }
 };
 
+// GET /api/orders/:id/invoice — the order's GST invoice as a PDF.
+// Only re-renders an invoice already issued with the confirmation email; it
+// never numbers an order here, so old orders don't get back-dated invoices.
+exports.downloadInvoice = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
+    if (!isManagerOrAdmin && order.user?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    if (!order.invoiceNumber) return res.status(404).json({ message: 'Invoice not available for this order' });
+
+    const pdf = await invoice.renderPdf(invoice.buildInvoiceData(order, await getCustomerInfo(order)));
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${invoice.invoiceFilename(order)}"`,
+      'Cache-Control': 'private, no-store',
+    });
+    res.send(pdf);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // PUT /api/orders/:id (admin)
 exports.updateOrderStatus = async (req, res, next) => {
   try {

@@ -11,7 +11,7 @@ import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
   HiOutlineMail, HiOutlinePhone, HiOutlinePencil, HiOutlineCheck,
   HiOutlineX, HiOutlinePlus, HiOutlineTrash, HiOutlineShieldCheck,
-  HiOutlinePhotograph, HiOutlineCamera
+  HiOutlinePhotograph, HiOutlineCamera, HiOutlineDocumentDownload
 } from 'react-icons/hi';
 
 const statusColors = {
@@ -36,6 +36,25 @@ const UserDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null); // order _id
+
+  // Fetched as a blob (not a plain link) so the auth header goes with it.
+  const downloadInvoice = async (order) => {
+    setDownloadingInvoice(order._id);
+    try {
+      const { data } = await API.get(`/orders/${order._id}/invoice`, { responseType: 'blob' });
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice-${order.invoiceNumber.replace(/[^A-Za-z0-9-]+/g, '-')}.pdf`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      toast.error('Could not download the invoice. Please try again.');
+    } finally {
+      setDownloadingInvoice(null);
+    }
+  };
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false);
@@ -717,6 +736,20 @@ const UserDashboard = () => {
                               {order.status}
                             </span>
                             <span className="font-bold text-accent text-xl">₹{order.totalPrice?.toLocaleString()}</span>
+                            {order.invoiceNumber && (
+                              <button
+                                onClick={() => downloadInvoice(order)}
+                                disabled={downloadingInvoice === order._id}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-xs font-bold hover:bg-secondary/20 transition-colors disabled:opacity-50 ml-2"
+                              >
+                                {downloadingInvoice === order._id ? (
+                                  <div className="w-3.5 h-3.5 border-2 border-secondary border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <HiOutlineDocumentDownload className="w-4 h-4" />
+                                )}
+                                Invoice
+                              </button>
+                            )}
                             {(order.status === 'pending' || order.status === 'processing') && (
                               <button
                                 onClick={async () => {

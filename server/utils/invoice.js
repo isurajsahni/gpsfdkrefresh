@@ -386,11 +386,12 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
  * Issue (number if needed) and render the invoice for an order.
  * Returns a Resend-ready attachment: { filename, content }.
  */
+const invoiceFilename = (order) => `Invoice-${String(order.invoiceNumber).replace(/[^A-Za-z0-9-]+/g, '-')}.pdf`;
+
 const createInvoiceAttachment = async (order, customer) => {
   await ensureInvoiceNumber(order);
   const content = await renderPdf(buildInvoiceData(order, customer));
-  const safe = String(order.invoiceNumber).replace(/[^A-Za-z0-9-]+/g, '-');
-  return { filename: `Invoice-${safe}.pdf`, content };
+  return { filename: invoiceFilename(order), content };
 };
 
 module.exports = {
@@ -400,5 +401,6 @@ module.exports = {
   ensureInvoiceNumber,
   buildInvoiceData,
   renderPdf,
+  invoiceFilename,
   createInvoiceAttachment,
 };

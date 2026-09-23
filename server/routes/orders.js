@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { 
   createOrder, createGuestOrder, getOrders, getOrderById, updateOrderStatus, 
   getOrderStats, cancelOrder, deleteOrder, trackOrder, getShipmentTracking,
-  getShiprocketOrderDetails, syncShiprocketOrder
+  getShiprocketOrderDetails, syncShiprocketOrder, downloadInvoice
 } = require('../controllers/orderController');
 const { protect, admin, authorizeRoles } = require('../middleware/auth');
 const { guestOrderValidation, guestOrderLimiter, orderTrackingLimiter } = require('../middleware/validators');
@@ -17,6 +17,7 @@ router.get('/track-awb/:awb', orderTrackingLimiter, getShipmentTracking);
 router.get('/stats', protect, authorizeRoles('order_manager'), getOrderStats);
 router.get('/shiprocket/:id', protect, authorizeRoles('order_manager'), getShiprocketOrderDetails);
 router.get('/:id', protect, getOrderById);
+router.get('/:id/invoice', protect, downloadInvoice);
 router.put('/:id', protect, admin, updateOrderStatus); // Admin only — order_manager is read-only
 router.post('/:id/sync-shiprocket', protect, admin, syncShiprocketOrder); // Admin only — order_manager is read-only
 router.put('/:id/cancel', protect, cancelOrder);

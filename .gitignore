@@ -22,3 +22,4 @@ scratch_*.js
 .claude/
 .gemini/
 
+server/invoice-demo/

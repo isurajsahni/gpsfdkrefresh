@@ -27,6 +27,8 @@ const sendEmail = async (options) => {
       to: options.email,
       subject: options.subject,
       html: options.html,
+      // [{ filename, content: Buffer }] — e.g. the invoice PDF.
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
     });
     
     // Resend API returns an error property if something failed logically (like unverified domain)

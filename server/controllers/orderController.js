@@ -4,6 +4,7 @@ const CouponUsage = require('../models/CouponUsage');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
+const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
@@ -103,10 +104,22 @@ const sendOrderEmail = async (order, status) => {
     const template = templateMap[status];
     if (!template) return;
 
+    // GST invoice rides on the order-confirmed email (opt-in, see utils/invoice).
+    // A failure here must never cost the customer their confirmation email.
+    const attachments = [];
+    if (status === 'pending' && invoice.getConfig().enabled) {
+      try {
+        attachments.push(await invoice.createInvoiceAttachment(order, { email, name }));
+      } catch (invErr) {
+        console.error(`Invoice generation failed for ${order.orderNumber}:`, invErr.message);
+      }
+    }
+
     await sendEmail({
       email,
       subject: subjectMap[status],
       html: template(order, name),
+      attachments,
     });
   } catch (err) {
     console.error('Failed to send order email:', err.message);

@@ -1,11 +1,12 @@
 /**
- * Render sample GST invoices from made-up orders, to check the layout and the
- * tax maths before switching invoices on. No database, no emails.
+ * Render sample invoices from made-up orders, to check the layout (and the
+ * GST maths, when enabled) before switching invoices on. No database, no emails.
  *
  *   node scripts/invoiceDemo.js [outDir]
  *
  * Uses the same SELLER_* / GST_RATE / INVOICE_HSN env vars as production, so
- * setting them in .env previews exactly what customers will receive.
+ * setting them in .env previews exactly what customers will receive. GST lines
+ * appear only when SELLER_GSTIN is set.
  */
 require('dotenv').config();
 const fs = require('fs');
@@ -53,8 +54,9 @@ const samples = {
     const data = buildInvoiceData(order, { email: 'customer@example.com' });
     const file = path.join(outDir, `${name}.pdf`);
     fs.writeFileSync(file, await renderPdf(data));
-    console.log(`${file}\n  total ${data.total}  taxable ${data.taxable}  ` +
-      data.taxLines.map((t) => `${t.label}: ${t.amount}`).join('  '));
+    console.log(`${file}\n  total ${data.total}` + (data.gst
+      ? `  taxable ${data.taxable}  ` + data.taxLines.map((t) => `${t.label}: ${t.amount}`).join('  ')
+      : '  (no GST — SELLER_GSTIN not set)'));
   }
 })().catch((err) => {
   console.error(err);

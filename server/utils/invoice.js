@@ -5,9 +5,9 @@
  * and the invoice works the taxable value and GST back out of it. Nothing
  * about checkout or the amount charged changes.
  *
- * OPT-IN: nothing is issued or emailed unless INVOICE_ENABLED=true. With
- * SELLER_GSTIN unset the PDF is stamped as a sample, so a half-configured
- * deploy can never send a customer something that looks like a real invoice.
+ * OPT-IN: nothing is issued or emailed unless INVOICE_ENABLED=true.
+ * GST is on only when SELLER_GSTIN is set; without it the PDF is a plain
+ * invoice — no GSTIN, HSN or tax breakdown.
  */
 const path = require('path');
 const PDFDocument = require('pdfkit');
@@ -20,7 +20,6 @@ const FONT_BOLD = path.join(__dirname, '../assets/fonts/Inter-SemiBold.ttf');
 const LOGO = path.join(__dirname, '../assets/logo.png');
 
 const BRAND = '#0B5D3B';
-const ACCENT = '#F15A29';
 const INK = '#1a1a1a';
 const MUTED = '#6b7280';
 const RULE = '#e5e7eb';
@@ -45,10 +44,10 @@ const getConfig = () => {
   const gstin = (env.SELLER_GSTIN || '').trim();
   return {
     enabled: env.INVOICE_ENABLED === 'true',
-    isSample: !gstin,
+    gst: Boolean(gstin),
     prefix: (env.INVOICE_PREFIX || 'GPS').trim(),
     legalName: env.SELLER_LEGAL_NAME || 'GPS FDK Refresh',
-    gstin: gstin || 'SAMPLE-GSTIN',
+    gstin,
     addressLines: (env.SELLER_ADDRESS || 'GPS, Circular Road, Near More Store|Faridkot, Punjab 151203|India')
       .split('|').map((l) => l.trim()).filter(Boolean),
     state: env.SELLER_STATE || 'Punjab',
@@ -198,8 +197,8 @@ const buildInvoiceData = (order, customer = {}) => {
 
   return {
     seller: cfg,
-    isSample: cfg.isSample,
-    invoiceNumber: order.invoiceNumber || 'SAMPLE',
+    gst: cfg.gst,
+    invoiceNumber: order.invoiceNumber || '—',
     invoiceDate: fmtDate(order.invoiceDate || new Date()),
     orderNumber: order.orderNumber,
     orderDate: fmtDate(order.createdAt || new Date()),
@@ -249,32 +248,24 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
 
   let y = 40;
 
-  if (d.isSample) {
-    doc.rect(PAGE.left, y, PAGE.right - PAGE.left, 22).fill(ACCENT);
-    text('SAMPLE — NOT A VALID TAX INVOICE (seller GSTIN not configured)', PAGE.left, y + 6, {
-      font: 'B', size: 9, color: '#ffffff', width: PAGE.right - PAGE.left, align: 'center',
-    });
-    y += 36;
-  }
-
   // Header — seller on the left, invoice meta on the right.
   const headerTop = y;
   doc.image(LOGO, PAGE.left, y, { height: 64 });
   y += 72;
   y = text(d.seller.legalName, PAGE.left, y, { font: 'B', size: 10 });
   for (const line of d.seller.addressLines) y = text(line, PAGE.left, y, { color: MUTED });
-  y = text(`GSTIN: ${d.seller.gstin}`, PAGE.left, y + 2, { font: 'B', size: 9 });
+  if (d.gst) y = text(`GSTIN: ${d.seller.gstin}`, PAGE.left, y + 2, { font: 'B', size: 9 });
   y = text(`${d.seller.email}  ·  ${d.seller.phone}`, PAGE.left, y, { color: MUTED });
   const leftBottom = y;
 
   const metaX = 340;
-  let my = text('TAX INVOICE', metaX, headerTop, { font: 'B', size: 16, width: PAGE.right - metaX, align: 'right' }) + 6;
+  let my = text(d.gst ? 'TAX INVOICE' : 'INVOICE', metaX, headerTop, { font: 'B', size: 16, width: PAGE.right - metaX, align: 'right' }) + 6;
   const meta = [
     ['Invoice No.', d.invoiceNumber],
     ['Invoice Date', d.invoiceDate],
     ['Order No.', d.orderNumber],
     ['Order Date', d.orderDate],
-    ['Place of Supply', d.placeOfSupply],
+    ...(d.gst ? [['Place of Supply', d.placeOfSupply]] : []),
   ];
   for (const [label, value] of meta) {
     text(label, metaX, my, { color: MUTED, width: 85 });
@@ -297,14 +288,16 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
   y = Math.max(party('Bill to', d.billTo, PAGE.left), party('Ship to', d.shipTo, PAGE.left + colW + 20)) + 18;
 
   // Items table
+  // Without GST there's no HSN column; the item column takes its space.
   const cols = [
     { key: 'n', label: '#', x: PAGE.left + 6, w: 18 },
-    { key: 'item', label: 'Item', x: PAGE.left + 26, w: 230 },
-    { key: 'hsn', label: 'HSN', x: 300, w: 45 },
+    { key: 'item', label: 'Item', x: PAGE.left + 26, w: d.gst ? 230 : 275 },
+    ...(d.gst ? [{ key: 'hsn', label: 'HSN', x: 300, w: 45 }] : []),
     { key: 'qty', label: 'Qty', x: 345, w: 35, align: 'right' },
     { key: 'rate', label: 'Rate', x: 385, w: 80, align: 'right' },
     { key: 'amount', label: 'Amount', x: 465, w: 84, align: 'right' },
   ];
+  const col = Object.fromEntries(cols.map((c) => [c.key, c]));
   const tableHeader = () => {
     doc.rect(PAGE.left, y, PAGE.right - PAGE.left, 22).fill('#f3f4f6');
     for (const c of cols) text(c.label, c.x, y + 7, { font: 'B', size: 8, color: MUTED, width: c.w, align: c.align || 'left' });
@@ -314,21 +307,21 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
 
   d.items.forEach((it, i) => {
     doc.font('B').fontSize(9);
-    let h = doc.heightOfString(it.name, { width: cols[1].w });
-    if (it.details) h += doc.font('R').fontSize(8).heightOfString(it.details, { width: cols[1].w }) + 2;
+    let h = doc.heightOfString(it.name, { width: col.item.w });
+    if (it.details) h += doc.font('R').fontSize(8).heightOfString(it.details, { width: col.item.w }) + 2;
     if (y + h > PAGE.bottom - 40) {
       doc.addPage();
       y = 40;
       tableHeader();
     }
     const rowTop = y;
-    text(i + 1, cols[0].x, rowTop, { color: MUTED, width: cols[0].w });
-    let iy = text(it.name, cols[1].x, rowTop, { font: 'B', width: cols[1].w });
-    if (it.details) iy = text(it.details, cols[1].x, iy + 1, { size: 8, color: MUTED, width: cols[1].w });
-    text(it.hsn, cols[2].x, rowTop, { color: MUTED, width: cols[2].w });
-    text(it.qty, cols[3].x, rowTop, { width: cols[3].w, align: 'right' });
-    text(money(it.rate), cols[4].x, rowTop, { width: cols[4].w, align: 'right', tabular: true });
-    text(money(it.amount), cols[5].x, rowTop, { font: 'B', width: cols[5].w, align: 'right', tabular: true });
+    text(i + 1, col.n.x, rowTop, { color: MUTED, width: col.n.w });
+    let iy = text(it.name, col.item.x, rowTop, { font: 'B', width: col.item.w });
+    if (it.details) iy = text(it.details, col.item.x, iy + 1, { size: 8, color: MUTED, width: col.item.w });
+    if (col.hsn) text(it.hsn, col.hsn.x, rowTop, { color: MUTED, width: col.hsn.w });
+    text(it.qty, col.qty.x, rowTop, { width: col.qty.w, align: 'right' });
+    text(money(it.rate), col.rate.x, rowTop, { width: col.rate.w, align: 'right', tabular: true });
+    text(money(it.amount), col.amount.x, rowTop, { font: 'B', width: col.amount.w, align: 'right', tabular: true });
     y = Math.max(iy, rowTop + h) + 8;
     rule(y - 4);
   });
@@ -353,11 +346,13 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
   if (d.discount > 0) row(`Discount${d.couponCode ? ` (${d.couponCode})` : ''}`, `−${money(d.discount)}`, { color: '#16a34a' });
   doc.moveTo(totalsX, y).lineTo(PAGE.right, y).lineWidth(1).strokeColor(BRAND).stroke();
   y += 7;
-  row('Total (incl. GST)', money(d.total), { bold: true, size: 11, color: BRAND });
-  y += 4;
-  row('Taxable value', money(d.taxable));
-  for (const t of d.taxLines) row(t.label, money(t.amount));
-  row('Total GST', money(d.totalTax), { bold: true });
+  row(d.gst ? 'Total (incl. GST)' : 'Total', money(d.total), { bold: true, size: 11, color: BRAND });
+  if (d.gst) {
+    y += 4;
+    row('Taxable value', money(d.taxable));
+    for (const t of d.taxLines) row(t.label, money(t.amount));
+    row('Total GST', money(d.totalTax), { bold: true });
+  }
   const totalsBottom = y;
 
   const leftW = totalsX - PAGE.left - 24;
@@ -372,7 +367,7 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
   rule(y);
   y += 10;
   const notes = [
-    'Prices are inclusive of GST. Tax payable on reverse charge: No.',
+    ...(d.gst ? ['Prices are inclusive of GST. Tax payable on reverse charge: No.'] : []),
     'This is a computer-generated invoice and does not require a signature.',
     `Questions about this invoice? Write to ${d.seller.email}.`,
   ];

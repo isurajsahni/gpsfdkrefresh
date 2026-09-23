@@ -95,6 +95,11 @@ const orderSchema = new mongoose.Schema({
   shiprocketError: { type: String, default: '' },
   deliveredAt: Date,
   notes: { type: String, default: '' },
+  // GST invoice — assigned once, the first time the invoice is issued, and
+  // never changed after (see utils/invoice.js). Sparse so the many orders
+  // without one don't collide on null.
+  invoiceNumber: { type: String, unique: true, sparse: true },
+  invoiceDate: Date,
   trackingEmailSent: { type: Boolean, default: false },
   // Status-change emails already sent for this order — prevents duplicate
   // shipped/delivered/cancelled emails on webhook redelivery or status

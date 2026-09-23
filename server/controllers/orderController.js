@@ -4,6 +4,7 @@ const CouponUsage = require('../models/CouponUsage');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const emailTemplates = require('../utils/orderEmailTemplates');
+const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
@@ -103,10 +104,22 @@ const sendOrderEmail = async (order, status) => {
     const template = templateMap[status];
     if (!template) return;
 
+    // GST invoice rides on the order-confirmed email (opt-in, see utils/invoice).
+    // A failure here must never cost the customer their confirmation email.
+    const attachments = [];
+    if (status === 'pending' && invoice.getConfig().enabled) {
+      try {
+        attachments.push(await invoice.createInvoiceAttachment(order, { email, name }));
+      } catch (invErr) {
+        console.error(`Invoice generation failed for ${order.orderNumber}:`, invErr.message);
+      }
+    }
+
     await sendEmail({
       email,
       subject: subjectMap[status],
       html: template(order, name),
+      attachments,
     });
   } catch (err) {
     console.error('Failed to send order email:', err.message);
@@ -768,6 +781,31 @@ exports.getOrderById = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
     res.json(order);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/orders/:id/invoice — the order's GST invoice as a PDF.
+// Only re-renders an invoice already issued with the confirmation email; it
+// never numbers an order here, so old orders don't get back-dated invoices.
+exports.downloadInvoice = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const isManagerOrAdmin = ['admin', 'admin_marketing', 'order_manager'].includes(req.user.role);
+    if (!isManagerOrAdmin && order.user?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    if (!order.invoiceNumber) return res.status(404).json({ message: 'Invoice not available for this order' });
+
+    const pdf = await invoice.renderPdf(invoice.buildInvoiceData(order, await getCustomerInfo(order)));
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${invoice.invoiceFilename(order)}"`,
+      'Cache-Control': 'private, no-store',
+    });
+    res.send(pdf);
   } catch (error) {
     next(error);
   }

@@ -786,9 +786,15 @@ exports.getOrderById = async (req, res, next) => {
   }
 };
 
+// GET /api/orders/invoice-settings — lets the storefront and admin decide
+// whether to show invoice buttons on orders that don't have one yet.
+exports.getInvoiceSettings = (req, res) => {
+  res.json({ enabled: invoice.getConfig().enabled });
+};
+
 // GET /api/orders/:id/invoice — the order's GST invoice as a PDF.
-// Only re-renders an invoice already issued with the confirmation email; it
-// never numbers an order here, so old orders don't get back-dated invoices.
+// Re-renders an invoice already issued; for an order placed before invoices
+// were switched on, issues one now (dated today) the first time it's asked for.
 exports.downloadInvoice = async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -797,7 +803,12 @@ exports.downloadInvoice = async (req, res, next) => {
     if (!isManagerOrAdmin && order.user?.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized' });
     }
-    if (!order.invoiceNumber) return res.status(404).json({ message: 'Invoice not available for this order' });
+    if (!order.invoiceNumber) {
+      if (!invoice.getConfig().enabled || !invoice.canIssueInvoice(order)) {
+        return res.status(404).json({ message: 'Invoice not available for this order' });
+      }
+      await invoice.ensureInvoiceNumber(order);
+    }
 
     const pdf = await invoice.renderPdf(invoice.buildInvoiceData(order, await getCustomerInfo(order)));
     res.set({

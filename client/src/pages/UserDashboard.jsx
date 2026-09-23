@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
+import { useInvoicesEnabled, canDownloadInvoice, downloadInvoice } from '../utils/invoice';
 import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
 import SEO from '../components/seo/SEO';
@@ -37,18 +38,16 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [downloadingInvoice, setDownloadingInvoice] = useState(null); // order _id
+  const invoicesEnabled = useInvoicesEnabled();
 
-  // Fetched as a blob (not a plain link) so the auth header goes with it.
-  const downloadInvoice = async (order) => {
+  const handleDownloadInvoice = async (order) => {
     setDownloadingInvoice(order._id);
     try {
-      const { data } = await API.get(`/orders/${order._id}/invoice`, { responseType: 'blob' });
-      const url = URL.createObjectURL(data);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Invoice-${order.invoiceNumber.replace(/[^A-Za-z0-9-]+/g, '-')}.pdf`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      await downloadInvoice(order);
+      if (!order.invoiceNumber) {
+        const { data } = await API.get('/orders');
+        setOrders(data);
+      }
     } catch {
       toast.error('Could not download the invoice. Please try again.');
     } finally {
@@ -736,9 +735,9 @@ const UserDashboard = () => {
                               {order.status}
                             </span>
                             <span className="font-bold text-accent text-xl">₹{order.totalPrice?.toLocaleString()}</span>
-                            {order.invoiceNumber && (
+                            {canDownloadInvoice(order, invoicesEnabled) && (
                               <button
-                                onClick={() => downloadInvoice(order)}
+                                onClick={() => handleDownloadInvoice(order)}
                                 disabled={downloadingInvoice === order._id}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/10 text-secondary rounded-lg text-xs font-bold hover:bg-secondary/20 transition-colors disabled:opacity-50 ml-2"
                               >

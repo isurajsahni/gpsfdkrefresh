@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { 
   createOrder, createGuestOrder, getOrders, getOrderById, updateOrderStatus, 
   getOrderStats, cancelOrder, deleteOrder, trackOrder, getShipmentTracking,
-  getShiprocketOrderDetails, syncShiprocketOrder, downloadInvoice
+  getShiprocketOrderDetails, syncShiprocketOrder, downloadInvoice, getInvoiceSettings
 } = require('../controllers/orderController');
 const { protect, admin, authorizeRoles } = require('../middleware/auth');
 const { guestOrderValidation, guestOrderLimiter, orderTrackingLimiter } = require('../middleware/validators');
@@ -14,7 +14,8 @@ router.get('/', protect, getOrders);
 // so throttling is the main defence against order/AWB enumeration.
 router.get('/track', orderTrackingLimiter, trackOrder);
 router.get('/track-awb/:awb', orderTrackingLimiter, getShipmentTracking);
-router.get('/stats', protect, authorizeRoles('order_manager'), getOrderStats);
+router.get('/invoice-settings', protect, getInvoiceSettings); // before /:id
+router.get('/stats',protect, authorizeRoles('order_manager'), getOrderStats);
 router.get('/shiprocket/:id', protect, authorizeRoles('order_manager'), getShiprocketOrderDetails);
 router.get('/:id', protect, getOrderById);
 router.get('/:id/invoice', protect, downloadInvoice);

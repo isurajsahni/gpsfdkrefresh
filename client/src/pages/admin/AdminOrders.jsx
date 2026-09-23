@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   HiOutlineChevronDown, HiOutlineChevronUp, HiOutlinePhone, HiOutlineMail, 
   HiOutlineLocationMarker, HiOutlineTrash, HiOutlineRefresh, HiOutlineCheckCircle, 
-  HiOutlineExclamationCircle, HiOutlineTruck 
+  HiOutlineExclamationCircle, HiOutlineTruck, HiOutlineDocumentDownload
 } from 'react-icons/hi';
 import API from '../../utils/api';
+import { useInvoicesEnabled, canDownloadInvoice, downloadInvoice } from '../../utils/invoice';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
 import { useAuth } from '../../context/AuthContext';
@@ -31,6 +32,8 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
   const [syncingId, setSyncingId] = useState(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(null); // order _id
+  const invoicesEnabled = useInvoicesEnabled();
   // Pagination + filters
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -96,6 +99,21 @@ const AdminOrders = () => {
       fetchOrders();
     } finally {
       setSyncingId(null);
+    }
+  };
+
+  const handleDownloadInvoice = async (order, e) => {
+    e.stopPropagation();
+    setDownloadingInvoice(order._id);
+    try {
+      await downloadInvoice(order);
+      // First download of an older order issues its invoice number — refresh
+      // so the row reflects it.
+      if (!order.invoiceNumber) fetchOrders();
+    } catch {
+      toast.error('Invoice download failed');
+    } finally {
+      setDownloadingInvoice(null);
     }
   };
 
@@ -261,6 +279,19 @@ const AdminOrders = () => {
                         </span>
                       )}
                       <span className="font-bold text-accent text-lg">₹{order.totalPrice?.toLocaleString()}</span>
+
+                      {/* Invoice — admin and order_manager (read-only is fine) */}
+                      {canDownloadInvoice(order, invoicesEnabled) && (
+                        <button
+                          onClick={(e) => handleDownloadInvoice(order, e)}
+                          disabled={downloadingInvoice === order._id}
+                          className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1 disabled:opacity-50"
+                          title={order.invoiceNumber ? `Download invoice ${order.invoiceNumber}` : 'Issue and download invoice'}
+                        >
+                          <HiOutlineDocumentDownload className={`w-3.5 h-3.5 ${downloadingInvoice === order._id ? 'animate-pulse' : ''}`} />
+                          {downloadingInvoice === order._id ? 'Downloading…' : 'Invoice'}
+                        </button>
+                      )}
 
                       {/* Delete Button - Admin Only */}
                       {canManage && (

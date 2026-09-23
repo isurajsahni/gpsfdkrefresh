@@ -386,6 +386,10 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
  * Issue (number if needed) and render the invoice for an order.
  * Returns a Resend-ready attachment: { filename, content }.
  */
+// Orders that can be invoiced: anything placed and not cancelled. A Razorpay
+// order still awaiting payment hasn't been sold yet.
+const canIssueInvoice = (order) => !['cancelled', 'payment_pending'].includes(order.status);
+
 const invoiceFilename = (order) => `Invoice-${String(order.invoiceNumber).replace(/[^A-Za-z0-9-]+/g, '-')}.pdf`;
 
 const createInvoiceAttachment = async (order, customer) => {
@@ -401,6 +405,7 @@ module.exports = {
   ensureInvoiceNumber,
   buildInvoiceData,
   renderPdf,
+  canIssueInvoice,
   invoiceFilename,
   createInvoiceAttachment,
 };

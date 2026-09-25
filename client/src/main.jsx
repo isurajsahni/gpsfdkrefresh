@@ -1,3 +1,5 @@
+// First, so storage is usable before any other module runs
+import './utils/storageFallback'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

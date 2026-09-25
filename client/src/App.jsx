@@ -10,7 +10,6 @@ import { CurrencyProvider } from './context/CurrencyContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminLayout from './components/admin/AdminLayout';
 import CartDrawer from './components/layout/CartDrawer';
 import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
@@ -20,13 +19,19 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 // Isolated Testing Pages (lazy — bypasses Router entirely)
 const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
 
-// ─── Eager (above-the-fold / very common routes) ───
-import HomePage from './pages/HomePage';
+// ─── Eager: the landing page, and the 404 fallback ───
 import StorePage from './pages/StorePage';
-import CategoryPage from './pages/CategoryPage';
-import ProductPage from './pages/ProductPage';
-import CartPage from './pages/CartPage';
 import NotFoundPage from './pages/NotFoundPage';
+
+// ─── Common next steps: on demand, but fetched in the background once the
+// first page has settled (see App), so opening one is still instant ───
+const loadCategoryPage = () => import('./pages/CategoryPage');
+const loadProductPage = () => import('./pages/ProductPage');
+const CategoryPage = lazy(loadCategoryPage);
+const ProductPage = lazy(loadProductPage);
+const HomePage = lazy(() => import('./pages/HomePage'));
+const CartPage = lazy(() => import('./pages/CartPage'));
+const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 
 // ─── Code-split (everything else loads on demand) ───
 // Each lazy() call becomes its own chunk, so guests on the homepage no longer
@@ -107,7 +112,7 @@ const getVisitorId = () => {
   return id;
 };
 
-const captureUTMOnce = () => {
+const captureUTM = () => {
   // Only capture UTM params on the very first page load of the session
   if (sessionStorage.getItem('utm_captured')) return;
   const params = new URLSearchParams(window.location.search);
@@ -121,6 +126,14 @@ const captureUTMOnce = () => {
     sessionStorage.setItem('initial_referrer', document.referrer);
   }
   sessionStorage.setItem('utm_captured', 'true');
+};
+
+const captureUTMOnce = () => {
+  try {
+    captureUTM();
+  } catch {
+    // Attribution is best-effort and must never stop the app from starting
+  }
 };
 
 function ScrollManager() {
@@ -184,6 +197,15 @@ const GlobalUI = () => {
 function App() {
   useEffect(() => {
     captureUTMOnce();
+  }, []);
+
+  // Warm the category and product pages once the browser is idle
+  useEffect(() => {
+    const whenIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 2000));
+    whenIdle(() => {
+      loadCategoryPage().catch(() => {});
+      loadProductPage().catch(() => {});
+    });
   }, []);
 
   // --- ISOLATED PREVIEW ROUTE ---

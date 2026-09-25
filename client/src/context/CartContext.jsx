@@ -6,6 +6,21 @@ const CartContext = createContext();
 
 const PRICE_REFRESH_GAP_MS = 60 * 1000;
 
+// A damaged cart, or one saved in a shape this build doesn't expect, must not
+// break the site on every visit: keep the lines that are still usable.
+const readSavedCart = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('cart'));
+    if (!Array.isArray(saved)) return [];
+    return saved.filter((item) =>
+      item && typeof item === 'object' && item.key &&
+      Number.isFinite(item.price) && Number.isInteger(item.quantity) && item.quantity > 0
+    );
+  } catch {
+    return [];
+  }
+};
+
 // The catalogue variation a cart line was added as: by id, else by the same
 // attributes (the server prices orders the same way).
 const matchVariation = (product, variation = {}) => {
@@ -23,13 +38,14 @@ const matchVariation = (product, variation = {}) => {
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState(() => {
-    const stored = localStorage.getItem('cart');
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [cartItems, setCartItems] = useState(readSavedCart);
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
+    try {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    } catch {
+      // Storage full: the cart still works for this visit
+    }
   }, [cartItems]);
 
   const addToCart = (product, variation, quantity = 1, customText = '', uploadedImageUrl = '') => {

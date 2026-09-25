@@ -111,6 +111,9 @@ const ProductPage = () => {
         }
       } catch (err) {
         console.error(err);
+        // Don't leave the previous product on screen (and addable to the cart)
+        // under this product's URL
+        setProduct(null);
       }
       setLoading(false);
     };

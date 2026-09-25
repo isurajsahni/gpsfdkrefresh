@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiOutlineSearch, HiOutlineHome, HiOutlineShoppingBag, HiOutlineViewGrid } from 'react-icons/hi';
+import { HiOutlineSearch, HiOutlineHome, HiOutlinePhotograph, HiOutlineViewGrid, HiOutlineSparkles } from 'react-icons/hi';
 import API from '../utils/api';
 import SEO from '../components/seo/SEO';
+
+const QUICK_LINKS = [
+  { to: '/', label: 'Home', hint: 'Back to the main page', Icon: HiOutlineHome },
+  { to: '/canvas', label: 'Canvas', hint: 'Wall art collections', Icon: HiOutlineViewGrid },
+  { to: '/house-nameplates', label: 'Nameplates', hint: 'Custom house nameplates', Icon: HiOutlineSparkles },
+  { to: '/customize-canvas', label: 'Customize', hint: 'Turn a photo into art', Icon: HiOutlinePhotograph },
+];
 
 const NotFoundPage = () => {
   const location = useLocation();
@@ -88,10 +95,12 @@ const NotFoundPage = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for premium canvases, frames..."
+              aria-label="Search the site"
               className="w-full pl-5 pr-12 py-4 bg-white border border-gray-200 rounded-full text-base focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 shadow-sm transition-all"
             />
             <button 
               type="submit"
+              aria-label="Search"
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-accent text-white rounded-full hover:bg-accent-dark transition-colors"
             >
               <HiOutlineSearch className="w-5 h-5" />
@@ -104,31 +113,17 @@ const NotFoundPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12 max-w-2xl mx-auto pt-8 border-t border-gray-100"
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 max-w-3xl mx-auto pt-8 border-t border-gray-100"
         >
-          <Link to="/" className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
-            <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-accent transition-colors">
-              <HiOutlineHome className="w-6 h-6 text-accent group-hover:text-white" />
-            </div>
-            <span className="font-heading font-semibold text-secondary">Return Home</span>
-            <span className="text-xs text-gray-400 mt-1">Back to the main page</span>
-          </Link>
-          
-          <Link to="/canvas" className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
-            <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-accent transition-colors">
-              <HiOutlineViewGrid className="w-6 h-6 text-accent group-hover:text-white" />
-            </div>
-            <span className="font-heading font-semibold text-secondary">Our Categories</span>
-            <span className="text-xs text-gray-400 mt-1">Explore all collections</span>
-          </Link>
-
-          <Link to="/search" className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
-            <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-accent transition-colors">
-              <HiOutlineShoppingBag className="w-6 h-6 text-accent group-hover:text-white" />
-            </div>
-            <span className="font-heading font-semibold text-secondary">All Products</span>
-            <span className="text-xs text-gray-400 mt-1">Discover luxury items</span>
-          </Link>
+          {QUICK_LINKS.map(({ to, label, hint, Icon }) => (
+            <Link key={to} to={to} className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
+              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-accent transition-colors">
+                <Icon className="w-6 h-6 text-accent group-hover:text-white" aria-hidden="true" />
+              </div>
+              <span className="font-heading font-semibold text-secondary">{label}</span>
+              <span className="text-xs text-gray-400 mt-1">{hint}</span>
+            </Link>
+          ))}
         </motion.div>
       </div>
     </div>

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import API from '../utils/api';
+import API, { cachedGet } from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
@@ -88,7 +88,7 @@ const ProductPage = () => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const { data } = await API.get(`/products/${slug}`);
+        const data = await cachedGet(`/products/${slug}`);
         setProduct(data);
         // Size and text the buyer already picked on the category listing
         const prefill = location.state || {};
@@ -325,8 +325,9 @@ const ProductPage = () => {
               Nameplates are landscape, so they get a 2:1.5 main image with the
               thumbnail strip stacked underneath it at every width. */}
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
             className={`flex flex-col gap-3 ${isNameplate ? 'self-start' : 'md:flex-row'}`}
           >
             {/* Thumbnails — horizontal on mobile, vertical on desktop */}
@@ -339,7 +340,7 @@ const ProductPage = () => {
                       }`}
                     onClick={() => setSelectedImage(index)}
                   >
-                    <img src={optimizeImage(img.url, 200)} alt="" onError={handleImageError} className="w-full h-full object-cover" />
+                    <img src={optimizeImage(img.url, 200)} alt="" onError={handleImageError} className="w-full h-full object-cover" loading="lazy" decoding="async" />
                   </div>
                 ))}
               </div>
@@ -356,9 +357,12 @@ const ProductPage = () => {
               <div className={`${isNameplate ? 'aspect-[4/3]' : 'aspect-[4/5]'} w-full relative overflow-hidden rounded-2xl bg-white`}>
                 <motion.img
                   key={selectedImage}
-                  initial={{ opacity: 0 }}
+                  // The first image is the page's largest paint: show it at
+                  // once, and only fade when switching between images
+                  initial={selectedImage === 0 ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  fetchPriority="high"
                   src={optimizeImage(product.images?.[selectedImage]?.url || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=900', 1200)}
                   alt={product.name}
                   onError={handleImageError}
@@ -369,8 +373,9 @@ const ProductPage = () => {
             </div>
           </motion.div>
 
-          {/* Details */}
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}>
+          {/* Details — not animated in: the price and Add to Cart must be
+              readable the moment the page appears */}
+          <div>
             <h1 className="text-3xl md:text-4xl font-heading font-bold text-secondary">{product.name}</h1>
 
 
@@ -591,7 +596,7 @@ const ProductPage = () => {
                 </button>
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 

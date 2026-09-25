@@ -30,7 +30,47 @@
       ],
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/product/:slug"
     },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    {
+      "source": "/wall-canvas/:collection",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
+        }
+      ],
+      "destination": "https://gpsfdkrefresh.onrender.com/api/share/collection/:collection"
+    },
+    {
+      "source": "/blog/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
+        }
+      ],
+      "destination": "https://gpsfdkrefresh.onrender.com/api/share/blog/:slug"
+    },
+    {
+      "source": "/:page(canvas|customize-canvas|house-nameplates|about|contact|consultancy|faq|blog|shipping-policy|returns-refunds|privacy-policy|terms-conditions|track-order|ceo|vision|support|premium-wall-canvas-india)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
+        }
+      ],
+      "destination": "https://gpsfdkrefresh.onrender.com/api/share/page/:page"
+    },
+    { "source": "/:page(home|store|search|customize-canvas|cart|login|register|forgot-password|whatsapp-login|blog|about|ceo|vision|consultancy|contact|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|school-of-learning|love|partner|support|checkout|thank-you|dashboard|track-order|premium-wall-canvas-india|canvas|consultancy-v2-demo|house-nameplates)", "destination": "/index.html" },
+    { "source": "/product/:slug", "destination": "/index.html" },
+    { "source": "/blog/:slug", "destination": "/index.html" },
+    { "source": "/location/:city", "destination": "/index.html" },
+    { "source": "/wall-canvas/:collection(all|ink--interval|the-sassy-classic|tethered-horizons|the-botanical-muse|the-celestial-frontier|the-ethereal-gaze|the-gaze-of-power|the-modern-legend|the-gilded-bloom|the-velocity-suite|millionaire-art|nostalgia-noir|the-after-hour-suite|the-wild-eccentrics)", "destination": "/index.html" },
+    { "source": "/admin/:path*", "destination": "/index.html" },
+    { "source": "/marketing/:path*", "destination": "/index.html" },
+    { "source": "/invoice-preview/:path*", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -56,7 +96,7 @@
         { "key": "Reporting-Endpoints", "value": "csp-endpoint=\"https://gpsfdkrefresh.onrender.com/api/csp-report\"" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'sha256-GrVK2ylU1ms4yO7FrCcu2iXqECjbZUqYvgBXn48pf64=' 'sha256-egQy6ZRhxe6401vhUzCxDWhiynpY4GLtm9aZEV8gmLo=' https://ajax.googleapis.com https://www.gstatic.com https://*.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://*.stripe.com https://js.stripe.com https://connect.facebook.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com https://www.facebook.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; connect-src 'self' https://ar-sage-eight.vercel.app https://www.gstatic.com https://gpsfdkrefresh.onrender.com https://*.onrender.com https://*.razorpay.com https://*.stripe.com https://api.stripe.com https://api.postalpincode.in https://www.facebook.com https://*.facebook.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com; frame-src 'self' https://*.razorpay.com https://*.stripe.com https://checkout.razorpay.com https://api.razorpay.com https://js.stripe.com https://*.facebook.com https://www.facebook.com; child-src 'self' https://*.razorpay.com https://*.stripe.com https://checkout.razorpay.com https://api.razorpay.com; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; report-uri https://gpsfdkrefresh.onrender.com/api/csp-report; report-to csp-endpoint;"
+          "value": "default-src 'self'; script-src 'self' 'sha256-GrVK2ylU1ms4yO7FrCcu2iXqECjbZUqYvgBXn48pf64=' 'sha256-egQy6ZRhxe6401vhUzCxDWhiynpY4GLtm9aZEV8gmLo=' https://ajax.googleapis.com https://www.gstatic.com https://*.razorpay.com https://checkout.razorpay.com https://cdn.razorpay.com https://*.stripe.com https://js.stripe.com https://connect.facebook.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com https://www.facebook.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com; connect-src 'self' https://ar-sage-eight.vercel.app https://www.gstatic.com https://gpsfdkrefresh.onrender.com https://*.onrender.com https://api.cloudinary.com https://*.razorpay.com https://*.stripe.com https://api.stripe.com https://api.postalpincode.in https://www.facebook.com https://*.facebook.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://va.vercel-scripts.com; frame-src 'self' https://*.razorpay.com https://*.stripe.com https://checkout.razorpay.com https://api.razorpay.com https://js.stripe.com https://*.facebook.com https://www.facebook.com; child-src 'self' https://*.razorpay.com https://*.stripe.com https://checkout.razorpay.com https://api.razorpay.com; media-src 'self' blob:; worker-src 'self' blob:; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; report-uri https://gpsfdkrefresh.onrender.com/api/csp-report; report-to csp-endpoint;"
         }
 
       ]

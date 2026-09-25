@@ -35,12 +35,21 @@ export const optimizeImage = (url, width) => {
       // Construct transformation string
       // Always include f_auto,q_auto
       let transform = 'f_auto,q_auto';
-      
+
       // If width is provided, add scaling transformation
       if (width) {
         transform += `,w_${width},c_limit`;
       }
-      
+
+      // A URL may already carry transformations (a customer's crop:
+      // /upload/c_crop,x_…/v123/…). Chain ours after them, just before the
+      // version segment, so the crop is taken from the full-size image and
+      // only then resized.
+      const versioned = /^(.*?\/)?(v\d+\/.*)$/.exec(parts[1]);
+      if (versioned && versioned[1]) {
+        return `${parts[0]}/upload/${versioned[1]}${transform}/${versioned[2]}`;
+      }
+
       // Reconstruct the URL with the transformation
       return `${parts[0]}/upload/${transform}/${parts[1]}`;
     }

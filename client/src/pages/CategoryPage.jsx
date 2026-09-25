@@ -1,26 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import API from '../utils/api';
+import { cachedGet } from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
+import ProductCard, { ProductCardSkeleton } from '../components/product/ProductCard';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
-import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
+import { optimizeImage } from '../utils/imageOptimizer';
+import { COLLECTIONS as SUBCATEGORIES, ALL_PRODUCTS_SLUG, collectionSlug as generateSlug } from '../utils/collections';
+import { CANVAS_PATH } from '../utils/categoryPath';
 
-const SUBCATEGORIES = [
-  'Ink & Interval', 'The Sassy Classic', 'Tethered Horizons', 'The Botanical Muse',
-  'The Celestial Frontier', 'The Ethereal Gaze', 'The Gaze of Power',
-  'The Modern Legend', 'The Gilded Bloom', 'The Velocity Suite',
-  'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'The Wild Eccentrics'
-];
+// /wall-canvas/all lists every canvas; /wall-canvas itself redirects to the
+// /canvas landing page.
 
-// /wall-canvas/all: every canvas across the collections, best sellers first.
-// (/wall-canvas itself redirects to the /canvas landing page.)
-const ALL_PRODUCTS_SLUG = 'all';
+const SITE_URL = 'https://www.gpsfdk.com';
+const PAGE_SIZE = 12;
 
 // Rendered by ProductZigzagPage, which fetches its own products
 const ZIGZAG_SLUG = 'house-nameplates';
@@ -47,8 +45,6 @@ const CategoryPage = () => {
   const { setIsCartOpen } = useUI();
   const { formatPrice } = useCurrency();
 
-  const generateSlug = (text) => text ? text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '') : '';
-
   const exactSubcategory = subcategorySlug 
     ? SUBCATEGORIES.find(s => generateSlug(s) === subcategorySlug)
     : null;
@@ -60,6 +56,16 @@ const CategoryPage = () => {
   // for whatever was typed.
   const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory && !isAllProducts;
   const displaySubcategory = exactSubcategory || (isAllProducts ? 'All Canvas Wall Art' : null);
+
+  // On phones the collection chips are one sideways-scrolling row: bring the
+  // current collection's chip into view
+  const chipRowRef = useRef(null);
+  useEffect(() => {
+    const row = chipRowRef.current;
+    const active = row?.querySelector('[data-active="true"]');
+    if (!row || !active || row.scrollWidth <= row.clientWidth) return;
+    row.scrollLeft = active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2;
+  }, [subcategorySlug]);
 
   useEffect(() => {
     if (isUnknownSubcategory) return;
@@ -74,7 +80,7 @@ const CategoryPage = () => {
       const params = {
         categorySlug: slug,
         page: currentPage,
-        limit: 12,
+        limit: PAGE_SIZE,
       };
 
       if (exactSubcategory) params.subCategoryExact = exactSubcategory;
@@ -85,9 +91,9 @@ const CategoryPage = () => {
       const [catResult, productsResult] = await Promise.allSettled([
         // Refetch when the slug changes: the component is reused across category
         // routes, so a stale category would title /house-nameplates "Wall Canvas".
-        category?.slug !== slug ? API.get(`/categories/${slug}`) : null,
+        category?.slug !== slug ? cachedGet(`/categories/${slug}`) : null,
         // The nameplate listing (ProductZigzagPage) loads its own products.
-        slug === ZIGZAG_SLUG ? null : API.get('/products', { params }),
+        slug === ZIGZAG_SLUG ? null : cachedGet('/products', { params }),
       ]);
       if (cancelled) return;
 
@@ -96,12 +102,12 @@ const CategoryPage = () => {
         setLoading(false);
         return;
       }
-      if (catResult.value) setCategory(catResult.value.data);
+      if (catResult.value) setCategory(catResult.value);
 
       if (productsResult.status === 'rejected') {
         console.error(productsResult.reason);
       } else if (productsResult.value) {
-        const { data } = productsResult.value;
+        const data = productsResult.value;
         setIsEmpty(data.total === 0);
         setTotalProducts(data.total);
         setTotalPages(data.pages);
@@ -150,6 +156,30 @@ const CategoryPage = () => {
 
   const dynamicDescription = category?.description || "Browse our exclusive collection of premium canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
 
+  // Home → category (→ collection), mirroring the visible navigation
+  const breadcrumbSchema = category?.name ? {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+      displaySubcategory
+        ? { '@type': 'ListItem', position: 2, name: category.name, item: `${SITE_URL}${slug === 'wall-canvas' ? CANVAS_PATH : `/${slug}`}` }
+        : { '@type': 'ListItem', position: 2, name: category.name },
+      ...(displaySubcategory ? [{ '@type': 'ListItem', position: 3, name: displaySubcategory }] : []),
+    ],
+  } : null;
+  // The collection's own products, for search engines' "ItemList" rich results
+  const itemListSchema = !loading && products.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: products.map((product, i) => ({
+      '@type': 'ListItem',
+      position: (currentPage - 1) * PAGE_SIZE + i + 1,
+      url: `${SITE_URL}/product/${product.slug}`,
+      name: product.name,
+    })),
+  } : null;
+
   // House Nameplates special handling
   if (slug === ZIGZAG_SLUG) {
     return <ProductZigzagPage category={category} slug={slug} />;
@@ -159,69 +189,77 @@ const CategoryPage = () => {
     <div className="min-h-screen bg-gray-50 pt-[60px] pb-12">
       {/* An empty listing is a soft 404; it becomes indexable again on its own
           once products are added. */}
-      <SEO title={dynamicTitle} description={dynamicDescription} noindex={isEmpty} />
+      <SEO
+        title={dynamicTitle}
+        description={dynamicDescription}
+        image={products[0]?.images?.[0]?.url ? optimizeImage(products[0].images[0].url, 1200) : undefined}
+        schema={[breadcrumbSchema, itemListSchema].filter(Boolean)}
+        noindex={isEmpty}
+      />
       
       {/* Header Area */}
       {slug === 'wall-canvas' ? (
-        <div className="bg-secondary section-padding py-12 md:py-20 text-center text-white relative flex flex-col items-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-6xl font-heading font-normal mb-10 tracking-[0.05em] text-white"
-          >
-            Canvas for your soul
-          </motion.h1>
+        // Kept short so the first products are visible without scrolling:
+        // one scrolling row of collections on phones, wrapped rows on desktop.
+        <div className="bg-secondary section-padding py-6 md:py-10 text-center text-white relative flex flex-col items-center">
+          <h1 className="text-3xl md:text-5xl font-heading font-normal mb-4 md:mb-6 tracking-[0.05em] text-white">
+            {displaySubcategory && !isAllProducts ? displaySubcategory : 'Canvas for your soul'}
+          </h1>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="max-w-5xl w-full border border-accent/40 rounded-2xl p-[16px] md:p-8 text-left bg-black/10 backdrop-blur-sm"
-          >
-            <h3 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
-            <div className="flex flex-wrap gap-x-3 gap-y-4">
-              <Link to={`/wall-canvas/${ALL_PRODUCTS_SLUG}`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isAllProducts ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+          <div className="max-w-5xl w-full border border-accent/40 rounded-2xl p-3 md:p-6 text-left bg-black/10 backdrop-blur-sm">
+            <h2 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-3 md:mb-4">MATCH YOUR VIBE</h2>
+            <div ref={chipRowRef} className="relative flex flex-nowrap md:flex-wrap gap-x-3 md:gap-y-3 overflow-x-auto md:overflow-visible scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 pb-1 md:pb-0">
+              <Link to={`/wall-canvas/${ALL_PRODUCTS_SLUG}`} data-active={isAllProducts} aria-current={isAllProducts ? 'page' : undefined} className={`shrink-0 whitespace-nowrap px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isAllProducts ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                 All Products
               </Link>
               {SUBCATEGORIES.map(sub => {
                 const subSlug = generateSlug(sub);
                 const isActive = subcategorySlug === subSlug;
                 return (
-                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} data-active={isActive} aria-current={isActive ? 'page' : undefined} className={`shrink-0 whitespace-nowrap px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                     {sub}
                   </Link>
                 );
               })}
             </div>
-          </motion.div>
+          </div>
         </div>
       ) : (
         <div className="bg-secondary section-padding py-16">
           <div className="max-w-[1200px] mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+            <div>
               <nav className="text-white/50 text-sm mb-4">
                 <Link to="/" className="hover:text-white">Home</Link> <span className="mx-2">/</span>
                 {subcategorySlug ? (
                   <>
-                    <Link to={`/${slug}`} className="hover:text-white">{category?.name || slug}</Link>
+                    <Link to={`/${slug}`} className="hover:text-white">{category?.name || '…'}</Link>
                     <span className="mx-2">/</span> <span className="text-white">{displaySubcategory}</span>
                   </>
                 ) : (
-                  <span className="text-white">{category?.name || slug}</span>
+                  <span className="text-white">{category?.name || '…'}</span>
                 )}
               </nav>
-              <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{displaySubcategory || category?.name || slug}</h1>
+              {displaySubcategory || category?.name ? (
+                <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{displaySubcategory || category.name}</h1>
+              ) : (
+                <div className="h-12 w-64 max-w-full rounded-lg bg-white/10 animate-pulse" aria-hidden="true" />
+              )}
               <p className="text-white/60 mt-3 max-w-xl">{category?.description}</p>
-            </motion.div>
+            </div>
           </div>
         </div>
       )}
 
       <div className="max-w-[1400px] mx-auto px-[15px] py-10">
-        <div className="flex items-center justify-between mb-8">
-          <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} products</p>
+        <div className="flex items-center justify-between mb-8 min-h-[24px]">
+          {!loading && products.length > 0 && (
+            <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} products</p>
+          )}
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" aria-busy="true" aria-label="Loading products">
+            {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
@@ -270,33 +308,14 @@ const CategoryPage = () => {
                 return (
                   <motion.div
                     key={`${product._id}-${i}`}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: (i % 12) * 0.05 }}
+                    transition={{ duration: 0.2, delay: Math.min(i, 8) * 0.02 }}
                   >
-                    <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
                     {slug === 'wall-canvas' ? (
-                      <div className="bg-[#fff7e7] rounded-xl p-[10px] h-full flex flex-col transition-transform duration-300 hover:-translate-y-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)]" data-badge={badgeType}>
-                        <div className="relative aspect-[4/5] w-full rounded-lg overflow-hidden mb-5 bg-white shadow-sm">
-                          <div 
-                            className={`absolute top-2 left-2 z-10 text-[10px] px-2 py-1 rounded font-semibold text-white uppercase tracking-wider ${badgeColors[badgeType] || ''}`}
-                            style={{ display: badgeType ? 'block' : 'none' }}
-                          >
-                            {badgeLabels[badgeType] || ''}
-                          </div>
-                          <img src={optimizeImage(product.images?.[0]?.url, 500)} alt={product.name} onError={handleImageError} className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" loading="lazy" />
-                        </div>
-                        <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
-                          <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
-                          <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
-                            {hasPriceRange ? `Starting from ${formatPrice(minPrice)}` : formatPrice(product.basePrice)}
-                          </p>
-                        </div>
-                        <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">
-                          Full details
-                        </div>
-                      </div>
+                      <ProductCard product={product} onClick={handleProductClick} />
                     ) : (
+                    <Link to={`/product/${product.slug}`} onClick={handleProductClick} className="group block h-full">
                       <div className="bg-white rounded-xl shadow-sm border border-gray-100 hover:border-gray-200 p-3 h-full flex flex-col transition-all hover:shadow-md" data-badge={badgeType}>
                         <div className="relative aspect-[3/4] rounded-lg overflow-hidden bg-cream-dark mb-4">
                           <div 
@@ -344,8 +363,8 @@ const CategoryPage = () => {
                           </div>
                         </div>
                       </div>
-                    )}
                     </Link>
+                    )}
                   </motion.div>
                 );
               })}

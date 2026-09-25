@@ -197,7 +197,7 @@ export default function ProductGrid() {
             // ~2500px tall on a phone, and a fraction of that would leave the
             // first card blank for a long scroll.
             viewport={{ once: true, margin: '0px 0px -80px 0px' }}
-            variants={stagger(0.06)}
+            variants={stagger(0.03)}
             className={GRID}
           >
             {products.map((p) => (

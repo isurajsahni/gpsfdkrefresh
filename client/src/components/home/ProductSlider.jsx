@@ -7,7 +7,7 @@ import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useUI } from '../../context/UIContext';
 import { optimizeImage } from '../../utils/imageOptimizer';
-import API from '../../utils/api';
+import { cachedGet } from '../../utils/api';
 import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
@@ -47,14 +47,12 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
         let data;
         if (hotSelling) {
           // Use the dedicated hot-selling endpoint
-          const res = await API.get('/products/hot-selling');
-          data = res.data;
+          data = await cachedGet('/products/hot-selling');
         } else {
           const params = { limit: 12 };
           if (featured) params.featured = true;
           if (categorySlug) params.categorySlug = categorySlug;
-          const res = await API.get('/products', { params });
-          data = res.data;
+          data = await cachedGet('/products', { params });
         }
         if (excludeId) {
           setProducts(data.products.filter(p => p._id !== excludeId));
@@ -68,8 +66,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             const params = { limit: 20 };
             params.featured = true;
             if (categorySlug) params.categorySlug = categorySlug;
-            const fallbackRes = await API.get('/products', { params });
-            const fallbackProducts = fallbackRes.data.products || [];
+            const fallbackProducts = (await cachedGet('/products', { params })).products || [];
             if (excludeId) {
               setProducts(fallbackProducts.filter(p => p._id !== excludeId));
             } else {

@@ -4,10 +4,12 @@ import API from '../utils/api';
 const CurrencyContext = createContext();
 
 /* The last detected currency, so a returning visitor sees their own prices
-   straight away instead of ₹ for a second first. It's still re-checked in the
-   background on every load, and dropped after a week. */
+   straight away instead of ₹ for a second first. It's re-checked in the
+   background once per browser session, and dropped after a week. */
 const GEO_CACHE_KEY = 'gpsfdk_geo_pricing';
 const GEO_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Set once this tab has re-checked the location with the server
+const GEO_CHECKED_KEY = 'gpsfdk_geo_checked';
 
 const readCachedGeo = () => {
   try {
@@ -22,8 +24,17 @@ const readCachedGeo = () => {
 const writeCachedGeo = (data) => {
   try {
     localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ data, at: Date.now() }));
+    sessionStorage.setItem(GEO_CHECKED_KEY, '1');
   } catch {
     // Storage full or blocked: the cache is only a nicety
+  }
+};
+
+const checkedThisSession = () => {
+  try {
+    return sessionStorage.getItem(GEO_CHECKED_KEY) === '1';
+  } catch {
+    return false;
   }
 };
 
@@ -56,8 +67,12 @@ export const CurrencyProvider = ({ children }) => {
   // Allow manual country override (optional feature)
   const [manualCountry, setManualCountry] = useState(null);
 
-  // Fetch geo data from backend on mount
+  // Fetch geo data from backend on mount — once per browser session: a
+  // visitor's country doesn't change between page loads, and each check is a
+  // round trip to the API
   useEffect(() => {
+    if (!manualCountry && readCachedGeo() && checkedThisSession()) return;
+
     const fetchGeo = async () => {
       try {
         const url = manualCountry ? `/pricing?country=${manualCountry}` : '/pricing';

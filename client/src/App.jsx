@@ -235,6 +235,9 @@ function App() {
               <GlobalUI />
 
               <Suspense fallback={<SuspenseFallback />}>
+              {/* Every route here also needs a rewrite in client/vercel.json.
+                  Without one, Vercel serves it from 404.html: the page still
+                  renders, but with a 404 status, so search engines drop it. */}
               <Routes>
                 {/* Public */}
                 <Route path="/" element={<><StorePage /><Footer /></>} />

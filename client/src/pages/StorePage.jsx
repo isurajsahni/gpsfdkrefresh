@@ -70,7 +70,8 @@ const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
 );
 
 // One slide in the marquee — links through to the wall-canvas collection.
-const GalleryImage = ({ src, width }) => (
+// The first set is on screen at load, so it loads eagerly and first.
+const GalleryImage = ({ src, width, eager }) => (
   <Link
     to="/canvas"
     style={{ width, height: GALLERY_HEIGHT }}
@@ -79,7 +80,9 @@ const GalleryImage = ({ src, width }) => (
     <img
       src={src}
       alt="Customers with their canvases"
-      loading="lazy"
+      loading={eager ? 'eager' : 'lazy'}
+      fetchPriority={eager ? 'high' : 'auto'}
+      decoding="async"
       onError={handleImageError}
       className="w-full h-full object-cover"
     />
@@ -126,7 +129,8 @@ const ArtworkVideo = ({ src, isUnmuted }) => {
         if (entry.isIntersecting) el.play().catch(() => {});
         else el.pause();
       },
-      { rootMargin: '100px' },
+      // Start loading a little before the slide scrolls into view
+      { rootMargin: '300px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -145,8 +149,11 @@ const ArtworkVideo = ({ src, isUnmuted }) => {
       muted
       loop
       playsInline
-      preload="metadata"
-      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+      // Nothing downloads until the slide nears the screen (the observer above
+      // calls play()); with 16 slides below the fold, even "metadata" meant 16
+      // requests on every homepage load.
+      preload="none"
+      className="w-full h-full object-cover bg-[#F5F5F7] transition-transform duration-700 group-hover:scale-105"
     />
   );
 };
@@ -226,6 +233,7 @@ const OverlayCard = ({ title, blurb, image, gradient, dark }) => (
       src={image}
       alt={title}
       loading="lazy"
+      decoding="async"
       onError={handleImageError}
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
     />
@@ -294,7 +302,7 @@ const StorePage = () => {
               always be ≥ viewport + one set wide or a blank gap scrolls through
               at the end of each cycle (covers viewports up to ~3200px). */}
           {[...HERO_STRIP, ...HERO_STRIP, ...HERO_STRIP, ...HERO_STRIP].map((src, i) => (
-            <GalleryImage key={i} src={src} width={GALLERY_WIDTHS[i % HERO_STRIP.length]} />
+            <GalleryImage key={i} src={src} width={GALLERY_WIDTHS[i % HERO_STRIP.length]} eager={i < HERO_STRIP.length} />
           ))}
         </motion.div>
       </section>
@@ -314,6 +322,7 @@ const StorePage = () => {
                   src={o.img}
                   alt={o.label}
                   loading="lazy"
+                  decoding="async"
                   onError={handleImageError}
                   style={{ width: o.width }}
                   className="h-auto max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
@@ -345,6 +354,7 @@ const StorePage = () => {
                 src={giftedImg}
                 alt="Family gifting a framed canvas"
                 loading="lazy"
+                decoding="async"
                 onError={handleImageError}
                 className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
               />

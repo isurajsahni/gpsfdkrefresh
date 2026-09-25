@@ -200,6 +200,14 @@ body {
   .h-screen {
     height: 100dvh;
   }
+  /* Sideways-scrolling rows (collection chips, image thumbnails): still
+     scrollable by touch, wheel and keyboard, without a visible bar */
+  .scrollbar-hide {
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer base {

@@ -1,53 +1,11 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
 const router = express.Router();
 const Product = require('../models/Product');
 const Category = require('../models/Category');
 
-// Fallback blog slugs — complete list mirroring client/src/content/blogs/index.js.
-// Used when the client folder isn't present (e.g. on the Render deployment,
-// which only ships the server/ directory).
-const FALLBACK_BLOG_SLUGS = [
-  'ultimate-guide-wall-canvas-living-room',
-  'photo-to-canvas-memories-gallery-art',
-  'what-is-gallery-wrapped-canvas',
-  'aesthetic-wall-art-trends-indian-homes',
-  'canvas-vs-framed-prints-best-investment',
-  'how-to-hang-large-canvas-prints',
-  'cleaning-maintaining-canvas-wall-decor',
-  'styling-bedroom-modern-canvas-art',
-  'custom-canvas-prints-anniversary-gift',
-  'split-canvas-prints-multi-panel-display',
-  'eco-friendly-sustainable-canvas-prints-india',
-  'transforming-home-offices-wall-canvas',
-  'buyer-guide-museum-grade-canvas-worth-it',
-  'wall-canvas-size-guide-living-room-layouts',
-  'vaastu-wall-art-canvas-painting-ideas-positive-energy',
-  'luxury-wall-decor-trends-2026-japandi-abstract',
-  'why-uv-resistant-canvas-prints-matter-india'
-];
-
-// At module load, try to extract slugs from the client blog registry so the
-// sitemap stays in sync automatically in local/monorepo deployments.
-const loadBlogSlugs = () => {
-  try {
-    const blogIndexPath = path.resolve(__dirname, '..', '..', 'client', 'src', 'content', 'blogs', 'index.js');
-    const source = fs.readFileSync(blogIndexPath, 'utf8');
-    const slugs = [];
-    const slugRegex = /slug:\s*['"]([^'"]+)['"]/g;
-    let match;
-    while ((match = slugRegex.exec(source)) !== null) {
-      slugs.push(match[1]);
-    }
-    if (slugs.length > 0) return slugs;
-  } catch (err) {
-    // Client folder not deployed alongside server — expected on Render.
-  }
-  return FALLBACK_BLOG_SLUGS;
-};
-
-const blogSlugs = loadBlogSlugs();
+// Blog slugs come from the client's blog registry when it's deployed alongside
+// the server, else from a fallback list (see utils/blogRegistry.js).
+const blogSlugs = require('../utils/blogRegistry').blogPosts.map((post) => post.slug);
 
 // In-memory cache of the generated XML — sitemap data changes rarely, so skip
 // the DB queries for an hour at a time.

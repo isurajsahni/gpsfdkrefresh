@@ -1,7 +1,11 @@
+# Run this on a paid instance in the Singapore region: the free tier sleeps
+# (30–60 s cold starts) and a far region adds ~1 s to every request from India.
+# See "Hosting the API on Render" in the README.
 services:
   - type: web
     name: gpsfdk-api
     env: node
+    healthCheckPath: /api/health
     buildCommand: npm install
     startCommand: node index.js
     envVars:

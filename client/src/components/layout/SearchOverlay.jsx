@@ -1,79 +1,62 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineSearch, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineSearch, HiOutlineX, HiOutlineCollection, HiOutlineViewGrid } from 'react-icons/hi';
 import { useUI } from '../../context/UIContext';
-// import API from '../../utils/api'; // Not needed for mock data
-// import { optimizeImage } from '../../utils/imageOptimizer'; // Not needed for mock data
+import { useCurrency } from '../../context/CurrencyContext';
+import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
+import {
+  loadSearchIndex, searchCatalogue, popularProducts, POPULAR_COLLECTIONS, SEARCH_CATEGORIES,
+} from '../../utils/searchIndex';
 
-// Using favicon from public folder as requested
-const MOCK_DATA = [
-  {
-    id: 1,
-    name: 'Premium Canvas',
-    category: 'Wall Art',
-    price: '₹2,499',
-    logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
-    slug: 'canvas',
-    description: 'Elevate your space with our premium quality matte canvas prints.'
-  },
-  {
-    id: 2,
-    name: 'Acrylic House Nameplate',
-    category: 'House Nameplates',
-    price: '₹1,299',
-    logoUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop',
-    slug: 'house-nameplates',
-    description: 'Weatherproof, elegant acrylic nameplates for your modern home.'
-  },
-  {
-    id: 3,
-    name: 'Millionaire Art Series',
-    category: 'Wall Art',
-    price: '₹4,999',
-    logoUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop',
-    slug: 'wall-canvas/millionaire-art',
-    description: 'Exclusive, limited edition art pieces for the ambitious.'
-  },
-  {
-    id: 4,
-    name: 'Custom Canvas Print',
-    category: 'Customize',
-    price: '₹1,999',
-    logoUrl: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?q=80&w=600&auto=format&fit=crop',
-    slug: 'customize-canvas',
-    description: 'Turn your favorite memories into beautiful custom wall art.'
-  },
-  {
-    id: 5,
-    name: 'The Botanical Muse',
-    category: 'Wall Art',
-    price: '₹3,499',
-    logoUrl: 'https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=600&auto=format&fit=crop',
-    slug: 'wall-canvas/the-botanical-muse',
-    description: 'Nature-inspired art that brings life and color to any room.'
-  }
+const DEBOUNCE_MS = 250;
+const MAX_PRODUCTS = 6;
+
+// Flatten the result groups into one keyboard-navigable list
+const toEntries = ({ products, collections, categories }) => [
+  ...products.map((p) => ({ kind: 'product', key: `p-${p.id}`, path: `/product/${p.slug}`, item: p })),
+  ...collections.map((c) => ({ kind: 'collection', key: `c-${c.path}`, path: c.path, item: c })),
+  ...categories.map((c) => ({ kind: 'category', key: `g-${c.path}`, path: c.path, item: c })),
 ];
 
 const SearchOverlay = () => {
   const { isSearchOpen, setIsSearchOpen } = useUI();
+  const { formatPrice } = useCurrency();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState([]);
-  const [hoveredItem, setHoveredItem] = useState(null);
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [index, setIndex] = useState(null);
+  const [indexError, setIndexError] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef(null);
+  const returnFocusRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
 
+  const close = () => setIsSearchOpen(false);
+
+  // Open: lock page scroll, focus the input, load the catalogue once.
+  // Close: reset, and hand focus back to whatever opened the search.
   useEffect(() => {
-    if (isSearchOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-      document.body.style.overflow = 'hidden';
-    } else {
+    if (!isSearchOpen) return undefined;
+    returnFocusRef.current = document.activeElement;
+    document.body.style.overflow = 'hidden';
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+
+    let alive = true;
+    setIndexError(false);
+    loadSearchIndex()
+      .then((idx) => { if (alive) setIndex(idx); })
+      .catch(() => { if (alive) setIndexError(true); });
+
+    return () => {
+      alive = false;
+      clearTimeout(focusTimer);
       document.body.style.overflow = '';
       setQuery('');
-      setResults([]);
-      setHoveredItem(null);
-    }
+      setDebouncedQuery('');
+      setActiveIndex(-1);
+      returnFocusRef.current?.focus?.();
+    };
   }, [isSearchOpen]);
 
   // Close search when navigating away
@@ -81,44 +64,78 @@ const SearchOverlay = () => {
     setIsSearchOpen(false);
   }, [location.pathname, setIsSearchOpen]);
 
-  // Debounce search logic
   useEffect(() => {
-    const fetchResults = () => {
-      if (query.trim().length === 0) {
-        setResults([]);
-        setHoveredItem(null);
-        return;
-      }
-      
-      const filtered = MOCK_DATA.filter(item => 
-        item.name.toLowerCase().includes(query.toLowerCase()) || 
-        item.category.toLowerCase().includes(query.toLowerCase())
-      );
-      
-      setResults(filtered);
-      if (filtered.length > 0) {
-        setHoveredItem(filtered[0]);
-      } else {
-        setHoveredItem(null);
-      }
-    };
-
-    const debounce = setTimeout(fetchResults, 300);
-    return () => clearTimeout(debounce);
+    const timer = setTimeout(() => setDebouncedQuery(query.trim()), DEBOUNCE_MS);
+    return () => clearTimeout(timer);
   }, [query]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      setIsSearchOpen(false);
-      navigate(`/search?q=${encodeURIComponent(query)}`);
+  const results = useMemo(() => {
+    const found = searchCatalogue(index, debouncedQuery);
+    return { ...found, products: found.products.slice(0, MAX_PRODUCTS) };
+  }, [index, debouncedQuery]);
+
+  const hasQuery = debouncedQuery.length >= 2;
+  const noMatches = hasQuery && index && toEntries(results).length === 0;
+  // Nothing typed yet, or nothing matched: suggest popular picks instead of a blank panel
+  const shown = hasQuery && !noMatches
+    ? results
+    : { products: popularProducts(index), collections: POPULAR_COLLECTIONS, categories: SEARCH_CATEGORIES };
+  const entries = toEntries(shown);
+
+  useEffect(() => setActiveIndex(-1), [debouncedQuery]);
+
+  const active = entries[activeIndex];
+  const previewProduct = active?.kind === 'product' ? active.item : shown.products[0];
+
+  const goTo = (path) => {
+    close();
+    navigate(path);
+  };
+
+  const submitSearch = () => {
+    const q = query.trim();
+    if (!q) return;
+    close();
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      close();
+    } else if (e.key === 'ArrowDown' && entries.length) {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % entries.length);
+    } else if (e.key === 'ArrowUp' && entries.length) {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? entries.length - 1 : i - 1));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      // An item picked with the arrow keys opens directly; otherwise Enter
+      // shows the full results page
+      if (active) goTo(active.path);
+      else submitSearch();
     }
   };
 
-  const handleItemClick = (slug) => {
-    setIsSearchOpen(false);
-    navigate(`/${slug}`);
+  const optionProps = (entry) => {
+    const i = entries.indexOf(entry);
+    return {
+      id: `search-option-${i}`,
+      role: 'option',
+      'aria-selected': i === activeIndex,
+      onMouseEnter: () => setActiveIndex(i),
+      onClick: () => goTo(entry.path),
+      className: `flex items-center gap-4 px-4 sm:px-6 py-2.5 cursor-pointer transition-colors ${i === activeIndex ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`,
+    };
   };
+
+  const productEntries = entries.filter((e) => e.kind === 'product');
+  const groupEntries = entries.filter((e) => e.kind !== 'product');
+
+  const sectionTitle = (text) => (
+    <h3 className="px-4 sm:px-6 pt-4 pb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">{text}</h3>
+  );
 
   return (
     <AnimatePresence>
@@ -127,131 +144,201 @@ const SearchOverlay = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
           className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex justify-center pt-8 sm:pt-16 px-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsSearchOpen(false);
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) close();
           }}
+          onKeyDown={(e) => { if (e.key === 'Escape') close(); }}
         >
-          <div className="w-full max-w-4xl bg-[#202124] rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[70vh]">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Search products"
+            className="w-full max-w-4xl bg-[#202124] rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[70vh]"
+          >
             {/* Header / Input */}
-            <form onSubmit={handleSearch} className="flex items-center px-4 sm:px-6 py-4 border-b border-gray-700 bg-[#202124]">
-              <HiOutlineSearch className="w-6 h-6 text-gray-400 mr-3" />
+            <form
+              role="search"
+              onSubmit={(e) => { e.preventDefault(); submitSearch(); }}
+              className="flex items-center px-4 sm:px-6 py-4 border-b border-gray-700 bg-[#202124]"
+            >
+              <HiOutlineSearch className="w-6 h-6 text-gray-400 mr-3 shrink-0" aria-hidden="true" />
               <input
                 ref={inputRef}
-                type="text"
+                type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search products, categories..."
-                className="flex-1 bg-transparent text-white text-lg placeholder-gray-500 focus:outline-none"
+                onKeyDown={handleKeyDown}
+                placeholder="Search canvases, collections, nameplates…"
+                aria-label="Search"
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="search-results"
+                aria-autocomplete="list"
+                aria-activedescendant={activeIndex >= 0 ? `search-option-${activeIndex}` : undefined}
+                autoComplete="off"
+                enterKeyHint="search"
+                className="flex-1 min-w-0 bg-transparent text-white text-lg placeholder-gray-500 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
               />
               {query && (
-                <button 
-                  type="button" 
-                  onClick={() => setQuery('')} 
+                <button
+                  type="button"
+                  onClick={() => { setQuery(''); inputRef.current?.focus(); }}
+                  aria-label="Clear search"
                   className="p-2 text-gray-400 hover:text-white transition-colors"
                 >
                   <HiOutlineX className="w-5 h-5" />
                 </button>
               )}
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Close search"
+                className="ml-1 p-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <span className="hidden sm:inline text-xs font-semibold border border-gray-600 rounded px-1.5 py-0.5">Esc</span>
+                <HiOutlineX className="w-6 h-6 sm:hidden" />
+              </button>
             </form>
 
             {/* Body */}
             <div className="flex flex-1 overflow-hidden">
-              {/* Left side: Suggestions */}
-              <div className="w-full md:w-1/2 flex flex-col border-r border-gray-700 overflow-y-auto bg-[#202124] custom-scrollbar">
-                {results.length > 0 ? (
-                  <div className="py-2">
-                    <h3 className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Suggestions</h3>
-                    {results.map((item) => (
-                      <div
-                        key={item.id}
-                        onMouseEnter={() => setHoveredItem(item)}
-                        onClick={() => handleItemClick(item.slug)}
-                        className={`flex items-center px-6 py-3 cursor-pointer transition-colors ${hoveredItem?.id === item.id ? 'bg-gray-800' : 'hover:bg-gray-800/50'}`}
-                      >
-                        <HiOutlineSearch className="w-5 h-5 text-gray-400 mr-4 flex-shrink-0" />
-                        <div className="flex-1 flex flex-col truncate">
-                          <span className="text-gray-100 font-medium truncate">{item.name}</span>
-                          <span className="text-gray-400 text-xs truncate">{item.category}</span>
+              <div
+                id="search-results"
+                role="listbox"
+                aria-label="Search suggestions"
+                className="w-full md:w-1/2 flex flex-col md:border-r border-gray-700 overflow-y-auto bg-[#202124] custom-scrollbar pb-3"
+              >
+                {!index && !indexError && (
+                  <div className="p-6 space-y-4" aria-live="polite">
+                    <span className="sr-only">Loading products…</span>
+                    {[0, 1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4 animate-pulse">
+                        <div className="w-12 h-14 rounded-lg bg-gray-700/60" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-3.5 w-2/3 rounded bg-gray-700/60" />
+                          <div className="h-3 w-1/3 rounded bg-gray-700/40" />
                         </div>
                       </div>
                     ))}
                   </div>
-                ) : query.length > 0 ? (
-                  <div className="flex flex-col items-center justify-center p-8 text-center h-full">
-                    <HiOutlineSearch className="w-12 h-12 text-gray-600 mb-4" />
-                    <p className="text-gray-400">No results found for "{query}"</p>
+                )}
+
+                {indexError && (
+                  <div className="p-8 text-center text-gray-400">
+                    <p>Suggestions aren't available right now.</p>
+                    <p className="text-sm mt-1">Press Enter to search the full catalogue.</p>
                   </div>
-                ) : (
-                  <div className="py-2">
-                    <h3 className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Popular Searches</h3>
-                    {MOCK_DATA.slice(0, 4).map((item) => (
-                      <div
-                        key={item.id}
-                        onMouseEnter={() => setHoveredItem(item)}
-                        onClick={() => handleItemClick(item.slug)}
-                        className="flex items-center px-6 py-3 cursor-pointer transition-colors hover:bg-gray-800/50"
-                      >
-                        <HiOutlineSearch className="w-5 h-5 text-gray-400 mr-4 flex-shrink-0" />
-                        <span className="text-gray-100">{item.name}</span>
+                )}
+
+                {index && (
+                  <>
+                    {noMatches && (
+                      <div className="px-6 pt-6 pb-2 text-gray-300" aria-live="polite">
+                        No results for “<span className="text-white font-semibold">{debouncedQuery}</span>”. Try a different word, or browse these:
                       </div>
-                    ))}
-                  </div>
+                    )}
+
+                    {productEntries.length > 0 && (
+                      <>
+                        {sectionTitle(hasQuery && !noMatches ? 'Products' : 'Popular products')}
+                        {productEntries.map((entry) => (
+                          <div key={entry.key} {...optionProps(entry)}>
+                            <div className="w-12 h-14 rounded-lg overflow-hidden bg-gray-800 shrink-0">
+                              {entry.item.image && (
+                                <img
+                                  src={optimizeImage(entry.item.image, 120)}
+                                  alt=""
+                                  onError={handleImageError}
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-100 font-medium truncate">{entry.item.name}</p>
+                              <p className="text-gray-400 text-xs truncate">
+                                {entry.item.collection || entry.item.category}
+                                {entry.item.price > 0 && <> · Starting from {formatPrice(entry.item.price)}</>}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {groupEntries.length > 0 && (
+                      <>
+                        {sectionTitle(hasQuery && !noMatches ? 'Collections & categories' : 'Browse')}
+                        {groupEntries.map((entry) => {
+                          const Icon = entry.kind === 'collection' ? HiOutlineCollection : HiOutlineViewGrid;
+                          return (
+                            <div key={entry.key} {...optionProps(entry)}>
+                              <div className="w-12 h-10 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
+                                <Icon className="w-5 h-5 text-gray-400" aria-hidden="true" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-gray-100 font-medium truncate">{entry.item.name}</p>
+                                <p className="text-gray-400 text-xs">{entry.kind === 'collection' ? 'Collection' : 'Category'}</p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+
+                    {hasQuery && !noMatches && (
+                      <button
+                        type="button"
+                        onClick={submitSearch}
+                        className="mx-4 sm:mx-6 mt-3 text-left text-sm font-semibold text-accent hover:underline"
+                      >
+                        See all results for “{debouncedQuery}” →
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Right side: Preview Card */}
+              {/* Right side: preview of the highlighted (or top) product */}
               <div className="hidden md:flex w-1/2 bg-[#171717] p-8 flex-col items-center justify-center relative overflow-y-auto">
-                {hoveredItem ? (
-                  <motion.div
-                    key={hoveredItem.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="w-full max-w-sm flex flex-col items-center text-center"
-                  >
-                    <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-gray-700/50 mb-6 group bg-gray-800/50">
-                      <img 
-                        src={hoveredItem.logoUrl} 
-                        alt={hoveredItem.name} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                        loading="lazy"
+                {previewProduct ? (
+                  <div key={previewProduct.id} className="w-full max-w-sm flex flex-col items-center text-center">
+                    <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-lg border border-gray-700/50 mb-6 bg-gray-800/50">
+                      <img
+                        src={optimizeImage(previewProduct.image, 600)}
+                        alt={previewProduct.name}
+                        onError={handleImageError}
+                        className="w-full h-full object-cover"
                         decoding="async"
                       />
                     </div>
-                    
-                    <span className="text-xs font-bold text-accent uppercase tracking-wider mb-2">{hoveredItem.category}</span>
-                    <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{hoveredItem.name}</h2>
-                    <p className="text-gray-300 font-semibold text-xl mb-4">{hoveredItem.price}</p>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-8 px-4">
-                      {hoveredItem.description}
-                    </p>
-                    
-                    <button 
-                      onClick={() => handleItemClick(hoveredItem.slug)}
-                      className="w-full py-3.5 px-6 bg-accent text-secondary font-bold rounded-xl hover:bg-white hover:text-accent transition-all shadow-[0_0_15px_rgba(var(--color-accent),0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.5)] transform hover:-translate-y-1"
+                    <span className="text-xs font-bold text-accent uppercase tracking-wider mb-2">{previewProduct.collection || previewProduct.category}</span>
+                    <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{previewProduct.name}</h2>
+                    {previewProduct.price > 0 && (
+                      <p className="text-gray-300 font-semibold text-lg mb-6">Starting from {formatPrice(previewProduct.price)}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => goTo(`/product/${previewProduct.slug}`)}
+                      className="w-full py-3.5 px-6 bg-accent text-white font-bold rounded-xl hover:bg-white hover:text-accent transition-colors"
                     >
                       View Details
                     </button>
-                  </motion.div>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center text-gray-500 space-y-4 h-full">
                     <div className="w-24 h-24 bg-gray-800/30 rounded-full flex items-center justify-center border border-gray-700/30">
-                      <HiOutlineSearch className="w-10 h-10 opacity-40" />
+                      <HiOutlineSearch className="w-10 h-10 opacity-40" aria-hidden="true" />
                     </div>
-                    <p className="text-sm font-medium">Hover over a suggestion to preview</p>
+                    <p className="text-sm font-medium">Start typing to search</p>
                   </div>
                 )}
               </div>
             </div>
           </div>
-          
-          {/* Close button outside container for mobile */}
-          <button
-            onClick={() => setIsSearchOpen(false)}
-            className="md:hidden absolute top-4 right-4 p-2 text-white hover:bg-white/10 rounded-full transition-colors"
-          >
-            <HiOutlineX className="w-6 h-6" />
-          </button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -259,4 +346,3 @@ const SearchOverlay = () => {
 };
 
 export default SearchOverlay;
-

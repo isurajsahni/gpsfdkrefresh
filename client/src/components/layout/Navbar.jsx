@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiOutlineSearch } from 'react-icons/hi';
+import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiOutlineSearch, HiChevronDown } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
@@ -9,7 +9,14 @@ import useClickOutside from '../../hooks/useClickOutside';
 import logo from '../../assets/vite.webp';
 
 const NAV_LINKS = [
-  { name: 'Store', path: '/' },
+  {
+    name: 'Store',
+    path: '/',
+    children: [
+      { name: 'Canvas', path: '/canvas' },
+      { name: 'House Nameplates', path: '/house-nameplates' },
+    ],
+  },
   { name: 'School of Learning', path: '/school-of-learning' },
   { name: 'Love', path: '/love' },
   { name: 'Vision', path: '/vision' },
@@ -25,6 +32,11 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { setIsCartOpen, setIsSearchOpen } = useUI();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // A parent item reads as active on any of its dropdown pages too
+  const isInSection = (link) =>
+    link.children?.some((child) => pathname === child.path || pathname.startsWith(`${child.path}/`));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,8 +81,43 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Nav */}
-                <div className="hidden lg:flex items-center gap-10">
-                  {NAV_LINKS.map((link) => (
+                <div className="hidden lg:flex items-center gap-10 h-full">
+                  {NAV_LINKS.map((link) => link.children ? (
+                    // Opens on hover, and on focus so keyboard users can tab into it
+                    <div key={link.path} className="relative group h-full flex items-center">
+                      <NavLink
+                        to={link.path}
+                        end
+                        className={({ isActive }) =>
+                          `flex items-center gap-1 text-xs font-normal transition-colors duration-300 ${
+                            isActive || isInSection(link) ? 'text-accent' : 'text-[#424245] hover:text-accent'
+                          }`
+                        }
+                      >
+                        {link.name}
+                        <HiChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180 group-focus-within:rotate-180" />
+                      </NavLink>
+                      <div className="absolute left-1/2 top-full -translate-x-1/2 translate-y-1 invisible opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
+                        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-2 min-w-[190px]">
+                          {link.children.map((child) => (
+                            <NavLink
+                              key={child.path}
+                              to={child.path}
+                              // Drop focus so focus-within doesn't hold the menu open after navigating
+                              onClick={(e) => e.currentTarget.blur()}
+                              className={({ isActive }) =>
+                                `block px-5 py-2.5 text-sm transition-colors ${
+                                  isActive ? 'text-accent bg-cream' : 'text-gray-700 hover:bg-cream hover:text-secondary'
+                                }`
+                              }
+                            >
+                              {child.name}
+                            </NavLink>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                     <NavLink
                       key={link.path}
                       to={link.path}
@@ -193,19 +240,34 @@ const Navbar = () => {
           >
             <div className="p-6 space-y-1 h-full overflow-y-auto pb-32">
               {NAV_LINKS.map((link) => (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  end
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `block text-xl font-heading py-3 border-b border-white/10 ${
-                      isActive ? 'text-accent' : 'text-white'
-                    }`
-                  }
-                >
-                  {link.name}
-                </NavLink>
+                <div key={link.path} className="border-b border-white/10">
+                  <NavLink
+                    to={link.path}
+                    end
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `block text-xl font-heading py-3 ${isActive ? 'text-accent' : 'text-white'}`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                  {link.children && (
+                    <div className="pl-4 pb-2">
+                      {link.children.map((child) => (
+                        <NavLink
+                          key={child.path}
+                          to={child.path}
+                          onClick={() => setMobileOpen(false)}
+                          className={({ isActive }) =>
+                            `block text-base font-heading py-2 ${isActive ? 'text-accent' : 'text-white/80'}`
+                          }
+                        >
+                          {child.name}
+                        </NavLink>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               <button
                 onClick={() => { setMobileOpen(false); setIsSearchOpen(true); }}

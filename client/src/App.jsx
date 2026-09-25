@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
@@ -291,8 +291,12 @@ function App() {
               {/* SEO Top Landing Pages */}
               <Route path="/premium-wall-canvas-india" element={<><SEO_PremiumWallCanvasIndia /><Footer /></>} />
 
-              {/* Canvas Page v2 — internal demo only. Not linked from nav; SEO noindex. */}
-              <Route path="/canvas-v2-demo" element={<><CanvasLandingV2 /><Footer /></>} />
+              {/* Canvas — the Wall Canvas landing page. The old all-canvas listing
+                  at /wall-canvas and the v2 demo URL redirect here (vercel.json
+                  301s them too); collections stay at /wall-canvas/<collection>. */}
+              <Route path="/canvas" element={<><CanvasLandingV2 /><Footer /></>} />
+              <Route path="/wall-canvas" element={<Navigate to="/canvas" replace />} />
+              <Route path="/canvas-v2-demo" element={<Navigate to="/canvas" replace />} />
 
               {/* Consultancy v2 — internal demo only. Not linked from nav; SEO noindex.
                   The live /consultancy page and its enquiry form are unchanged. */}

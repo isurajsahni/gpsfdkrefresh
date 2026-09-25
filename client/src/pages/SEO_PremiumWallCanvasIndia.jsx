@@ -36,7 +36,7 @@ const SEO_PremiumWallCanvasIndia = () => {
            transition={{ delay: 0.2 }}
            className="mt-8 flex flex-wrap justify-center gap-4"
         >
-          <Link to="/wall-canvas" className="btn-primary text-lg px-8 py-3 shadow-lg">Shop Premium Collection</Link>
+          <Link to="/canvas" className="btn-primary text-lg px-8 py-3 shadow-lg">Shop Premium Collection</Link>
           <Link to="/customize-canvas" className="bg-white border-2 border-accent text-accent hover:bg-accent hover:text-white transition-all px-8 py-3 rounded-full font-bold text-lg shadow-sm">Create Custom Art</Link>
         </motion.div>
       </section>
@@ -176,7 +176,7 @@ const SEO_PremiumWallCanvasIndia = () => {
             Stop settling for empty, echoing walls and uninspired rooms. Browse through our premium curated categories and find the exact <strong>premium wall canvas</strong> that resonates with your personal soul. Whether you need a massive, show-stopping <strong>luxury wall canvas for living room</strong> to impress your guests, or specialized <strong>custom wall canvas india</strong> drops to memorialize your journey, we deliver unparalleled printing quality right to your doorstep. Experience the true standard of Indian luxury home styling.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link to="/wall-canvas" className="btn-primary w-full sm:w-auto px-12 py-4 text-xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
+            <Link to="/canvas" className="btn-primary w-full sm:w-auto px-12 py-4 text-xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1">
               Browse Full Collection
             </Link>
             <span className="text-gray-400 font-medium">or</span>

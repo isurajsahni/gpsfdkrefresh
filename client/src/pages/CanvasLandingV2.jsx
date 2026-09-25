@@ -7,13 +7,12 @@ import CtaBanner from '../components/canvas-v2/CtaBanner';
 import FaqSection from '../components/landing/FaqSection';
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Canvas Page v2 — DEMO ONLY
+   Canvas — the Wall Canvas landing page, served at /canvas.
 
    Rebuild of the "Canvas Page" frame in the Canvas Page Figma file
-   (figma.com/design/7gCw9F9RUAYrudmzJtsHWM, node 22:7).
-
-   Not linked from anywhere in the site and marked noindex. The production page
-   at /customize-canvas is untouched.
+   (figma.com/design/7gCw9F9RUAYrudmzJtsHWM, node 22:7). It replaces the old
+   all-canvas listing at /wall-canvas, which now redirects here; each art style
+   still opens its collection at /wall-canvas/<collection>.
 
    Sizes, colours, radii and gaps are read from the Figma layers via the Figma
    MCP. Each section lives in components/canvas-v2 and starts at its heading's
@@ -55,15 +54,24 @@ const FAQS = [
   },
 ];
 
+const BREADCRUMB_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.gpsfdk.com' },
+    { '@type': 'ListItem', position: 2, name: 'Canvas Wall Art' },
+  ],
+};
+
 export default function CanvasLandingV2() {
   return (
     // Bottom padding, not margin: a margin would collapse out of <main> and
     // show the body's cream behind the gap above the footer.
     <main className="overflow-x-clip bg-white pb-20 pt-[60px] lg:pb-[100px]">
       <SEO
-        title="Canvas Page v2 — internal demo"
-        description="Internal demo rebuild of the Canvas Page design. Not a live page."
-        noindex
+        title="Canvas Wall Art | Premium Canvas Prints Online | GPSFDK"
+        description="Premium canvas wall art from GPSFDK. Browse curated collections or turn your photo into a custom canvas: framed, ready to hang, delivered across India."
+        schema={BREADCRUMB_SCHEMA}
       />
       <CanvasHero />
       <div className="mt-14 lg:mt-[90px]">

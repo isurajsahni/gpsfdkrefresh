@@ -72,7 +72,7 @@ const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
 // One slide in the marquee — links through to the wall-canvas collection.
 const GalleryImage = ({ src, width }) => (
   <Link
-    to="/wall-canvas"
+    to="/canvas"
     style={{ width, height: GALLERY_HEIGHT }}
     className="block flex-shrink-0 rounded-2xl overflow-hidden bg-cream-dark"
   >
@@ -88,7 +88,7 @@ const GalleryImage = ({ src, width }) => (
 
 // width: per-item Figma image width (px); height follows each image's ratio.
 const OFFER = [
-  { label: 'Canvas', img: offerCanvas, to: '/wall-canvas', width: 160 },
+  { label: 'Canvas', img: offerCanvas, to: '/canvas', width: 160 },
   { label: 'Nameplates', img: offerNameplate, to: '/house-nameplates', width: 150 },
   { label: 'Consultancy', img: offerConsultancy, to: '/consultancy', width: 135 },
   { label: 'Getaway', img: offerGetaway, to: '/consultancy', width: 156 },
@@ -338,7 +338,7 @@ const StorePage = () => {
             {/* Left: most-gifted items promo — text sits straight on the dark
                 image (no blur band), per Figma. */}
             <Link
-              to="/wall-canvas"
+              to="/canvas"
               className="group relative rounded-3xl overflow-hidden block w-full max-w-[505px]"
             >
               <img
@@ -398,7 +398,7 @@ const StorePage = () => {
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
-            action={<ArrowLink to="/wall-canvas">Explore Collections</ArrowLink>}
+            action={<ArrowLink to="/canvas">Explore Collections</ArrowLink>}
           />
         </div>
 

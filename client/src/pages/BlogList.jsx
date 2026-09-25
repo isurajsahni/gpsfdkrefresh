@@ -104,7 +104,7 @@ const BlogList = () => {
         <KindCTA
           title="Ready to Transform Your Walls?"
           text="Explore our premium collection of custom canvas prints and house nameplates. Fast delivery across India."
-          to="/wall-canvas"
+          to="/canvas"
           cta="Shop Canvas"
         />
       </motion.div>

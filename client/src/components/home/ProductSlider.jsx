@@ -11,6 +11,7 @@ import API from '../../utils/api';
 import WebflowButton from '../ui/WebflowButton';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { categoryPath } from '../../utils/categoryPath';
 
 const BESTSELLER_LABELS = [
   'Best Seller',
@@ -104,7 +105,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             <div className="w-20 h-1 bg-accent mt-[15px] rounded-full" />
           </div>
           {categorySlug && (
-            <WebflowButton to={`/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">
+            <WebflowButton to={categoryPath(categorySlug)} className="text-sm py-1.5 pl-5 pr-1.5 hidden md:flex">
               View All
             </WebflowButton>
           )}
@@ -227,7 +228,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
 
           {/* Custom Navigation Buttons to the bottom right */}
           <div className="absolute right-0 bottom-0 flex items-center justify-between w-full z-10 mt-6">
-            <WebflowButton to={`/${categorySlug}`} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
+            <WebflowButton to={categoryPath(categorySlug)} className="text-sm py-1.5 pl-5 pr-1.5 flex md:hidden mr-auto mt-auto mb-1">
               View All
             </WebflowButton>
 

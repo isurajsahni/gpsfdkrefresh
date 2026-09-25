@@ -366,7 +366,7 @@ const HeroVideo = () => {
         transition={{ delay: 0.9, duration: 0.8 }}
         className="mt-10 items-center flex flex-col sm:flex-row gap-4"
       >
-        <WebflowButton to="/wall-canvas" className="text-lg">
+        <WebflowButton to="/canvas" className="text-lg">
           Canvas
         </WebflowButton>
         <Link

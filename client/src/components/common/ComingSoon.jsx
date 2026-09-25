@@ -18,7 +18,7 @@ const ComingSoon = ({
   seoTitle,
   seoDescription,
   ctaText = 'Explore Our Canvas Collection',
-  ctaTo = '/wall-canvas',
+  ctaTo = '/canvas',
   image,
 }) => {
   return (

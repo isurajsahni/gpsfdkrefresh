@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { HiArrowRight } from 'react-icons/hi';
 import { Shell, SectionHeading } from './Layout';
 import { fadeUp, stagger } from './motion';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -164,7 +165,17 @@ export default function ProductGrid() {
   return (
     <section className="px-5 sm:px-8">
       <Shell>
-        <SectionHeading>Find your next favourite</SectionHeading>
+        {/* On phones the heading wraps, and the button sits by its last line */}
+        <div className="flex items-end justify-between gap-4 sm:items-center">
+          <SectionHeading className="min-w-0">Find your next favourite</SectionHeading>
+          <Link
+            to="/wall-canvas/all"
+            className="group inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[40px] border-[1.5px] border-accent px-5 text-[14px] font-medium leading-[1.19] text-accent transition-colors duration-300 hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:h-[45px] sm:px-6 sm:text-[16px]"
+          >
+            View all
+            <HiArrowRight aria-hidden="true" className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
 
         {state === 'loading' && (
           <ul className={GRID} aria-busy="true" aria-label="Loading products">

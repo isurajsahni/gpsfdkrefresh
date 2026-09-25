@@ -398,7 +398,7 @@ const StorePage = () => {
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
-            action={<ArrowLink to="/canvas">Explore Collections</ArrowLink>}
+            action={<ArrowLink to="/wall-canvas/all">Explore Collections</ArrowLink>}
           />
         </div>
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { isChunkLoadError, reloadForNewBuild } from '../../utils/staleBuild';
 
 /**
  * App-level error boundary.
@@ -21,6 +22,9 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    // A page file from a replaced build: reload into the new one. main.jsx
+    // catches most of these first; this covers any that reach React.
+    if (isChunkLoadError(error) && reloadForNewBuild()) return;
     // Log to console. If you ever wire up Sentry / Datadog / similar, push
     // the error + stack here as well.
     console.error('ErrorBoundary caught:', error, errorInfo);

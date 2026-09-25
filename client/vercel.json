@@ -30,8 +30,7 @@
       ],
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/product/:slug"
     },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

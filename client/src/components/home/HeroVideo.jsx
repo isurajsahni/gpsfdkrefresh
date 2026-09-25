@@ -54,6 +54,51 @@ const smoothstep = (edge0, edge1, x) => {
   return t * t * (3 - 2 * t);
 };
 
+// Pick the hero variant once, before anything downloads. Low-end phones and
+// constrained connections get the still hero: scrubbing an all-keyframe clip
+// means a full-frame decode on every seek, which those devices can't sustain,
+// and the multi-MB download would dominate their first visit.
+const detectMode = () => {
+  if (typeof window === 'undefined' || !window.matchMedia) return 'desktop';
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'static';
+
+  const connection = navigator.connection;
+  if (connection) {
+    if (connection.saveData) return 'static';
+    if (/(^|-)2g|3g/.test(connection.effectiveType || '')) return 'static';
+  }
+  // Both are Chromium-only hints; Safari leaves them undefined, so an absent
+  // value never counts against the device.
+  if (navigator.deviceMemory && navigator.deviceMemory < 4) return 'static';
+  if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) return 'static';
+
+  return window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop';
+};
+
+// Run `callback` once the page has finished loading and the main thread is
+// idle, so the clip never competes with the poster, fonts or JS chunks that
+// make up first paint. Returns a cancel function.
+const whenPageIdle = (callback) => {
+  let idleId = 0;
+  let timeoutId = 0;
+  const schedule = () => {
+    if ('requestIdleCallback' in window) {
+      idleId = window.requestIdleCallback(callback, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(callback, 200);
+    }
+  };
+
+  if (document.readyState === 'complete') schedule();
+  else window.addEventListener('load', schedule, { once: true });
+
+  return () => {
+    window.removeEventListener('load', schedule);
+    if (idleId && 'cancelIdleCallback' in window) window.cancelIdleCallback(idleId);
+    if (timeoutId) window.clearTimeout(timeoutId);
+  };
+};
+
 const HeroVideo = () => {
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
@@ -70,14 +115,12 @@ const HeroVideo = () => {
 
   const [isReady, setIsReady] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  // Object URL for the fully downloaded clip; null until the fetch completes.
+  const [videoSrc, setVideoSrc] = useState(null);
 
   // Decided once on mount. Swapping the source on resize would restart the
   // download mid-scroll, which is worse than serving a phone the desktop clip.
-  const [mode] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return 'desktop';
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'static';
-    return window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop';
-  });
+  const [mode] = useState(detectMode);
 
   // `svh` ignores the mobile URL bar, so the pinned stage does not resize (and
   // visibly jump) as the browser chrome collapses. Resolved once, with a vh
@@ -90,6 +133,46 @@ const HeroVideo = () => {
   const isStatic = mode === 'static' || hasFailed;
   const scrollLength = mode === 'mobile' ? SCROLL_LENGTH_MOBILE : SCROLL_LENGTH_DESKTOP;
 
+  // Falling back to the still hero collapses the tall pinned section, which
+  // would yank the page if the visitor has already scrolled into it. Only
+  // swap layouts while they are still at the top; otherwise the poster simply
+  // stays pinned in place of the clip.
+  const failGracefully = () => {
+    if (window.scrollY < window.innerHeight * 0.25) setHasFailed(true);
+  };
+
+  // Download the whole clip up front instead of streaming it into <video>.
+  //  - Mobile Safari and data-saver modes ignore preload="auto" and may never
+  //    fetch a muted, never-played video, which left the hero stuck forever.
+  //  - A streamed clip turns every seek past the buffered range into a network
+  //    round trip, so scrubbing stalled. From a Blob every seek is local.
+  useEffect(() => {
+    if (isStatic) return undefined;
+
+    const controller = new AbortController();
+    let objectUrl = null;
+
+    const cancelIdle = whenPageIdle(async () => {
+      try {
+        const response = await fetch(mode === 'mobile' ? storeEntryMobile : storeEntryDesktop, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+        setVideoSrc(objectUrl);
+      } catch (err) {
+        if (err.name !== 'AbortError') failGracefully();
+      }
+    });
+
+    return () => {
+      cancelIdle();
+      controller.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [isStatic, mode]);
+
   useEffect(() => {
     if (isStatic) return undefined;
 
@@ -101,7 +184,6 @@ const HeroVideo = () => {
 
     const handleMetadata = () => {
       durationRef.current = video.duration || 0;
-      setIsReady(true);
       // Safari (and iOS in particular) will not paint or reliably honour a seek
       // until the element has decoded once. A muted play immediately followed
       // by a pause primes the decoder without the visitor seeing playback.
@@ -119,11 +201,16 @@ const HeroVideo = () => {
       }
     };
 
-    const handleError = () => setHasFailed(true);
+    // The poster stays on top until a real frame is decoded, so the swap from
+    // still to video is invisible.
+    const handleLoadedData = () => setIsReady(true);
+    const handleError = () => failGracefully();
 
     video.addEventListener('loadedmetadata', handleMetadata);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('error', handleError);
     if (video.readyState >= 1) handleMetadata();
+    if (video.readyState >= 2) handleLoadedData();
 
     const applyVisuals = (progress) => {
       // Camera push: starts slightly ahead of the doorway and settles level as
@@ -165,12 +252,16 @@ const HeroVideo = () => {
     const frame = (now) => {
       if (cancelled) return;
 
+      const rect = section.getBoundingClientRect();
+      const travel = section.offsetHeight - window.innerHeight;
+      const progress = travel > 0 ? clamp(-rect.top / travel) : 0;
+
+      // Camera move and copy fade run from the first frame, so the hero feels
+      // alive on the poster while the clip is still downloading.
+      applyVisuals(progress);
+
       const duration = durationRef.current;
       if (duration > 0) {
-        const rect = section.getBoundingClientRect();
-        const travel = section.offsetHeight - window.innerHeight;
-        const progress = travel > 0 ? clamp(-rect.top / travel) : 0;
-
         // Position -> time. Deliberately not velocity based: the same scroll
         // offset always resolves to the same frame, scrubbed either direction.
         // The scrub finishes at SCRUB_PORTION so the tail of the pin holds the
@@ -202,32 +293,40 @@ const HeroVideo = () => {
         ) {
           video.currentTime = snapped;
         }
-
-        applyVisuals(progress);
       }
 
       rafRef.current = requestAnimationFrame(frame);
     };
 
-    rafRef.current = requestAnimationFrame(frame);
-
-    // Don't burn a rAF loop (or battery) on a backgrounded tab.
-    const handleVisibility = () => {
+    // Only loop while the hero is on screen and the tab is visible. Once the
+    // visitor scrolls past it, the rest of the page shouldn't pay for a
+    // per-frame layout read, which matters most on weaker phones.
+    let onScreen = true;
+    const start = () => {
       cancelAnimationFrame(rafRef.current);
-      if (document.visibilityState === 'visible' && !cancelled) {
-        // Drop the stale timestamp so the first frame back doesn't see the
-        // whole hidden period as one enormous delta.
-        lastTimeRef.current = 0;
-        rafRef.current = requestAnimationFrame(frame);
-      }
+      if (cancelled || !onScreen || document.visibilityState !== 'visible') return;
+      // Drop the stale timestamp so the first frame back doesn't see the
+      // whole paused period as one enormous delta.
+      lastTimeRef.current = 0;
+      rafRef.current = requestAnimationFrame(frame);
     };
-    document.addEventListener('visibilitychange', handleVisibility);
+
+    const observer = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      start();
+    });
+    observer.observe(section);
+    start();
+
+    document.addEventListener('visibilitychange', start);
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(rafRef.current);
-      document.removeEventListener('visibilitychange', handleVisibility);
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', start);
       video.removeEventListener('loadedmetadata', handleMetadata);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('error', handleError);
     };
   }, [isStatic, mode]);
@@ -320,14 +419,24 @@ const HeroVideo = () => {
           <video
             ref={videoRef}
             className="w-full h-full object-cover"
-            src={mode === 'mobile' ? storeEntryMobile : storeEntryDesktop}
-            poster={storeEntryPoster}
+            src={videoSrc || undefined}
             preload="auto"
             muted
             playsInline
             disablePictureInPicture
             aria-hidden="true"
             tabIndex={-1}
+          />
+          {/* The poster is the first frame of the clip, so it stands in until a
+              real frame is decoded, then fades out. The hero is fully usable
+              meanwhile; there is no blocking loader. */}
+          <img
+            src={storeEntryPoster}
+            alt=""
+            fetchPriority="high"
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+              isReady ? 'opacity-0' : 'opacity-100'
+            }`}
           />
         </div>
 
@@ -369,14 +478,6 @@ const HeroVideo = () => {
             <div className="w-1.5 h-3 bg-white/60 rounded-full" />
           </motion.div>
         </motion.div>
-
-        {/* Holds the first frame until the clip can be scrubbed. */}
-        {!isReady && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
-            <img src={storeEntryPoster} alt="" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-            <div className="relative w-10 h-10 border-2 border-white/30 border-t-white/80 rounded-full animate-spin" />
-          </div>
-        )}
       </div>
     </section>
   );

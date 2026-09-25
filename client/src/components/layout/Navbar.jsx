@@ -12,9 +12,10 @@ const NAV_LINKS = [
   {
     name: 'Store',
     path: '/',
+    // `match`: the paths that count as being in that section, for the highlight
     children: [
-      { name: 'Canvas', path: '/canvas' },
-      { name: 'House Nameplates', path: '/house-nameplates' },
+      { name: 'Canvas', path: '/canvas', match: ['/canvas', '/wall-canvas', '/customize-canvas'] },
+      { name: 'House Nameplates', path: '/house-nameplates', match: ['/house-nameplates'] },
     ],
   },
   { name: 'School of Learning', path: '/school-of-learning' },
@@ -33,10 +34,18 @@ const Navbar = () => {
   const { setIsCartOpen, setIsSearchOpen } = useUI();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  // The Store menu opens on hover/focus. After a link is followed it stays
+  // shut until the pointer leaves, so it doesn't sit open over the new page.
+  const [storeMenuShut, setStoreMenuShut] = useState(false);
+  const shutStoreMenu = () => {
+    document.activeElement?.blur();
+    setStoreMenuShut(true);
+  };
 
+  const isChildActive = (child) =>
+    child.match.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   // A parent item reads as active on any of its dropdown pages too
-  const isInSection = (link) =>
-    link.children?.some((child) => pathname === child.path || pathname.startsWith(`${child.path}/`));
+  const isInSection = (link) => link.children?.some(isChildActive);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,7 +93,11 @@ const Navbar = () => {
                 <div className="hidden lg:flex items-center gap-10 h-full">
                   {NAV_LINKS.map((link) => link.children ? (
                     // Opens on hover, and on focus so keyboard users can tab into it
-                    <div key={link.path} className="relative group h-full flex items-center">
+                    <div
+                      key={link.path}
+                      className="relative group h-full flex items-center"
+                      onMouseLeave={() => setStoreMenuShut(false)}
+                    >
                       <NavLink
                         to={link.path}
                         end
@@ -97,23 +110,31 @@ const Navbar = () => {
                         {link.name}
                         <HiChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180 group-focus-within:rotate-180" />
                       </NavLink>
-                      <div className="absolute left-1/2 top-full -translate-x-1/2 translate-y-1 invisible opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0">
-                        <div className="bg-white rounded-xl shadow-2xl border border-gray-100 py-2 min-w-[190px]">
-                          {link.children.map((child) => (
-                            <NavLink
-                              key={child.path}
-                              to={child.path}
-                              // Drop focus so focus-within doesn't hold the menu open after navigating
-                              onClick={(e) => e.currentTarget.blur()}
-                              className={({ isActive }) =>
-                                `block px-5 py-2.5 text-sm transition-colors ${
-                                  isActive ? 'text-accent bg-cream' : 'text-gray-700 hover:bg-cream hover:text-secondary'
-                                }`
-                              }
-                            >
-                              {child.name}
-                            </NavLink>
-                          ))}
+                      {/* pt-2 keeps the gap under the bar hoverable. w-max: an absolute
+                          box is otherwise capped by the narrow Store link and wraps. */}
+                      <div
+                        className={`absolute left-1/2 top-full w-max -translate-x-1/2 translate-y-1 pt-2 invisible opacity-0 transition-all duration-200 ${
+                          storeMenuShut ? '' : 'group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0'
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1.5 bg-white rounded-xl shadow-xl border border-gray-100 p-2 min-w-[200px]">
+                          {link.children.map((child) => {
+                            const active = isChildActive(child);
+                            return (
+                              <Link
+                                key={child.path}
+                                to={child.path}
+                                onClick={shutStoreMenu}
+                                aria-current={active ? 'page' : undefined}
+                                className={`flex items-center justify-between gap-6 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm transition-colors ${
+                                  active ? 'bg-accent/10 text-accent font-semibold' : 'text-gray-700 hover:bg-accent/10 hover:text-accent'
+                                }`}
+                              >
+                                {child.name}
+                                {active && <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />}
+                              </Link>
+                            );
+                          })}
                         </div>
                       </div>
                     </div>
@@ -254,16 +275,15 @@ const Navbar = () => {
                   {link.children && (
                     <div className="pl-4 pb-2">
                       {link.children.map((child) => (
-                        <NavLink
+                        <Link
                           key={child.path}
                           to={child.path}
                           onClick={() => setMobileOpen(false)}
-                          className={({ isActive }) =>
-                            `block text-base font-heading py-2 ${isActive ? 'text-accent' : 'text-white/80'}`
-                          }
+                          aria-current={isChildActive(child) ? 'page' : undefined}
+                          className={`block text-base font-heading py-2 ${isChildActive(child) ? 'text-accent' : 'text-white/80'}`}
                         >
                           {child.name}
-                        </NavLink>
+                        </Link>
                       ))}
                     </div>
                   )}

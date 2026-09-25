@@ -48,7 +48,9 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems]);
 
-  const addToCart = (product, variation, quantity = 1, customText = '', uploadedImageUrl = '') => {
+  // `details`: extra fields kept on a new cart line (the canvas customiser
+  // stores the original photo and the chosen crop there)
+  const addToCart = (product, variation, quantity = 1, customText = '', uploadedImageUrl = '', details = {}) => {
     // Meta Pixel: AddToCart event
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'AddToCart', {
@@ -79,6 +81,7 @@ export const CartProvider = ({ children }) => {
         uploadedImageUrl,
         price: variation.price,
         quantity,
+        ...details,
       }];
     });
   };
@@ -95,9 +98,18 @@ export const CartProvider = ({ children }) => {
     const lines = cartItems.filter((item) => item.slug && !item.uploadedImageUrl);
     const slugs = [...new Set(lines.map((item) => item.slug))];
     if (!slugs.length) return;
-    const results = await Promise.allSettled(slugs.map((slug) => API.get(`/products/${slug}`, { silent: true })));
+    // One request for the whole cart. `_` skips the browser's cached copy of
+    // the listing: this check exists to catch a price that just changed.
     const productBySlug = new Map();
-    results.forEach((r, i) => { if (r.status === 'fulfilled') productBySlug.set(slugs[i], r.value.data); });
+    try {
+      const { data } = await API.get('/products', {
+        params: { slugs: slugs.join(','), limit: slugs.length, _: Date.now() },
+        silent: true,
+      });
+      (data.products || []).forEach((product) => productBySlug.set(product.slug, product));
+    } catch {
+      return; // Best effort: checkout prices the order on the server anyway
+    }
 
     // Line key → current variation, for lines whose price has moved
     const updates = new Map();

@@ -54,8 +54,11 @@ router.get('/', async (req, res) => {
       }
     }
 
-    // Cache for 1 hour — geo data doesn't change frequently
-    res.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    // Cache for 1 hour — geo data doesn't change frequently. Private: the
+    // answer depends on the caller's IP, so a shared cache must never hand one
+    // visitor's currency to another. (The IP→country lookup itself is cached
+    // in memory by detectCountry.)
+    res.set('Cache-Control', 'private, max-age=3600');
     res.json(response);
   } catch (error) {
     console.error('[GeoPricing] API Error:', error.message);

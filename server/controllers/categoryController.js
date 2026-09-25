@@ -1,5 +1,8 @@
 const Category = require('../models/Category');
 const Product = require('../models/Product');
+// Listings embed the category's name, so a rename or delete must not be
+// served from the product cache
+const { clearCatalogueCache } = require('./productController');
 
 exports.getCategories = async (req, res, next) => {
   try {
@@ -49,6 +52,7 @@ exports.updateCategory = async (req, res, next) => {
     if (isActive !== undefined) category.isActive = isActive;
 
     await category.save();
+    clearCatalogueCache();
     res.json(category);
   } catch (error) {
     next(error);
@@ -68,6 +72,7 @@ exports.deleteCategory = async (req, res, next) => {
     }
     const category = await Category.findByIdAndDelete(req.params.id);
     if (!category) return res.status(404).json({ message: 'Category not found' });
+    clearCatalogueCache();
     res.json({ message: 'Category removed' });
   } catch (error) {
     next(error);

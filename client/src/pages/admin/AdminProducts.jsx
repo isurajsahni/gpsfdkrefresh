@@ -18,7 +18,7 @@ const AdminProducts = () => {
   const [total, setTotal] = useState(0);
   const PAGE_SIZE = 50;
   const [form, setForm] = useState({
-    name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false,
+    name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, tags: '',
     variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
     images: [],
     thumbnailImage: null,
@@ -75,7 +75,7 @@ const AdminProducts = () => {
       }
       setShowForm(false);
       setEditing(null);
-      setForm({ name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }], images: [], thumbnailImage: null });
+      setForm({ name: '', description: '', metaTitle: '', metaDescription: '', category: '', subCategory: '', customizable: false, customizationLabel: 'Custom Text', featured: false, isMasonry: false, tags: '', variations: [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }], images: [], thumbnailImage: null });
       fetchProducts();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed');
@@ -94,6 +94,7 @@ const AdminProducts = () => {
       customizationLabel: product.customizationLabel || 'Custom Text',
       featured: product.featured,
       isMasonry: product.isMasonry,
+      tags: (product.tags || []).join(', '),
       variations: product.variations?.length > 0 ? product.variations : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
       images: product.images || [],
       thumbnailImage: product.thumbnailImage || null,
@@ -119,6 +120,7 @@ const AdminProducts = () => {
       customizationLabel: product.customizationLabel || 'Custom Text',
       featured: product.featured,
       isMasonry: product.isMasonry,
+      tags: (product.tags || []).join(', '),
       variations: product.variations?.length > 0 ? product.variations.map(v => ({...v, _id: undefined})) : [{ material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }],
       images: product.images || [],
       thumbnailImage: product.thumbnailImage || null,
@@ -301,6 +303,11 @@ const AdminProducts = () => {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold mb-1">SEO Description (140-160 characters)</label>
                   <textarea value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" rows={2} maxLength={160} />
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="product-tags" className="block text-sm font-semibold mb-1">Search keywords (comma-separated)</label>
+                  <input id="product-tags" type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="e.g. leopard, big cat, wildlife" className="w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:border-accent" />
+                  <p className="text-xs text-gray-500 mt-1">Words shoppers might search for that aren't in the name or description (what's in the picture, colours, themes).</p>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold mb-1">Category</label>

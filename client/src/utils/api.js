@@ -80,4 +80,29 @@ API.interceptors.response.use(
   }
 );
 
+// ─── Read cache for catalogue data ───
+// Each API round trip costs about a second, and shoppers go back and forth
+// between the same listings and products. cachedGet keeps a response for a few
+// minutes and shares one request between callers asking at the same time, so
+// going back to a page doesn't refetch everything. Resolves to the response
+// data. Failures aren't kept, so the next call tries again.
+const READ_CACHE_TTL_MS = 5 * 60 * 1000;
+const READ_CACHE_MAX = 200;
+const readCache = new Map(); // key -> { expires, promise }, oldest first
+
+export const cachedGet = (url, config = {}, ttlMs = READ_CACHE_TTL_MS) => {
+  const key = `${url}|${JSON.stringify(config.params || {})}`;
+  const hit = readCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.promise;
+
+  const promise = API.get(url, config).then((res) => res.data);
+  readCache.delete(key);
+  if (readCache.size >= READ_CACHE_MAX) readCache.delete(readCache.keys().next().value);
+  readCache.set(key, { expires: Date.now() + ttlMs, promise });
+  promise.catch(() => {
+    if (readCache.get(key)?.promise === promise) readCache.delete(key);
+  });
+  return promise;
+};
+
 export default API;

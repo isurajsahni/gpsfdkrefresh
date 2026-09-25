@@ -117,3 +117,14 @@ Below is a cheat sheet of root npm scripts available:
 *   `npm run build` – Triggers the production-grade static build bundle for the Vite client.
 *   `npm run seed` – Resets your local collections and seeds mock records into MongoDB.
 *   `npm start` – Runs production starts concurrently for client and server (local deployment emulation).
+
+---
+
+## ☁️ Hosting the API on Render
+
+Every page load waits on this API, so its hosting decides how fast the site feels.
+
+*   **Use a paid instance.** Render's free tier sleeps after 15 minutes idle, and the next visitor waits 30–60 s for it to wake (product pages show a spinner, previews time out).
+*   **Use the Singapore region.** From India, a request to the current region takes about 1 s even for `/api/health`, which does no database work. That delay is network distance, not code, and it's paid on every call. Singapore is the closest Render region to India. Changing region means creating a new service there and switching `VITE_API_URL` (and the `gpsfdkrefresh.onrender.com` references in `client/vercel.json`) to its URL.
+*   **Health check / keep-alive.** `GET /api/health` returns `{ status: 'OK' }` without touching the database. Set it as the service's Health Check Path in Render. On a paid instance nothing needs pinging; if the service ever runs on the free tier, an uptime monitor (e.g. UptimeRobot) hitting `https://gpsfdkrefresh.onrender.com/api/health` every 10 minutes keeps it awake.
+*   **Caching.** Public catalogue reads (`/api/products`, `/api/products/:slug`, `/api/products/hot-selling`) are cached in memory for 5 minutes and sent with `Cache-Control: public, max-age=300, stale-while-revalidate=3600`. Admin product and category edits clear the in-memory cache immediately. `/api/pricing` depends on the visitor's country, so it's `private`.

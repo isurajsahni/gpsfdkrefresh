@@ -1,7 +1,8 @@
-/* Shared reveal animation for the Canvas Page v2 sections. */
+/* Shared reveal animation for the Canvas Page v2 sections. Kept short:
+   products and prices must never sit washed out while someone reads them. */
 export const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } },
 };
 
 /* Spread onto a motion element to fade it up once it scrolls into view. */

@@ -5,6 +5,55 @@ const fs = require('fs');
 const slugify = require('slugify');
 const { cloudinary } = require('../middleware/upload');
 const { sanitizeRichText } = require('../utils/sanitizeHtml');
+const { createTtlCache } = require('../utils/ttlCache');
+
+/* Public catalogue reads (listings, product pages, the hot-selling row) are
+   cached for a few minutes: the same handful of queries are asked constantly
+   and each one costs a database round trip. Admin writes clear the cache, so
+   a new price is served straight away. Admin reads bypass it entirely — they
+   see inactive products and cost prices.
+   Responses are kept as their JSON text and capped at ~20M characters in
+   total (the whole catalogue is ~0.4M), so no stream of distinct requests can
+   run the server out of memory. */
+const catalogueCache = createTtlCache({
+  ttlMs: 5 * 60 * 1000,
+  max: 500,
+  maxSize: 20_000_000,
+  sizeOf: (json) => json.length,
+});
+const clearCatalogueCache = () => catalogueCache.clear();
+
+// The query parameters getProducts reads. Anything else (junk, or the `_`
+// cache-buster the cart uses to skip the browser cache) doesn't change the
+// answer, so it must not create a separate cache entry.
+const LISTING_PARAMS = ['category', 'categorySlug', 'featured', 'search', 'sort', 'page', 'limit', 'masonry', 'all', 'subCategoryExact', 'subCategory', 'minPrice', 'maxPrice', 'slugs'];
+const catalogueQueryKey = (query) => JSON.stringify(
+  LISTING_PARAMS.filter((k) => query[k] !== undefined).map((k) => [k, query[k]])
+);
+
+// Browsers may keep public catalogue reads for 5 minutes. Vary on
+// Authorization so an admin's browser never reuses a public copy (which lacks
+// cost prices) or the reverse.
+const setCatalogueCacheHeaders = (res, isAdmin) => {
+  res.vary('Authorization');
+  res.set('Cache-Control', isAdmin ? 'private, no-store' : 'public, max-age=300, stale-while-revalidate=3600');
+};
+
+// Send already-serialized JSON (what the catalogue cache holds)
+const sendJsonText = (res, isAdmin, json) => {
+  setCatalogueCacheHeaders(res, isAdmin);
+  res.type('json').send(json);
+};
+
+// Most product slugs one ?slugs= request may ask for (the cart's price refresh)
+const MAX_SLUGS_PER_REQUEST = 100;
+
+// Search keywords from the admin form: a comma-separated string or an array.
+const parseTags = (value) => {
+  const raw = Array.isArray(value) ? value : String(value || '').split(',');
+  const tags = raw.map((t) => String(t).trim().toLowerCase().slice(0, 40)).filter(Boolean);
+  return [...new Set(tags)].slice(0, 30);
+};
 
 /**
  * Retry a Cloudinary upload with exponential backoff
@@ -97,7 +146,7 @@ const findCategoryId = async (slug) => {
 // GET /api/products
 exports.getProducts = async (req, res, next) => {
   try {
-    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry, all, subCategoryExact, subCategory, minPrice, maxPrice } = req.query;
+    const { category, categorySlug, featured, search, sort, page = 1, limit = 20, masonry, all, subCategoryExact, subCategory, minPrice, maxPrice, slugs } = req.query;
     
     const andConditions = [];
 
@@ -106,6 +155,15 @@ exports.getProducts = async (req, res, next) => {
     // inactive products (below) and the internal variations.costPrice field
     // (further down). Keep it as one flag so the two can't drift apart.
     const isAdmin = !!(req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing'));
+
+    const cacheKey = isAdmin ? null : `list:${catalogueQueryKey(req.query)}`;
+    const send = (body) => {
+      const json = JSON.stringify(body);
+      if (cacheKey) catalogueCache.set(cacheKey, json);
+      sendJsonText(res, isAdmin, json);
+    };
+    const cached = cacheKey && catalogueCache.get(cacheKey);
+    if (cached) return sendJsonText(res, isAdmin, cached);
 
     // By default only show active products. `?all=true` lifts that filter, but
     // ONLY for admins: this route is mounted with `optionalAuth` (routes/products.js),
@@ -133,8 +191,15 @@ exports.getProducts = async (req, res, next) => {
         andConditions.push({ category: categoryId });
       } else {
         // If category slug is requested but doesn't exist, return no products
-        return res.json({ products: [], total: 0, pages: 0, page: 1 });
+        return send({ products: [], total: 0, pages: 0, page: 1 });
       }
+    }
+
+    // ?slugs=a,b,c — several specific products in one request (the cart
+    // refreshes its prices this way instead of one request per line)
+    if (slugs) {
+      const slugList = String(slugs).split(',').map((s) => s.trim()).filter(Boolean).slice(0, MAX_SLUGS_PER_REQUEST);
+      andConditions.push({ slug: { $in: slugList } });
     }
 
     if (featured === 'true') andConditions.push({ featured: true });
@@ -179,6 +244,7 @@ exports.getProducts = async (req, res, next) => {
           { name: searchRegex },
           { description: searchRegex },
           { subCategory: searchRegex },
+          { tags: searchRegex },
           { category: { $in: categoryIds } }
         ]
       });
@@ -212,7 +278,7 @@ exports.getProducts = async (req, res, next) => {
         .lean();
       const position = new Map(pageIds.map((id, i) => [String(id), i]));
       docs.sort((a, b) => position.get(String(a._id)) - position.get(String(b._id)));
-      return res.json({
+      return send({
         products: docs,
         total: candidates.length,
         pages: Math.ceil(candidates.length / safeLimit) || 1,
@@ -237,7 +303,7 @@ exports.getProducts = async (req, res, next) => {
     
     // Use safeLimit (not the raw query param) so an admin sending ?limit=foo
     // doesn't end up with NaN in the paging math.
-    res.json({ products, total, pages: Math.ceil(total / safeLimit) || 1, page: parseInt(page) || 1, pageSize: safeLimit });
+    send({ products, total, pages: Math.ceil(total / safeLimit) || 1, page: parseInt(page) || 1, pageSize: safeLimit });
   } catch (error) {
     next(error);
   }
@@ -246,6 +312,8 @@ exports.getProducts = async (req, res, next) => {
 // GET /api/products/hot-selling
 exports.getHotSellingProducts = async (req, res, next) => {
   try {
+    const cached = catalogueCache.get('hot-selling');
+    if (cached) return sendJsonText(res, false, cached);
     const Category = require('../models/Category');
     const MAX_PRODUCTS = 20;
 
@@ -299,7 +367,9 @@ exports.getHotSellingProducts = async (req, res, next) => {
     }
 
     const combined = [...sellingProducts, ...featuredProducts];
-    res.json({ products: combined });
+    const json = JSON.stringify({ products: combined });
+    catalogueCache.set('hot-selling', json);
+    sendJsonText(res, false, json);
   } catch (error) {
     next(error);
   }
@@ -308,13 +378,18 @@ exports.getHotSellingProducts = async (req, res, next) => {
 // GET /api/products/:slug
 exports.getProductBySlug = async (req, res, next) => {
   try {
-    const isAdmin = req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing');
+    const isAdmin = !!(req.user && (req.user.role === 'admin' || req.user.role === 'admin_marketing'));
+    const cacheKey = isAdmin ? null : `slug:${req.params.slug}`;
+    const cached = cacheKey && catalogueCache.get(cacheKey);
+    if (cached) return sendJsonText(res, isAdmin, cached);
     const product = await Product.findOne({ slug: req.params.slug })
       .select(isAdmin ? {} : { 'variations.costPrice': 0 })
       .populate('category', 'name slug')
       .lean();
     if (!product) return res.status(404).json({ message: 'Product not found' });
-    res.json(product);
+    const json = JSON.stringify(product);
+    if (cacheKey) catalogueCache.set(cacheKey, json);
+    sendJsonText(res, isAdmin, json);
   } catch (error) {
     next(error);
   }
@@ -344,10 +419,16 @@ exports.createProduct = async (req, res, next) => {
       variations: variations,
       images: req.body.images || [],
       thumbnailImage: req.body.thumbnailImage || undefined,
+      tags: parseTags(req.body.tags),
+      // The admin form's SEO fields; saved nowhere before, so the form's
+      // values were silently dropped.
+      metaTitle: String(req.body.metaTitle || '').trim(),
+      metaDescription: String(req.body.metaDescription || '').trim(),
     };
 
     const product = new Product(productData);
     await product.save();
+    clearCatalogueCache();
     res.status(201).json(product);
   } catch (error) {
     next(error);
@@ -370,6 +451,9 @@ exports.updateProduct = async (req, res, next) => {
     if (req.body.customizationLabel !== undefined) product.customizationLabel = req.body.customizationLabel;
     if (req.body.featured !== undefined) product.featured = parseBool(req.body.featured);
     if (req.body.isMasonry !== undefined) product.isMasonry = parseBool(req.body.isMasonry);
+    if (req.body.tags !== undefined) product.tags = parseTags(req.body.tags);
+    if (req.body.metaTitle !== undefined) product.metaTitle = String(req.body.metaTitle || '').trim();
+    if (req.body.metaDescription !== undefined) product.metaDescription = String(req.body.metaDescription || '').trim();
 
     if (typeof req.body.variations === 'string') {
       product.variations = JSON.parse(req.body.variations);
@@ -407,6 +491,7 @@ exports.updateProduct = async (req, res, next) => {
     product.thumbnailImage = newThumbnail || undefined;
 
     await product.save();
+    clearCatalogueCache();
     res.json(product);
   } catch (error) {
     next(error);
@@ -442,6 +527,7 @@ exports.deleteProduct = async (req, res, next) => {
     }
 
     await product.deleteOne();
+    clearCatalogueCache();
     res.json({ message: 'Product removed' });
   } catch (error) {
     next(error);
@@ -475,6 +561,7 @@ exports.bulkDeleteProducts = async (req, res, next) => {
     }
 
     const result = await Product.deleteMany({ _id: { $in: ids } });
+    clearCatalogueCache();
     res.json({ message: `${result.deletedCount} product(s) deleted`, deletedCount: result.deletedCount });
   } catch (error) {
     next(error);
@@ -680,6 +767,8 @@ exports.importProducts = async (req, res, next) => {
             }
           }
 
+          if (importedCount > 0) clearCatalogueCache();
+
           // Clean up uploaded file
           try { fs.unlinkSync(req.file.path); } catch (e) { /* ignore */ }
 
@@ -705,3 +794,5 @@ exports.importProducts = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.clearCatalogueCache = clearCatalogueCache;

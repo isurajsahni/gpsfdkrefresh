@@ -74,6 +74,22 @@ const rankBySales = (products, unitsSold) => {
   );
 };
 
+/* Category slug → _id. Every listing request resolves its category first, and
+   each database round trip is slow from this server, so the id is kept for a
+   few minutes (long enough to spare most lookups, short enough that a deleted
+   category drops out). Only slugs that exist are kept, so made-up slugs can't
+   grow the map. */
+const CATEGORY_ID_TTL_MS = 5 * 60 * 1000;
+const categoryIdBySlug = new Map();
+const findCategoryId = async (slug) => {
+  const hit = categoryIdBySlug.get(slug);
+  if (hit && hit.expires > Date.now()) return hit.id;
+  const cat = await Category.findOne({ slug }).select('_id').lean();
+  if (cat) categoryIdBySlug.set(slug, { id: cat._id, expires: Date.now() + CATEGORY_ID_TTL_MS });
+  else categoryIdBySlug.delete(slug);
+  return cat?._id || null;
+};
+
 // GET /api/products
 exports.getProducts = async (req, res, next) => {
   try {
@@ -99,19 +115,18 @@ exports.getProducts = async (req, res, next) => {
     if (category) andConditions.push({ category });
     
     if (categorySlug) {
-      const Category = require('../models/Category');
-      let cat = await Category.findOne({ slug: categorySlug });
-      if (!cat) {
+      let categoryId = await findCategoryId(categorySlug);
+      if (!categoryId) {
         // Try normalized, case-insensitive, hyphen-agnostic lookup (e.g. housenameplates -> house-nameplates)
         const allCats = await Category.find({});
         const normalizedInput = categorySlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        cat = allCats.find(c => {
+        categoryId = allCats.find(c => {
           const normalizedSlug = (c.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           return normalizedSlug === normalizedInput;
-        });
+        })?._id;
       }
-      if (cat) {
-        andConditions.push({ category: cat._id });
+      if (categoryId) {
+        andConditions.push({ category: categoryId });
       } else {
         // If category slug is requested but doesn't exist, return no products
         return res.json({ products: [], total: 0, pages: 0, page: 1 });
@@ -204,14 +219,17 @@ exports.getProducts = async (req, res, next) => {
 
     // variations.costPrice is internal — only admins (see the isAdmin flag
     // computed above) get it back; public callers never see it
-    const total = await Product.countDocuments(finalQuery);
-    const products = await Product.find(finalQuery)
-      .select(hiddenFields)
-      .populate('category', 'name slug')
-      .sort(sortObj)
-      .skip((page - 1) * safeLimit)
-      .limit(safeLimit)
-      .lean();
+    // Independent queries: run them together rather than back to back
+    const [total, products] = await Promise.all([
+      Product.countDocuments(finalQuery),
+      Product.find(finalQuery)
+        .select(hiddenFields)
+        .populate('category', 'name slug')
+        .sort(sortObj)
+        .skip((page - 1) * safeLimit)
+        .limit(safeLimit)
+        .lean(),
+    ]);
     
     // Use safeLimit (not the raw query param) so an admin sending ?limit=foo
     // doesn't end up with NaN in the paging math.

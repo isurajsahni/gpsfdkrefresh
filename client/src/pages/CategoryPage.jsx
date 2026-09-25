@@ -22,6 +22,9 @@ const SUBCATEGORIES = [
 // (/wall-canvas itself redirects to the /canvas landing page.)
 const ALL_PRODUCTS_SLUG = 'all';
 
+// Rendered by ProductZigzagPage, which fetches its own products
+const ZIGZAG_SLUG = 'house-nameplates';
+
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,25 +63,13 @@ const CategoryPage = () => {
 
   useEffect(() => {
     if (isUnknownSubcategory) return;
+    // A later navigation supersedes this one; its responses must not land
+    let cancelled = false;
+
     const fetchProducts = async () => {
       setLoading(true);
       setIsNotFound(false);
       setIsEmpty(false);
-
-      // Refetch when the slug changes: the component is reused across category
-      // routes, so a stale category would title /house-nameplates "Wall Canvas".
-      if (category?.slug !== slug) {
-        try {
-          const catRes = await API.get(`/categories/${slug}`);
-          setCategory(catRes.data);
-        } catch (e) {
-          if (e.response?.status === 404) {
-            setIsNotFound(true);
-            setLoading(false);
-            return;
-          }
-        }
-      }
 
       const params = {
         categorySlug: slug,
@@ -89,13 +80,33 @@ const CategoryPage = () => {
       if (exactSubcategory) params.subCategoryExact = exactSubcategory;
       if (isAllProducts) params.sort = 'best_selling';
 
-      try {
-        const { data } = await API.get('/products', { params });
+      // The category and its products don't depend on each other, so they're
+      // fetched together rather than one after the other.
+      const [catResult, productsResult] = await Promise.allSettled([
+        // Refetch when the slug changes: the component is reused across category
+        // routes, so a stale category would title /house-nameplates "Wall Canvas".
+        category?.slug !== slug ? API.get(`/categories/${slug}`) : null,
+        // The nameplate listing (ProductZigzagPage) loads its own products.
+        slug === ZIGZAG_SLUG ? null : API.get('/products', { params }),
+      ]);
+      if (cancelled) return;
+
+      if (catResult.status === 'rejected' && catResult.reason?.response?.status === 404) {
+        setIsNotFound(true);
+        setLoading(false);
+        return;
+      }
+      if (catResult.value) setCategory(catResult.value.data);
+
+      if (productsResult.status === 'rejected') {
+        console.error(productsResult.reason);
+      } else if (productsResult.value) {
+        const { data } = productsResult.value;
         setIsEmpty(data.total === 0);
         setTotalProducts(data.total);
         setTotalPages(data.pages);
         setProducts(data.products);
-        
+
         // Restore scroll position logic if returning to page
         const scrollKey = `scroll_${location.pathname}${location.search}`;
         const savedPos = sessionStorage.getItem(scrollKey);
@@ -105,14 +116,12 @@ const CategoryPage = () => {
         } else {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
-    
+
     fetchProducts();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, subcategorySlug, currentPage]);
 
@@ -142,7 +151,7 @@ const CategoryPage = () => {
   const dynamicDescription = category?.description || "Browse our exclusive collection of premium canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
 
   // House Nameplates special handling
-  if (slug === 'house-nameplates') {
+  if (slug === ZIGZAG_SLUG) {
     return <ProductZigzagPage category={category} slug={slug} />;
   }
 

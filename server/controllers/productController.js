@@ -77,16 +77,20 @@ const rankBySales = (products, unitsSold) => {
 /* Category slug → _id. Every listing request resolves its category first, and
    each database round trip is slow from this server, so the id is kept for a
    few minutes (long enough to spare most lookups, short enough that a deleted
-   category drops out). Only slugs that exist are kept, so made-up slugs can't
-   grow the map. */
+   category drops out). Only plain-string slugs that exist are kept, so made-up
+   slugs can't grow the map. A repeated query param arrives as an array, which
+   would never be looked up again: those skip the cache entirely. */
 const CATEGORY_ID_TTL_MS = 5 * 60 * 1000;
 const categoryIdBySlug = new Map();
 const findCategoryId = async (slug) => {
-  const hit = categoryIdBySlug.get(slug);
+  const cacheable = typeof slug === 'string';
+  const hit = cacheable && categoryIdBySlug.get(slug);
   if (hit && hit.expires > Date.now()) return hit.id;
   const cat = await Category.findOne({ slug }).select('_id').lean();
-  if (cat) categoryIdBySlug.set(slug, { id: cat._id, expires: Date.now() + CATEGORY_ID_TTL_MS });
-  else categoryIdBySlug.delete(slug);
+  if (cacheable) {
+    if (cat) categoryIdBySlug.set(slug, { id: cat._id, expires: Date.now() + CATEGORY_ID_TTL_MS });
+    else categoryIdBySlug.delete(slug);
+  }
   return cat?._id || null;
 };
 

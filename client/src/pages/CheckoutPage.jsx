@@ -90,7 +90,14 @@ const loadRazorpayScript = () => {
 
 
 const CheckoutPage = () => {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { cartItems, cartTotal, clearCart, refreshPrices } = useCart();
+
+  // Show today's prices before the customer pays (skipped if the cart was
+  // refreshed in the last minute, e.g. on this same page load)
+  useEffect(() => {
+    refreshPrices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- on arrival only
+  }, []);
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);

@@ -130,7 +130,7 @@ const Vision = () => {
           eyebrow="Take action"
           title="See the vision in action"
           text="See the vision in action — explore our handcrafted canvas collection."
-          to="/wall-canvas"
+          to="/canvas"
           cta="Explore Our Canvas Collection"
         />
       </motion.div>

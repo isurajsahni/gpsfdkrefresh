@@ -22,7 +22,7 @@ const LINK_COLUMNS = [
   {
     title: 'Services',
     links: [
-      { name: 'Canvases', path: '/wall-canvas' },
+      { name: 'Canvases', path: '/canvas' },
       { name: 'Nameplates', path: '/house-nameplates' },
       { name: 'Consultancy', path: '/consultancy' },
       { name: 'Getaway', path: '/consultancy' },

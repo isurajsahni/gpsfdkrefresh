@@ -25,7 +25,12 @@ API.interceptors.request.use((config) => {
 });
 
 API.interceptors.request.use((config) => {
-  const user = JSON.parse(localStorage.getItem('user'));
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch {
+    // Unreadable saved login: send the request signed out rather than fail it
+  }
   if (user?.token) {
     config.headers.Authorization = `Bearer ${user.token}`;
   }

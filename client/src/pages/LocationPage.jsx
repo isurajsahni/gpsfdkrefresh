@@ -214,7 +214,7 @@ const LocationPage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {/* Points at canvases while the House Nameplates catalog is empty; switch
                   back to /house-nameplates ("Shop Name Plates") once it's restocked. */}
-              <Link to="/wall-canvas" className="btn-primary w-full sm:w-auto text-lg px-8 py-3.5">
+              <Link to="/canvas" className="btn-primary w-full sm:w-auto text-lg px-8 py-3.5">
                 Shop Canvases
               </Link>
               <a

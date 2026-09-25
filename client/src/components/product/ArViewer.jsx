@@ -8,9 +8,21 @@ import { useEffect, useState } from 'react';
  *
  * - Matches the product by slug against catalog.json "id"
  * - Renders nothing if the product has no AR models yet (safe on every page)
- * - Requires the model-viewer script in client/index.html:
- *   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>
+ * - Loads the model-viewer script itself the first time a viewer opens
  */
+
+const MODEL_VIEWER_SRC = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+
+// ~250KB, so it's fetched only when someone opens the viewer rather than on
+// every page. <model-viewer> upgrades by itself once the script defines it.
+const loadModelViewer = () => {
+  if (customElements.get('model-viewer') || document.querySelector(`script[src="${MODEL_VIEWER_SRC}"]`)) return;
+  const script = document.createElement('script');
+  script.type = 'module';
+  script.src = MODEL_VIEWER_SRC;
+  document.head.appendChild(script);
+};
+
 export default function ArViewer({ productId, catalogUrl }) {
   const [artwork, setArtwork] = useState(null);
   const [baseUrl, setBaseUrl] = useState('');
@@ -20,6 +32,7 @@ export default function ArViewer({ productId, catalogUrl }) {
 
   useEffect(() => {
     if (!catalogUrl || !productId) return;
+    loadModelViewer();
     let alive = true;
     fetch(catalogUrl)
       .then((r) => r.json())

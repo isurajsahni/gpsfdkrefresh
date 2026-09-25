@@ -3,6 +3,30 @@ import API from '../utils/api';
 
 const CurrencyContext = createContext();
 
+/* The last detected currency, so a returning visitor sees their own prices
+   straight away instead of ₹ for a second first. It's still re-checked in the
+   background on every load, and dropped after a week. */
+const GEO_CACHE_KEY = 'gpsfdk_geo_pricing';
+const GEO_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+const readCachedGeo = () => {
+  try {
+    const cached = JSON.parse(localStorage.getItem(GEO_CACHE_KEY));
+    if (cached?.data && Date.now() - cached.at < GEO_CACHE_MAX_AGE_MS) return cached.data;
+  } catch {
+    // Unreadable or blocked storage: detect afresh
+  }
+  return null;
+};
+
+const writeCachedGeo = (data) => {
+  try {
+    localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ data, at: Date.now() }));
+  } catch {
+    // Storage full or blocked: the cache is only a nicety
+  }
+};
+
 /**
  * CurrencyProvider
  * 
@@ -15,15 +39,18 @@ const CurrencyContext = createContext();
  *   <span>{formatPrice(400)}</span>  // "$49" for US, "₹400" for IN
  */
 export const CurrencyProvider = ({ children }) => {
-  const [geoData, setGeoData] = useState({
-    country: 'IN',
-    currency: 'INR',
-    symbol: '₹',
-    multiplier: 1,
-    exchangeRate: 1,
-    locale: 'en-IN',
-    decimals: 0,
-    loaded: false,
+  const [geoData, setGeoData] = useState(() => {
+    const cached = readCachedGeo();
+    return cached ? { ...cached, loaded: true } : {
+      country: 'IN',
+      currency: 'INR',
+      symbol: '₹',
+      multiplier: 1,
+      exchangeRate: 1,
+      locale: 'en-IN',
+      decimals: 0,
+      loaded: false,
+    };
   });
 
   // Allow manual country override (optional feature)
@@ -36,6 +63,8 @@ export const CurrencyProvider = ({ children }) => {
         const url = manualCountry ? `/pricing?country=${manualCountry}` : '/pricing';
         const { data } = await API.get(url);
         setGeoData({ ...data, loaded: true });
+        // Only the visitor's own detected location is remembered
+        if (!manualCountry) writeCachedGeo(data);
       } catch (err) {
         console.warn('[Currency] Geo detection failed, using INR default:', err.message);
         setGeoData(prev => ({ ...prev, loaded: true }));

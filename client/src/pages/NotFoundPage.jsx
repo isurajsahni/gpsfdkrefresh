@@ -114,7 +114,7 @@ const NotFoundPage = () => {
             <span className="text-xs text-gray-400 mt-1">Back to the main page</span>
           </Link>
           
-          <Link to="/wall-canvas" className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
+          <Link to="/canvas" className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-accent hover:shadow-md transition-all group">
             <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mb-3 group-hover:bg-accent transition-colors">
               <HiOutlineViewGrid className="w-6 h-6 text-accent group-hover:text-white" />
             </div>

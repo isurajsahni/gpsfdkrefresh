@@ -125,11 +125,13 @@ router.get('/', async (req, res) => {
   </url>`;
     });
 
-    // Add categories
+    // Add categories. Wall Canvas's landing page is /canvas; /wall-canvas
+    // only 301s there, and a sitemap should list the final URL.
     categories.filter((category) => stockedCategoryIds.has(String(category._id))).forEach((category) => {
+      const path = category.slug === 'wall-canvas' ? '/canvas' : `/${category.slug}`;
       xml += `
   <url>
-    <loc>${baseUrl}/${category.slug}</loc>
+    <loc>${baseUrl}${path}</loc>
     <lastmod>${category.updatedAt ? category.updatedAt.toISOString() : new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>

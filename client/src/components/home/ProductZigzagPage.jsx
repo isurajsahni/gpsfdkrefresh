@@ -19,14 +19,12 @@ const ProductZigzagPage = ({ category, slug }) => {
       setLoading(true);
       setIsEmpty(false);
       try {
+        // Only this category's products — not the whole catalogue
         const { data } = await API.get('/products', {
-          params: { limit: 1000 }
+          params: { categorySlug: slug, limit: 1000 }
         });
-        const filtered = data.products.filter(
-          p => p.category?.slug === slug
-        );
-        setProducts(filtered);
-        setIsEmpty(filtered.length === 0);
+        setProducts(data.products);
+        setIsEmpty(data.products.length === 0);
       } catch (err) {
         console.error(err);
       }

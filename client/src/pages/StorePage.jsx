@@ -24,7 +24,7 @@ import offerNameplate from '../assets/image/store page/image 18.png';
 import offerConsultancy from '../assets/image/store page/portrait-happy-smiling-cheerful-beautiful-young-support-phone-operator-headset-with-laptop-isolated-white-wall 1.png';
 import offerGetaway from '../assets/image/store page/image 21.png';
 import offerEvents from '../assets/image/store page/image 22.png';
-import giftedImg from '../assets/image/store page/newimg.png';
+import giftedImg from '../assets/image/store page/newimg.webp';
 import collab1 from '../assets/image/store page/Rectangle 174.webp';
 import collab2 from '../assets/image/store page/Rectangle 174 (1).webp';
 import collab3 from '../assets/image/store page/Rectangle 174 (2).webp';
@@ -72,7 +72,7 @@ const GALLERY_LOOP_WIDTH = HERO_STRIP.reduce(
 // One slide in the marquee — links through to the wall-canvas collection.
 const GalleryImage = ({ src, width }) => (
   <Link
-    to="/wall-canvas"
+    to="/canvas"
     style={{ width, height: GALLERY_HEIGHT }}
     className="block flex-shrink-0 rounded-2xl overflow-hidden bg-cream-dark"
   >
@@ -88,7 +88,7 @@ const GalleryImage = ({ src, width }) => (
 
 // width: per-item Figma image width (px); height follows each image's ratio.
 const OFFER = [
-  { label: 'Canvas', img: offerCanvas, to: '/wall-canvas', width: 160 },
+  { label: 'Canvas', img: offerCanvas, to: '/canvas', width: 160 },
   { label: 'Nameplates', img: offerNameplate, to: '/house-nameplates', width: 150 },
   { label: 'Consultancy', img: offerConsultancy, to: '/consultancy', width: 135 },
   { label: 'Getaway', img: offerGetaway, to: '/consultancy', width: 156 },
@@ -338,7 +338,7 @@ const StorePage = () => {
             {/* Left: most-gifted items promo — text sits straight on the dark
                 image (no blur band), per Figma. */}
             <Link
-              to="/wall-canvas"
+              to="/canvas"
               className="group relative rounded-3xl overflow-hidden block w-full max-w-[505px]"
             >
               <img
@@ -398,7 +398,7 @@ const StorePage = () => {
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
-            action={<ArrowLink to="/wall-canvas">Explore Collections</ArrowLink>}
+            action={<ArrowLink to="/wall-canvas/all">Explore Collections</ArrowLink>}
           />
         </div>
 

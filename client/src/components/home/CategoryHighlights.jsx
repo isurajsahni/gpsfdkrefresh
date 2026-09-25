@@ -79,7 +79,7 @@ const CategoryHighlights = () => {
       description: "Transform your walls into a gallery of expression. Our museum-grade canvases bring vibrant color and sophisticated texture to any interior environment.",
       image: poster1, 
       isReverse: false,
-      link: "/wall-canvas",
+      link: "/canvas",
       bgColor: "bg-primary",
       isDark: false,
       ctaText: "View All"

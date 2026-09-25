@@ -41,6 +41,59 @@ const generateUniqueSlug = async (name) => {
   return slug;
 };
 
+/**
+ * Units sold per product, best sellers first. An order counts once it has gone
+ * through: not cancelled and not still waiting on payment. Shared by the
+ * hot-selling row and the best-selling sort so both agree on what "sold" means.
+ * @param {number} [limit] - only the top N products
+ * @returns {Promise<Array<{ _id: ObjectId, totalSold: number }>>}
+ */
+const getUnitsSold = async (limit) => {
+  const Order = require('../models/Order');
+  const pipeline = [
+    { $match: { status: { $nin: ['cancelled', 'payment_pending'] } } },
+    { $unwind: '$items' },
+    { $group: { _id: '$items.product', totalSold: { $sum: '$items.quantity' } } },
+    { $sort: { totalSold: -1 } },
+  ];
+  if (limit) pipeline.push({ $limit: limit });
+  return Order.aggregate(pipeline);
+};
+
+/**
+ * Orders products most-sold first; products that sold the same (including
+ * never) fall back to newest first. Returns a new array.
+ * @param {Array<{ _id, createdAt }>} products
+ * @param {Array<{ _id, totalSold }>} unitsSold - from getUnitsSold()
+ */
+const rankBySales = (products, unitsSold) => {
+  const sold = new Map(unitsSold.map((s) => [String(s._id), s.totalSold]));
+  const soldOf = (p) => sold.get(String(p._id)) || 0;
+  return [...products].sort(
+    (a, b) => soldOf(b) - soldOf(a) || (new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  );
+};
+
+/* Category slug → _id. Every listing request resolves its category first, and
+   each database round trip is slow from this server, so the id is kept for a
+   few minutes (long enough to spare most lookups, short enough that a deleted
+   category drops out). Only plain-string slugs that exist are kept, so made-up
+   slugs can't grow the map. A repeated query param arrives as an array, which
+   would never be looked up again: those skip the cache entirely. */
+const CATEGORY_ID_TTL_MS = 5 * 60 * 1000;
+const categoryIdBySlug = new Map();
+const findCategoryId = async (slug) => {
+  const cacheable = typeof slug === 'string';
+  const hit = cacheable && categoryIdBySlug.get(slug);
+  if (hit && hit.expires > Date.now()) return hit.id;
+  const cat = await Category.findOne({ slug }).select('_id').lean();
+  if (cacheable) {
+    if (cat) categoryIdBySlug.set(slug, { id: cat._id, expires: Date.now() + CATEGORY_ID_TTL_MS });
+    else categoryIdBySlug.delete(slug);
+  }
+  return cat?._id || null;
+};
+
 // GET /api/products
 exports.getProducts = async (req, res, next) => {
   try {
@@ -66,19 +119,18 @@ exports.getProducts = async (req, res, next) => {
     if (category) andConditions.push({ category });
     
     if (categorySlug) {
-      const Category = require('../models/Category');
-      let cat = await Category.findOne({ slug: categorySlug });
-      if (!cat) {
+      let categoryId = await findCategoryId(categorySlug);
+      if (!categoryId) {
         // Try normalized, case-insensitive, hyphen-agnostic lookup (e.g. housenameplates -> house-nameplates)
         const allCats = await Category.find({});
         const normalizedInput = categorySlug.toLowerCase().replace(/[^a-z0-9]/g, '');
-        cat = allCats.find(c => {
+        categoryId = allCats.find(c => {
           const normalizedSlug = (c.slug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
           return normalizedSlug === normalizedInput;
-        });
+        })?._id;
       }
-      if (cat) {
-        andConditions.push({ category: cat._id });
+      if (categoryId) {
+        andConditions.push({ category: categoryId });
       } else {
         // If category slug is requested but doesn't exist, return no products
         return res.json({ products: [], total: 0, pages: 0, page: 1 });
@@ -141,17 +193,47 @@ exports.getProducts = async (req, res, next) => {
     const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 1000);
     
     const finalQuery = andConditions.length > 0 ? { $and: andConditions } : {};
+    const hiddenFields = isAdmin ? {} : { 'variations.costPrice': 0 };
+
+    // Sales live on orders, not on products, so this sort can't be a Mongo
+    // sort: rank the matching ids in memory, then fetch just the asked-for page.
+    if (sort === 'best_selling') {
+      const [candidates, unitsSold] = await Promise.all([
+        Product.find(finalQuery).select('_id createdAt').lean(),
+        getUnitsSold(),
+      ]);
+      const pageNum = Math.max(parseInt(page) || 1, 1);
+      const pageIds = rankBySales(candidates, unitsSold)
+        .slice((pageNum - 1) * safeLimit, pageNum * safeLimit)
+        .map((p) => p._id);
+      const docs = await Product.find({ _id: { $in: pageIds } })
+        .select(hiddenFields)
+        .populate('category', 'name slug')
+        .lean();
+      const position = new Map(pageIds.map((id, i) => [String(id), i]));
+      docs.sort((a, b) => position.get(String(a._id)) - position.get(String(b._id)));
+      return res.json({
+        products: docs,
+        total: candidates.length,
+        pages: Math.ceil(candidates.length / safeLimit) || 1,
+        page: pageNum,
+        pageSize: safeLimit,
+      });
+    }
 
     // variations.costPrice is internal — only admins (see the isAdmin flag
     // computed above) get it back; public callers never see it
-    const total = await Product.countDocuments(finalQuery);
-    const products = await Product.find(finalQuery)
-      .select(isAdmin ? {} : { 'variations.costPrice': 0 })
-      .populate('category', 'name slug')
-      .sort(sortObj)
-      .skip((page - 1) * safeLimit)
-      .limit(safeLimit)
-      .lean();
+    // Independent queries: run them together rather than back to back
+    const [total, products] = await Promise.all([
+      Product.countDocuments(finalQuery),
+      Product.find(finalQuery)
+        .select(hiddenFields)
+        .populate('category', 'name slug')
+        .sort(sortObj)
+        .skip((page - 1) * safeLimit)
+        .limit(safeLimit)
+        .lean(),
+    ]);
     
     // Use safeLimit (not the raw query param) so an admin sending ?limit=foo
     // doesn't end up with NaN in the paging math.
@@ -164,7 +246,6 @@ exports.getProducts = async (req, res, next) => {
 // GET /api/products/hot-selling
 exports.getHotSellingProducts = async (req, res, next) => {
   try {
-    const Order = require('../models/Order');
     const Category = require('../models/Category');
     const MAX_PRODUCTS = 20;
 
@@ -174,20 +255,8 @@ exports.getHotSellingProducts = async (req, res, next) => {
       return res.json({ products: [] });
     }
 
-    // Aggregate orders to find best-selling product IDs in wall-canvas category
-    // Only count orders that are not cancelled and are paid (or COD pending)
-    const bestSellers = await Order.aggregate([
-      { $match: { status: { $nin: ['cancelled', 'payment_pending'] } } },
-      { $unwind: '$items' },
-      {
-        $group: {
-          _id: '$items.product',
-          totalSold: { $sum: '$items.quantity' },
-        },
-      },
-      { $sort: { totalSold: -1 } },
-      { $limit: MAX_PRODUCTS },
-    ]);
+    // Best-selling product IDs (any category — filtered to wall-canvas below)
+    const bestSellers = await getUnitsSold(MAX_PRODUCTS);
 
     const bestSellerIds = bestSellers.map((b) => b._id);
 

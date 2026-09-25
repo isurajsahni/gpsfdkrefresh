@@ -33,6 +33,10 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 
+/* Opening and closing share one curve, so the card's padding, the answer's
+   height and the chevron all move together. */
+const EASE = 'duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]';
+
 const inView = {
   initial: 'hidden',
   whileInView: 'show',
@@ -49,7 +53,7 @@ function FaqItem({ q, a, open, onToggle }) {
     // and margins add; they don't collapse). Closed: the question centres in
     // the 80px row.
     <li
-      className={`relative flex min-h-[80px] items-center gap-6 rounded-[10px] pl-5 pr-5 sm:gap-10 sm:pl-[25px] sm:pr-[40px] ${
+      className={`relative flex min-h-[80px] items-center gap-6 rounded-[10px] pl-5 pr-5 transition-[padding,margin] ${EASE} sm:gap-10 sm:pl-[25px] sm:pr-[40px] ${
         open ? 'mb-[10px] pb-[20.4px] pt-[15.6px] last:mb-0' : 'py-[18px]'
       }`}
       style={{ backgroundImage: open ? FAQ_BG_OPEN : FAQ_BG_CLOSED }}
@@ -69,13 +73,22 @@ function FaqItem({ q, a, open, onToggle }) {
             {q}
           </button>
         </h3>
-        <p
+        {/* Animates to the answer's real height: the grid row eases between
+            0fr and 1fr, and overflow-hidden lets it collapse to nothing.
+            `invisible` (applied once closing ends) keeps a closed answer out
+            of screen readers, as `hidden` used to. */}
+        <div
           id={answerId}
-          hidden={!open}
-          className="relative mt-[11.5px] max-w-[557px] text-[16px] leading-[1.19] text-[#595959] sm:text-[18px]"
+          className={`grid transition-[grid-template-rows,opacity,visibility] ${EASE} ${
+            open ? 'visible grid-rows-[1fr] opacity-100' : 'invisible grid-rows-[0fr] opacity-0'
+          }`}
         >
-          <Lines lines={a} />
-        </p>
+          <div className="overflow-hidden">
+            <p className="relative max-w-[557px] pt-[11.5px] text-[16px] leading-[1.19] text-[#595959] sm:text-[18px]">
+              <Lines lines={a} />
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* pointer-events-none so a click on the circle falls through to the
@@ -85,7 +98,7 @@ function FaqItem({ q, a, open, onToggle }) {
         <img
           src={chevronDownIcon}
           alt=""
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-transform ${EASE} ${open ? 'rotate-180' : ''}`}
         />
       </span>
     </li>

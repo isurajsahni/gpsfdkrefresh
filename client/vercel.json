@@ -4,10 +4,12 @@
     { "source": "/(.*)", "has": [{ "type": "host", "value": "gpsfdk.com" }], "destination": "https://www.gpsfdk.com/$1", "permanent": true },
     { "source": "/wp-content/(.*)", "destination": "/", "permanent": true },
     { "source": "/wp-admin/(.*)", "destination": "/", "permanent": true },
-    { "source": "/product-category/(.*)", "destination": "/wall-canvas", "permanent": true },
+    { "source": "/product-category/(.*)", "destination": "/canvas", "permanent": true },
+    { "source": "/wall-canvas", "destination": "/canvas", "permanent": true },
+    { "source": "/canvas-v2-demo", "destination": "/canvas", "permanent": true },
     { "source": "/shop", "destination": "/store", "permanent": true },
     { "source": "/shop/(.*)", "destination": "/store", "permanent": true },
-    { "source": "/product/:slug((?:aa|c|cas|ma|pt|sc|sp)-\\d+(?:-\\d+)?)", "destination": "/wall-canvas", "permanent": true },
+    { "source": "/product/:slug((?:aa|c|cas|ma|pt|sc|sp)-\\d+(?:-\\d+)?)", "destination": "/canvas", "permanent": true },
     { "source": "/staging-page", "destination": "/", "permanent": true },
     { "source": "/wp/blog/(.*)", "destination": "/blog/$1", "permanent": true },
     { "source": "/category/(.*)", "destination": "/$1", "permanent": true },
@@ -28,14 +30,19 @@
       ],
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/product/:slug"
     },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
       "source": "/assets/(.*\\.mp4)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }
+      ]
+    },
+    {
+      "source": "/assets/(.*\\.(?:js|css|woff2?|png|jpe?g|webp|avif|gif|svg))",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {

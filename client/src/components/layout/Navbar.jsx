@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiOutlineSearch } from 'react-icons/hi';
+import { HiOutlineShoppingBag, HiOutlineUser, HiOutlineMenu, HiOutlineX, HiOutlineSearch, HiChevronDown } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useUI } from '../../context/UIContext';
@@ -9,7 +9,15 @@ import useClickOutside from '../../hooks/useClickOutside';
 import logo from '../../assets/vite.webp';
 
 const NAV_LINKS = [
-  { name: 'Store', path: '/' },
+  {
+    name: 'Store',
+    path: '/',
+    // `match`: the paths that count as being in that section, for the highlight
+    children: [
+      { name: 'Canvas', path: '/canvas', match: ['/canvas', '/wall-canvas', '/customize-canvas'] },
+      { name: 'House Nameplates', path: '/house-nameplates', match: ['/house-nameplates'] },
+    ],
+  },
   { name: 'School of Learning', path: '/school-of-learning' },
   { name: 'Love', path: '/love' },
   { name: 'Vision', path: '/vision' },
@@ -25,6 +33,19 @@ const Navbar = () => {
   const { cartCount } = useCart();
   const { setIsCartOpen, setIsSearchOpen } = useUI();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // The Store menu opens on hover/focus. After a link is followed it stays
+  // shut until the pointer leaves, so it doesn't sit open over the new page.
+  const [storeMenuShut, setStoreMenuShut] = useState(false);
+  const shutStoreMenu = () => {
+    document.activeElement?.blur();
+    setStoreMenuShut(true);
+  };
+
+  const isChildActive = (child) =>
+    child.match.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  // A parent item reads as active on any of its dropdown pages too
+  const isInSection = (link) => link.children?.some(isChildActive);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,8 +90,55 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Nav */}
-                <div className="hidden lg:flex items-center gap-10">
-                  {NAV_LINKS.map((link) => (
+                <div className="hidden lg:flex items-center gap-10 h-full">
+                  {NAV_LINKS.map((link) => link.children ? (
+                    // Opens on hover, and on focus so keyboard users can tab into it
+                    <div
+                      key={link.path}
+                      className="relative group h-full flex items-center"
+                      onMouseLeave={() => setStoreMenuShut(false)}
+                    >
+                      <NavLink
+                        to={link.path}
+                        end
+                        className={({ isActive }) =>
+                          `flex items-center gap-1 text-xs font-normal transition-colors duration-300 ${
+                            isActive || isInSection(link) ? 'text-accent' : 'text-[#424245] hover:text-accent'
+                          }`
+                        }
+                      >
+                        {link.name}
+                        <HiChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180 group-focus-within:rotate-180" />
+                      </NavLink>
+                      {/* pt-2 keeps the gap under the bar hoverable. w-max: an absolute
+                          box is otherwise capped by the narrow Store link and wraps. */}
+                      <div
+                        className={`absolute left-1/2 top-full w-max -translate-x-1/2 translate-y-1 pt-2 invisible opacity-0 transition-all duration-200 ${
+                          storeMenuShut ? '' : 'group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0'
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1.5 bg-white rounded-xl shadow-xl border border-gray-100 p-2 min-w-[200px]">
+                          {link.children.map((child) => {
+                            const active = isChildActive(child);
+                            return (
+                              <Link
+                                key={child.path}
+                                to={child.path}
+                                onClick={shutStoreMenu}
+                                aria-current={active ? 'page' : undefined}
+                                className={`flex items-center justify-between gap-6 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm transition-colors ${
+                                  active ? 'bg-accent/10 text-accent font-semibold' : 'text-gray-700 hover:bg-accent/10 hover:text-accent'
+                                }`}
+                              >
+                                {child.name}
+                                {active && <span aria-hidden="true" className="size-1.5 rounded-full bg-accent" />}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
                     <NavLink
                       key={link.path}
                       to={link.path}
@@ -193,19 +261,33 @@ const Navbar = () => {
           >
             <div className="p-6 space-y-1 h-full overflow-y-auto pb-32">
               {NAV_LINKS.map((link) => (
-                <NavLink
-                  key={link.path}
-                  to={link.path}
-                  end
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    `block text-xl font-heading py-3 border-b border-white/10 ${
-                      isActive ? 'text-accent' : 'text-white'
-                    }`
-                  }
-                >
-                  {link.name}
-                </NavLink>
+                <div key={link.path} className="border-b border-white/10">
+                  <NavLink
+                    to={link.path}
+                    end
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `block text-xl font-heading py-3 ${isActive ? 'text-accent' : 'text-white'}`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                  {link.children && (
+                    <div className="pl-4 pb-2">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          onClick={() => setMobileOpen(false)}
+                          aria-current={isChildActive(child) ? 'page' : undefined}
+                          className={`block text-base font-heading py-2 ${isChildActive(child) ? 'text-accent' : 'text-white/80'}`}
+                        >
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
               <button
                 onClick={() => { setMobileOpen(false); setIsSearchOpen(true); }}

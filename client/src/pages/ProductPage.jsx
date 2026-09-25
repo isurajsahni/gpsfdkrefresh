@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API from '../utils/api';
@@ -14,14 +14,27 @@ import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { productSeoTitle, productSeoDescription, productSchemaDescription } from '../utils/productSeo';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
+import { useAuth } from '../context/AuthContext';
+import { validators, formatters } from '../utils/validation';
+import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
+import { categoryPath } from '../utils/categoryPath';
 
 const ProductPage = () => {
   const { slug } = useParams();
+  const location = useLocation();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariation, setSelectedVariation] = useState({});
   const [customText, setCustomText] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
+  // Custom size isn't a variation: selectedVariation keeps a real one (for the
+  // wall preview and schema) while this flag drives the UI.
+  const [isCustomSize, setIsCustomSize] = useState(false);
+  const [customSize, setCustomSize] = useState('');
+  const [quoteForm, setQuoteForm] = useState({ name: '', email: '', phone: '' });
+  const [quoteSending, setQuoteSending] = useState(false);
+  const [quoteSent, setQuoteSent] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [isWallPreviewOpen, setIsWallPreviewOpen] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
@@ -59,6 +72,17 @@ const ProductPage = () => {
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
   const { formatPrice } = useCurrency();
+  const { user } = useAuth();
+
+  // Logged-in buyers shouldn't have to retype who they are for a quote
+  useEffect(() => {
+    if (!user) return;
+    setQuoteForm(prev => ({
+      name: prev.name || user.name || '',
+      email: prev.email || user.email || '',
+      phone: prev.phone || formatters.phone(user.phone || ''),
+    }));
+  }, [user]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -66,8 +90,14 @@ const ProductPage = () => {
       try {
         const { data } = await API.get(`/products/${slug}`);
         setProduct(data);
+        // Size and text the buyer already picked on the category listing
+        const prefill = location.state || {};
+        setIsCustomSize(prefill.size === CUSTOM_SIZE);
+        setQuoteSent(false);
+        if (prefill.familyName) setCustomText(prefill.familyName);
+        if (prefill.houseNumber) setHouseNumber(prefill.houseNumber);
         if (data.variations?.length > 0) {
-          setSelectedVariation(data.variations[0]);
+          setSelectedVariation(data.variations.find(v => prefill.size && v.size === prefill.size) || data.variations[0]);
         }
         // Meta Pixel: ViewContent event
         if (typeof window.fbq === 'function') {
@@ -81,10 +111,14 @@ const ProductPage = () => {
         }
       } catch (err) {
         console.error(err);
+        // Don't leave the previous product on screen (and addable to the cart)
+        // under this product's URL
+        setProduct(null);
       }
       setLoading(false);
     };
     fetchProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- prefill is read once per product load
   }, [slug]);
 
   if (loading) {
@@ -100,7 +134,7 @@ const ProductPage = () => {
   }
 
   // Determine if this is a nameplate product (show custom text only for nameplates)
-  const isNameplate = product.category?.name?.toLowerCase().includes('nameplate');
+  const isNameplate = isNameplateProduct(product);
 
   // Cascading variation options: Material → Frame → Size → Color
   // Materials: always show all available
@@ -163,9 +197,57 @@ const ProductPage = () => {
       toast.error('Please enter custom text');
       return;
     }
-    addToCart(product, selectedVariation, quantity, isNameplate ? customText : '');
+    addToCart(product, selectedVariation, quantity, isNameplate ? nameplateCustomText(customText, houseNumber) : '');
     setIsCartOpen(true);
   };
+
+  // A custom size has no price to charge, so instead of a cart line it becomes
+  // a lead the team follows up on from the admin Leads page.
+  const handleQuoteRequest = async (e) => {
+    e.preventDefault();
+    if (quoteSending) return;
+    if (!customSize.trim()) {
+      toast.error('Please enter the size you need');
+      return;
+    }
+    const fieldError = validators.fullName(quoteForm.name) || validators.email(quoteForm.email) || validators.phone(quoteForm.phone);
+    if (fieldError) {
+      toast.error(fieldError);
+      return;
+    }
+
+    const details = [
+      `Custom size request: ${product.name}`,
+      `https://www.gpsfdk.com/product/${product.slug}`,
+      `Size: ${customSize.trim()}`,
+      selectedVariation.material && `Material: ${selectedVariation.material}`,
+      selectedVariation.frame && `Frame: ${selectedVariation.frame}`,
+      selectedVariation.color && `Color: ${selectedVariation.color}`,
+      customText.trim() && `Name on plate: ${customText.trim()}`,
+      houseNumber.trim() && `House number: ${houseNumber.trim()}`,
+      `Quantity: ${quantity}`,
+    ].filter(Boolean);
+
+    setQuoteSending(true);
+    try {
+      await API.post('/leads', {
+        name: quoteForm.name.trim(),
+        email: quoteForm.email.trim(),
+        phone: formatters.phone(quoteForm.phone),
+        message: details.join('\n'),
+      });
+      if (typeof window.fbq === 'function') {
+        window.fbq('track', 'Lead', { content_name: product.name, content_category: 'Custom Size' });
+      }
+      setQuoteSent(true);
+      toast.success("Thanks — our team will call you with the price shortly.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Something went wrong. Please try again.');
+    }
+    setQuoteSending(false);
+  };
+
+  const quoteInputClass = 'w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20';
 
   const productSchema = product ? {
     "@context": "https://schema.org/",
@@ -210,7 +292,7 @@ const ProductPage = () => {
         "@type": "ListItem",
         "position": 2,
         "name": product.category.name,
-        "item": `https://www.gpsfdk.com/${product.category.slug}`,
+        "item": `https://www.gpsfdk.com${categoryPath(product.category.slug)}`,
       }] : []),
       // Last crumb is the current page — no item URL on the final breadcrumb
       { "@type": "ListItem", "position": hasCategoryCrumb ? 3 : 2, "name": product.name },
@@ -233,7 +315,7 @@ const ProductPage = () => {
         <nav className="text-gray-400 text-sm mb-8">
           <Link to="/" className="hover:text-secondary">Home</Link>
           <span className="mx-2">/</span>
-          <Link to={`/${product.category?.slug}`} className="hover:text-secondary">{product.category?.name}</Link>
+          <Link to={categoryPath(product.category?.slug)} className="hover:text-secondary">{product.category?.name}</Link>
           <span className="mx-2">/</span>
           <span className="text-secondary">{product.name}</span>
         </nav>
@@ -294,17 +376,24 @@ const ProductPage = () => {
 
 
             {/* Price — shown here briefly under name, updates on variation change */}
-            <div className="mt-6">
-              <span className="text-4xl font-bold text-accent">{formatPrice(selectedVariation.price * quantity)}</span>
-              {selectedVariation.comparePrice > 0 && (
-                <>
-                  <span className="text-xl text-gray-400 line-through ml-3">{formatPrice(selectedVariation.comparePrice * quantity)}</span>
-                  <span className="ml-3 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
-                    {Math.round((1 - selectedVariation.price / selectedVariation.comparePrice) * 100)}% OFF
-                  </span>
-                </>
-              )}
-            </div>
+            {isCustomSize ? (
+              <div className="mt-6 rounded-xl bg-accent/10 border border-accent/20 px-5 py-4">
+                <p className="text-lg font-semibold text-accent">Custom size pricing</p>
+                <p className="text-gray-700 mt-1">One of our team will connect with you regarding the pricing.</p>
+              </div>
+            ) : (
+              <div className="mt-6">
+                <span className="text-4xl font-bold text-accent">{formatPrice(selectedVariation.price * quantity)}</span>
+                {selectedVariation.comparePrice > 0 && (
+                  <>
+                    <span className="text-xl text-gray-400 line-through ml-3">{formatPrice(selectedVariation.comparePrice * quantity)}</span>
+                    <span className="ml-3 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
+                      {Math.round((1 - selectedVariation.price / selectedVariation.comparePrice) * 100)}% OFF
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Variations */}
             <div className="mt-8 space-y-6">
@@ -359,34 +448,64 @@ const ProductPage = () => {
                 </div>
               )}
 
-              {sizes.length > 0 && (
+              {(sizes.length > 0 || isNameplate) && (
                 <div>
                   <label className="block text-sm font-semibold text-secondary mb-2">Size</label>
                   <div className="flex flex-wrap gap-2">
                     {sizes.map(s => (
                       <button
                         key={s}
-                        onClick={() => setSelectedVariation(findVariation({ size: s }))}
-                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${selectedVariation.size === s ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
+                        onClick={() => { setIsCustomSize(false); setSelectedVariation(findVariation({ size: s })); }}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${!isCustomSize && selectedVariation.size === s ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
                       >
                         {s}
                       </button>
                     ))}
+                    {isNameplate && (
+                      <button
+                        onClick={() => setIsCustomSize(true)}
+                        className={`px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all duration-300 ease-in-out ${isCustomSize ? 'border-accent bg-accent text-white shadow-sm' : 'border-gray-200 hover:border-accent'}`}
+                      >
+                        {CUSTOM_SIZE}
+                      </button>
+                    )}
                   </div>
+                  {isCustomSize && (
+                    <input
+                      type="text"
+                      value={customSize}
+                      onChange={(e) => setCustomSize(e.target.value)}
+                      placeholder="Your size, e.g. 24 x 16 inches"
+                      aria-label="Custom size"
+                      className="mt-3 w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-lg"
+                    />
+                  )}
                 </div>
               )}
 
-              {/* Custom Text — only for Nameplate products */}
+              {/* Custom Text + House Number — only for Nameplate products; side by side on desktop */}
               {isNameplate && (
-                <div>
-                  <label className="block text-sm font-semibold text-secondary mb-2">{product.customizationLabel || 'Custom Text'}</label>
-                  <input
-                    type="text"
-                    value={customText}
-                    onChange={(e) => setCustomText(e.target.value)}
-                    placeholder="e.g. The Sharma Family"
-                    className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-lg"
-                  />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-secondary mb-2">{product.customizationLabel || 'Custom Text'}</label>
+                    <input
+                      type="text"
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                      placeholder="e.g. The Sharma Family"
+                      className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-lg"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-secondary mb-2">House Number</label>
+                    <input
+                      type="text"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      placeholder="e.g. A 507"
+                      className="w-full px-5 py-3.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 text-lg"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -405,11 +524,65 @@ const ProductPage = () => {
                   </button>
                 </div>
               </div>
-              <button onClick={handleAddToCart} className="btn-primary w-full flex items-center justify-center gap-3 text-lg">
-                <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
-              </button>
+              {isCustomSize ? (
+                quoteSent ? (
+                  <div className="rounded-xl bg-green-50 border border-green-200 px-5 py-4 text-green-800">
+                    <p className="font-semibold">Request received</p>
+                    <p className="text-sm mt-1">One of our team will call you shortly with the price for your {customSize.trim() || 'custom'} size.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleQuoteRequest} className="space-y-3">
+                    <p className="text-sm text-gray-600">Share your details and we'll get back to you with a price.</p>
+                    <input
+                      type="text"
+                      value={quoteForm.name}
+                      onChange={(e) => setQuoteForm({ ...quoteForm, name: e.target.value })}
+                      placeholder="Your name"
+                      aria-label="Your name"
+                      autoComplete="name"
+                      className={quoteInputClass}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="tel"
+                        value={quoteForm.phone}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, phone: formatters.phone(e.target.value) })}
+                        placeholder="Phone number"
+                        aria-label="Phone number"
+                        autoComplete="tel"
+                        className={quoteInputClass}
+                      />
+                      <input
+                        type="email"
+                        value={quoteForm.email}
+                        onChange={(e) => setQuoteForm({ ...quoteForm, email: e.target.value })}
+                        placeholder="Email"
+                        aria-label="Email"
+                        autoComplete="email"
+                        className={quoteInputClass}
+                      />
+                    </div>
+                    <button type="submit" disabled={quoteSending} className="btn-primary w-full flex items-center justify-center gap-3 text-lg disabled:opacity-60">
+                      {quoteSending ? 'Sending…' : 'Request Price'}
+                    </button>
+                  </form>
+                )
+              ) : (
+                <button onClick={handleAddToCart} className="btn-primary w-full flex items-center justify-center gap-3 text-lg">
+                  <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
+                </button>
+              )}
+              {/* Nameplates get a size disclaimer in place of the wall preview */}
+              {isNameplate && (
+                <p className="flex items-start gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
+                  <HiOutlineInformationCircle className="w-5 h-5 shrink-0 text-secondary mt-px" />
+                  <span>
+                    <strong className="font-semibold text-secondary">Disclaimer:</strong> Sizes are approximate. Because each design has a different shape, the final dimensions may vary slightly from the size shown.
+                  </span>
+                </p>
+              )}
               {/* Only show 'View on Your Wall' for wall-related products instead of applying it to all products */}
-              {['wall-canvas', 'house-nameplates', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
+              {['wall-canvas', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
                 <button
                   onClick={() => setIsWallPreviewOpen(true)}
                   className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"

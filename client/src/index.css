@@ -13,21 +13,30 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: local('SF Pro Display'), url('./assets/fonts/sf-pro-display-regular.woff') format('woff');
+  src: local('SF Pro Display'), url('./assets/fonts/sf-pro-display-regular.woff2') format('woff2'), url('./assets/fonts/sf-pro-display-regular.woff') format('woff');
 }
 @font-face {
   font-family: 'SF Pro Display';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: local('SF Pro Display Medium'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-medium.woff') format('woff');
+  src: local('SF Pro Display Medium'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-medium.woff2') format('woff2'), url('./assets/fonts/sf-pro-display-medium.woff') format('woff');
 }
 @font-face {
   font-family: 'SF Pro Display';
   font-style: normal;
   font-weight: 600 700;
   font-display: swap;
-  src: local('SF Pro Display Bold'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-bold.woff') format('woff');
+  src: local('SF Pro Display Bold'), local('SF Pro Display'), url('./assets/fonts/sf-pro-display-bold.woff2') format('woff2'), url('./assets/fonts/sf-pro-display-bold.woff') format('woff');
+}
+
+/* Nothing may widen the page sideways on phones: slide-in animations start
+   20–40px off to the side, and while they play the page would scroll
+   horizontally. `clip`, unlike `hidden`, doesn't turn the page into a scroll
+   container, so sticky elements keep working. */
+html,
+body {
+  overflow-x: clip;
 }
 
 :root {

@@ -14,7 +14,7 @@ const MOCK_DATA = [
     category: 'Wall Art',
     price: '₹2,499',
     logoUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?q=80&w=600&auto=format&fit=crop',
-    slug: 'wall-canvas',
+    slug: 'canvas',
     description: 'Elevate your space with our premium quality matte canvas prints.'
   },
   {

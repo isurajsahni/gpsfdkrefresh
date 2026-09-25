@@ -4,7 +4,7 @@ import Lines from '../landing/Lines';
 import { Shell } from './Layout';
 import { fadeUp } from './motion';
 
-import heroWallArt from '../../assets/image/canvas-v2/hero-wall-art.jpg';
+import heroWallArt from '../../assets/image/canvas-v2/hero-wall-art.webp';
 import brushUnderline from '../../assets/image/canvas-v2/icons/brush-underline.svg';
 
 /* ── Hero ─────────────────────────────────────────────────────────────────────

@@ -24,7 +24,7 @@ import offerNameplate from '../assets/image/store page/image 18.png';
 import offerConsultancy from '../assets/image/store page/portrait-happy-smiling-cheerful-beautiful-young-support-phone-operator-headset-with-laptop-isolated-white-wall 1.png';
 import offerGetaway from '../assets/image/store page/image 21.png';
 import offerEvents from '../assets/image/store page/image 22.png';
-import giftedImg from '../assets/image/store page/newimg.png';
+import giftedImg from '../assets/image/store page/newimg.webp';
 import collab1 from '../assets/image/store page/Rectangle 174.webp';
 import collab2 from '../assets/image/store page/Rectangle 174 (1).webp';
 import collab3 from '../assets/image/store page/Rectangle 174 (2).webp';

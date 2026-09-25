@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { inView } from './motion';
 
-import ctaBanner from '../../assets/image/canvas-v2/cta-banner.jpg';
+import ctaBanner from '../../assets/image/canvas-v2/cta-banner.webp';
 
 /* ───────────────────────────────────────────────────────────────────────────
    Closing CTA banner.

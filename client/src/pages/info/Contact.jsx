@@ -11,8 +11,8 @@ import toast from 'react-hot-toast';
 import API from '../../utils/api';
 import { formatters } from '../../utils/validation';
 import SEO from '../../components/seo/SEO';
-import heroConsultation from '../../assets/image/hero section consultation.png';
-import approachImage from '../../assets/image/second-image-cosutation.png';
+import heroConsultation from '../../assets/image/hero section consultation.webp';
+import approachImage from '../../assets/image/second-image-cosutation.webp';
 
 // Alternating chip tones, matching the peach / green rhythm across the row.
 const NEEDS = [

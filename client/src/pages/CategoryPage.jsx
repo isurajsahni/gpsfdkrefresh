@@ -18,6 +18,10 @@ const SUBCATEGORIES = [
   'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'The Wild Eccentrics'
 ];
 
+// /wall-canvas/all: every canvas across the collections, best sellers first.
+// (/wall-canvas itself redirects to the /canvas landing page.)
+const ALL_PRODUCTS_SLUG = 'all';
+
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -46,10 +50,13 @@ const CategoryPage = () => {
     ? SUBCATEGORIES.find(s => generateSlug(s) === subcategorySlug)
     : null;
 
-  // Only the collections in SUBCATEGORIES exist. Any other /:slug/:subcategory
-  // is a 404 rather than an indexable, empty "collection" for whatever was typed.
-  const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory;
-  const displaySubcategory = exactSubcategory;
+  const isAllProducts = slug === 'wall-canvas' && subcategorySlug === ALL_PRODUCTS_SLUG;
+
+  // Only the collections in SUBCATEGORIES (plus "all") exist. Any other
+  // /:slug/:subcategory is a 404 rather than an indexable, empty "collection"
+  // for whatever was typed.
+  const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory && !isAllProducts;
+  const displaySubcategory = exactSubcategory || (isAllProducts ? 'All Canvas Wall Art' : null);
 
   useEffect(() => {
     if (isUnknownSubcategory) return;
@@ -80,6 +87,7 @@ const CategoryPage = () => {
       };
 
       if (exactSubcategory) params.subCategoryExact = exactSubcategory;
+      if (isAllProducts) params.sort = 'best_selling';
 
       try {
         const { data } = await API.get('/products', { params });
@@ -160,7 +168,7 @@ const CategoryPage = () => {
           >
             <h3 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-6">MATCH YOUR VIBE</h3>
             <div className="flex flex-wrap gap-x-3 gap-y-4">
-              <Link to={`/wall-canvas`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${!subcategorySlug ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
+              <Link to={`/wall-canvas/${ALL_PRODUCTS_SLUG}`} className={`px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isAllProducts ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
                 All Products
               </Link>
               {SUBCATEGORIES.map(sub => {

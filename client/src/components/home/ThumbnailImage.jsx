@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { optimizeImage } from '../../utils/imageOptimizer';
 
-const ThumbnailImage = ({ src, alt, slug, isEven }) => {
+const ThumbnailImage = ({ src, alt, slug, state, isEven }) => {
   return (
     <Link
       to={`/product/${slug}`}
+      state={state}
       className="block relative group cursor-pointer w-full"
     >
       <div

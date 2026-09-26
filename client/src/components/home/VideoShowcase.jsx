@@ -11,9 +11,10 @@ import 'swiper/css/navigation';
 const VideoCard = ({ video, index, mutedStates, handleMuteToggle }) => {
   const videoRef = useRef(null);
 
-  // Play only while on screen. Combined with preload="metadata" this defers the
-  // full download of each clip until it scrolls into view (the section sits
-  // below the fold) instead of fetching all four MP4s on page load. Each card
+  // Play only while on screen. With preload="none" nothing downloads until a
+  // card nears the screen and play() is called: the section sits below the
+  // pinned hero, and even "metadata" meant eight requests (the phone slider
+  // and desktop grid both mount) competing with the hero on page load. Each card
   // owns its own element: the mobile slider and desktop grid both mount, so the
   // old shared index-keyed ref map only ever pointed at one of the two copies
   // (which also broke the mute button on mobile).
@@ -26,7 +27,8 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle }) => {
         if (entry.isIntersecting) el.play().catch(() => {});
         else el.pause();
       },
-      { rootMargin: '100px' },
+      // Start loading a little before the card scrolls into view
+      { rootMargin: '300px' },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -46,7 +48,7 @@ const VideoCard = ({ video, index, mutedStates, handleMuteToggle }) => {
     <video
       ref={videoRef}
       src={video.src}
-      preload="metadata"
+      preload="none"
       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       loop
       muted

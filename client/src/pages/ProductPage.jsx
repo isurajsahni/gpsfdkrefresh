@@ -235,6 +235,17 @@ const ProductPage = () => {
         email: quoteForm.email.trim(),
         phone: formatters.phone(quoteForm.phone),
         message: details.join('\n'),
+        // The same request as fields, for the team's WhatsApp alert
+        quote: {
+          slug: product.slug,
+          size: customSize.trim(),
+          material: selectedVariation.material || '',
+          frame: selectedVariation.frame || '',
+          color: selectedVariation.color || '',
+          nameOnPlate: customText.trim(),
+          houseNumber: houseNumber.trim(),
+          quantity,
+        },
       });
       if (typeof window.fbq === 'function') {
         window.fbq('track', 'Lead', { content_name: product.name, content_category: 'Custom Size' });

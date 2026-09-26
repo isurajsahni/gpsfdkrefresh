@@ -1,29 +1,18 @@
-const axios = require('axios');
+const { sendTeamWhatsApp } = require('./whatsappTeam');
 
 /**
  * WhatsApp alert to the team for every new order: customer, delivery city,
- * payment, total, and each item with its product link.
- *
- * Sent through the same Meta WhatsApp Cloud API account as the login OTPs.
- * WhatsApp only lets a business message someone first through an approved
- * template, so:
- *   - WHATSAPP_ORDER_ALERT_TEMPLATE set → that template (reliable, any time).
- *   - not set → a plain text message, which WhatsApp only delivers if the
- *     alert phone has messaged the business number in the last 24 hours.
+ * payment, total, and each item with its product link. Sending, recipients
+ * and the template-or-text rule live in whatsappTeam.js.
  *
  * Never throws: a WhatsApp problem must not affect the order.
  *
- * Env vars:
- *   WHATSAPP_TOKEN, PHONE_NUMBER_ID      — required (already used for OTPs)
- *   WHATSAPP_API_VERSION                 — default v22.0
- *   ORDER_ALERT_WHATSAPP                 — recipient(s), comma-separated,
- *                                          with country code; default below
+ * Env vars (plus whatsappTeam.js's):
  *   WHATSAPP_ORDER_ALERT_TEMPLATE        — approved template name (see
  *                                          ORDER_ALERT_TEMPLATE_TEXT below)
  *   WHATSAPP_ORDER_ALERT_TEMPLATE_LANG   — default en_US
  */
 
-const DEFAULT_RECIPIENTS = '916280300103';
 const SITE_URL = 'https://www.gpsfdk.com';
 
 // The body to submit in WhatsApp Manager (category: Utility) for
@@ -41,13 +30,6 @@ Items: {{7}}
 
 Manage it in the admin panel: {{8}}
 Sent automatically by the GPSFDK store.`;
-
-// Meta rejects template values containing new lines, tabs or runs of spaces,
-// and caps the whole message at 1024 characters.
-const oneLine = (value, max = 200) => {
-  const text = String(value ?? '').replace(/\s+/g, ' ').trim();
-  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
-};
 
 const rupees = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
@@ -93,7 +75,7 @@ const templateParams = (s) => [
   // nameplate text like "The Sharma Family | House No: A 507")
   s.items.map((line, i) => `${i + 1}) ${line}`).join('  '),
   s.adminUrl,
-].map((text) => ({ type: 'text', text: oneLine(text, 600) || '—' }));
+];
 
 const textBody = (s) => [
   `🛒 New order ${s.orderNumber}`,
@@ -110,50 +92,25 @@ const textBody = (s) => [
   `Admin: ${s.adminUrl}`,
 ].join('\n');
 
-const recipients = () =>
-  (process.env.ORDER_ALERT_WHATSAPP || DEFAULT_RECIPIENTS)
-    .split(',')
-    .map((n) => n.replace(/\D/g, ''))
-    .filter(Boolean);
-
 /**
  * @param {object} order - an Order document, with items.product populated
  *   (for the product links)
  */
 const sendOrderWhatsAppAlert = async (order) => {
-  if (!process.env.WHATSAPP_TOKEN || !process.env.PHONE_NUMBER_ID) {
-    console.warn('[WhatsApp order alert] Skipped: WHATSAPP_TOKEN / PHONE_NUMBER_ID not set');
+  let s;
+  try {
+    s = summary(order);
+  } catch (err) {
+    console.error(`[WhatsApp alert] order ${order?.orderNumber}: couldn't build the message:`, err.message);
     return;
   }
-  try {
-    const s = summary(order);
-    const template = process.env.WHATSAPP_ORDER_ALERT_TEMPLATE;
-    const message = template
-      ? {
-          type: 'template',
-          template: {
-            name: template,
-            language: { code: process.env.WHATSAPP_ORDER_ALERT_TEMPLATE_LANG || 'en_US' },
-            components: [{ type: 'body', parameters: templateParams(s) }],
-          },
-        }
-      : { type: 'text', text: { preview_url: false, body: textBody(s).slice(0, 4000) } };
-
-    const apiVersion = process.env.WHATSAPP_API_VERSION || 'v22.0';
-    const url = `https://graph.facebook.com/${apiVersion}/${process.env.PHONE_NUMBER_ID}/messages`;
-    await Promise.all(recipients().map((to) =>
-      axios.post(url, { messaging_product: 'whatsapp', to, ...message }, {
-        headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' },
-        timeout: 15000,
-      }).then(() => console.log(`[WhatsApp order alert] ${order.orderNumber} sent to ${to} (${template ? 'template' : 'text'})`))
-    ));
-  } catch (err) {
-    const meta = err.response?.data?.error;
-    console.error(
-      `[WhatsApp order alert] ${order?.orderNumber} failed:`,
-      meta ? `${meta.message} (code ${meta.code}${meta.error_subcode ? `/${meta.error_subcode}` : ''})` : err.message
-    );
-  }
+  await sendTeamWhatsApp({
+    label: `order ${s.orderNumber}`,
+    templateName: process.env.WHATSAPP_ORDER_ALERT_TEMPLATE,
+    templateLang: process.env.WHATSAPP_ORDER_ALERT_TEMPLATE_LANG || 'en_US',
+    params: templateParams(s),
+    text: textBody(s),
+  });
 };
 
 module.exports = { sendOrderWhatsAppAlert, ORDER_ALERT_TEMPLATE_TEXT, _internal: { summary, templateParams, textBody } };

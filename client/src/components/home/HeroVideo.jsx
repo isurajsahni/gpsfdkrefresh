@@ -14,7 +14,13 @@ import storeEntryPoster from '../../assets/videos/store-entry-poster.jpg';
  * that extra height maps 1:1 onto the video timeline (25% scrolled === 25% of
  * the clip), so the visitor's scroll acts as the camera walking into the store.
  *
- * Two things make this smooth:
+ * The hero only becomes the tall, pinned section once the clip is downloaded
+ * and decoded, and only while the visitor is at the top of the page. Before
+ * that it is an ordinary one-screen hero on the poster, so scrolling early
+ * never drags the visitor through a frozen frame. The section grows below the
+ * fold, so the switch is invisible.
+ *
+ * Two things make the scrub itself smooth:
  *  - The source clip is re-encoded so EVERY frame is a keyframe. The original
  *    had 3 keyframes in 158 frames, which meant a seek had to decode up to 72
  *    frames and scrubbing stuttered badly.
@@ -75,30 +81,6 @@ const detectMode = () => {
   return window.matchMedia('(max-width: 767px)').matches ? 'mobile' : 'desktop';
 };
 
-// Run `callback` once the page has finished loading and the main thread is
-// idle, so the clip never competes with the poster, fonts or JS chunks that
-// make up first paint. Returns a cancel function.
-const whenPageIdle = (callback) => {
-  let idleId = 0;
-  let timeoutId = 0;
-  const schedule = () => {
-    if ('requestIdleCallback' in window) {
-      idleId = window.requestIdleCallback(callback, { timeout: 1500 });
-    } else {
-      timeoutId = window.setTimeout(callback, 200);
-    }
-  };
-
-  if (document.readyState === 'complete') schedule();
-  else window.addEventListener('load', schedule, { once: true });
-
-  return () => {
-    window.removeEventListener('load', schedule);
-    if (idleId && 'cancelIdleCallback' in window) window.cancelIdleCallback(idleId);
-    if (timeoutId) window.clearTimeout(timeoutId);
-  };
-};
-
 const HeroVideo = () => {
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
@@ -115,6 +97,8 @@ const HeroVideo = () => {
 
   const [isReady, setIsReady] = useState(false);
   const [hasFailed, setHasFailed] = useState(false);
+  // True once the section is tall and pinned (see armWhenAtTop below)
+  const [isArmed, setIsArmed] = useState(false);
   // Object URL for the fully downloaded clip; null until the fetch completes.
   const [videoSrc, setVideoSrc] = useState(null);
 
@@ -146,16 +130,22 @@ const HeroVideo = () => {
   //    fetch a muted, never-played video, which left the hero stuck forever.
   //  - A streamed clip turns every seek past the buffered range into a network
   //    round trip, so scrubbing stalled. From a Blob every seek is local.
+  // Started straight away at low priority: waiting for the page's load event
+  // (every product image on the page) held the clip back by seconds, long
+  // after visitors had started scrolling. Low priority keeps the poster, fonts
+  // and scripts ahead of it. The file is cached long-term (vercel.json), so
+  // repeat visits start instantly.
   useEffect(() => {
     if (isStatic) return undefined;
 
     const controller = new AbortController();
     let objectUrl = null;
 
-    const cancelIdle = whenPageIdle(async () => {
+    (async () => {
       try {
         const response = await fetch(mode === 'mobile' ? storeEntryMobile : storeEntryDesktop, {
           signal: controller.signal,
+          priority: 'low',
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const blob = await response.blob();
@@ -164,14 +154,27 @@ const HeroVideo = () => {
       } catch (err) {
         if (err.name !== 'AbortError') failGracefully();
       }
-    });
+    })();
 
     return () => {
-      cancelIdle();
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [isStatic, mode]);
+
+  // Pin the hero (make the section tall) once the clip can be scrubbed, but
+  // only while the visitor is at the top: then the extra height appears below
+  // the screen and nothing moves. Someone who has already scrolled on gets it
+  // when they come back up; until then the hero is a normal one-screen section.
+  useEffect(() => {
+    if (!isReady || isArmed || isStatic) return undefined;
+    const armWhenAtTop = () => {
+      if (window.scrollY < window.innerHeight * 0.25) setIsArmed(true);
+    };
+    armWhenAtTop();
+    window.addEventListener('scroll', armWhenAtTop, { passive: true });
+    return () => window.removeEventListener('scroll', armWhenAtTop);
+  }, [isReady, isArmed, isStatic]);
 
   useEffect(() => {
     if (isStatic) return undefined;
@@ -401,7 +404,7 @@ const HeroVideo = () => {
   return (
     <section
       ref={sectionRef}
-      style={{ height: `${scrollLength * 100}${unit}` }}
+      style={{ height: `${isArmed ? scrollLength * 100 : 100}${unit}` }}
       className="relative w-full"
       aria-label="Entering the GPSFDK store"
     >

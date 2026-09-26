@@ -3,6 +3,7 @@ const Coupon = require('../models/Coupon');
 const CouponUsage = require('../models/CouponUsage');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
+const { sendOrderWhatsAppAlert } = require('../utils/whatsappOrderAlert');
 const emailTemplates = require('../utils/orderEmailTemplates');
 const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
@@ -159,6 +160,9 @@ const triggerNewOrderNotifications = async (order) => {
         ${productListHtml}
       `
     }).catch(err => console.error('Admin order notification failed:', err.message));
+
+    // WhatsApp alert to the team (never throws; logs its own failures)
+    sendOrderWhatsAppAlert(order);
 
     // ─── Shiprocket Integration ───
     // Automatically create shipment for Prepaid orders (isPaid: true) or COD orders

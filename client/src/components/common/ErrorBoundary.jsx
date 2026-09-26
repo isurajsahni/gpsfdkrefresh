@@ -1,5 +1,5 @@
 import React from 'react';
-import { isChunkLoadError, reloadForNewBuild } from '../../utils/staleBuild';
+import { isChunkLoadError, isReloadingForNewBuild, reloadForNewBuild } from '../../utils/staleBuild';
 
 /**
  * App-level error boundary.
@@ -14,17 +14,24 @@ import { isChunkLoadError, reloadForNewBuild } from '../../utils/staleBuild';
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, updating: false };
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    // After a deploy, the page this tab tried to open no longer exists.
+    // main.jsx has usually started a reload already (and the failed page then
+    // surfaces here as a different error); either way it's not a real error,
+    // so show "Updating…" while the new version loads, not "Something went wrong".
+    return { hasError: true, error, updating: isReloadingForNewBuild() || isChunkLoadError(error) };
   }
 
   componentDidCatch(error, errorInfo) {
-    // A page file from a replaced build: reload into the new one. main.jsx
-    // catches most of these first; this covers any that reach React.
+    if (isReloadingForNewBuild()) return;
+    // A page file from a replaced build that reached React first: reload here
     if (isChunkLoadError(error) && reloadForNewBuild()) return;
+    // Couldn't reload (it already did moments ago, so the file is genuinely
+    // missing): show the real error instead of "Updating…" forever
+    if (this.state.updating) this.setState({ updating: false });
     // Log to console. If you ever wire up Sentry / Datadog / similar, push
     // the error + stack here as well.
     console.error('ErrorBoundary caught:', error, errorInfo);
@@ -40,6 +47,27 @@ class ErrorBoundary extends React.Component {
   };
 
   render() {
+    if (this.state.hasError && this.state.updating) {
+      return (
+        <div
+          role="status"
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 16,
+            background: '#fffdf9',
+            fontFamily: 'var(--font-sf)',
+            color: '#0B5D3B',
+          }}
+        >
+          <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+          <p style={{ margin: 0, fontSize: 16 }}>Updating to the latest version…</p>
+        </div>
+      );
+    }
     if (this.state.hasError) {
       return (
         <div style={{

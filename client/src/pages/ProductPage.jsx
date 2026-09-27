@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
@@ -18,6 +18,11 @@ import { useAuth } from '../context/AuthContext';
 import { validators, formatters } from '../utils/validation';
 import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
 import { categoryPath } from '../utils/categoryPath';
+
+// The story sits below the fold, so its code (about two-thirds of this page's)
+// downloads alongside the product fetch rather than ahead of the buy box
+const loadProductStory = () => import('../components/product/story/ProductStory');
+const ProductStory = lazy(loadProductStory);
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -42,6 +47,10 @@ const ProductPage = () => {
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
   const [arSlugs, setArSlugs] = useState([]);
+  // The story below the fold sends buyers back up here (to name a nameplate,
+  // or to request a custom-size price)
+  const buyBoxRef = useRef(null);
+  const nameInputRef = useRef(null);
 
   // AR catalog ids decide which products get real AR vs the 2D camera overlay
   useEffect(() => {
@@ -83,6 +92,10 @@ const ProductPage = () => {
       phone: prev.phone || formatters.phone(user.phone || ''),
     }));
   }, [user]);
+
+  useEffect(() => {
+    loadProductStory().catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -195,10 +208,27 @@ const ProductPage = () => {
   const handleAddToCart = () => {
     if (isNameplate && !customText.trim()) {
       toast.error('Please enter custom text');
+      // Take them to the box, which may be a long way up from the story's button
+      nameInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      nameInputRef.current?.focus({ preventScroll: true });
       return;
     }
     addToCart(product, selectedVariation, quantity, isNameplate ? nameplateCustomText(customText, houseNumber) : '');
     setIsCartOpen(true);
+  };
+
+  // A finish or size picked in the story below, applied like the buy box's own buttons
+  const pickVariation = (updates) => {
+    setIsCustomSize(false);
+    setSelectedVariation(findVariation(updates));
+  };
+
+  const showBuyBox = () => buyBoxRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // The story's "ask for a custom size": switch to the quote form and go to it
+  const chooseCustomSize = () => {
+    setIsCustomSize(true);
+    showBuyBox();
   };
 
   // A custom size has no price to charge, so instead of a cart line it becomes
@@ -386,7 +416,7 @@ const ProductPage = () => {
 
           {/* Details — not animated in: the price and Add to Cart must be
               readable the moment the page appears */}
-          <div>
+          <div ref={buyBoxRef} className="scroll-mt-28">
             <h1 className="text-3xl md:text-4xl font-heading font-bold text-secondary">{product.name}</h1>
 
 
@@ -505,6 +535,7 @@ const ProductPage = () => {
                   <div>
                     <label className="block text-sm font-semibold text-secondary mb-2">{product.customizationLabel || 'Custom Text'}</label>
                     <input
+                      ref={nameInputRef}
                       type="text"
                       value={customText}
                       onChange={(e) => setCustomText(e.target.value)}
@@ -611,131 +642,26 @@ const ProductPage = () => {
         </div>
       </div>
 
-      {/* Extensive Product Description Section */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 mt-[100px] pb-16">
-        <div className="bg-[#fffdf9] rounded-3xl p-8 md:p-12 border border-[#eae0cc] shadow-sm">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-6 border-b border-gray-200 pb-4">
-            Product Description: {product.name}
-          </h2>
+      {/* The product story: gallery hero, finishes, size to scale, details.
+          Its pickers drive this page's selection, so they stay in step. */}
+      <Suspense fallback={null}>
+        <ProductStory
+          key={product._id}
+          product={product}
+          selectedVariation={selectedVariation}
+          isCustomSize={isCustomSize}
+          quantity={quantity}
+          needsText={isNameplate && !customText.trim()}
+          onPick={pickVariation}
+          onCustomSize={chooseCustomSize}
+          onAddToCart={handleAddToCart}
+          onShowBuyBox={showBuyBox}
+        />
+      </Suspense>
 
-          <div className="prose prose-lg max-w-none text-gray-700">
-            {/* Dynamic Description provided by Admin */}
-            {product.description && (
-              <div 
-                className="mb-10 text-lg leading-relaxed text-gray-800 prose prose-secondary max-w-none"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
-            )}
-
-            {/* Static Canvas Details - Only show for Canvas */}
-            {product.category?.slug === 'wall-canvas' && (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-bold text-secondary mb-3">1. Canvas Print*</h3>
-                  <ul className="list-disc pl-5 space-y-2">
-                    <li><strong>Paper Quality:</strong> 350 GSM</li>
-                    <li>Printed using high-quality digital industrial eco-solvent printers</li>
-                    <li><strong>Inks:</strong> Eco-solvent (environment-friendly and long-lasting)</li>
-                    <li><strong>Ideal for:</strong> Premium wall art, photo canvases, exhibitions, and décor</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-secondary mb-4">2. Poster Options*</h3>
-
-                  <div className="space-y-6 pl-4 border-l-2 border-accent/20">
-                    <div>
-                      <h4 className="font-bold text-lg text-secondary mb-2">a) Soft Board Poster</h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li><strong>Material:</strong> 5mm thick sunboard (instead of soft board)</li>
-                        <li><strong>Features:</strong> Lightweight, sturdy, easy to mount</li>
-                        <li><strong>Usage:</strong> Office display, educational charts, presentations, Home decor.</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-lg text-secondary mb-2">b) Sticker Poster</h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li><strong>Material:</strong> 120 GSM Vinyl Sheet</li>
-                        <li><strong>Type:</strong> Self-adhesive sticker (peel and stick)</li>
-                        <li><strong>Usage:</strong> Branding, signage, product labels, glass surface display</li>
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h4 className="font-bold text-lg text-secondary mb-2">c) Paper Poster</h4>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li><strong>Paper Quality:</strong> 300 GSM premium paper</li>
-                        <li><strong>Finish:</strong> Matte</li>
-                        <li><strong>Usage:</strong> Wall posters, promotional material, events, décor</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <hr className="border-gray-200 my-8" />
-
-                <div className="text-center">
-                  <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
-                  <p className="text-accent font-medium">Eco-friendly inks | High durability | Premium finish</p>
-                </div>
-              </div>
-            )}
-
-            {/* Static Nameplate Details - Only show for House Nameplates */}
-            {product.category?.slug === 'house-nameplates' && (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-xl font-bold text-secondary mb-3">Affordable Elegance, Built To Last</h3>
-                  <p className="text-lg leading-relaxed text-gray-800 italic">
-                    Bring home style and durability at an affordable price! Our Value-Packed Vinyl Nameplates reflect our belief that everyone has the Right To Luxury, offering a sleek, elegant look without compromise.
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-secondary mb-4">Description:</h3>
-                  <ul className="space-y-3">
-                    <li className="flex gap-2"><span>✨</span> <strong>Premium House Nameplate At An Affordable Price</strong> – Designed For Every Home.</li>
-                    <li className="flex gap-2"><span>🪞</span> <strong>Built On A Durable Acrylic Base</strong> With A Matte Vinyl Finish For A Smooth, Elegant Look.</li>
-                    <li className="flex gap-2"><span>💧</span> <strong>Weather-Resistant And Long-Lasting</strong> – Perfect For Outdoor Use.</li>
-                    <li className="flex gap-2"><span>⚡</span> <strong>Lightweight Yet Sturdy</strong>, Making It Easy To Install.</li>
-                    <li className="flex gap-2"><span>🌟</span> <strong>Perfect For Those Searching For Custom Vinyl Nameplates Online</strong> That Combine Luxury And Value.</li>
-                  </ul>
-                </div>
-
-                <div className="bg-cream/30 p-6 rounded-2xl border border-accent/10">
-                  <h3 className="text-xl font-bold text-secondary mb-4">What’s Included In The Box:</h3>
-                  <ul className="space-y-2">
-                    <li className="flex gap-2"><span>📦</span> 1 × Value-Packed Vinyl Nameplate</li>
-                    <li className="flex gap-2"><span>🛠</span> 1 × Hanging Kit For Easy Installation</li>
-                    <li className="flex gap-2"><span>🎖</span> 1 × GPS Family Certificate</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold text-secondary mb-4">Care & Handling:</h3>
-                  <ul className="space-y-2">
-                    <li className="flex gap-2"><span>🧽</span> Clean directly using a soft damp cloth.</li>
-                    <li className="flex gap-2"><span>💧</span> Avoid washing or rinsing with water.</li>
-                    <li className="flex gap-2"><span>❌</span> Do not use harsh chemicals; simply wipe gently for a long-lasting finish.</li>
-                  </ul>
-                </div>
-
-                <hr className="border-gray-200 my-8" />
-
-                <div className="text-center">
-                  <p className="font-heading font-bold text-xl text-secondary mb-1">Brand: GPSFDK</p>
-                  <p className="text-accent font-medium">Right to Luxury | High durability | Premium finish</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Related Products */}
+      {/* Related Products — straight after the story's green sign-off band */}
       {product.category && (
-        <div className="mt-10">
+        <div>
           <ProductSlider
             title="Related Products"
             categorySlug={product.category.slug}

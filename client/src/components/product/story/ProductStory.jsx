@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MotionConfig } from 'framer-motion';
 import { useCurrency } from '../../../context/CurrencyContext';
 import { optimizeImage } from '../../../utils/imageOptimizer';
@@ -9,6 +10,7 @@ import GalleryHero from './GalleryHero';
 import NameplateAnatomy from './NameplateAnatomy';
 import ScaleScene from './ScaleScene';
 import StoryDetails from './StoryDetails';
+import StoryShortcuts from './StoryShortcuts';
 import useImageRatio from './useImageRatio';
 import {
   BOX_CONTENTS, artworkSource, careFor, collectionOf, finishKey, getFinishes, headlineFor, isInchSize, labelFor,
@@ -21,10 +23,13 @@ import {
    key figures), a nameplate's anatomy, its size to scale, then the details.
    The finish and size pickers here drive the buy box's own selection through
    `onPick`, so the two never disagree. Keyed by product on the page, so local
-   state (orientation) starts fresh on every product. */
+   state (orientation) starts fresh on every product. The buy box's "which
+   size?" and "which finish?" shortcuts are rendered from here, into
+   `shortcutsSlot`, because only the story knows which chapters it shows. */
 
 export default function ProductStory({
   product, selectedVariation, isCustomSize, quantity, needsText, onPick, onCustomSize, onAddToCart, onShowBuyBox,
+  shortcutsSlot,
 }) {
   const { formatPrice } = useCurrency();
   const kind = storyKind(product);
@@ -32,6 +37,8 @@ export default function ProductStory({
   const art = useMemo(() => artworkSource(product, kind), [product, kind]);
   const artRatio = useImageRatio(art.url);
   const [chosenOrientation, setOrientation] = useState(null);
+  const finishRef = useRef(null);
+  const scaleRef = useRef(null);
 
   // Hung the way the artwork (or the plate) is shaped until the visitor turns it
   const orientation = chosenOrientation || (artRatio && artRatio < 0.95 ? 'portrait' : 'landscape');
@@ -74,13 +81,32 @@ export default function ProductStory({
       ? { label: 'Add your name above', up: true, onClick: onAddToCart }
       : { label: 'Add to cart', up: false, onClick: onAddToCart };
 
-  const showScale = isCustomSize || sizeOptions.some((option) => parseSize(option.size));
+  // Sizes the scale scene can draw; with none, it only shows for a custom size
+  const drawable = sizeOptions.some((option) => parseSize(option.size));
+  const showScale = isCustomSize || drawable;
   const showFinishes = kind !== 'nameplate' && finishes.length > 1;
+
+  // A shortcut takes you down to its chapter, and keyboard and screen reader
+  // users with it
+  const goTo = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    ref.current?.focus({ preventScroll: true });
+  };
 
   return (
     <MotionConfig reducedMotion="user">
+      {shortcutsSlot && (drawable || showFinishes) && createPortal(
+        <StoryShortcuts
+          finishes={finishes}
+          onSize={drawable ? () => goTo(scaleRef) : null}
+          onFinish={showFinishes ? () => goTo(finishRef) : null}
+        />,
+        shortcutsSlot,
+      )}
+
       {showFinishes && (
         <FinishExplorer
+          ref={finishRef}
           finishes={finishes}
           activeKey={activeKey}
           onPick={onPick}
@@ -113,6 +139,7 @@ export default function ProductStory({
 
         {showScale && (
           <ScaleScene
+            ref={scaleRef}
             kind={kind}
             finishKind={activeFinish?.kind}
             product={product}

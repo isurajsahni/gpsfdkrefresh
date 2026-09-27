@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiEye, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiMinus, HiPlus, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API, { cachedGet } from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
-import ViewOnWallModal from '../components/product/ViewOnWallModal';
-import ArViewer from '../components/product/ArViewer';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { productSeoTitle, productSeoDescription, productSchemaDescription } from '../utils/productSeo';
 import NotFoundPage from './NotFoundPage';
@@ -34,35 +32,24 @@ const ProductPage = () => {
   const [customText, setCustomText] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
   // Custom size isn't a variation: selectedVariation keeps a real one (for the
-  // wall preview and schema) while this flag drives the UI.
+  // story below and the schema) while this flag drives the UI.
   const [isCustomSize, setIsCustomSize] = useState(false);
   const [customSize, setCustomSize] = useState('');
   const [quoteForm, setQuoteForm] = useState({ name: '', email: '', phone: '' });
   const [quoteSending, setQuoteSending] = useState(false);
   const [quoteSent, setQuoteSent] = useState(false);
   const [quantity, setQuantity] = useState(1);
-  const [isWallPreviewOpen, setIsWallPreviewOpen] = useState(false);
   const [zoomStyle, setZoomStyle] = useState({});
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
-  const [arSlugs, setArSlugs] = useState([]);
   // The story below the fold sends buyers back up here (to name a nameplate,
   // or to request a custom-size price)
   const buyBoxRef = useRef(null);
   const nameInputRef = useRef(null);
-
-  // AR catalog ids decide which products get real AR vs the 2D camera overlay
-  useEffect(() => {
-    const catalogUrl = import.meta.env.VITE_AR_CATALOG_URL;
-    if (!catalogUrl) return;
-    let alive = true;
-    fetch(catalogUrl)
-      .then((r) => r.json())
-      .then((d) => { if (alive) setArSlugs(d.artworks.map((a) => a.id)); })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, []);
+  // ...and the buy box sends them down to it: the story renders its "which
+  // size?" and "which finish?" shortcuts into this element, under Add to Cart
+  const [shortcutsSlot, setShortcutsSlot] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsDesktop(window.innerWidth >= 768);
@@ -619,7 +606,7 @@ const ProductPage = () => {
                   <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
                 </button>
               )}
-              {/* Nameplates get a size disclaimer in place of the wall preview */}
+              {/* Nameplates' shapes vary with the design, so their sizes come with a disclaimer */}
               {isNameplate && (
                 <p className="flex items-start gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
                   <HiOutlineInformationCircle className="w-5 h-5 shrink-0 text-secondary mt-px" />
@@ -628,15 +615,8 @@ const ProductPage = () => {
                   </span>
                 </p>
               )}
-              {/* Only show 'View on Your Wall' for wall-related products instead of applying it to all products */}
-              {['wall-canvas', 'the-wild-eccentrics', 'match-your-vibe', 'wall-clocks', 'neon-signs'].includes(product.category?.slug) && (
-                <button
-                  onClick={() => setIsWallPreviewOpen(true)}
-                  className="w-full flex items-center justify-center gap-2 text-secondary bg-gray-100 hover:bg-gray-200 border-2 border-transparent hover:border-gray-300 font-semibold py-3 px-6 rounded-xl transition-all duration-300"
-                >
-                  <HiEye className="w-5 h-5" /> View on Your Wall
-                </button>
-              )}
+              {/* Filled by the story once it loads; hidden until then */}
+              <div ref={setShortcutsSlot} className="empty:hidden" />
             </div>
           </div>
         </div>
@@ -656,6 +636,7 @@ const ProductPage = () => {
           onCustomSize={chooseCustomSize}
           onAddToCart={handleAddToCart}
           onShowBuyBox={showBuyBox}
+          shortcutsSlot={shortcutsSlot}
         />
       </Suspense>
 
@@ -670,43 +651,6 @@ const ProductPage = () => {
           />
         </div>
       )}
-
-      {/* View on Wall — real AR (model-viewer) for products in the AR catalog, legacy 2D camera overlay for everything else */}
-      {product && (arSlugs.includes(product.slug) ? (
-        isWallPreviewOpen && (
-          <div
-            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setIsWallPreviewOpen(false)}
-          >
-            <div
-              className="bg-white rounded-2xl p-6 w-full max-w-[640px] max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-secondary">View on Your Wall</h3>
-                <button
-                  onClick={() => setIsWallPreviewOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                >
-                  <HiOutlineX className="w-5 h-5" />
-                </button>
-              </div>
-              {/* key: remount on slug change so ArViewer's internal format/size state resets */}
-              <ArViewer
-                key={product.slug}
-                productId={product.slug}
-                catalogUrl={import.meta.env.VITE_AR_CATALOG_URL}
-              />
-            </div>
-          </div>
-        )
-      ) : (
-        <ViewOnWallModal
-          isOpen={isWallPreviewOpen}
-          onClose={() => setIsWallPreviewOpen(false)}
-          imageUrl={optimizeImage(product.thumbnailImage?.url || product.images?.[1]?.url || product.images?.[0]?.url, 800)}
-        />
-      ))}
 
       {/* Fullscreen HD Zoom Modal */}
       <AnimatePresence>

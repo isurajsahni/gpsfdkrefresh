@@ -49,14 +49,21 @@ function FinishGlyph({ kind }) {
   );
 }
 
-export default function FinishExplorer({ finishes, activeKey, onPick, art, ratio, shownAt, formatPrice }) {
+export default function FinishExplorer({ ref, finishes, activeKey, onPick, art, ratio, shownAt, formatPrice }) {
   const active = finishes.find((finish) => finish.key === activeKey) || finishes[0];
   const { rotateX, rotateY, turned, backOn, showSide, stageProps } = useTurntable(active.key);
   const count = NUMBER_WORDS[finishes.length] || finishes.length;
   const backLabel = active.kind === 'stretched' ? 'See the wooden frame' : 'See the back';
 
   return (
-    <section aria-labelledby="finish-title" className="bg-white pb-20 md:pb-28">
+    // The buy box's "Rolled or stretched?" shortcut scrolls here and focuses
+    // it; the scroll margin lands the eyebrow just under the fixed header
+    <section
+      ref={ref}
+      tabIndex={-1}
+      aria-labelledby="finish-title"
+      className="scroll-mt-12 bg-white pb-20 outline-none md:scroll-mt-8 md:pb-28"
+    >
       <div className="mx-auto max-w-7xl section-padding">
         {/* A hairline under the buy box, across its content width */}
         <div className="border-t border-black/[0.06] pt-12 md:pt-16">

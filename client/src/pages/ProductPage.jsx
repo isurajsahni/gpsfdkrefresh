@@ -51,6 +51,9 @@ const ProductPage = () => {
   // or to request a custom-size price)
   const buyBoxRef = useRef(null);
   const nameInputRef = useRef(null);
+  // ...and the buy box sends them down to it: the story renders its "which
+  // size?" and "which finish?" shortcuts into this element, under the buttons
+  const [shortcutsSlot, setShortcutsSlot] = useState(null);
 
   // AR catalog ids decide which products get real AR vs the 2D camera overlay
   useEffect(() => {
@@ -637,6 +640,8 @@ const ProductPage = () => {
                   <HiEye className="w-5 h-5" /> View on Your Wall
                 </button>
               )}
+              {/* Filled by the story once it loads; hidden until then */}
+              <div ref={setShortcutsSlot} className="empty:hidden" />
             </div>
           </div>
         </div>
@@ -656,6 +661,7 @@ const ProductPage = () => {
           onCustomSize={chooseCustomSize}
           onAddToCart={handleAddToCart}
           onShowBuyBox={showBuyBox}
+          shortcutsSlot={shortcutsSlot}
         />
       </Suspense>
 

@@ -148,7 +148,7 @@ function Segmented({ label, options, value, onChange }) {
 }
 
 export default function ScaleScene({
-  kind, finishKind, product, art, sizeOptions, selectedSize, isCustomSize, orientation, onOrientation,
+  ref, kind, finishKind, product, art, sizeOptions, selectedSize, isCustomSize, orientation, onOrientation,
   onPick, onCustomSize, priceText, pickLabel, cta, formatPrice,
 }) {
   const [unit, setUnit] = useState('in');
@@ -172,7 +172,14 @@ export default function ScaleScene({
   };
 
   return (
-    <section aria-labelledby="scale-title" className="bg-[#fbfaf7] px-5 py-20 sm:px-8 md:py-28">
+    // The buy box's "Not sure which size?" shortcut scrolls here and focuses
+    // it; its own top padding clears the fixed header
+    <section
+      ref={ref}
+      tabIndex={-1}
+      aria-labelledby="scale-title"
+      className="scroll-mt-4 bg-[#fbfaf7] px-5 py-20 outline-none sm:px-8 md:scroll-mt-0 md:py-28"
+    >
       <div className="mx-auto max-w-[1200px]">
         <motion.div {...reveal}>
           <p className="apple-eyebrow uppercase text-accent">Size & scale</p>

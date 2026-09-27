@@ -3,9 +3,15 @@ import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 
 import { handleImageError } from '../../../utils/imageOptimizer';
 
 /* ── Finish mockups ───────────────────────────────────────────────────────────
-   Each finish drawn with the product's own artwork, at the proportions of the
-   selected size. They render inside the finish explorer's stage, which is a
-   size container: cqw/cqh keep every mockup inside it at any width. */
+   Each finish as a small 3D model, drawn with the product's own artwork at the
+   proportions of the selected size, turned by the explorer's turntable
+   (rotateX/rotateY motion values). Every model has a front and a back — a
+   stretched canvas shows its wooden stretcher bars, a sticker its printed
+   backing grid — and edges where it has a thickness. Faces darken as they
+   turn away from the viewer.
+
+   They render inside the explorer's stage, which is a size container: cqw
+   and cqh keep every model inside it at any width. */
 
 // As large as fits both ways inside the stage
 const fit = (ratio, maxW, maxH) => ({ width: `min(${maxW}cqw, calc(${maxH}cqh * ${ratio}))`, aspectRatio: `${ratio}` });
@@ -13,9 +19,6 @@ const fit = (ratio, maxW, maxH) => ({ width: `min(${maxW}cqw, calc(${maxH}cqh * 
 // Unprinted canvas: a fine linen weave
 const LINEN =
   'repeating-linear-gradient(0deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,0.035) 0 1px, transparent 1px 3px)';
-
-// A roll of canvas seen from the front: the unprinted back, lit from above
-const ROLL = 'linear-gradient(180deg, #8d8a82 0%, #d6d2c9 16%, #f6f4ef 40%, #ffffff 48%, #e4e0d7 68%, #aaa59b 88%, #85817a 100%)';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -29,16 +32,94 @@ function Art({ src }) {
       loading="lazy"
       decoding="async"
       onError={handleImageError}
-      className="absolute inset-0 size-full object-cover"
+      className="pointer-events-none absolute inset-0 size-full select-none object-cover"
     />
   );
 }
 
+// How dark a face is: none square-on, more as it turns away. `phase` is the
+// face's own heading: 0 front, 180 back, 90 right edge, -90 left edge.
+function useShade(rotateY, phase, strength = 0.55) {
+  return useTransform(rotateY, (y) => {
+    const facing = Math.cos(((y + phase) * Math.PI) / 180);
+    return Math.min(0.7, Math.max(0, (1 - facing) * strength));
+  });
+}
+
+// `reveal` is motion props for the whole face, shade included (the rolled
+// canvas unrolls with a clip-path)
+function Face({ shade, style, reveal, children }) {
+  return (
+    <motion.div className="absolute inset-0 overflow-hidden [backface-visibility:hidden]" style={style} {...reveal}>
+      {children}
+      <motion.span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-black" style={{ opacity: shade }} />
+    </motion.div>
+  );
+}
+
+// Where each edge face sits, hinged back from the front's edge, and which
+// strip of the print wraps round it
+const EDGES = {
+  right: { className: 'left-full top-0 h-full origin-left', transform: 'rotateY(90deg)', size: 'width', strip: 'right center / auto 100%', phase: 90 },
+  left: { className: 'right-full top-0 h-full origin-right', transform: 'rotateY(-90deg)', size: 'width', strip: 'left center / auto 100%', phase: -90 },
+  top: { className: 'bottom-full left-0 w-full origin-bottom', transform: 'rotateX(90deg)', size: 'height', strip: 'center top / 100% auto' },
+  bottom: { className: 'left-0 top-full w-full origin-top', transform: 'rotateX(-90deg)', size: 'height', strip: 'center bottom / 100% auto' },
+};
+
+function Edge({ side, depth, background, rotateY }) {
+  const edge = EDGES[side];
+  const shade = useShade(rotateY, edge.phase ?? 0, edge.phase === undefined ? 0 : 0.45);
+  return (
+    <div
+      aria-hidden="true"
+      className={`absolute overflow-hidden [backface-visibility:hidden] ${edge.className}`}
+      style={{ [edge.size]: depth, transform: edge.transform, background: background(edge.strip, side) }}
+    >
+      {/* The top catches the light, the bottom sits in shadow */}
+      {side === 'bottom' && <span className="absolute inset-0 bg-black/35" />}
+      {side === 'top' && <span className="absolute inset-0 bg-white/15" />}
+      {edge.phase !== undefined && <motion.span className="absolute inset-0 bg-black" style={{ opacity: shade }} />}
+    </div>
+  );
+}
+
+/* A block with a front, a back `depth` px behind it and, if `edge` is given,
+   four edges. Extra 3D parts (the roll of a rolled canvas) go in `children`. */
+function Solid({ ratio, depth, rotateX, rotateY, front, back, edge, reveal, children, maxW = 54, maxH = 60 }) {
+  const frontShade = useShade(rotateY, 0);
+  const backShade = useShade(rotateY, 180);
+  // A soft highlight that slides across the print as it turns
+  const sheenX = useTransform(rotateY, (y) => `${50 - y * 1.4}%`);
+  return (
+    <div className="relative" style={fit(ratio, maxW, maxH)}>
+      {/* Its shadow on the wall behind, which stays put as it turns */}
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-[7%] left-1/2 h-[9%] w-[78%] -translate-x-1/2 rounded-[50%] bg-black/25 blur-xl" />
+      <div className="absolute inset-0" style={{ perspective: 1400 }}>
+        <motion.div className="absolute inset-0" style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}>
+          <Face shade={frontShade} reveal={reveal}>
+            {front}
+            <motion.span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(105deg,transparent_35%,rgba(255,255,255,0.2)_48%,transparent_62%)] bg-[length:250%_100%] mix-blend-screen"
+              style={{ backgroundPositionX: sheenX }}
+            />
+          </Face>
+          <Face shade={backShade} reveal={reveal} style={{ transform: `translateZ(-${depth}px) rotateY(180deg)` }}>
+            {back}
+          </Face>
+          {edge && ['right', 'left', 'top', 'bottom'].map((side) => (
+            <Edge key={side} side={side} depth={depth} background={edge} rotateY={rotateY} />
+          ))}
+          {children}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 // An edge face showing the strip of print that wraps round it, shaded
-const wrapped = (src, position, direction, stops) =>
-  src
-    ? `linear-gradient(${direction}, ${stops}), url("${src}") ${position} no-repeat`
-    : `linear-gradient(${direction}, ${stops}), #efe8da`;
+const wrapped = (src) => (strip) =>
+  src ? `url("${src}") ${strip} no-repeat, #1a1a1a` : '#e6dfd0';
 
 // The back of a stretched canvas: raw canvas stapled over wooden stretcher bars
 function StretcherBack() {
@@ -59,117 +140,56 @@ function StretcherBack() {
   );
 }
 
-function Slab({ src, ratio, depth, edge, rotateY, flipped, back }) {
-  const reduce = useReducedMotion();
+function Stretched({ src, ratio, rotateX, rotateY }) {
   return (
-    <div className="grid place-items-center" style={{ perspective: 1400 }}>
-      <motion.div
-        className="relative"
-        style={{ ...fit(ratio, 54, 62), transformStyle: 'preserve-3d' }}
-        initial={reduce ? false : { rotateY: 0, rotateX: 0 }}
-        // Flipped, it turns half round: the back, at the same angle as the front
-        animate={{ rotateY: flipped ? 180 + rotateY : rotateY, rotateX: 5 }}
-        transition={{ type: 'spring', stiffness: 50, damping: 14 }}
-      >
-        <div className="absolute inset-0 overflow-hidden shadow-[0_40px_60px_-34px_rgba(0,0,0,0.6)] [backface-visibility:hidden]">
-          <Art src={src} />
-          <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.16),transparent_42%,rgba(0,0,0,0.08))]" />
-        </div>
-        <span
-          aria-hidden="true"
-          className="absolute left-full top-0 h-full origin-left [backface-visibility:hidden]"
-          style={{ width: depth, transform: 'rotateY(90deg)', background: edge('right center / auto 100%', '90deg') }}
-        />
-        <span
-          aria-hidden="true"
-          className="absolute right-full top-0 h-full origin-right [backface-visibility:hidden]"
-          style={{ width: depth, transform: 'rotateY(-90deg)', background: edge('left center / auto 100%', '270deg') }}
-        />
-        <span
-          aria-hidden="true"
-          className="absolute left-0 top-full w-full origin-top [backface-visibility:hidden]"
-          style={{ height: depth, transform: 'rotateX(-90deg)', background: edge('center bottom / 100% auto', '180deg') }}
-        />
-        {back && (
-          <div className="absolute inset-0 [backface-visibility:hidden]" style={{ transform: `translateZ(-${depth}px) rotateY(180deg)` }}>
-            {back}
-          </div>
-        )}
-      </motion.div>
-    </div>
-  );
-}
-
-function Stretched({ src, ratio, flipped }) {
-  return (
-    <Slab
-      src={src}
+    <Solid
       ratio={ratio}
       depth={16}
-      rotateY={-24}
-      flipped={flipped}
+      rotateX={rotateX}
+      rotateY={rotateY}
+      front={<Art src={src} />}
       back={<StretcherBack />}
-      edge={(position, direction) => wrapped(src, position, direction, `rgba(0,0,0,0.3), rgba(0,0,0,0.5)`)}
+      edge={wrapped(src)}
     />
   );
 }
 
-function SoftBoard({ src, ratio }) {
+function SoftBoard({ src, ratio, rotateX, rotateY }) {
   return (
-    <div className="relative grid place-items-center">
-      <Slab
-        src={src}
-        ratio={ratio}
-        depth={9}
-        rotateY={-32}
-        // Sunboard is white foam right through
-        edge={(_, direction) => `linear-gradient(${direction}, #ffffff, #e2e2dc)`}
-      />
-      {/* Half the board's width out from the centre, i.e. just past its edge */}
-      <span
-        className="absolute top-1/2 hidden -translate-y-1/2 items-center gap-2 whitespace-nowrap text-[12px] font-medium text-[#1d1d1f] sm:flex"
-        style={{ left: `calc(50% + min(27cqw, calc(31cqh * ${ratio})))` }}
-      >
-        <span aria-hidden="true" className="h-px w-6 bg-[#1d1d1f]/40" />
-        5 mm sunboard
-      </span>
-    </div>
+    <Solid
+      ratio={ratio}
+      depth={9}
+      rotateX={rotateX}
+      rotateY={rotateY}
+      front={<Art src={src} />}
+      // Sunboard is white foam right through
+      back={<div className="absolute inset-0 bg-[linear-gradient(160deg,#fafaf7,#e9e9e3)]" />}
+      edge={() => 'linear-gradient(90deg, #ffffff, #e2e2dc)'}
+    />
   );
 }
 
-function Rolled({ src, ratio }) {
-  const reduce = useReducedMotion();
-  const open = 86; // how far down it's unrolled, in %
-  const unroll = { duration: 1.3, ease: EASE, delay: 0.15 };
+function Paper({ src, ratio, rotateX, rotateY }) {
   return (
-    <div className="relative" style={fit(ratio, 52, 58)}>
-      <div className="absolute inset-0 drop-shadow-[0_18px_22px_rgba(0,0,0,0.28)]">
-        <motion.div
-          className="absolute inset-0 overflow-hidden"
-          initial={reduce ? false : { clipPath: 'inset(0% 0% 94% 0%)' }}
-          animate={{ clipPath: `inset(0% 0% ${100 - open}% 0%)` }}
-          transition={unroll}
-        >
+    <Solid
+      ratio={ratio}
+      depth={1}
+      rotateX={rotateX}
+      rotateY={rotateY}
+      maxW={50}
+      front={(
+        <>
           <Art src={src} />
-          <span aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),transparent_30%,rgba(0,0,0,0.14))]" />
-        </motion.div>
-      </div>
-      <motion.span
-        aria-hidden="true"
-        className="absolute -left-[2.5%] -right-[2.5%] h-[max(16px,5.5cqh)] -translate-y-1/2 rounded-full"
-        style={{ background: ROLL, boxShadow: '0 14px 18px -10px rgba(0,0,0,0.45)' }}
-        initial={reduce ? false : { top: '6%' }}
-        animate={{ top: `${open}%` }}
-        transition={unroll}
-      >
-        {/* Where the outer turn of canvas ends */}
-        <span className="absolute inset-x-[3%] top-[64%] h-px bg-black/15" />
-      </motion.span>
-    </div>
+          <span aria-hidden="true" className="absolute bottom-0 right-0 size-1/4 bg-[linear-gradient(315deg,rgba(0,0,0,0.14),transparent_60%)]" />
+        </>
+      )}
+      back={<div className="absolute inset-0 bg-[#f6f4ee]" style={{ backgroundImage: LINEN }} />}
+    />
   );
 }
 
-function Sticker({ src, ratio }) {
+// The sticker's front: the print with one corner peeled back off its liner
+function PeelingSticker({ src, ratio }) {
   const reduce = useReducedMotion();
   // Share of the width peeled back. The corner folds at 45°: as far up the
   // right edge as along the bottom, which in % of the height is × ratio.
@@ -195,52 +215,121 @@ function Sticker({ src, ratio }) {
   };
 
   return (
-    <div className="-rotate-2">
-      <motion.div className="relative" style={fit(ratio, 50, 60)} onHoverStart={peel(0.3)} onHoverEnd={peel(0.2)}>
-        {/* Backing sheet, printed with its cutting grid */}
+    <motion.div className="absolute inset-0" onHoverStart={peel(0.3)} onHoverEnd={peel(0.2)}>
+      {/* The liner under the peeled corner: glossy and plain */}
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,#ffffff,#f1f1ef)]" />
+      <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: artClip }}>
+        <Art src={src} />
+      </motion.div>
+      <div className="absolute inset-0 drop-shadow-[-3px_-3px_5px_rgba(0,0,0,0.25)]">
+        <motion.div
+          className="absolute inset-0"
+          style={{ clipPath: flapClip, background: 'linear-gradient(315deg, #c4c4c4 0%, #ececec 45%, #ffffff 100%)' }}
+        />
+      </div>
+    </motion.div>
+  );
+}
+
+function Sticker({ src, ratio, rotateX, rotateY }) {
+  return (
+    <Solid
+      ratio={ratio}
+      depth={1.5}
+      rotateX={rotateX}
+      rotateY={rotateY}
+      maxW={50}
+      front={<PeelingSticker src={src} ratio={ratio} />}
+      // The back of the liner, printed with its cutting grid
+      back={(
         <div
-          className="absolute inset-0 rounded-[2px] bg-[#fbfbfb] shadow-[0_18px_30px_-16px_rgba(0,0,0,0.35)]"
+          className="absolute inset-0 bg-[#fbfbfb]"
           style={{
-            backgroundImage: 'linear-gradient(rgba(110,130,165,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(110,130,165,0.2) 1px, transparent 1px)',
+            backgroundImage: 'linear-gradient(rgba(110,130,165,0.22) 1px, transparent 1px), linear-gradient(90deg, rgba(110,130,165,0.22) 1px, transparent 1px)',
             backgroundSize: '12px 12px',
           }}
         />
-        <motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath: artClip }}>
-          <Art src={src} />
-        </motion.div>
-        <div className="absolute inset-0 drop-shadow-[-3px_-3px_5px_rgba(0,0,0,0.25)]">
-          <motion.div
-            className="absolute inset-0"
-            style={{ clipPath: flapClip, background: 'linear-gradient(315deg, #c4c4c4 0%, #ececec 45%, #ffffff 100%)' }}
-          />
-        </div>
-      </motion.div>
-    </div>
-  );
-}
-
-function Flat({ src, ratio, curl }) {
-  return (
-    <div className="relative shadow-[0_18px_30px_-16px_rgba(0,0,0,0.4)]" style={fit(ratio, 50, 60)}>
-      <div className="absolute inset-0 overflow-hidden">
-        <Art src={src} />
-      </div>
-      {curl && (
-        <span aria-hidden="true" className="absolute bottom-0 right-0 size-1/4 bg-[linear-gradient(315deg,rgba(0,0,0,0.14),transparent_60%)]" />
       )}
-    </div>
+    />
   );
 }
 
-export default function FinishMockup({ kind, src, ratio, flipped }) {
+/* A roll of canvas: a cylinder of facets round the horizontal axis, lit from
+   above, with spiral end caps. Its radius is in cqh so it scales with the stage. */
+const ROLL_FACETS = 14;
+const ROLL_R = 2.6; // cqh
+const FACET = 2 * ROLL_R * Math.tan(Math.PI / ROLL_FACETS) + 0.08; // a hair wide, so no seams show
+
+const facetColor = (index) => {
+  const angle = (index / ROLL_FACETS) * 2 * Math.PI;
+  // Light from above and in front
+  const light = Math.max(0, 0.6 * Math.sin(angle) + 0.8 * Math.cos(angle));
+  const tone = Math.round(150 + light * 102);
+  return `rgb(${tone}, ${tone - 3}, ${tone - 10})`;
+};
+
+function Roll({ open, unroll, reduce }) {
+  const cap = 'absolute rounded-full [backface-visibility:hidden] bg-[radial-gradient(circle,#4a463f_0_16%,transparent_17%),repeating-radial-gradient(circle,#efe9dc_0_5%,#cfc6b3_5%_7%)]';
   return (
-    <div className="grid place-items-center">
-      {kind === 'stretched' && <Stretched src={src} ratio={ratio} flipped={flipped} />}
-      {kind === 'rolled' && <Rolled src={src} ratio={ratio} />}
-      {kind === 'softboard' && <SoftBoard src={src} ratio={ratio} />}
-      {kind === 'sticker' && <Sticker src={src} ratio={ratio} />}
-      {kind === 'paper' && <Flat src={src} ratio={ratio} curl />}
-      {kind === 'generic' && <Flat src={src} ratio={ratio} />}
-    </div>
+    <motion.div
+      aria-hidden="true"
+      className="absolute -left-[2.5%] -right-[2.5%] h-0"
+      style={{ transformStyle: 'preserve-3d' }}
+      initial={reduce ? false : { top: '6%' }}
+      animate={{ top: `${open}%` }}
+      transition={unroll}
+    >
+      {Array.from({ length: ROLL_FACETS }, (_, index) => (
+        <span
+          key={index}
+          className="absolute inset-x-0 [backface-visibility:hidden]"
+          style={{
+            height: `${FACET}cqh`,
+            top: `${-FACET / 2}cqh`,
+            transform: `rotateX(${(360 / ROLL_FACETS) * index}deg) translateZ(${ROLL_R}cqh)`,
+            background: facetColor(index),
+          }}
+        />
+      ))}
+      <span className={cap} style={{ width: `${2 * ROLL_R}cqh`, height: `${2 * ROLL_R}cqh`, left: `${-ROLL_R}cqh`, top: `${-ROLL_R}cqh`, transform: 'rotateY(-90deg)' }} />
+      <span className={cap} style={{ width: `${2 * ROLL_R}cqh`, height: `${2 * ROLL_R}cqh`, left: `calc(100% - ${ROLL_R}cqh)`, top: `${-ROLL_R}cqh`, transform: 'rotateY(90deg)' }} />
+    </motion.div>
   );
+}
+
+function Rolled({ src, ratio, rotateX, rotateY }) {
+  const reduce = useReducedMotion();
+  const open = 86; // how far down it's unrolled, in %
+  const unroll = { duration: 1.3, ease: EASE, delay: 0.15 };
+  return (
+    <Solid
+      ratio={ratio}
+      depth={0.5}
+      rotateX={rotateX}
+      rotateY={rotateY}
+      maxW={52}
+      maxH={56}
+      // Both sides of the sheet unroll together
+      reveal={{
+        initial: reduce ? false : { clipPath: 'inset(0% 0% 94% 0%)' },
+        animate: { clipPath: `inset(0% 0% ${100 - open}% 0%)` },
+        transition: unroll,
+      }}
+      front={<Art src={src} />}
+      back={<div className="absolute inset-0 bg-[#ece3d1]" style={{ backgroundImage: LINEN }} />}
+    >
+      <Roll open={open} unroll={unroll} reduce={reduce} />
+    </Solid>
+  );
+}
+
+export default function FinishMockup({ kind, src, ratio, rotateX, rotateY }) {
+  const Model = {
+    stretched: Stretched,
+    rolled: Rolled,
+    softboard: SoftBoard,
+    sticker: Sticker,
+    paper: Paper,
+  }[kind] || Paper;
+  return <Model src={src} ratio={ratio} rotateX={rotateX} rotateY={rotateY} />;
 }

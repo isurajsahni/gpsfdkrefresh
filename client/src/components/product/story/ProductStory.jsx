@@ -16,12 +16,12 @@ import {
 } from './storyData';
 
 /* ── The product story ────────────────────────────────────────────────────────
-   Everything under the buy box that describes the product, in chapters:
-   the piece (gallery hero and key figures), its finishes (or, for a nameplate,
-   its anatomy), its size to scale, then the details. The finish and size
-   pickers here drive the buy box's own selection through `onPick`, so the two
-   never disagree. Keyed by product on the page, so local state (orientation)
-   starts fresh on every product. */
+   Everything under the buy box that describes the product, in chapters: its
+   finishes first, straight under the buy box, then the piece (gallery hero and
+   key figures), a nameplate's anatomy, its size to scale, then the details.
+   The finish and size pickers here drive the buy box's own selection through
+   `onPick`, so the two never disagree. Keyed by product on the page, so local
+   state (orientation) starts fresh on every product. */
 
 export default function ProductStory({
   product, selectedVariation, isCustomSize, quantity, needsText, onPick, onCustomSize, onAddToCart, onShowBuyBox,
@@ -75,10 +75,24 @@ export default function ProductStory({
       : { label: 'Add to cart', up: false, onClick: onAddToCart };
 
   const showScale = isCustomSize || sizeOptions.some((option) => parseSize(option.size));
+  const showFinishes = kind !== 'nameplate' && finishes.length > 1;
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="mt-20 md:mt-28">
+      {showFinishes && (
+        <FinishExplorer
+          finishes={finishes}
+          activeKey={activeKey}
+          onPick={onPick}
+          art={art.url}
+          ratio={mockupRatio}
+          shownAt={sizeText}
+          formatPrice={formatPrice}
+        />
+      )}
+
+      {/* With no finishes above it, the hero needs its own gap from the buy box */}
+      <div className={showFinishes ? '' : 'mt-20 md:mt-28'}>
         <GalleryHero
           product={product}
           kind={kind}
@@ -93,20 +107,8 @@ export default function ProductStory({
           collection={collection}
         />
 
-        {kind === 'nameplate' ? (
+        {kind === 'nameplate' && (
           <NameplateAnatomy design={design} ratio={design ? artRatio : null} name={product.name} />
-        ) : (
-          finishes.length > 1 && (
-            <FinishExplorer
-              finishes={finishes}
-              activeKey={activeKey}
-              onPick={onPick}
-              art={art.url}
-              ratio={mockupRatio}
-              shownAt={sizeText}
-              formatPrice={formatPrice}
-            />
-          )
         )}
 
         {showScale && (

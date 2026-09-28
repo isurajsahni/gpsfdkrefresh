@@ -167,7 +167,10 @@ const triggerNewOrderNotifications = async (order) => {
     // ─── Shiprocket Integration ───
     // Automatically create shipment for Prepaid orders (isPaid: true) or COD orders
     // IMPORTANT: Run Shiprocket BEFORE sending customer email so AWB is included
-    if (order.isPaid || order.paymentMethod === 'cod') {
+    // Opt-in (SHIPROCKET_ENABLED) — while it's off the order stays unsynced.
+    if (!shiprocket.isEnabled()) {
+      console.log(`[Shiprocket] Integration disabled — no shipment created for ${order.orderNumber}`);
+    } else if (order.isPaid || order.paymentMethod === 'cod') {
       try {
         console.log(`[Shiprocket] Starting automation for order: ${order.orderNumber} (isPaid: ${order.isPaid}, paymentMethod: ${order.paymentMethod})`);
 
@@ -957,7 +960,11 @@ exports.cancelOrder = async (req, res, next) => {
     await restoreStockForOrder(order);
 
     // ─── Shiprocket Order Cancellation ───
-    if (order.shiprocketOrderId) {
+    // With the integration off, an order pushed to Shiprocket before it was
+    // switched off is still live there — it has to be cancelled in the panel.
+    if (order.shiprocketOrderId && !shiprocket.isEnabled()) {
+      console.warn(`[Shiprocket] Integration disabled — cancel SR Order ID ${order.shiprocketOrderId} (${order.orderNumber}) in the Shiprocket panel`);
+    } else if (order.shiprocketOrderId) {
       try {
         console.log(`[Shiprocket] Attempting to cancel order ${order.orderNumber} on Shiprocket (SR Order ID: ${order.shiprocketOrderId})`);
         const cancelResult = await shiprocket.cancelOrder(order.shiprocketOrderId);
@@ -1096,12 +1103,17 @@ exports.trackOrder = async (req, res, next) => {
       paymentMethod: order.paymentMethod,
       trackingHistory: order.trackingHistory || [],
       lastTrackingUpdate: order.lastTrackingUpdate || null,
+      // Tells the page whether /track-awb is worth calling (Shiprocket opt-in).
+      liveTracking: shiprocket.isEnabled(),
     });
 
   } catch (error) {
     next(error);
   }
 };
+
+// Returned by the Shiprocket endpoints below while SHIPROCKET_ENABLED is off.
+const SHIPROCKET_DISABLED = 'Shiprocket integration is disabled';
 
 // GET /api/orders/track-awb/:awb
 // Public endpoint keyed on AWB alone, so the raw Shiprocket payload must never
@@ -1111,6 +1123,7 @@ exports.getShipmentTracking = async (req, res, next) => {
   try {
     const { awb } = req.params;
     if (!awb) return res.status(400).json({ message: 'AWB code is required' });
+    if (!shiprocket.isEnabled()) return res.status(503).json({ message: SHIPROCKET_DISABLED });
 
     const trackingData = await shiprocket.getTracking(awb);
 
@@ -1139,11 +1152,19 @@ exports.getShipmentTracking = async (req, res, next) => {
     next(error);
   }
 };
+
+// GET /api/orders/shiprocket-settings — lets the admin panel hide the
+// Shiprocket sync controls while the integration is switched off.
+exports.getShiprocketSettings = (req, res) => {
+  res.json({ enabled: shiprocket.isEnabled() });
+};
+
 // GET /api/orders/shiprocket/:id (admin)
 exports.getShiprocketOrderDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Shiprocket Order ID is required' });
+    if (!shiprocket.isEnabled()) return res.status(503).json({ message: SHIPROCKET_DISABLED });
 
     const orderDetails = await shiprocket.getOrderDetails(id);
     res.json(orderDetails);
@@ -1155,6 +1176,9 @@ exports.getShiprocketOrderDetails = async (req, res, next) => {
 // POST /api/orders/:id/sync-shiprocket (admin / manager)
 exports.syncShiprocketOrder = async (req, res, next) => {
   try {
+    if (!shiprocket.isEnabled()) {
+      return res.status(503).json({ message: SHIPROCKET_DISABLED, success: false });
+    }
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 

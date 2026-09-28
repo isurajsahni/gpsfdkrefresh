@@ -15,8 +15,9 @@ import { Eyebrow, KindButton, KindHero, KindSectionHead } from '../../components
 import heroImage from '../../assets/image/faq_demo.webp';
 
 // The order-tracking journey, from checkout to doorstep. Step 2 is where the
-// Shiprocket webhook kicks in: the AWB lands in the customer's inbox and
-// order dashboard automatically the moment the shipment is created.
+// Shiprocket webhook kicks in (when SHIPROCKET_ENABLED is on): the AWB lands in
+// the customer's inbox and order dashboard automatically the moment the
+// shipment is created.
 const TRACKING_STEPS = [
   {
     Icon: HiOutlineShoppingBag,
@@ -26,7 +27,7 @@ const TRACKING_STEPS = [
   {
     Icon: HiOutlineCube,
     title: 'Shipment created — AWB assigned',
-    text: 'As soon as our courier partner Shiprocket generates your shipment, an AWB tracking number is assigned. We email it to you instantly, and it appears on your order in the dashboard automatically.',
+    text: 'As soon as our courier partner generates your shipment, an AWB tracking number is assigned. We email it to you instantly, and it appears on your order in the dashboard automatically.',
   },
   {
     Icon: HiOutlineTruck,

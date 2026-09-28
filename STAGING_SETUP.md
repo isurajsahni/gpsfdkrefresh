@@ -91,10 +91,11 @@ New → Web Service → same repo, then:
 - **Razorpay** — `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`. Leaving them unset is
   the whole point of this doc: prepaid returns a clean 503, COD works. Add test
   keys (`rzp_test_…`) later only when you want to test prepaid.
-- **Shiprocket** — `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`,
-  `SHIPROCKET_PICKUP_LOCATION`, `SHIPROCKET_WEBHOOK_SECRET`. Shipment creation
-  throws "not configured" and the order just marks `shiprocketSyncStatus:
-  failed`. **No courier is ever booked.**
+- **Shiprocket** — `SHIPROCKET_ENABLED`, `SHIPROCKET_EMAIL`, `SHIPROCKET_PASSWORD`,
+  `SHIPROCKET_PICKUP_LOCATION`, `SHIPROCKET_WEBHOOK_SECRET`. With
+  `SHIPROCKET_ENABLED` unset the integration is off: no shipment is created (the
+  order stays `shiprocketSyncStatus: pending`) and the tracking webhook ignores
+  every event. **No courier is ever booked.**
 - **Meta** — `META_PIXEL_ID`, `META_CAPI_ACCESS_TOKEN`, `META_APP_SECRET`. CAPI
   logs "Skipped". **No purchase events fire.**
 - **Push (FCM)** — `FCM_*`. Push sender no-ops until set.

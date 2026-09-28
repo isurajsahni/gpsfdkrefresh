@@ -2,7 +2,7 @@ const router = require('express').Router();
 const { 
   createOrder, createGuestOrder, getOrders, getOrderById, updateOrderStatus, 
   getOrderStats, cancelOrder, deleteOrder, trackOrder, getShipmentTracking,
-  getShiprocketOrderDetails, syncShiprocketOrder, downloadInvoice, getInvoiceSettings
+  getShiprocketOrderDetails, syncShiprocketOrder, getShiprocketSettings, downloadInvoice, getInvoiceSettings
 } = require('../controllers/orderController');
 const { protect, admin, authorizeRoles } = require('../middleware/auth');
 const { guestOrderValidation, guestOrderLimiter, orderTrackingLimiter } = require('../middleware/validators');
@@ -15,6 +15,7 @@ router.get('/', protect, getOrders);
 router.get('/track', orderTrackingLimiter, trackOrder);
 router.get('/track-awb/:awb', orderTrackingLimiter, getShipmentTracking);
 router.get('/invoice-settings', protect, getInvoiceSettings); // before /:id
+router.get('/shiprocket-settings', protect, getShiprocketSettings); // before /:id
 router.get('/stats',protect, authorizeRoles('order_manager'), getOrderStats);
 router.get('/shiprocket/:id', protect, authorizeRoles('order_manager'), getShiprocketOrderDetails);
 router.get('/:id', protect, getOrderById);

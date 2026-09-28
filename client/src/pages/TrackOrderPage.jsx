@@ -44,8 +44,8 @@ const TrackOrderPage = () => {
       const response = await API.get(`/orders/track?orderId=${encodeURIComponent(orderIdVal)}&contact=${encodeURIComponent(contactVal)}`);
       setOrderData(response.data);
 
-      // If AWB exists, try to get real-time tracking (non-blocking)
-      if (response.data.awbCode) {
+      // If AWB exists and Shiprocket is switched on, try to get real-time tracking (non-blocking)
+      if (response.data.awbCode && response.data.liveTracking) {
         try {
           const trackRes = await API.get(`/orders/track-awb/${response.data.awbCode}`);
           setShiprocketData(trackRes.data);

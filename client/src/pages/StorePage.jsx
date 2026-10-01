@@ -45,6 +45,10 @@ import vidSentinel from '../assets/videos/The-Sentinel.mp4';
 
 const HERO_STRIP = [strip1, strip2, strip3, strip4, strip5, strip6, strip7];
 
+// "Can't decide what to gift", "Inspire and collaborate" and "Escape into
+// tranquility" are hidden for now; set this to true to bring all three back.
+const SHOW_PAUSED_SECTIONS = false;
+
 const ARTWORK_VIDEOS = [
   { name: 'Bubblegum Rebellion', src: vidBubblegum, slug: 'bubblegum-rebellion' },
   { name: 'Dreaming in Colors', src: vidDreaming, slug: 'dreaming-in-colors' },
@@ -435,70 +439,72 @@ const StorePage = () => {
       </section>
 
       {/* ─── Customize canvas ─── */}
-      <section className="py-[55px] section-padding">
-        <div className="max-w-[1200px] mx-auto">
-          <Heading bold="Can't decide what to gift." light="Want to customize ?" />
-          {/* fr units keep the Figma 505:635 ratio but scale with the container —
-              fixed px columns would overflow the 1200px wrapper on smaller
-              viewports. Left card caps at its Figma width (505px), height auto. */}
-          <div className="grid grid-cols-1 md:grid-cols-[505fr_635fr] gap-8 lg:gap-[60px] items-start">
-            {/* Left: most-gifted items promo — text sits straight on the dark
-                image (no blur band), per Figma. */}
-            <Link
-              to="/canvas"
-              className="group relative rounded-3xl overflow-hidden block w-full max-w-[505px]"
-            >
-              <img
-                src={giftedImg}
-                alt="Family gifting a framed canvas"
-                loading="lazy"
-                decoding="async"
-                onError={handleImageError}
-                className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute top-0 left-0 right-0 p-[30px]">
-                <h3 className="apple-tile-title font-heading text-white">
-                  Our most gifted items
-                </h3>
-                <span className="apple-link mt-2 inline-flex items-center gap-1.5 text-accent group-hover:gap-2.5 transition-all">
-                  Visit Collection
-                  <FigmaChevron className="w-[7px] h-auto mt-1" />
-                </span>
-              </div>
-            </Link>
-
-            {/* Right: upload widget (Figma "Upload your photo") */}
-            <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_6px_36px_rgba(0,0,0,0.12)] p-6 sm:p-10 flex flex-col items-center justify-center text-center h-full">
-              <div className="apple-eyebrow flex flex-wrap items-center justify-center gap-3 sm:gap-8 uppercase text-accent">
-                <span>Step 1: Upload</span>
-                <span>Step 2: Customize</span>
-              </div>
-              <h3 className="apple-tile-title font-heading text-[#1D1D1F] mt-4">
-                Upload your photo
-              </h3>
-              <p className="apple-body text-[#1D1D1F] mt-2.5 max-w-xs">
-                Upload a photo. Choose your style. We'll create the masterpiece.
-              </p>
-
+      {SHOW_PAUSED_SECTIONS && (
+        <section className="py-[55px] section-padding">
+          <div className="max-w-[1200px] mx-auto">
+            <Heading bold="Can't decide what to gift." light="Want to customize ?" />
+            {/* fr units keep the Figma 505:635 ratio but scale with the container —
+                fixed px columns would overflow the 1200px wrapper on smaller
+                viewports. Left card caps at its Figma width (505px), height auto. */}
+            <div className="grid grid-cols-1 md:grid-cols-[505fr_635fr] gap-8 lg:gap-[60px] items-start">
+              {/* Left: most-gifted items promo — text sits straight on the dark
+                  image (no blur band), per Figma. */}
               <Link
-                to="/customize-canvas"
-                className="group mt-7 w-full max-w-md rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 px-7 py-8 flex flex-col items-center gap-3 hover:border-accent/50 transition-colors"
+                to="/canvas"
+                className="group relative rounded-3xl overflow-hidden block w-full max-w-[505px]"
               >
-                <div className="relative">
-                  <HiPhotograph className="w-12 h-12 text-[#F2A39C]" />
-                  <span className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-[#E5484D] ring-2 ring-white flex items-center justify-center">
-                    <HiPlus className="w-3 h-3 text-white" />
+                <img
+                  src={giftedImg}
+                  alt="Family gifting a framed canvas"
+                  loading="lazy"
+                  decoding="async"
+                  onError={handleImageError}
+                  className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute top-0 left-0 right-0 p-[30px]">
+                  <h3 className="apple-tile-title font-heading text-white">
+                    Our most gifted items
+                  </h3>
+                  <span className="apple-link mt-2 inline-flex items-center gap-1.5 text-accent group-hover:gap-2.5 transition-all">
+                    Visit Collection
+                    <FigmaChevron className="w-[7px] h-auto mt-1" />
                   </span>
                 </div>
-                <p className="apple-body text-[#1D1D1F] mt-1">or drag and drop here</p>
-                <p className="apple-caption text-[#1D1D1F]">
-                  JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
-                </p>
               </Link>
+
+              {/* Right: upload widget (Figma "Upload your photo") */}
+              <div className="rounded-3xl border border-gray-100 bg-white shadow-[0_6px_36px_rgba(0,0,0,0.12)] p-6 sm:p-10 flex flex-col items-center justify-center text-center h-full">
+                <div className="apple-eyebrow flex flex-wrap items-center justify-center gap-3 sm:gap-8 uppercase text-accent">
+                  <span>Step 1: Upload</span>
+                  <span>Step 2: Customize</span>
+                </div>
+                <h3 className="apple-tile-title font-heading text-[#1D1D1F] mt-4">
+                  Upload your photo
+                </h3>
+                <p className="apple-body text-[#1D1D1F] mt-2.5 max-w-xs">
+                  Upload a photo. Choose your style. We'll create the masterpiece.
+                </p>
+
+                <Link
+                  to="/customize-canvas"
+                  className="group mt-7 w-full max-w-md rounded-2xl border border-dashed border-gray-300 bg-gray-50/50 px-7 py-8 flex flex-col items-center gap-3 hover:border-accent/50 transition-colors"
+                >
+                  <div className="relative">
+                    <HiPhotograph className="w-12 h-12 text-[#F2A39C]" />
+                    <span className="absolute -bottom-0.5 -right-1 w-5 h-5 rounded-full bg-[#E5484D] ring-2 ring-white flex items-center justify-center">
+                      <HiPlus className="w-3 h-3 text-white" />
+                    </span>
+                  </div>
+                  <p className="apple-body text-[#1D1D1F] mt-1">or drag and drop here</p>
+                  <p className="apple-caption text-[#1D1D1F]">
+                    JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
+                  </p>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── Artworks in motion (full-width video slider) ─── */}
       <section className="py-[50px] md:py-[55px] overflow-hidden">
@@ -571,32 +577,36 @@ const StorePage = () => {
       </section>
 
       {/* ─── Inspire and collaborate ─── */}
-      <section className="py-[55px] section-padding">
-        <div className="max-w-[1200px] mx-auto">
-          <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
-          {/* 3-up only from md — at sm widths three columns squeeze the cards to
-              ~190px, where the 160px blur band swallows the whole image. */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
-            {COLLABORATE_CARDS.map((card) => (
-              <OverlayCard key={card.title} {...card} />
-            ))}
+      {SHOW_PAUSED_SECTIONS && (
+        <section className="py-[55px] section-padding">
+          <div className="max-w-[1200px] mx-auto">
+            <Heading bold="Inspire and collaborate." light="Where creativity brings people together." />
+            {/* 3-up only from md — at sm widths three columns squeeze the cards to
+                ~190px, where the 160px blur band swallows the whole image. */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
+              {COLLABORATE_CARDS.map((card) => (
+                <OverlayCard key={card.title} {...card} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── Escape into tranquility ─── */}
-      <section className="py-[55px] section-padding">
-        <div className="max-w-[1200px] mx-auto">
-          <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
-          {/* 3-up only from md — at sm widths three columns squeeze the cards to
-              ~190px, where the 160px blur band swallows the whole image. */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
-            {TRANQUILITY_CARDS.map((card) => (
-              <OverlayCard key={card.title} {...card} />
-            ))}
+      {SHOW_PAUSED_SECTIONS && (
+        <section className="py-[55px] section-padding">
+          <div className="max-w-[1200px] mx-auto">
+            <Heading bold="Escape into tranquility." light="Find your perfect retreat." />
+            {/* 3-up only from md — at sm widths three columns squeeze the cards to
+                ~190px, where the 160px blur band swallows the whole image. */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-[30px]">
+              {TRANQUILITY_CARDS.map((card) => (
+                <OverlayCard key={card.title} {...card} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
     </div>
   );

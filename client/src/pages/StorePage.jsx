@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
+import { HiChevronDown, HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
+import useClickOutside from '../hooks/useClickOutside';
 import { ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '../utils/siteSchema';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
@@ -206,6 +207,105 @@ const ArrowLink = ({ to, children }) => (
   </Link>
 );
 
+// The hero's "Store" title, which opens a menu of everything the store offers:
+// the "What we offer" row's five, with its links. A mouse opens it by hovering
+// the title and closes it by leaving the title and menu; a click or tap (or
+// Enter) toggles it. It also closes on a pick, a click elsewhere, or Escape
+// (which hands focus back to the title).
+const StoreMenu = () => {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+  // Set while a hover holds the menu open, so the click that usually follows
+  // the hover doesn't shut it again.
+  const hoverOpened = useRef(false);
+  const close = useCallback(() => {
+    hoverOpened.current = false;
+    setOpen(false);
+  }, []);
+  useClickOutside(menuRef, close);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      close();
+      buttonRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open, close]);
+
+  // Mouse only: a tap fires pointerenter too, and would open the menu just
+  // before its own click toggled it shut.
+  const onPointerEnter = (e) => {
+    if (e.pointerType !== 'mouse') return;
+    hoverOpened.current = true;
+    setOpen(true);
+  };
+  const onPointerLeave = (e) => {
+    if (e.pointerType === 'mouse') close();
+  };
+  const onClick = () => {
+    if (hoverOpened.current) {
+      hoverOpened.current = false;
+      return;
+    }
+    setOpen((o) => !o);
+  };
+
+  return (
+    <div ref={menuRef} className="relative w-fit" onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
+      <h1 className="apple-hero font-heading text-[#1D1D1F]">
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-expanded={open}
+          aria-controls="store-menu"
+          onClick={onClick}
+          className="group inline-flex items-center gap-[0.1em] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
+        >
+          Store
+          <HiChevronDown
+            aria-hidden="true"
+            className={`mt-[0.08em] size-[0.5em] transition-[transform,color] duration-300 group-hover:text-accent ${open ? 'rotate-180 text-accent' : ''}`}
+          />
+        </button>
+      </h1>
+      <AnimatePresence>
+        {open && (
+          // pt-3 rather than a margin, so the gap under the title still
+          // counts as hovering the menu on the way down to it.
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="absolute left-0 top-full z-30 pt-3"
+          >
+            <ul
+              id="store-menu"
+              className="w-[min(240px,calc(100vw-40px))] rounded-2xl border border-black/[0.06] bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
+            >
+              {OFFER.map((o) => (
+                <li key={o.label}>
+                  <Link
+                    to={o.to}
+                    onClick={close}
+                    className="apple-body block rounded-xl px-4 py-2.5 font-medium text-[#1D1D1F] transition-colors hover:bg-[#f5f5f7] hover:text-accent focus-visible:bg-[#f5f5f7] focus-visible:outline-none"
+                  >
+                    {o.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // Top band tinted with the card's `gradient` colour (fading to transparent), with a
 // progressive "layer blur" (Figma-style) underneath. Holds the card text, 30px padding.
 const BlurBand = ({ height, gradient, solidStop = 45, children }) => (
@@ -276,9 +376,7 @@ const StorePage = () => {
       {/* pt-[130px] = 60px fixed navbar + 70px visual gap */}
       <section className="pt-[130px] pb-[50px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="apple-hero font-heading text-[#1D1D1F]">
-            Store
-          </h1>
+          <StoreMenu />
           <div className="sm:text-right">
             <p className="apple-intro text-[#1D1D1F] sm:ml-auto">
               The best way to buy the <br /> products you love.

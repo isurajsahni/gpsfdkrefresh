@@ -13,6 +13,9 @@ import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { COLLECTIONS as SUBCATEGORIES, ALL_PRODUCTS_SLUG, collectionSlug as generateSlug } from '../utils/collections';
 import { CANVAS_PATH } from '../utils/categoryPath';
+import { SectionHeading } from '../components/canvas-v2/Layout';
+import StyleCircle from '../components/canvas-v2/StyleCircle';
+import { ART_STYLES, ALL_PRODUCTS_STYLE } from '../components/canvas-v2/artStyles';
 
 // /wall-canvas/all lists every canvas; /wall-canvas itself redirects to the
 // /canvas landing page.
@@ -57,11 +60,11 @@ const CategoryPage = () => {
   const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory && !isAllProducts;
   const displaySubcategory = exactSubcategory || (isAllProducts ? 'All Canvas Wall Art' : null);
 
-  // On phones the collection chips are one sideways-scrolling row: bring the
-  // current collection's chip into view
-  const chipRowRef = useRef(null);
+  // Below lg the art styles are one sideways-scrolling row: bring the current
+  // collection's circle into view
+  const styleRowRef = useRef(null);
   useEffect(() => {
-    const row = chipRowRef.current;
+    const row = styleRowRef.current;
     const active = row?.querySelector('[data-active="true"]');
     if (!row || !active || row.scrollWidth <= row.clientWidth) return;
     row.scrollLeft = active.offsetLeft - (row.clientWidth - active.offsetWidth) / 2;
@@ -186,7 +189,8 @@ const CategoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-[60px] pb-12">
+    // Wall Canvas listings are white like /canvas, whose art-style circles head them
+    <div className={`min-h-screen ${slug === 'wall-canvas' ? 'bg-white' : 'bg-gray-50'} pt-[60px] pb-12`}>
       {/* An empty listing is a soft 404; it becomes indexable again on its own
           once products are added. */}
       <SEO
@@ -199,30 +203,27 @@ const CategoryPage = () => {
       
       {/* Header Area */}
       {slug === 'wall-canvas' ? (
-        // Kept short so the first products are visible without scrolling:
-        // one scrolling row of collections on phones, wrapped rows on desktop.
-        <div className="bg-secondary section-padding py-6 md:py-10 text-center text-white relative flex flex-col items-center">
-          <h1 className="text-3xl md:text-5xl font-heading font-normal mb-4 md:mb-6 tracking-[0.05em] text-white">
+        // The /canvas page's "Find your art style" circles, led by All Products
+        // and lined up with the product grid below. Kept short so the first
+        // products are visible without scrolling: one sideways-scrolling row
+        // below lg, two rows of eight from lg.
+        <div className="max-w-[1400px] mx-auto px-[15px] pt-8 lg:pt-12">
+          <SectionHeading as="h1">
             {displaySubcategory && !isAllProducts ? displaySubcategory : 'Canvas for your soul'}
-          </h1>
+          </SectionHeading>
 
-          <div className="max-w-5xl w-full border border-accent/40 rounded-2xl p-3 md:p-6 text-left bg-black/10 backdrop-blur-sm">
-            <h2 className="text-accent text-[12px] font-bold tracking-[0.2em] uppercase mb-3 md:mb-4">MATCH YOUR VIBE</h2>
-            <div ref={chipRowRef} className="relative flex flex-nowrap md:flex-wrap gap-x-3 md:gap-y-3 overflow-x-auto md:overflow-visible scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 pb-1 md:pb-0">
-              <Link to={`/wall-canvas/${ALL_PRODUCTS_SLUG}`} data-active={isAllProducts} aria-current={isAllProducts ? 'page' : undefined} className={`shrink-0 whitespace-nowrap px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isAllProducts ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
-                All Products
-              </Link>
-              {SUBCATEGORIES.map(sub => {
-                const subSlug = generateSlug(sub);
-                const isActive = subcategorySlug === subSlug;
-                return (
-                  <Link key={subSlug} to={`/wall-canvas/${subSlug}`} data-active={isActive} aria-current={isActive ? 'page' : undefined} className={`shrink-0 whitespace-nowrap px-[11px] py-[6px] text-[11px] md:px-6 md:py-2.5 md:text-[12px] rounded-full font-semibold transition-colors ${isActive ? 'bg-accent text-white' : 'bg-white/10 text-white/90 hover:bg-white/20'}`}>
-                    {sub}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+          {/* Fixed-width items in the row keep the overhanging labels clear of
+              each other; py-1 leaves room for the active ring's offset. */}
+          <ul ref={styleRowRef} className="relative -mx-[15px] mt-5 flex gap-x-1 overflow-x-auto px-[15px] py-1 scrollbar-hide sm:mt-7 sm:gap-x-2 lg:mx-0 lg:mt-[31.18px] lg:grid lg:grid-cols-[repeat(8,80px)] lg:justify-between lg:gap-y-[42.18px] lg:overflow-visible lg:px-0">
+            {[ALL_PRODUCTS_STYLE, ...ART_STYLES].map((style) => {
+              const isActive = style === ALL_PRODUCTS_STYLE ? isAllProducts : Boolean(style.collection) && style.collection === exactSubcategory;
+              return (
+                <li key={style.to} data-active={isActive} className="w-[76px] shrink-0 sm:w-[96px] lg:w-auto">
+                  <StyleCircle {...style} active={isActive} />
+                </li>
+              );
+            })}
+          </ul>
         </div>
       ) : (
         <div className="bg-secondary section-padding py-16">

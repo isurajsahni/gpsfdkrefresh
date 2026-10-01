@@ -9,9 +9,9 @@ export const Shell = ({ className = '', children }) => (
 );
 
 /* Figma section heading: SF Pro Medium 38px, #1D1D1F, line-height "auto"
-   (1.19 — SF Pro's ascent + descent). */
-export const SectionHeading = ({ className = '', children }) => (
-  <h2 className={`text-[28px] font-medium leading-[1.19] text-[#1d1d1f] sm:text-[32px] lg:text-[38px] ${className}`}>
+   (1.19 — SF Pro's ascent + descent). `as` swaps the h2 for a page's h1. */
+export const SectionHeading = ({ as: Tag = 'h2', className = '', children }) => (
+  <Tag className={`text-[28px] font-medium leading-[1.19] text-[#1d1d1f] sm:text-[32px] lg:text-[38px] ${className}`}>
     {children}
-  </h2>
+  </Tag>
 );

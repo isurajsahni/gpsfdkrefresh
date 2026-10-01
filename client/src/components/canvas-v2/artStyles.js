@@ -1,4 +1,4 @@
-import { ALL_PRODUCTS_SLUG, collectionPath } from '../../utils/collections';
+import { ALL_CANVASES_PATH, collectionPath } from '../../utils/collections';
 
 import inkAndInterval from '../../assets/image/canvas-v2/styles/ink-and-interval.png';
 import sassyClassic from '../../assets/image/canvas-v2/styles/sassy-classic.png';
@@ -51,10 +51,11 @@ export const ART_STYLES = [
   { image: customCanvas, lines: ['Custom', 'Canvas'], to: '/customize-canvas' },
 ];
 
-/* /wall-canvas/all, which the listings put ahead of the styles. It has no
-   thumbnail of its own, so its circle is a mosaic of four styles' thumbnails. */
+/* Every canvas, which the collection listings put ahead of the styles: the
+   listing under the art styles on /canvas. It has no thumbnail of its own, so
+   its circle is a mosaic of four styles' thumbnails. */
 export const ALL_PRODUCTS_STYLE = {
   mosaic: [sassyClassic, botanicalMuse, wildEccentrics, velocitySuite],
   lines: ['All', 'Products'],
-  to: `/wall-canvas/${ALL_PRODUCTS_SLUG}`,
+  to: ALL_CANVASES_PATH,
 };

@@ -1,5 +1,5 @@
 import { cachedGet } from './api';
-import { COLLECTIONS, ALL_PRODUCTS_SLUG, collectionPath, lowestPrice } from './collections';
+import { COLLECTIONS, ALL_CANVASES_PATH, collectionPath, lowestPrice } from './collections';
 import { toPlainText } from './productSeo';
 
 /*
@@ -18,7 +18,7 @@ const CATEGORY_ENTRIES = [
 ];
 
 const COLLECTION_ENTRIES = [
-  { name: 'All Canvas Wall Art', keywords: 'all canvas', path: `/wall-canvas/${ALL_PRODUCTS_SLUG}` },
+  { name: 'All Canvas Wall Art', keywords: 'all canvas', path: ALL_CANVASES_PATH },
   ...COLLECTIONS.map((name) => ({ name, keywords: '', path: collectionPath(name) })),
 ];
 

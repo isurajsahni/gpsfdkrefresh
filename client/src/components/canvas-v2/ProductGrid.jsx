@@ -7,6 +7,7 @@ import { fadeUp, stagger } from './motion';
 import { useCurrency } from '../../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
 import API from '../../utils/api';
+import { ALL_CANVASES_PATH } from '../../utils/collections';
 
 import viewCircle from '../../assets/image/canvas-v2/icons/view-circle.svg';
 import viewArrow from '../../assets/image/canvas-v2/icons/view-arrow.svg';
@@ -169,7 +170,7 @@ export default function ProductGrid() {
         <div className="flex items-end justify-between gap-4 sm:items-center">
           <SectionHeading className="min-w-0">Find your next favourite</SectionHeading>
           <Link
-            to="/wall-canvas/all"
+            to={ALL_CANVASES_PATH}
             className="group inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[40px] border-[1.5px] border-accent px-5 text-[14px] font-medium leading-[1.19] text-accent transition-colors duration-300 hover:bg-accent hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 sm:h-[45px] sm:px-6 sm:text-[16px]"
           >
             View all

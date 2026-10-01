@@ -17,6 +17,7 @@ import ChatBot from './components/common/ChatBot';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NavigationProgress from './components/common/NavigationProgress';
 import { lazyPage, startRoutePrefetch } from './utils/routePrefetch';
+import { ALL_CANVASES_PATH } from './utils/collections';
 
 // Isolated Testing Pages (lazy — bypasses Router entirely)
 const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
@@ -139,11 +140,36 @@ const captureUTMOnce = () => {
 
 function ScrollManager() {
   const location = useLocation();
+  const { pathname, search, hash, key } = location;
+  // Every visit to an #anchor counts, even to the one already in the address
+  // bar: "Explore Collections" at the foot of /canvas goes back up to it
+  const anchorVisit = hash ? key : '';
+
+  // To the top of each new page, or to the #anchor a link points at
+  // (e.g. /canvas#all-canvases). On a first load the page is still on its way,
+  // so wait a few seconds for the anchor to appear.
+  useEffect(() => {
+    const anchor = () => (hash.length > 1 ? document.getElementById(hash.slice(1)) : null);
+    if (anchor()) {
+      anchor().scrollIntoView();
+      return undefined;
+    }
+    window.scrollTo(0, 0);
+    if (!hash) return undefined;
+    const observer = new MutationObserver(() => {
+      if (!anchor()) return;
+      observer.disconnect();
+      anchor().scrollIntoView();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const giveUp = setTimeout(() => observer.disconnect(), 5000);
+    return () => {
+      observer.disconnect();
+      clearTimeout(giveUp);
+    };
+  }, [pathname, search, hash, anchorVisit]);
 
   useEffect(() => {
-    // Simple scroll to top on route change
-    window.scrollTo(0, 0);
-
     // Fire Meta Pixel PageView on every route change (SPA support)
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'PageView');
@@ -284,6 +310,8 @@ const pageRoutes = (
     <Route path="/canvas" element={<><CanvasLandingV2 /><Footer /></>} />
     <Route path="/wall-canvas" element={<Navigate to="/canvas" replace />} />
     <Route path="/canvas-v2-demo" element={<Navigate to="/canvas" replace />} />
+    {/* Every canvas is listed on /canvas now, under the art styles */}
+    <Route path="/wall-canvas/all" element={<Navigate to={ALL_CANVASES_PATH} replace />} />
 
     {/* Consultancy v2 — internal demo only. Not linked from nav; SEO noindex.
         The live /consultancy page and its enquiry form are unchanged. */}

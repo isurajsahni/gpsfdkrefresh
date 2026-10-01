@@ -24,6 +24,18 @@ const CHUNK_ERROR =
 
 export const isChunkLoadError = (error) => CHUNK_ERROR.test(error?.message || '');
 
+// Pages fetched ahead of a click (see routePrefetch). A failure there mustn't
+// reload the page under someone who was only hovering a link; if they do
+// click, the page fails to render and the error boundary reloads then.
+let backgroundLoads = 0;
+export const loadInBackground = (load) => {
+  backgroundLoads += 1;
+  return load().finally(() => {
+    backgroundLoads -= 1;
+  });
+};
+export const isLoadingInBackground = () => backgroundLoads > 0;
+
 /**
  * Reload to fetch the current build, at most once every few seconds, so a file
  * that is genuinely missing can't put the page in a reload loop.

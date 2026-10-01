@@ -51,9 +51,10 @@ export const ART_STYLES = [
   { image: customCanvas, lines: ['Custom', 'Canvas'], to: '/customize-canvas' },
 ];
 
-/* Every canvas, which the collection listings put ahead of the styles: the
-   listing under the art styles on /canvas. It has no thumbnail of its own, so
-   its circle is a mosaic of four styles' thumbnails. */
+/* Every canvas: the listing under the art styles on /canvas. Both style
+   pickers (there and on the collection listings) put it ahead of the styles.
+   It has no thumbnail of its own, so its circle is a mosaic of four styles'
+   thumbnails. */
 export const ALL_PRODUCTS_STYLE = {
   mosaic: [sassyClassic, botanicalMuse, wildEccentrics, velocitySuite],
   lines: ['All', 'Products'],

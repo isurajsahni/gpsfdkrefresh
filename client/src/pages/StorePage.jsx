@@ -284,7 +284,7 @@ const StorePage = () => {
               The best way to buy the <br /> products you love.
             </p>
             <div className="mt-1 sm:flex sm:justify-end">
-              <ArrowLink to="/consultancy">Connect with a Specialist</ArrowLink>
+              <ArrowLink to="/canvas">Explore our Canvas Collection</ArrowLink>
             </div>
           </div>
         </div>

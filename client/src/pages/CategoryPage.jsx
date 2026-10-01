@@ -26,6 +26,10 @@ const PAGE_SIZE = 12;
 // Rendered by ProductZigzagPage, which fetches its own products
 const ZIGZAG_SLUG = 'house-nameplates';
 
+// The /canvas page's column, which the Wall Canvas listings share: a 1200px
+// <Shell> inside px-5 sm:px-8 sections (1264 = 1200 + 2 × 32).
+const CANVAS_COLUMN = 'mx-auto max-w-[1264px] px-5 sm:px-8';
+
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -204,18 +208,18 @@ const CategoryPage = () => {
       {/* Header Area */}
       {slug === 'wall-canvas' ? (
         // The /canvas page's "Find your art style" circles, led by All Products
-        // and ending with Custom Canvas (which opens the customiser), lined up
-        // with the product grid below. Kept short so the first
+        // and ending with Custom Canvas (which opens the customiser), in the
+        // same column and on the same tracks as there. Kept short so the first
         // products are visible without scrolling: one sideways-scrolling row
         // below lg, two rows of eight from lg.
-        <div className="max-w-[1400px] mx-auto px-[15px] pt-8 lg:pt-12">
+        <div className={`${CANVAS_COLUMN} pt-8 lg:pt-12`}>
           <SectionHeading as="h1">
             {displaySubcategory && !isAllProducts ? displaySubcategory : 'Canvas for your soul'}
           </SectionHeading>
 
           {/* Fixed-width items in the row keep the overhanging labels clear of
               each other; py-1 leaves room for the active ring's offset. */}
-          <ul ref={styleRowRef} className="relative -mx-[15px] mt-5 flex gap-x-1 overflow-x-auto px-[15px] py-1 scrollbar-hide sm:mt-7 sm:gap-x-2 lg:mx-0 lg:mt-[31.18px] lg:grid lg:grid-cols-[repeat(8,80px)] lg:justify-between lg:gap-y-[42.18px] lg:overflow-visible lg:px-0">
+          <ul ref={styleRowRef} className="relative -mx-5 mt-5 flex gap-x-1 overflow-x-auto px-5 py-1 scrollbar-hide sm:-mx-8 sm:mt-7 sm:gap-x-2 sm:px-8 lg:mx-0 lg:mt-[31.18px] lg:grid lg:grid-cols-8 lg:gap-x-0 lg:gap-y-[42.18px] lg:overflow-visible lg:px-0 xl:grid-cols-[repeat(8,80px)] xl:gap-x-20 xl:pl-1">
             {[ALL_PRODUCTS_STYLE, ...ART_STYLES].map((style) => {
               const isActive = style === ALL_PRODUCTS_STYLE ? isAllProducts : Boolean(style.collection) && style.collection === exactSubcategory;
               return (
@@ -252,7 +256,7 @@ const CategoryPage = () => {
         </div>
       )}
 
-      <div className="max-w-[1400px] mx-auto px-[15px] py-10">
+      <div className={`${slug === 'wall-canvas' ? CANVAS_COLUMN : 'max-w-[1400px] mx-auto px-[15px]'} py-10`}>
         <div className="flex items-center justify-between mb-8 min-h-[24px]">
           {!loading && products.length > 0 && (
             <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} products</p>

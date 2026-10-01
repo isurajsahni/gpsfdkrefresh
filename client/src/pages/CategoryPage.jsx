@@ -26,6 +26,10 @@ const PAGE_SIZE = 12;
 // Rendered by ProductZigzagPage, which fetches its own products
 const ZIGZAG_SLUG = 'house-nameplates';
 
+// The Wall Canvas listings' collection picker: All Products, then the art
+// styles. Custom Canvas isn't a collection, so it stays on /canvas only.
+const LISTING_STYLES = [ALL_PRODUCTS_STYLE, ...ART_STYLES.filter((style) => style.collection)];
+
 const CategoryPage = () => {
   const { slug, subcategorySlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -206,7 +210,7 @@ const CategoryPage = () => {
         // The /canvas page's "Find your art style" circles, led by All Products
         // and lined up with the product grid below. Kept short so the first
         // products are visible without scrolling: one sideways-scrolling row
-        // below lg, two rows of eight from lg.
+        // below lg, eight then seven from lg.
         <div className="max-w-[1400px] mx-auto px-[15px] pt-8 lg:pt-12">
           <SectionHeading as="h1">
             {displaySubcategory && !isAllProducts ? displaySubcategory : 'Canvas for your soul'}
@@ -215,8 +219,8 @@ const CategoryPage = () => {
           {/* Fixed-width items in the row keep the overhanging labels clear of
               each other; py-1 leaves room for the active ring's offset. */}
           <ul ref={styleRowRef} className="relative -mx-[15px] mt-5 flex gap-x-1 overflow-x-auto px-[15px] py-1 scrollbar-hide sm:mt-7 sm:gap-x-2 lg:mx-0 lg:mt-[31.18px] lg:grid lg:grid-cols-[repeat(8,80px)] lg:justify-between lg:gap-y-[42.18px] lg:overflow-visible lg:px-0">
-            {[ALL_PRODUCTS_STYLE, ...ART_STYLES].map((style) => {
-              const isActive = style === ALL_PRODUCTS_STYLE ? isAllProducts : Boolean(style.collection) && style.collection === exactSubcategory;
+            {LISTING_STYLES.map((style) => {
+              const isActive = style === ALL_PRODUCTS_STYLE ? isAllProducts : style.collection === exactSubcategory;
               return (
                 <li key={style.to} data-active={isActive} className="w-[76px] shrink-0 sm:w-[96px] lg:w-auto">
                   <StyleCircle {...style} active={isActive} />

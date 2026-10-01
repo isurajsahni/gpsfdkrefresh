@@ -26,8 +26,9 @@ const PAGE_SIZE = 12;
 // Rendered by ProductZigzagPage, which fetches its own products
 const ZIGZAG_SLUG = 'house-nameplates';
 
-// The /canvas page's column, which the Wall Canvas listings share: a 1200px
-// <Shell> inside px-5 sm:px-8 sections (1264 = 1200 + 2 × 32).
+// The /canvas page's column, which the Wall Canvas listings' header shares: a
+// 1200px <Shell> inside px-5 sm:px-8 sections (1264 = 1200 + 2 × 32). Their
+// product grid keeps the wider listing wrapper below.
 const CANVAS_COLUMN = 'mx-auto max-w-[1264px] px-5 sm:px-8';
 
 const CategoryPage = () => {
@@ -256,7 +257,7 @@ const CategoryPage = () => {
         </div>
       )}
 
-      <div className={`${slug === 'wall-canvas' ? CANVAS_COLUMN : 'max-w-[1400px] mx-auto px-[15px]'} py-10`}>
+      <div className="max-w-[1400px] mx-auto px-[15px] py-10">
         <div className="flex items-center justify-between mb-8 min-h-[24px]">
           {!loading && products.length > 0 && (
             <p className="text-gray-500 font-medium">Showing {products.length} of {totalProducts} products</p>

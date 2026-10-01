@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
+import { HiChevronDown, HiPhotograph, HiPlus, HiVolumeOff, HiVolumeUp } from 'react-icons/hi';
 import { handleImageError } from '../utils/imageOptimizer';
+import useClickOutside from '../hooks/useClickOutside';
 import { ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '../utils/siteSchema';
 import SEO from '../components/seo/SEO';
 import 'swiper/css';
@@ -206,6 +207,76 @@ const ArrowLink = ({ to, children }) => (
   </Link>
 );
 
+// The hero's "Store" title, which opens a menu of everything the store offers:
+// the "What we offer" row's five, with its links and pictures. Closes on a
+// pick, a click elsewhere, or Escape (which hands focus back to the title).
+const StoreMenu = () => {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+  const buttonRef = useRef(null);
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(menuRef, close);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [open]);
+
+  return (
+    <div ref={menuRef} className="relative">
+      <h1 className="apple-hero font-heading text-[#1D1D1F]">
+        <button
+          ref={buttonRef}
+          type="button"
+          aria-expanded={open}
+          aria-controls="store-menu"
+          onClick={() => setOpen((o) => !o)}
+          className="group inline-flex items-center gap-[0.1em] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
+        >
+          Store
+          <HiChevronDown
+            aria-hidden="true"
+            className={`mt-[0.08em] size-[0.5em] transition-[transform,color] duration-300 group-hover:text-accent ${open ? 'rotate-180 text-accent' : ''}`}
+          />
+        </button>
+      </h1>
+      <AnimatePresence>
+        {open && (
+          <motion.ul
+            id="store-menu"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+            className="absolute left-0 top-full z-30 mt-3 w-[min(300px,calc(100vw-40px))] rounded-2xl border border-black/[0.06] bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
+          >
+            {OFFER.map((o) => (
+              <li key={o.label}>
+                <Link
+                  to={o.to}
+                  onClick={close}
+                  className="group/item flex items-center gap-4 rounded-xl px-3 py-2 transition-colors hover:bg-[#f5f5f7] focus-visible:bg-[#f5f5f7] focus-visible:outline-none"
+                >
+                  <img src={o.img} alt="" onError={handleImageError} className="h-10 w-14 shrink-0 object-contain" />
+                  <span className="apple-body font-medium text-[#1D1D1F] transition-colors group-hover/item:text-accent">
+                    {o.label}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 // Top band tinted with the card's `gradient` colour (fading to transparent), with a
 // progressive "layer blur" (Figma-style) underneath. Holds the card text, 30px padding.
 const BlurBand = ({ height, gradient, solidStop = 45, children }) => (
@@ -276,9 +347,7 @@ const StorePage = () => {
       {/* pt-[130px] = 60px fixed navbar + 70px visual gap */}
       <section className="pt-[130px] pb-[50px] section-padding">
         <div className="max-w-[1200px] mx-auto flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <h1 className="apple-hero font-heading text-[#1D1D1F]">
-            Store
-          </h1>
+          <StoreMenu />
           <div className="sm:text-right">
             <p className="apple-intro text-[#1D1D1F] sm:ml-auto">
               The best way to buy the <br /> products you love.

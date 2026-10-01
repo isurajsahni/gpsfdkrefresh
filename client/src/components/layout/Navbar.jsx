@@ -34,12 +34,40 @@ const Navbar = () => {
   const { setIsCartOpen, setIsSearchOpen } = useUI();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  // The Store menu opens on hover/focus. After a link is followed it stays
-  // shut until the pointer leaves, so it doesn't sit open over the new page.
+  // The Store menu opens on hover, and on keyboard focus so keyboard users can
+  // tab into it (focus from a mouse click doesn't count, or the clicked link
+  // would hold it open). Clicking Store opens the Store page with the menu
+  // still open, a second click shuts it and a third reopens it; Escape shuts
+  // it too. After a link is followed it stays shut until the pointer leaves,
+  // so it doesn't sit open over the new page.
   const [storeMenuShut, setStoreMenuShut] = useState(false);
+  // Set by the first click after the pointer arrives: the hover has already
+  // opened the menu, so that click mustn't shut it.
+  const storeClicked = useRef(false);
+  const storeLinkRef = useRef(null);
   const shutStoreMenu = () => {
     document.activeElement?.blur();
     setStoreMenuShut(true);
+  };
+  const resetStoreMenu = () => {
+    storeClicked.current = false;
+    setStoreMenuShut(false);
+  };
+  const toggleStoreMenu = () => {
+    if (!storeClicked.current) {
+      storeClicked.current = true;
+      return;
+    }
+    setStoreMenuShut((shut) => !shut);
+  };
+  const onStoreMenuKeyDown = (e) => {
+    if (e.key !== 'Escape') return;
+    setStoreMenuShut(true);
+    storeLinkRef.current?.focus();
+  };
+  // Focus leaving the menu altogether resets it, like the pointer leaving
+  const onStoreMenuBlur = (e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) resetStoreMenu();
   };
 
   const isChildActive = (child) =>
@@ -92,15 +120,19 @@ const Navbar = () => {
                 {/* Desktop Nav */}
                 <div className="hidden lg:flex items-center gap-10 h-full">
                   {NAV_LINKS.map((link) => link.children ? (
-                    // Opens on hover, and on focus so keyboard users can tab into it
+                    // Opens on hover, and on keyboard focus so keyboard users can tab into it
                     <div
                       key={link.path}
                       className="relative group h-full flex items-center"
-                      onMouseLeave={() => setStoreMenuShut(false)}
+                      onMouseLeave={resetStoreMenu}
+                      onKeyDown={onStoreMenuKeyDown}
+                      onBlur={onStoreMenuBlur}
                     >
                       <NavLink
+                        ref={storeLinkRef}
                         to={link.path}
                         end
+                        onClick={toggleStoreMenu}
                         className={({ isActive }) =>
                           `flex items-center gap-1 text-xs font-normal transition-colors duration-300 ${
                             isActive || isInSection(link) ? 'text-accent' : 'text-[#424245] hover:text-accent'
@@ -108,13 +140,13 @@ const Navbar = () => {
                         }
                       >
                         {link.name}
-                        <HiChevronDown className="w-3 h-3 transition-transform duration-300 group-hover:rotate-180 group-focus-within:rotate-180" />
+                        <HiChevronDown className={`w-3 h-3 transition-transform duration-300 ${storeMenuShut ? '' : 'group-hover:rotate-180 group-has-[:focus-visible]:rotate-180'}`} />
                       </NavLink>
                       {/* pt-2 keeps the gap under the bar hoverable. w-max: an absolute
                           box is otherwise capped by the narrow Store link and wraps. */}
                       <div
                         className={`absolute left-1/2 top-full w-max -translate-x-1/2 translate-y-1 pt-2 invisible opacity-0 transition-all duration-200 ${
-                          storeMenuShut ? '' : 'group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:translate-y-0'
+                          storeMenuShut ? '' : 'group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 group-has-[:focus-visible]:visible group-has-[:focus-visible]:opacity-100 group-has-[:focus-visible]:translate-y-0'
                         }`}
                       >
                         <div className="flex flex-col gap-1.5 bg-white rounded-xl shadow-xl border border-gray-100 p-2 min-w-[200px]">

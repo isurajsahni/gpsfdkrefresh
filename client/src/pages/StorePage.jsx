@@ -208,35 +208,61 @@ const ArrowLink = ({ to, children }) => (
 );
 
 // The hero's "Store" title, which opens a menu of everything the store offers:
-// the "What we offer" row's five, with its links and pictures. Closes on a
-// pick, a click elsewhere, or Escape (which hands focus back to the title).
+// the "What we offer" row's five, with its links. A mouse opens it by hovering
+// the title and closes it by leaving the title and menu; a click or tap (or
+// Enter) toggles it. It also closes on a pick, a click elsewhere, or Escape
+// (which hands focus back to the title).
 const StoreMenu = () => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const buttonRef = useRef(null);
-  const close = useCallback(() => setOpen(false), []);
+  // Set while a hover holds the menu open, so the click that usually follows
+  // the hover doesn't shut it again.
+  const hoverOpened = useRef(false);
+  const close = useCallback(() => {
+    hoverOpened.current = false;
+    setOpen(false);
+  }, []);
   useClickOutside(menuRef, close);
 
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e) => {
       if (e.key !== 'Escape') return;
-      setOpen(false);
+      close();
       buttonRef.current?.focus();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [open]);
+  }, [open, close]);
+
+  // Mouse only: a tap fires pointerenter too, and would open the menu just
+  // before its own click toggled it shut.
+  const onPointerEnter = (e) => {
+    if (e.pointerType !== 'mouse') return;
+    hoverOpened.current = true;
+    setOpen(true);
+  };
+  const onPointerLeave = (e) => {
+    if (e.pointerType === 'mouse') close();
+  };
+  const onClick = () => {
+    if (hoverOpened.current) {
+      hoverOpened.current = false;
+      return;
+    }
+    setOpen((o) => !o);
+  };
 
   return (
-    <div ref={menuRef} className="relative">
+    <div ref={menuRef} className="relative w-fit" onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}>
       <h1 className="apple-hero font-heading text-[#1D1D1F]">
         <button
           ref={buttonRef}
           type="button"
           aria-expanded={open}
           aria-controls="store-menu"
-          onClick={() => setOpen((o) => !o)}
+          onClick={onClick}
           className="group inline-flex items-center gap-[0.1em] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
         >
           Store
@@ -248,29 +274,32 @@ const StoreMenu = () => {
       </h1>
       <AnimatePresence>
         {open && (
-          <motion.ul
-            id="store-menu"
+          // pt-3 rather than a margin, so the gap under the title still
+          // counts as hovering the menu on the way down to it.
+          <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="absolute left-0 top-full z-30 mt-3 w-[min(300px,calc(100vw-40px))] rounded-2xl border border-black/[0.06] bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
+            className="absolute left-0 top-full z-30 pt-3"
           >
-            {OFFER.map((o) => (
-              <li key={o.label}>
-                <Link
-                  to={o.to}
-                  onClick={close}
-                  className="group/item flex items-center gap-4 rounded-xl px-3 py-2 transition-colors hover:bg-[#f5f5f7] focus-visible:bg-[#f5f5f7] focus-visible:outline-none"
-                >
-                  <img src={o.img} alt="" onError={handleImageError} className="h-10 w-14 shrink-0 object-contain" />
-                  <span className="apple-body font-medium text-[#1D1D1F] transition-colors group-hover/item:text-accent">
+            <ul
+              id="store-menu"
+              className="w-[min(240px,calc(100vw-40px))] rounded-2xl border border-black/[0.06] bg-white p-2 shadow-[0_20px_50px_rgba(0,0,0,0.12)]"
+            >
+              {OFFER.map((o) => (
+                <li key={o.label}>
+                  <Link
+                    to={o.to}
+                    onClick={close}
+                    className="apple-body block rounded-xl px-4 py-2.5 font-medium text-[#1D1D1F] transition-colors hover:bg-[#f5f5f7] hover:text-accent focus-visible:bg-[#f5f5f7] focus-visible:outline-none"
+                  >
                     {o.label}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </motion.ul>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

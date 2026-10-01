@@ -18,6 +18,7 @@ const crypto = require('crypto');
 const express = require('express');
 const router = express.Router();
 const { handleTrackingUpdate } = require('../controllers/shiprocketWebhookController');
+const shiprocket = require('../utils/shiprocket');
 
 // Constant-time compare — guards against remote timing attacks on the secret.
 // Returns false (rather than throwing) when lengths differ, since
@@ -67,12 +68,23 @@ const validateApiKey = (req, res, next) => {
   next();
 };
 
+// ─── Integration switch ───
+// While SHIPROCKET_ENABLED is off, acknowledge and drop every event without
+// touching an order. Runs BEFORE auth so it stays a quiet no-op even after the
+// webhook secret is removed, and the 200 stops Shiprocket retrying events for
+// shipments created before the switch-off.
+const skipWhenDisabled = (req, res, next) => {
+  if (shiprocket.isEnabled()) return next();
+  console.log('[Shiprocket Webhook] Integration disabled — event ignored');
+  return res.status(200).json({ success: true, ignored: true, reason: 'Integration disabled' });
+};
+
 // GET /api/webhook/tracking — Health check (open access, no auth)
 router.get('/tracking', (req, res) => {
   res.status(200).json({ message: 'Webhook endpoint is live' });
 });
 
 // POST /api/webhook/tracking — Webhook handler
-router.post('/tracking', validateApiKey, handleTrackingUpdate);
+router.post('/tracking', skipWhenDisabled, validateApiKey, handleTrackingUpdate);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { MotionConfig } from 'framer-motion';
 import { useCurrency } from '../../../context/CurrencyContext';
@@ -23,9 +23,9 @@ import {
    key figures), a nameplate's anatomy, its size to scale, then the details.
    The finish and size pickers here drive the buy box's own selection through
    `onPick`, so the two never disagree. Keyed by product on the page, so local
-   state (orientation) starts fresh on every product. The buy box's "which
-   size?" and "which finish?" shortcuts are rendered from here, into
-   `shortcutsSlot`, because only the story knows which chapters it shows. */
+   state (the units, the turntable) starts fresh on every product. The buy
+   box's "which size?" and "which finish?" shortcuts are rendered from here,
+   into `shortcutsSlot`, because only the story knows which chapters it shows. */
 
 export default function ProductStory({
   product, selectedVariation, isCustomSize, quantity, needsText, onPick, onCustomSize, onAddToCart, onShowBuyBox,
@@ -36,12 +36,12 @@ export default function ProductStory({
   const finishes = useMemo(() => getFinishes(product.variations), [product.variations]);
   const art = useMemo(() => artworkSource(product, kind), [product, kind]);
   const artRatio = useImageRatio(art.url);
-  const [chosenOrientation, setOrientation] = useState(null);
   const finishRef = useRef(null);
   const scaleRef = useRef(null);
 
-  // Hung the way the artwork (or the plate) is shaped until the visitor turns it
-  const orientation = chosenOrientation || (artRatio && artRatio < 0.95 ? 'portrait' : 'landscape');
+  // Hung the way the artwork (or the plate) is shaped: it can only be printed
+  // that way, so there's no turning it round
+  const orientation = artRatio && artRatio < 0.95 ? 'portrait' : 'landscape';
 
   const activeKey = finishKey(selectedVariation);
   const activeFinish = finishes.find((finish) => finish.key === activeKey);
@@ -148,7 +148,6 @@ export default function ProductStory({
             selectedSize={size}
             isCustomSize={isCustomSize}
             orientation={orientation}
-            onOrientation={setOrientation}
             onPick={onPick}
             onCustomSize={onCustomSize}
             priceText={priceText}

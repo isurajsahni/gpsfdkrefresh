@@ -7,6 +7,7 @@ import {
 } from 'react-icons/hi';
 import API from '../../utils/api';
 import { useInvoicesEnabled, canDownloadInvoice, downloadInvoice } from '../../utils/invoice';
+import { useShiprocketEnabled } from '../../utils/shiprocket';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
 import { useAuth } from '../../context/AuthContext';
@@ -34,6 +35,7 @@ const AdminOrders = () => {
   const [syncingId, setSyncingId] = useState(null);
   const [downloadingInvoice, setDownloadingInvoice] = useState(null); // order _id
   const invoicesEnabled = useInvoicesEnabled();
+  const shiprocketEnabled = useShiprocketEnabled();
   // Pagination + filters
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -190,6 +192,8 @@ const AdminOrders = () => {
             const addr = order.shippingAddress;
             const isSynced = !!(order.shiprocketOrderId || order.shiprocketSyncStatus === 'synced');
             const isFailed = order.shiprocketSyncStatus === 'failed' || !!order.shiprocketError;
+            // Shipment details stored while Shiprocket was on — still shown when it's off.
+            const hasShipmentDetails = !!(order.shiprocketOrderId || order.shipmentId || order.awbCode || order.awb || order.courierName);
 
             return (
               <motion.div
@@ -213,7 +217,7 @@ const AdminOrders = () => {
                           <span className="text-[10px] font-bold bg-accent/10 text-accent px-2 py-0.5 rounded-full">GUEST</span>
                         )}
                         {/* Shiprocket Sync Status Badge */}
-                        {isSynced ? (
+                        {shiprocketEnabled && (isSynced ? (
                           <span className="text-[10px] font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1" title={`SR Order ID: ${order.shiprocketOrderId || 'N/A'}`}>
                             <HiOutlineCheckCircle className="w-3 h-3" /> Shiprocket Synced
                           </span>
@@ -225,7 +229,7 @@ const AdminOrders = () => {
                           <span className="text-[10px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                             Unsynced
                           </span>
-                        )}
+                        ))}
                       </div>
                       <p className="text-sm text-gray-600 mt-0.5">{customer.name}</p>
                       <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
@@ -244,7 +248,7 @@ const AdminOrders = () => {
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       {/* Manual Shiprocket Sync Button */}
-                      {canManage && (
+                      {canManage && shiprocketEnabled && (
                         <button
                           onClick={(e) => handleSyncShiprocket(order._id, e)}
                           disabled={syncingId === order._id}
@@ -436,68 +440,74 @@ const AdminOrders = () => {
                               </>
                             )}
 
-                            {/* Shiprocket Logistics Details */}
-                            <h4 className="text-sm font-semibold text-secondary mt-5 mb-2 flex items-center gap-1.5">
-                              <HiOutlineTruck className="w-4 h-4 text-accent" /> Shiprocket Logistics
-                            </h4>
-                            <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2 border border-gray-100">
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Sync Status:</span>
-                                <span className={`font-semibold text-xs px-2.5 py-0.5 rounded-full ${
-                                  isSynced
-                                    ? 'bg-green-100 text-green-700'
-                                    : isFailed
-                                    ? 'bg-red-100 text-red-700'
-                                    : 'bg-gray-200 text-gray-700'
-                                }`}>
-                                  {(order.shiprocketSyncStatus || (isSynced ? 'synced' : 'pending')).toUpperCase()}
-                                </span>
-                              </div>
+                            {/* Shiprocket Logistics Details (read-only history while the integration is off) */}
+                            {(shiprocketEnabled || hasShipmentDetails) && (
+                              <>
+                                <h4 className="text-sm font-semibold text-secondary mt-5 mb-2 flex items-center gap-1.5">
+                                  <HiOutlineTruck className="w-4 h-4 text-accent" /> Shiprocket Logistics
+                                </h4>
+                                <div className="bg-gray-50 rounded-xl p-4 text-sm space-y-2 border border-gray-100">
+                                  {shiprocketEnabled && (
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-gray-600">Sync Status:</span>
+                                      <span className={`font-semibold text-xs px-2.5 py-0.5 rounded-full ${
+                                        isSynced
+                                          ? 'bg-green-100 text-green-700'
+                                          : isFailed
+                                          ? 'bg-red-100 text-red-700'
+                                          : 'bg-gray-200 text-gray-700'
+                                      }`}>
+                                        {(order.shiprocketSyncStatus || (isSynced ? 'synced' : 'pending')).toUpperCase()}
+                                      </span>
+                                    </div>
+                                  )}
 
-                              {order.shiprocketOrderId && (
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-gray-500">Shiprocket Order ID:</span>
-                                  <span className="font-mono font-semibold text-secondary">{order.shiprocketOrderId}</span>
-                                </div>
-                              )}
-                              {order.shipmentId && (
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-gray-500">Shipment ID:</span>
-                                  <span className="font-mono text-secondary">{order.shipmentId}</span>
-                                </div>
-                              )}
-                              {(order.awbCode || order.awb) && (
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-gray-500">AWB Code:</span>
-                                  <span className="font-mono font-bold text-accent">{order.awbCode || order.awb}</span>
-                                </div>
-                              )}
-                              {order.courierName && (
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-gray-500">Courier Partner:</span>
-                                  <span className="font-medium text-secondary">{order.courierName}</span>
-                                </div>
-                              )}
-                              {order.shiprocketError && (
-                                <div className="mt-2 text-xs bg-red-50 text-red-700 p-2.5 rounded-lg border border-red-200">
-                                  <p className="font-bold flex items-center gap-1"><HiOutlineExclamationCircle className="w-4 h-4" /> Sync Failure Details:</p>
-                                  <p className="font-mono mt-1 break-all bg-white p-2 rounded border border-red-100">{order.shiprocketError}</p>
-                                </div>
-                              )}
+                                  {order.shiprocketOrderId && (
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-gray-500">Shiprocket Order ID:</span>
+                                      <span className="font-mono font-semibold text-secondary">{order.shiprocketOrderId}</span>
+                                    </div>
+                                  )}
+                                  {order.shipmentId && (
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-gray-500">Shipment ID:</span>
+                                      <span className="font-mono text-secondary">{order.shipmentId}</span>
+                                    </div>
+                                  )}
+                                  {(order.awbCode || order.awb) && (
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-gray-500">AWB Code:</span>
+                                      <span className="font-mono font-bold text-accent">{order.awbCode || order.awb}</span>
+                                    </div>
+                                  )}
+                                  {order.courierName && (
+                                    <div className="flex justify-between text-xs">
+                                      <span className="text-gray-500">Courier Partner:</span>
+                                      <span className="font-medium text-secondary">{order.courierName}</span>
+                                    </div>
+                                  )}
+                                  {shiprocketEnabled && order.shiprocketError && (
+                                    <div className="mt-2 text-xs bg-red-50 text-red-700 p-2.5 rounded-lg border border-red-200">
+                                      <p className="font-bold flex items-center gap-1"><HiOutlineExclamationCircle className="w-4 h-4" /> Sync Failure Details:</p>
+                                      <p className="font-mono mt-1 break-all bg-white p-2 rounded border border-red-100">{order.shiprocketError}</p>
+                                    </div>
+                                  )}
 
-                              {canManage && (
-                                <div className="pt-2">
-                                  <button
-                                    onClick={(e) => handleSyncShiprocket(order._id, e)}
-                                    disabled={syncingId === order._id}
-                                    className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                                  >
-                                    <HiOutlineRefresh className={`w-4 h-4 ${syncingId === order._id ? 'animate-spin' : ''}`} />
-                                    {syncingId === order._id ? 'Syncing with Shiprocket…' : (isSynced ? 'Re-sync Order to Shiprocket' : 'Sync Order to Shiprocket')}
-                                  </button>
+                                  {canManage && shiprocketEnabled && (
+                                    <div className="pt-2">
+                                      <button
+                                        onClick={(e) => handleSyncShiprocket(order._id, e)}
+                                        disabled={syncingId === order._id}
+                                        className="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                      >
+                                        <HiOutlineRefresh className={`w-4 h-4 ${syncingId === order._id ? 'animate-spin' : ''}`} />
+                                        {syncingId === order._id ? 'Syncing with Shiprocket…' : (isSynced ? 'Re-sync Order to Shiprocket' : 'Sync Order to Shiprocket')}
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

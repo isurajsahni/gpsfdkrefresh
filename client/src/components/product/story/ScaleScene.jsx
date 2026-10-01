@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LuArrowUp, LuRectangleHorizontal, LuRectangleVertical, LuRuler, LuShoppingBag } from 'react-icons/lu';
+import { LuArrowUp, LuRuler, LuShoppingBag } from 'react-icons/lu';
 import { handleImageError } from '../../../utils/imageOptimizer';
 import { formatLength, isInchSize, orient, parseSize, sizeLabel } from './storyData';
 
 /* ── True to scale ────────────────────────────────────────────────────────────
    The selected size drawn to scale in a room: a canvas above an 84-inch sofa,
-   a nameplate beside a 36 × 84-inch front door. Everything in a scene is laid
-   out in inches and converted to percentages of the scene, so it scales with
-   the screen and stays true. The size buttons here pick the size in the buy
-   box, like the finish explorer's buttons. */
+   a nameplate beside a 36 × 84-inch front door, hung the way its artwork is
+   shaped. Everything in a scene is laid out in inches and converted to
+   percentages of the scene, so it scales with the screen and stays true. The
+   size buttons here pick the size in the buy box, like the finish explorer's
+   buttons. */
 
 // Inches. The floor band sits under the floor line (y = 0).
 const SCENES = {
@@ -148,13 +149,12 @@ function Segmented({ label, options, value, onChange }) {
 }
 
 export default function ScaleScene({
-  ref, kind, finishKind, product, art, sizeOptions, selectedSize, isCustomSize, orientation, onOrientation,
+  ref, kind, finishKind, product, art, sizeOptions, selectedSize, isCustomSize, orientation,
   onPick, onCustomSize, priceText, pickLabel, cta, formatPrice,
 }) {
   const [unit, setUnit] = useState('in');
   const scene = SCENES[kind === 'nameplate' ? 'door' : 'sofa'];
   const dims = isCustomSize ? null : parseSize(selectedSize);
-  const square = dims && dims.long === dims.short;
   const size = dims ? orient(dims, orientation) : null;
   const spot = size ? scene.place(size.w, size.h) : null;
   const artBox = size ? box(scene, spot.x, spot.y, size.w, size.h) : null;
@@ -351,18 +351,8 @@ export default function ScaleScene({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
-              {dims && !square && (
-                <Segmented
-                  label="Orientation"
-                  value={orientation}
-                  onChange={onOrientation}
-                  options={[
-                    { value: 'portrait', label: 'Portrait', icon: <LuRectangleVertical aria-hidden="true" className="size-4" /> },
-                    { value: 'landscape', label: 'Landscape', icon: <LuRectangleHorizontal aria-hidden="true" className="size-4" /> },
-                  ]}
-                />
-              )}
+            {/* A block around it, so the column doesn't stretch it full width */}
+            <div>
               <Segmented
                 label="Units"
                 value={unit}

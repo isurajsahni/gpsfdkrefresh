@@ -1,6 +1,12 @@
 const axios = require('axios');
 const { getWeightBySize, getDimensionsBySize } = require('./weightMapping');
 
+// OPT-IN: the store never talks to Shiprocket unless SHIPROCKET_ENABLED=true.
+// While it's off, no shipment is created for new orders, cancellations aren't
+// forwarded, the admin sync/details and live-tracking endpoints answer 503, and
+// the tracking webhook acknowledges and drops every event. The code and the
+// Shiprocket fields already stored on orders are kept, so setting the flag
+// back to true (with the credentials below) turns everything on again.
 class ShiprocketService {
   constructor() {
     this.baseUrl = 'https://apiv2.shiprocket.in/v1/external';
@@ -8,7 +14,9 @@ class ShiprocketService {
     this.tokenExpiry = null;
 
     // Validate credentials on startup
-    if (!process.env.SHIPROCKET_EMAIL || !process.env.SHIPROCKET_PASSWORD) {
+    if (!this.isEnabled()) {
+      console.log('[Shiprocket] Integration disabled — set SHIPROCKET_ENABLED=true to turn it on.');
+    } else if (!process.env.SHIPROCKET_EMAIL || !process.env.SHIPROCKET_PASSWORD) {
       console.error('⚠️ [Shiprocket] SHIPROCKET_EMAIL or SHIPROCKET_PASSWORD not set in environment variables!');
     } else {
       console.log(`✅ [Shiprocket] Credentials loaded for: ${process.env.SHIPROCKET_EMAIL}`);
@@ -51,10 +59,19 @@ class ShiprocketService {
     }
   }
 
+  isEnabled() {
+    return process.env.SHIPROCKET_ENABLED === 'true';
+  }
+
   // Run an authed request; on a 401 (token rejected / expired early) force a
   // fresh login and retry once. Without this a stale cached token locks out all
   // Shiprocket calls until the 9-day local expiry or a container restart (F3).
+  // Every Shiprocket call (login included) passes through here, so this is also
+  // the backstop that keeps a disabled integration from reaching Shiprocket.
   async _authedRequest(fn) {
+    if (!this.isEnabled()) {
+      throw new Error('Shiprocket integration is disabled (SHIPROCKET_ENABLED is not "true")');
+    }
     let token = await this.getToken();
     try {
       return await fn(token);

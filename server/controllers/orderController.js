@@ -306,9 +306,18 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
     if (!variation && item.variation?.size) {
       variation = product.variations.find(v => norm(v.size) === norm(item.variation.size));
     }
-    // Tier 5: last resort — use the first variation so the order isn't blocked
+    // Tier 5: last resort — the first variation. Only safe when it is not a
+    // guess: a single-variation product, or post-payment (allowOversell), where
+    // the Razorpay amount check still rejects a price that doesn't match and
+    // throwing would strand a captured payment. Pre-payment on a multi-variation
+    // product, an unmatched request is rejected rather than silently priced as
+    // whichever variation happens to be first.
     if (!variation && product.variations.length > 0) {
-      variation = product.variations[0];
+      if (product.variations.length === 1 || allowOversell) {
+        variation = product.variations[0];
+      } else {
+        throw new Error(`Invalid variation for ${product.name} — this option is no longer available. Please remove it from your cart and add it again.`);
+      }
     }
 
     if (!variation) {
@@ -341,15 +350,19 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
 
     verifiedItems.push({
       product: product._id,
-      name: item.uploadedImageUrl ? `Custom ${item.variation?.material || 'Canvas'}` : product.name,
+      name: item.uploadedImageUrl ? `Custom ${variation.material || 'Canvas'}` : product.name,
       image: item.uploadedImageUrl || item.image,
       // Persist variationId so we can target the exact sub-doc on cancel/restock.
       variationId: variation._id,
+      // Always the attributes of the variation that was PRICED, never the
+      // client's. Recording the request's fields let a buyer send the cheapest
+      // variation's id with the largest size's attributes: charged for the one,
+      // while the order, invoice and Shiprocket shipment said the other.
       variation: {
-        material: item.variation?.material || variation.material,
-        frame: item.variation?.frame || variation.frame,
-        size: item.variation?.size || variation.size,
-        color: item.variation?.color || variation.color,
+        material: variation.material,
+        frame: variation.frame,
+        size: variation.size,
+        color: variation.color,
       },
       customText: item.customText || '',
       uploadedImageUrl: item.uploadedImageUrl || '',

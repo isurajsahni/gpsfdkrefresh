@@ -48,7 +48,7 @@ const REELS = [
 /* What a canvas costs across every size and finish, as the store lists them.
    The reels aren't loaded from the API, so the range is the catalogue's rather
    than each product's; formatPrice converts it for overseas visitors. */
-const PRICE_FROM = 149;
+const PRICE_FROM = 599;
 const PRICE_TO = 7999;
 
 /* Swiper's loop needs at least one more slide than fits in the track. A 3440px

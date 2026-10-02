@@ -142,7 +142,7 @@ function ScrollManager() {
   const location = useLocation();
   const { pathname, search, hash, key } = location;
   // Every visit to an #anchor counts, even to the one already in the address
-  // bar: "Explore Collection" at the foot of /canvas goes back up to it
+  // bar: clicking "Explore Collection" again after scrolling away goes back to it
   const anchorVisit = hash ? key : '';
 
   // To the top of each new page, or to the #anchor a link points at

@@ -63,6 +63,10 @@ const FAQS = [
 // back.
 const SHOW_NEXT_FAVOURITE = false;
 
+// The "Art that belongs to you" banner at the foot of the page is hidden for
+// now too; set this to true to bring it back.
+const SHOW_CTA_BANNER = false;
+
 const BREADCRUMB_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
@@ -109,9 +113,11 @@ export default function CanvasLandingV2() {
         }
         items={FAQS}
       />
-      <div className="mt-16 lg:mt-[100px]">
-        <CtaBanner />
-      </div>
+      {SHOW_CTA_BANNER && (
+        <div className="mt-16 lg:mt-[100px]">
+          <CtaBanner />
+        </div>
+      )}
     </main>
   );
 }

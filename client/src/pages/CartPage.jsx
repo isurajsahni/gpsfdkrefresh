@@ -64,17 +64,17 @@ const CartPage = () => {
                       </div>
                       {item.customText && <p className="text-sm text-accent mt-1">Custom: "{item.customText}"</p>}
                     </div>
-                    <button onClick={() => removeFromCart(item.key)} className="text-gray-400 hover:text-red-500 p-1 transition-colors">
+                    <button onClick={() => removeFromCart(item.key)} aria-label={`Remove ${item.name} from cart`} className="text-gray-400 hover:text-red-500 p-1 transition-colors">
                       <HiOutlineTrash className="w-5 h-5" />
                     </button>
                   </div>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center border border-gray-200 rounded-full">
-                      <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="px-3 py-1.5 hover:bg-cream-dark rounded-l-full transition-colors">
+                      <button onClick={() => updateQuantity(item.key, item.quantity - 1)} aria-label="Decrease quantity" className="px-3 py-1.5 hover:bg-cream-dark rounded-l-full transition-colors">
                         <HiMinus className="w-4 h-4" />
                       </button>
                       <span className="px-4 text-sm font-semibold">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.key, item.quantity + 1)} className="px-3 py-1.5 hover:bg-cream-dark rounded-r-full transition-colors">
+                      <button onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label="Increase quantity" className="px-3 py-1.5 hover:bg-cream-dark rounded-r-full transition-colors">
                         <HiPlus className="w-4 h-4" />
                       </button>
                     </div>

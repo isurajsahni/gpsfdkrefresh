@@ -26,18 +26,18 @@ const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
 import StorePage from './pages/StorePage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// ─── Common next steps: on demand, but fetched in the background once the
+// ─── The purchase path: on demand, but fetched in the background once the
 // first page has settled (see App), so opening one is still instant ───
 const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
 const ProductPage = lazyPage(() => import('./pages/ProductPage'));
 const CartPage = lazyPage(() => import('./pages/CartPage'));
+const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
 const AdminLayout = lazyPage(() => import('./components/admin/AdminLayout'));
 
 // ─── Code-split (everything else loads on demand) ───
 // Each lazyPage() call becomes its own chunk, so guests on the homepage no
 // longer download admin + marketing + invoice bundles. A page is fetched as
 // soon as someone points at or taps a link to it (see startRoutePrefetch).
-const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
 const ThankYouPage = lazyPage(() => import('./pages/ThankYouPage'));
 const LoginPage = lazyPage(() => import('./pages/LoginPage'));
 const RegisterPage = lazyPage(() => import('./pages/RegisterPage'));
@@ -352,10 +352,10 @@ const pageRoutes = (
 );
 
 function App() {
-  // Fetch pages ahead of the click: the header's and footer's, and category
-  // and product pages (the store's cards), once this one has loaded; any
-  // other on hover, focus or touch
-  useEffect(() => startRoutePrefetch(pageRoutes, { warm: [CategoryPage, ProductPage] }), []);
+  // Fetch pages ahead of the click: the purchase path (category, product,
+  // cart, checkout) once this one has loaded; any other only on hover, focus
+  // or touch of a link to it
+  useEffect(() => startRoutePrefetch(pageRoutes, { warm: [CategoryPage, ProductPage, CartPage, CheckoutPage] }), []);
 
   // --- ISOLATED PREVIEW ROUTE ---
   // Completely bypasses all providers, routers, and API calls to guarantee no reload loops

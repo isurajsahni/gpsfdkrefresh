@@ -7,9 +7,11 @@
  * the first request for one after a deploy can miss Vercel's edge cache and
  * take seconds, which looks like the link is broken.
  *
- * So fetch ahead: the header's and footer's pages once the first page has
- * loaded, and any other page as soon as the pointer, keyboard focus or a
- * finger lands on a link to it.
+ * So fetch ahead: the purchase path's pages (category, product, cart,
+ * checkout) once the first page has loaded, and any other page only when the
+ * pointer, keyboard focus or a finger lands on a link to it. Warming every
+ * header and footer link on load made the homepage download nearly every
+ * page's file (About, Blog, policies...) whether or not anyone opened them.
  */
 import { lazy, isValidElement, Children } from 'react';
 import { createRoutesFromChildren, matchRoutes } from 'react-router-dom';
@@ -51,7 +53,7 @@ const saveData = () => {
 
 /**
  * @param routeElements the <Route>s the app renders
- * @param warm pages to fetch once the first page has loaded, besides the header's
+ * @param warm pages to fetch once the first page has loaded
  * @returns cleanup
  */
 export function startRoutePrefetch(routeElements, { warm = [] } = {}) {
@@ -80,9 +82,9 @@ export function startRoutePrefetch(routeElements, { warm = [] } = {}) {
   document.addEventListener('focusin', onIntent);
   document.addEventListener('touchstart', onIntent, { passive: true });
 
-  // The header's and footer's pages (~100 KB in all), after the first page's
-  // own files and images are in. Phones have no hover to go on, so this is
-  // what makes a tap on those links instant there.
+  // The purchase path's pages, after the first page's own files and images
+  // are in. Phones have no hover to go on, so this is what makes a tap on a
+  // product, the cart or checkout instant there.
   const idleHandles = new Set();
   const whenIdle = (cb) => {
     const request = window.requestIdleCallback || ((fn) => setTimeout(fn, 1000));
@@ -92,23 +94,9 @@ export function startRoutePrefetch(routeElements, { warm = [] } = {}) {
     }, { timeout: 3000 });
     idleHandles.add(handle);
   };
-  const warmLinks = (selector) =>
-    document.querySelectorAll(selector).forEach((link) => prefetchHref(link.href));
-
-  let footerWatch;
   const warmUp = () => whenIdle(() => {
     if (saveData()) return;
-    warmLinks('header a[href]');
     warm.forEach(preload);
-    // The footer is part of each page, so it only appears once the first
-    // page's own file has arrived
-    if (document.querySelector('footer')) return warmLinks('footer a[href]');
-    footerWatch = new MutationObserver(() => {
-      if (!document.querySelector('footer')) return;
-      footerWatch.disconnect();
-      whenIdle(() => warmLinks('footer a[href]'));
-    });
-    footerWatch.observe(document.body, { childList: true, subtree: true });
   });
   if (document.readyState === 'complete') warmUp();
   else window.addEventListener('load', warmUp, { once: true });
@@ -118,7 +106,6 @@ export function startRoutePrefetch(routeElements, { warm = [] } = {}) {
     document.removeEventListener('focusin', onIntent);
     document.removeEventListener('touchstart', onIntent);
     window.removeEventListener('load', warmUp);
-    footerWatch?.disconnect();
     idleHandles.forEach((handle) => (window.cancelIdleCallback || clearTimeout)(handle));
   };
 }

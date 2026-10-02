@@ -28,14 +28,10 @@ import {
 } from '../content/blogs/blogShared';
 import { markdownComponents } from '../content/blogs/markdownComponents';
 import { ArrowRight, BlogCard, Eyebrow } from '../components/blog/BlogUI';
-import useDropStaticSnapshot from '../components/blog/useDropStaticSnapshot';
 import ProductCard from '../components/product/ProductCard';
 import { KindCTA } from '../components/kindact/KindUI';
 import API from '../utils/api';
 import NotFoundPage from './NotFoundPage';
-
-// The header and article column are mirrored in content/blogs/blogStatic.js
-// (renderBlogPostBody); keep the two in step.
 
 const byDate = sortByDate(blogs);
 const renderLink = (to, children) => <Link to={to}>{children}</Link>;
@@ -146,7 +142,6 @@ const TocLinks = ({ toc, active }) => (
 );
 
 const BlogPost = () => {
-  useDropStaticSnapshot();
   const { slug } = useParams();
   const blog = blogs.find((b) => b.slug === slug);
   const articleRef = useRef(null);

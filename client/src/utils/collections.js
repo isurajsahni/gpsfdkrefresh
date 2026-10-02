@@ -10,6 +10,9 @@ export const COLLECTIONS = [
   'Millionaire Art', 'Nostalgia Noir', 'The After Hour Suite', 'The Wild Eccentrics',
 ];
 
+// Products per page on a collection / category listing (CategoryPage)
+export const LISTING_PAGE_SIZE = 12;
+
 // The /canvas page's "Find your art style" (one circle per collection) and,
 // right under it, every canvas across the collections, best sellers first.
 // That listing used to be a page of its own at /wall-canvas/all, which now

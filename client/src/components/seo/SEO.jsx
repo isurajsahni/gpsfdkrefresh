@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
+import { dropStaticSnapshot } from '../../prerender/snapshot';
 
 const SITE_URL = 'https://www.gpsfdk.com';
 // Default social-share image — must be a file that exists in client/public
@@ -20,11 +21,19 @@ const SEO = ({
 }) => {
   const { pathname } = useLocation();
 
-  // index.html ships homepage title/description/OG tags (marked data-static-seo)
-  // for crawlers that don't run JavaScript. Once a page renders its own, drop
-  // those so the head doesn't carry two titles and two descriptions.
-  useEffect(() => {
+  // The raw HTML carries head tags for crawlers that don't run JavaScript
+  // (marked data-static-seo): index.html's homepage defaults, or the page's own
+  // from the build's prerender (vite.prerender.plugin.js). Once a page renders
+  // its own, drop those so the head doesn't carry two titles and two
+  // descriptions.
+  //
+  // A prerendered page also ships a static copy of its content, shown until
+  // React renders the page. A page renders <SEO> along with its content, so by
+  // now the live page sits in place below the copy: remove the copy before the
+  // browser paints.
+  useLayoutEffect(() => {
     document.head.querySelectorAll('[data-static-seo]').forEach((el) => el.remove());
+    dropStaticSnapshot();
   }, []);
 
   // Normalize the pathname: strip trailing slash(es) except for the root path,

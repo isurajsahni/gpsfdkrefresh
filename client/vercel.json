@@ -1,5 +1,11 @@
 {
   "trailingSlash": false,
+  "functions": {
+    "api/render.js": {
+      "includeFiles": "dist/app.html",
+      "maxDuration": 10
+    }
+  },
   "redirects": [
     { "source": "/(.*)", "has": [{ "type": "host", "value": "gpsfdk.com" }], "destination": "https://www.gpsfdk.com/$1", "permanent": true },
     { "source": "/wp-content/(.*)", "destination": "/", "permanent": true },
@@ -21,29 +27,7 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "https://gpsfdkrefresh.onrender.com/sitemap.xml" },
     {
-      "source": "/product/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
-        }
-      ],
-      "destination": "https://gpsfdkrefresh.onrender.com/api/share/product/:slug"
-    },
-    {
-      "source": "/wall-canvas/:collection",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
-        }
-      ],
-      "destination": "https://gpsfdkrefresh.onrender.com/api/share/collection/:collection"
-    },
-    {
-      "source": "/:page(canvas|customize-canvas|house-nameplates|about|contact|consultancy|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|track-order|ceo|vision|support|premium-wall-canvas-india)",
+      "source": "/:page(contact|track-order)",
       "has": [
         {
           "type": "header",
@@ -53,15 +37,17 @@
       ],
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/page/:page"
     },
-    { "source": "/:page(home|store|search|customize-canvas|cart|login|register|forgot-password|whatsapp-login|about|ceo|vision|consultancy|contact|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|school-of-learning|love|partner|support|checkout|thank-you|dashboard|track-order|premium-wall-canvas-india|canvas|consultancy-v2-demo|house-nameplates)", "destination": "/index.html" },
-    { "source": "/product/:slug", "destination": "/index.html" },
-    { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/store", "destination": "/index.html" },
+    { "source": "/:page(about|ceo|vision|consultancy|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|support|customize-canvas|premium-wall-canvas-india|canvas|blog)", "destination": "/:page/index.html" },
+    { "source": "/:page(home|search|cart|login|register|forgot-password|whatsapp-login|contact|school-of-learning|love|partner|checkout|thank-you|dashboard|track-order|consultancy-v2-demo)", "destination": "/app.html" },
+    { "source": "/house-nameplates", "destination": "/api/render?path=/house-nameplates" },
+    { "source": "/product/:slug", "destination": "/api/render?path=/product/:slug" },
     { "source": "/blog/:slug", "destination": "/blog/:slug/index.html" },
-    { "source": "/location/:city", "destination": "/index.html" },
-    { "source": "/wall-canvas/:collection(ink--interval|the-sassy-classic|tethered-horizons|the-botanical-muse|the-celestial-frontier|the-ethereal-gaze|the-gaze-of-power|the-modern-legend|the-gilded-bloom|the-velocity-suite|millionaire-art|nostalgia-noir|the-after-hour-suite|the-wild-eccentrics)", "destination": "/index.html" },
-    { "source": "/admin/:path*", "destination": "/index.html" },
-    { "source": "/marketing/:path*", "destination": "/index.html" },
-    { "source": "/invoice-preview/:path*", "destination": "/index.html" }
+    { "source": "/location/:city", "destination": "/location/:city/index.html" },
+    { "source": "/wall-canvas/:collection(ink--interval|the-sassy-classic|tethered-horizons|the-botanical-muse|the-celestial-frontier|the-ethereal-gaze|the-gaze-of-power|the-modern-legend|the-gilded-bloom|the-velocity-suite|millionaire-art|nostalgia-noir|the-after-hour-suite|the-wild-eccentrics)", "destination": "/api/render?path=/wall-canvas/:collection" },
+    { "source": "/admin/:path*", "destination": "/app.html" },
+    { "source": "/marketing/:path*", "destination": "/app.html" },
+    { "source": "/invoice-preview/:path*", "destination": "/app.html" }
   ],
   "headers": [
     {

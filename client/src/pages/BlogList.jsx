@@ -16,10 +16,6 @@ import {
   topicsOf,
 } from '../content/blogs/blogShared';
 import { ArrowRight, BlogCard, Eyebrow, PostMeta } from '../components/blog/BlogUI';
-import useDropStaticSnapshot from '../components/blog/useDropStaticSnapshot';
-
-// The layout above the "Start here" panel is mirrored in
-// content/blogs/blogStatic.js (renderBlogListBody); keep the two in step.
 
 const posts = sortByDate(blogs);
 const topics = topicsOf(posts);
@@ -41,7 +37,6 @@ const matches = (post, query) => {
 };
 
 const BlogList = () => {
-  useDropStaticSnapshot();
 
   // Posts link here as /blog?topic=<category>; the chips filter in place
   const [searchParams] = useSearchParams();

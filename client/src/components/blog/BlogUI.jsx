@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { blogImage, blogSrcSet, formatDate, readingMinutes } from '../../content/blogs/blogShared';
 
-// Pieces shared by BlogList and BlogPost. Their markup is mirrored in
-// content/blogs/blogStatic.js (the prerendered HTML), so keep the two in step.
+// Pieces shared by BlogList and BlogPost
 
 export const ArrowRight = ({ className = 'w-4 h-4' }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">

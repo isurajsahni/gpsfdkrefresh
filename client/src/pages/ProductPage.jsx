@@ -17,6 +17,8 @@ import { useAuth } from '../context/AuthContext';
 import { validators, formatters } from '../utils/validation';
 import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
 import { categoryPath } from '../utils/categoryPath';
+import { usePrerenderData } from '../prerender/PrerenderData';
+import { dropStaticSnapshot } from '../prerender/snapshot';
 
 // The story sits below the fold, so its code (about two-thirds of this page's)
 // downloads alongside the product fetch rather than ahead of the buy box
@@ -26,14 +28,18 @@ const ProductStory = lazy(loadProductStory);
 const ProductPage = () => {
   const { slug } = useParams();
   const location = useLocation();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Rendered outside the browser (api/render.js), the product comes with the
+  // render; in the browser it's fetched below
+  const prerendered = usePrerenderData()?.product;
+  const initialProduct = prerendered?.slug === slug ? prerendered : null;
+  const [product, setProduct] = useState(initialProduct);
+  const [loading, setLoading] = useState(!initialProduct);
   // 'notFound' only when the API answered 404; 'error' for anything temporary
   const [loadFailure, setLoadFailure] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const autoRetriedSlug = useRef(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariation, setSelectedVariation] = useState({});
+  const [selectedVariation, setSelectedVariation] = useState(() => initialProduct?.variations?.[0] || {});
   const [customText, setCustomText] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
   // Custom size isn't a variation: selectedVariation keeps a real one (for the
@@ -134,6 +140,7 @@ const ProductPage = () => {
           return;
         } else {
           setLoadFailure('error');
+          dropStaticSnapshot();
         }
       }
       setLoading(false);

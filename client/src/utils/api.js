@@ -80,6 +80,12 @@ API.interceptors.response.use(
   }
 );
 
+// A failed request means "not found" only when the API answered 404. A
+// timeout, rate limit (429), server error or lost connection is temporary:
+// pages show a retry instead of the 404 page, which search engines must only
+// see for pages that really don't exist (it's noindex).
+export const isNotFound = (err) => err?.response?.status === 404;
+
 // ─── Read cache for catalogue data ───
 // Each API round trip costs about a second, and shoppers go back and forth
 // between the same listings and products. cachedGet keeps a response for a few

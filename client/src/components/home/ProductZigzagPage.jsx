@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import ProductRow from './ProductRow';
 import API from '../../utils/api';
 import SEO from '../seo/SEO';
+import LoadErrorNotice from '../common/LoadErrorNotice';
 import heroImage from '../../assets/image/housenameplate_poster.webp';
 
 const ProductZigzagPage = ({ category, slug }) => {
@@ -13,11 +14,15 @@ const ProductZigzagPage = ({ category, slug }) => {
   // True only when the listing loaded and has no products; a failed request
   // must never mark the page noindex.
   const [isEmpty, setIsEmpty] = useState(false);
+  // The list failed to load: offer a retry rather than "Coming Soon"
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setIsEmpty(false);
+      setLoadError(false);
       try {
         // Only this category's products — not the whole catalogue
         const { data } = await API.get('/products', {
@@ -27,12 +32,13 @@ const ProductZigzagPage = ({ category, slug }) => {
         setIsEmpty(data.products.length === 0);
       } catch (err) {
         console.error(err);
+        setLoadError(true);
       }
       setLoading(false);
     };
     setVisibleCount(16);
     fetchProducts();
-  }, [slug]);
+  }, [slug, reloadKey]);
 
   // Intersection Observer for scroll animations
   const containerRef = useRef(null);
@@ -168,7 +174,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       {/* Product Count */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
         <p className="text-gray-500 text-sm">
-          {loading ? 'Loading...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
+          {loading ? 'Loading...' : loadError ? '' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
         </p>
       </div>
 
@@ -180,6 +186,8 @@ const ProductZigzagPage = ({ category, slug }) => {
             <SkeletonRow isEven={false} />
             <SkeletonRow isEven={true} />
           </>
+        ) : loadError ? (
+          <LoadErrorNotice onRetry={() => setReloadKey((k) => k + 1)} />
         ) : products.length === 0 ? (
           <div className="text-center py-20">
             <h3 className="text-2xl font-heading font-semibold text-secondary mb-2">Coming Soon</h3>

@@ -4,12 +4,13 @@ import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import { cachedGet } from '../utils/api';
+import { cachedGet, isNotFound as isApiNotFound } from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
 import ProductCard, { ProductCardSkeleton } from '../components/product/ProductCard';
 import Pagination from '../components/common/Pagination';
 import NotFoundPage from './NotFoundPage';
+import LoadErrorNotice from '../components/common/LoadErrorNotice';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { COLLECTIONS as SUBCATEGORIES, collectionSlug as generateSlug } from '../utils/collections';
@@ -47,6 +48,10 @@ const CategoryPage = () => {
   // True only when the listing loaded and has no products; a failed request
   // must never mark the page noindex.
   const [isEmpty, setIsEmpty] = useState(false);
+  // The product list failed to load (timeout, rate limit, server error):
+  // offer a retry rather than "Coming Soon"
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   
@@ -81,6 +86,7 @@ const CategoryPage = () => {
       setLoading(true);
       setIsNotFound(false);
       setIsEmpty(false);
+      setLoadError(false);
 
       const params = {
         categorySlug: slug,
@@ -101,7 +107,7 @@ const CategoryPage = () => {
       ]);
       if (cancelled) return;
 
-      if (catResult.status === 'rejected' && catResult.reason?.response?.status === 404) {
+      if (catResult.status === 'rejected' && isApiNotFound(catResult.reason)) {
         setIsNotFound(true);
         setLoading(false);
         return;
@@ -110,6 +116,7 @@ const CategoryPage = () => {
 
       if (productsResult.status === 'rejected') {
         console.error(productsResult.reason);
+        setLoadError(true);
       } else if (productsResult.value) {
         const data = productsResult.value;
         setIsEmpty(data.total === 0);
@@ -133,7 +140,7 @@ const CategoryPage = () => {
     fetchProducts();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, subcategorySlug, currentPage]);
+  }, [slug, subcategorySlug, currentPage, reloadKey]);
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -264,6 +271,11 @@ const CategoryPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" aria-busy="true" aria-label="Loading products">
             {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
           </div>
+        ) : loadError ? (
+          <LoadErrorNotice
+            onRetry={() => setReloadKey((k) => k + 1)}
+            className="bg-white rounded-2xl shadow-sm border border-gray-100"
+          />
         ) : products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-2xl font-heading font-semibold text-secondary mb-2">Coming Soon</h3>

@@ -1,6 +1,9 @@
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const Order = require('../models/Order');
+const RazorpayCheckout = require('../models/RazorpayCheckout');
+const PaymentClaim = require('../models/PaymentClaim');
+const User = require('../models/User');
 const orderController = require('./orderController');
 const { detectCountry, getCurrency, getPriceMultiplier, applyPriceMultiplier } = require('../utils/geoPricing');
 const metaCapi = require('../utils/metaCapi');
@@ -58,6 +61,50 @@ const rzpCallWithRetry = async (label, fn, attempts = 3) => {
     }
   }
   throw lastErr;
+};
+
+// Errors calculateOrderPrices throws for a cart it can't price: the shopper's
+// to fix (a 400), and never worth Razorpay retrying a webhook for
+const ORDER_DATA_ERRORS = ['not found', 'not available', 'Invalid variation', 'Invalid quantity', 'Insufficient stock', 'Coupon'];
+const isOrderDataError = (err) => ORDER_DATA_ERRORS.some((text) => err?.message?.includes(text));
+
+// ─── One order per payment ───
+// The browser (/verify-payment) and Razorpay's webhook usually arrive within
+// the same second. Whichever claims the payment creates its order; the other
+// waits for it. A claim older than this with no order is taken over: the
+// request that held it crashed or the server restarted mid-way.
+const CLAIM_TIMEOUT_MS = 2 * 60 * 1000;
+
+const claimPayment = async (paymentId, razorpayOrderId) => {
+  try {
+    await PaymentClaim.create({ _id: paymentId, razorpayOrderId });
+    return true;
+  } catch (err) {
+    if (err.code !== 11000) throw err;
+  }
+  const takenOver = await PaymentClaim.findOneAndUpdate(
+    { _id: paymentId, order: null, claimedAt: { $lt: new Date(Date.now() - CLAIM_TIMEOUT_MS) } },
+    { $set: { claimedAt: new Date() } }
+  );
+  return Boolean(takenOver);
+};
+
+// No order came of it: let the other request (or Razorpay's next retry) try
+const releasePayment = (paymentId) =>
+  PaymentClaim.deleteOne({ _id: paymentId, order: null })
+    .catch((err) => console.error(`[Razorpay] could not release payment ${paymentId}:`, err.message));
+
+// The order another request is creating for this payment, once it exists;
+// null if that request gives up without one (its claim is gone) or runs out
+// of time
+const waitForOrder = async (paymentId, waitMs) => {
+  const giveUpAt = Date.now() + waitMs;
+  for (;;) {
+    const order = await Order.findOne({ 'paymentResult.id': paymentId });
+    if (order) return order;
+    if (Date.now() >= giveUpAt || !(await PaymentClaim.exists({ _id: paymentId }))) return null;
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
 };
 
 // Returns the public Razorpay key to the frontend — avoids baking VITE_* into
@@ -203,6 +250,21 @@ exports.createRazorpayOrder = async (req, res, next) => {
       return res.status(502).json({ message: 'Failed to create Razorpay order' });
     }
 
+    // Save the cart so Razorpay's webhook can still make the order if the
+    // browser never reaches /verify-payment. Checkout goes on without it (the
+    // browser path works as before), so a failure here is only logged.
+    try {
+      await RazorpayCheckout.create({
+        razorpayOrderId: order.id,
+        orderData,
+        user: userId,
+        clientContext: metaCapi.extractClientContext(req),
+        sourceUrl: req.headers.referer || req.headers.referrer || '',
+      });
+    } catch (saveErr) {
+      console.error(`[Razorpay] could not save checkout ${order.id} for the webhook:`, saveErr.message);
+    }
+
     // Server-side InitiateCheckout — dedupes with the browser pixel via eventId.
     // Fire-and-forget: never block the order on Meta's API.
     // Skipped for app checkouts: the apps send Meta nothing at all, which is
@@ -247,18 +309,303 @@ exports.createRazorpayOrder = async (req, res, next) => {
     // the browser (only the secret must stay server-side).
     res.json({ ...order, key: keyId });
   } catch (error) {
-    if (
-      error.message.includes('not found') ||
-      error.message.includes('not available') ||
-      error.message.includes('Invalid variation') ||
-      error.message.includes('Invalid quantity') ||
-      error.message.includes('Insufficient stock') ||
-      error.message.includes('Coupon')
-    ) {
+    if (isOrderDataError(error)) {
       return res.status(400).json({ message: error.message });
     }
     console.error('[Razorpay] createRazorpayOrder unexpected error:', error);
     next(error);
+  }
+};
+
+// ─── Turning a captured payment into an order ───
+// Prices the cart, checks it against the amount Razorpay holds for the order,
+// and creates the paid order. `user`, `clientContext` and `sourceUrl` are the
+// shopper's (from the browser's request, or saved with the checkout when the
+// webhook makes the order).
+const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, clientContext, sourceUrl }) => {
+  // 1. Verify exact price to prevent tampering
+  const userId = user ? user._id : null;
+  const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
+  const { calculateOrderPrices } = require('./orderController');
+  // Payment is already captured — allowOversell ensures a product that went
+  // low-stock/inactive between checkout and capture can't block order creation
+  // and strand the customer's money with no order (F1).
+  const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { allowOversell: true });
+  
+  // Verify the payment amount matches what we expect
+  // Fetch the Razorpay order to confirm the amount paid
+  const instance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+  const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpayOrderId));
+  
+  // ─── Amount verification — fails CLOSED ───
+  // `rzpOrder.amount` (paise) is the figure Razorpay itself holds for this
+  // order. createRazorpayOrder derived it from a server-side price
+  // calculation, so the client can never influence it. It is the
+  // authoritative amount; `notes.inr_total` is only a convenience copy.
+  //
+  // This check used to key SOLELY off `notes.inr_total`, and skipped
+  // verification entirely when that note was missing or "0". Every order
+  // minted by createRazorpayOrder carries the note, which made the skip look
+  // harmless — but createRazorpayOrder is not the only thing minting
+  // payable orders on this key. The /api/payment-health probe mints a real
+  // ₹1 order whose notes are `{ purpose: 'gateway-health-probe' }` with no
+  // inr_total. Anyone holding such an order id could pay ₹1 through the
+  // public checkout, receive a genuine Razorpay signature for it, and POST
+  // that to /verify-payment with an arbitrarily large cart: the note was
+  // absent, the amount check was skipped, and a ₹4,000 order was created
+  // for ₹1. Comparing against `amount` closes that for good, regardless of
+  // what notes any out-of-band order happens to carry.
+  //
+  // Why this is safe for real buyers: for an order created by
+  // createRazorpayOrder, `amount === round(inr_total * 100)` by
+  // construction, so any checkout that passed the old note comparison
+  // passes this one identically. The ±₹1 tolerance is preserved so
+  // sub-rupee rounding drift between checkout and verification still goes
+  // through. The only newly-rejected requests are ones whose captured
+  // amount genuinely does not match the cart being claimed.
+  //
+  // The currency guard exists because comparing paise across currencies is
+  // meaningless: createRazorpayOrder hardcodes INR (Razorpay only supports
+  // INR for Indian merchant accounts — see the geo-pricing note there), so
+  // a non-INR order here cannot have come from our checkout.
+  // International orders are charged `base * multiplier` (see
+  // createRazorpayOrder). Recover that multiplier from the note WE wrote on
+  // the Razorpay order rather than re-deriving it from the caller's geo —
+  // this request may resolve to a different country than the one that priced
+  // the order, and a mismatch here would capture the payment then refuse to
+  // create the order. Absent/legacy note ⇒ 1, i.e. previous behaviour.
+  const orderMultiplier = Number(rzpOrder?.notes?.price_multiplier) || 1;
+  const expectedPrices = applyPriceMultiplier(prices, orderMultiplier);
+  const expectedTotal = expectedPrices.totalPrice;
+
+  const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
+  const paidInr = Number(rzpOrder?.amount) / 100;
+  if (
+    paidCurrency !== 'INR' ||
+    !Number.isFinite(paidInr) ||
+    paidInr <= 0 ||
+    Math.abs(paidInr - expectedTotal) > 1
+  ) {
+    console.error(
+      '[Razorpay] verify: amount/currency mismatch — refusing to create order:',
+      JSON.stringify({
+        razorpayOrderId,
+        paymentId,
+        orderAmountPaise: rzpOrder?.amount ?? null,
+        orderCurrency: rzpOrder?.currency ?? null,
+        recalculatedTotal: expectedTotal,
+        priceMultiplier: orderMultiplier,
+      })
+    );
+    return { ok: false, status: 400, message: 'Payment verification failed: Amount mismatch' };
+  }
+
+  // Secondary cross-check against the note written at order creation. Kept
+  // as defence in depth (it would catch an order whose amount was somehow
+  // right but whose recorded INR total was not); still advisory-only when
+  // the note is absent, since the authoritative check above already ran.
+  const storedInrTotal = parseFloat(rzpOrder.notes?.inr_total || '0');
+  if (storedInrTotal > 0 && Math.abs(storedInrTotal - expectedTotal) > 1) {
+    return { ok: false, status: 400, message: 'Payment verification failed: Amount mismatch' };
+  }
+
+  // ─── Capture state: LOG ONLY, never a rejection ───
+  // Deliberate decision, do not "harden" this into a hard 400. A valid
+  // signature is itself proof that Razorpay processed a successful payment
+  // on this order (only Razorpay can produce the HMAC), so an unpaid order
+  // cannot reach this point anyway. Meanwhile `status` legitimately lags or
+  // sits at 'attempted' when the account/payment is on manual capture
+  // (authorized, captured later) or when the fetch races the capture
+  // propagating. Rejecting on that would take the buyer's money and create
+  // no order — the exact failure this whole path is built to avoid (F1).
+  // So we record the anomaly for reconciliation and continue.
+  if (rzpOrder?.status !== 'paid' || Number(rzpOrder?.amount_paid) < Number(rzpOrder?.amount)) {
+    console.warn(
+      '[Razorpay] verify: signature valid but order not shown as fully paid — proceeding anyway:',
+      JSON.stringify({
+        razorpayOrderId,
+        paymentId,
+        status: rzpOrder?.status ?? null,
+        amount: rzpOrder?.amount ?? null,
+        amount_paid: rzpOrder?.amount_paid ?? null,
+      })
+    );
+  }
+
+  // 2. Create the final Database Order securely
+  const newOrder = await Order.create({
+    user: userId,
+    guestEmail: orderData.guestEmail || '',
+    guestPhone: orderData.guestPhone || orderData.shippingAddress?.phone || '',
+    // Record the amounts actually CHARGED (base × multiplier), so the order,
+    // the invoice/emails and the money captured all agree.
+    items: expectedPrices.verifiedItems,
+    shippingAddress: orderData.shippingAddress,
+    billingAddress: orderData.billingAddress,
+    paymentMethod: 'razorpay',
+    source: orderController.normalizeOrderSource(orderData.source),
+    itemsPrice: expectedPrices.itemsPrice,
+    shippingPrice: expectedPrices.shippingPrice,
+    taxPrice: expectedPrices.taxPrice,
+    discountPrice: expectedPrices.discountPrice,
+    couponCode: orderData.couponCode || null,
+    totalPrice: expectedTotal,
+    status: 'pending',
+    isPaid: true,
+    paidAt: Date.now(),
+    paymentResult: {
+      id: paymentId,
+      status: 'completed',
+      update_time: new Date().toISOString(),
+    }
+  });
+
+  // Handle coupon usage
+  if (orderData.couponCode) {
+    const Coupon = require('../models/Coupon');
+    const coupon = await Coupon.findOne({ code: orderData.couponCode.toUpperCase() });
+    if (coupon) {
+      if (userId) {
+        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === userId.toString());
+        if (userUsage) {
+          userUsage.useCount += 1;
+        } else {
+          coupon.usageHistory.push({ userId: userId, useCount: 1 });
+        }
+      } else if (guestIdentifier) {
+        const guestUsage = coupon.usageHistory.find(u => !u.userId && u.identifier && u.identifier.toLowerCase() === guestIdentifier.toLowerCase());
+        if (guestUsage) {
+          guestUsage.useCount += 1;
+        } else {
+          coupon.usageHistory.push({ userId: null, identifier: guestIdentifier, useCount: 1 });
+        }
+      }
+      await coupon.save();
+    }
+  }
+
+  // Decrement stock atomically now that payment is captured.
+  try {
+    await orderController.decrementStockForOrder(newOrder);
+  } catch (stockErr) {
+    console.error('Stock Decrement Error (Silently handled):', stockErr);
+  }
+
+  // Trigger notifications now that it's paid. Not awaited (as for COD
+  // orders): Razorpay gives a webhook 5 seconds to answer, and the helper
+  // catches its own errors.
+  orderController.triggerNewOrderNotifications(newOrder);
+
+  // Meta Conversions API — server-side Purchase event. This is the
+  // authoritative signal: it fires only after the DB write succeeds, so
+  // Meta's reported revenue stays in sync with real orders. The browser
+  // pixel fires the same event with the same event_id; Meta dedupes.
+  // Skipped for app orders: the apps send Meta nothing at all, which is what
+  // keeps App Tracking Transparency off the App Store submission.
+  // newOrder.source was normalized by Order.create above.
+  if (!orderController.isAppSource(newOrder.source)) {
+    try {
+      const ctx = clientContext || {};
+      const shipping = orderData.shippingAddress || {};
+      metaCapi.sendEvent({
+        eventName: 'Purchase',
+        eventId: orderData.eventIdPurchase,
+        eventSourceUrl: sourceUrl || undefined,
+        userData: {
+          email: newOrder.guestEmail || user?.email,
+          phone: newOrder.guestPhone || shipping.phone || user?.phone,
+          firstName: (shipping.fullName || user?.name || '').split(' ')[0],
+          lastName: (shipping.fullName || user?.name || '').split(' ').slice(1).join(' '),
+          city: shipping.city,
+          state: shipping.state,
+          zip: shipping.pincode,
+          country: shipping.country || 'India',
+          externalId: (user?._id || newOrder._id).toString(),
+          ...ctx,
+        },
+        customData: {
+          value: prices.totalPrice,
+          currency: 'INR',
+          num_items: prices.verifiedItems.length,
+          content_ids: prices.verifiedItems.map((i) => String(i.product)),
+          content_type: 'product',
+          contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
+          order_id: newOrder.orderNumber,
+        },
+      }).catch(() => {});
+    } catch (_) { /* never block the order response */ }
+  }
+
+  return { ok: true, order: newOrder };
+};
+
+// The browser's cart and context, as saved by createRazorpayOrder
+const savedRequest = async (checkout) => ({
+  orderData: checkout.orderData,
+  user: checkout.user ? await User.findById(checkout.user).select('-password') : null,
+  clientContext: checkout.clientContext || {},
+  sourceUrl: checkout.sourceUrl || '',
+});
+
+// Creates the order for a captured payment, once, whoever asks first: the
+// browser (verifyRazorpay, with its `request`) or Razorpay's webhook (no
+// `request`: the cart saved with the checkout is used). Returns
+// { ok: true, order, duplicate } or { ok: false, status, message, retry }.
+const settleRazorpayPayment = async ({ razorpayOrderId, paymentId, request, waitMs }) => {
+  // IDEMPOTENCY — if this payment has already been recorded as an order
+  // (e.g., the user double-clicked, the network retried, or Razorpay redelivered
+  // a webhook), short-circuit and return the existing order. This prevents
+  // duplicate orders, duplicate Shiprocket shipments, and duplicate emails.
+  const findExisting = () => Order.findOne({ 'paymentResult.id': paymentId });
+  const existing = await findExisting();
+  if (existing) return { ok: true, order: existing, duplicate: true };
+
+  if (!(await claimPayment(paymentId, razorpayOrderId))) {
+    // The other request is creating it right now
+    const order = await waitForOrder(paymentId, waitMs);
+    if (order) return { ok: true, order, duplicate: true };
+    // It gave up without one (e.g. it was sent a different cart): take over
+    if (!(await claimPayment(paymentId, razorpayOrderId))) {
+      return {
+        ok: false,
+        status: 409,
+        retry: true,
+        message: 'Your payment is received and your order is still being created — you will get a confirmation shortly',
+      };
+    }
+  }
+
+  try {
+    // Made in the moment between the check above and the claim
+    const madeMeanwhile = await findExisting();
+    if (madeMeanwhile) return { ok: true, order: madeMeanwhile, duplicate: true };
+
+    let input = request;
+    if (!input) {
+      const checkout = await RazorpayCheckout.findOne({ razorpayOrderId }).lean();
+      if (!checkout) {
+        // Not from our checkout, or from before checkouts were saved
+        await releasePayment(paymentId);
+        return { ok: false, status: 404, message: `No saved checkout for ${razorpayOrderId}` };
+      }
+      input = await savedRequest(checkout);
+    }
+
+    const result = await createPaidOrder({ razorpayOrderId, paymentId, ...input });
+    if (result.ok) {
+      await PaymentClaim.updateOne({ _id: paymentId }, { $set: { order: result.order._id } });
+    } else {
+      // e.g. the browser sent a different cart from the one paid for: the
+      // webhook can still make the order from the saved one
+      await releasePayment(paymentId);
+    }
+    return result;
+  } catch (err) {
+    await releasePayment(paymentId);
+    throw err;
   }
 };
 
@@ -277,249 +624,99 @@ exports.verifyRazorpay = async (req, res, next) => {
       .update(sign.toString())
       .digest('hex');
     
-    if (safeEqual(expectedSign, razorpay_signature)) {
-      // 0. IDEMPOTENCY — if this payment has already been recorded as an order
-      // (e.g., the user double-clicked, the network retried, or Razorpay redelivered
-      // a webhook), short-circuit and return the existing order. This prevents
-      // duplicate orders, duplicate Shiprocket shipments, and duplicate emails.
-      const existing = await Order.findOne({ 'paymentResult.id': razorpay_payment_id });
-      if (existing) {
-        return res.json({
-          message: 'Payment already verified',
-          success: true,
-          orderId: existing._id,
-          orderNumber: existing.orderNumber,
-          duplicate: true,
-        });
-      }
-
-      // 1. Verify exact price to prevent tampering
-      const userId = req.user ? req.user._id : null;
-      const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
-      const { calculateOrderPrices } = require('./orderController');
-      // Payment is already captured — allowOversell ensures a product that went
-      // low-stock/inactive between checkout and capture can't block order creation
-      // and strand the customer's money with no order (F1).
-      const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { allowOversell: true });
-      
-      // Verify the payment amount matches what we expect
-      // Fetch the Razorpay order to confirm the amount paid
-      const instance = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-      });
-      const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpay_order_id));
-      
-      // ─── Amount verification — fails CLOSED ───
-      // `rzpOrder.amount` (paise) is the figure Razorpay itself holds for this
-      // order. createRazorpayOrder derived it from a server-side price
-      // calculation, so the client can never influence it. It is the
-      // authoritative amount; `notes.inr_total` is only a convenience copy.
-      //
-      // This check used to key SOLELY off `notes.inr_total`, and skipped
-      // verification entirely when that note was missing or "0". Every order
-      // minted by createRazorpayOrder carries the note, which made the skip look
-      // harmless — but createRazorpayOrder is not the only thing minting
-      // payable orders on this key. The /api/payment-health probe mints a real
-      // ₹1 order whose notes are `{ purpose: 'gateway-health-probe' }` with no
-      // inr_total. Anyone holding such an order id could pay ₹1 through the
-      // public checkout, receive a genuine Razorpay signature for it, and POST
-      // that to /verify-payment with an arbitrarily large cart: the note was
-      // absent, the amount check was skipped, and a ₹4,000 order was created
-      // for ₹1. Comparing against `amount` closes that for good, regardless of
-      // what notes any out-of-band order happens to carry.
-      //
-      // Why this is safe for real buyers: for an order created by
-      // createRazorpayOrder, `amount === round(inr_total * 100)` by
-      // construction, so any checkout that passed the old note comparison
-      // passes this one identically. The ±₹1 tolerance is preserved so
-      // sub-rupee rounding drift between checkout and verification still goes
-      // through. The only newly-rejected requests are ones whose captured
-      // amount genuinely does not match the cart being claimed.
-      //
-      // The currency guard exists because comparing paise across currencies is
-      // meaningless: createRazorpayOrder hardcodes INR (Razorpay only supports
-      // INR for Indian merchant accounts — see the geo-pricing note there), so
-      // a non-INR order here cannot have come from our checkout.
-      // International orders are charged `base * multiplier` (see
-      // createRazorpayOrder). Recover that multiplier from the note WE wrote on
-      // the Razorpay order rather than re-deriving it from the caller's geo —
-      // this request may resolve to a different country than the one that priced
-      // the order, and a mismatch here would capture the payment then refuse to
-      // create the order. Absent/legacy note ⇒ 1, i.e. previous behaviour.
-      const orderMultiplier = Number(rzpOrder?.notes?.price_multiplier) || 1;
-      const expectedPrices = applyPriceMultiplier(prices, orderMultiplier);
-      const expectedTotal = expectedPrices.totalPrice;
-
-      const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
-      const paidInr = Number(rzpOrder?.amount) / 100;
-      if (
-        paidCurrency !== 'INR' ||
-        !Number.isFinite(paidInr) ||
-        paidInr <= 0 ||
-        Math.abs(paidInr - expectedTotal) > 1
-      ) {
-        console.error(
-          '[Razorpay] verify: amount/currency mismatch — refusing to create order:',
-          JSON.stringify({
-            razorpay_order_id,
-            razorpay_payment_id,
-            orderAmountPaise: rzpOrder?.amount ?? null,
-            orderCurrency: rzpOrder?.currency ?? null,
-            recalculatedTotal: expectedTotal,
-            priceMultiplier: orderMultiplier,
-          })
-        );
-        return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
-      }
-
-      // Secondary cross-check against the note written at order creation. Kept
-      // as defence in depth (it would catch an order whose amount was somehow
-      // right but whose recorded INR total was not); still advisory-only when
-      // the note is absent, since the authoritative check above already ran.
-      const storedInrTotal = parseFloat(rzpOrder.notes?.inr_total || '0');
-      if (storedInrTotal > 0 && Math.abs(storedInrTotal - expectedTotal) > 1) {
-        return res.status(400).json({ message: 'Payment verification failed: Amount mismatch', success: false });
-      }
-
-      // ─── Capture state: LOG ONLY, never a rejection ───
-      // Deliberate decision, do not "harden" this into a hard 400. A valid
-      // signature is itself proof that Razorpay processed a successful payment
-      // on this order (only Razorpay can produce the HMAC), so an unpaid order
-      // cannot reach this point anyway. Meanwhile `status` legitimately lags or
-      // sits at 'attempted' when the account/payment is on manual capture
-      // (authorized, captured later) or when the fetch races the capture
-      // propagating. Rejecting on that would take the buyer's money and create
-      // no order — the exact failure this whole path is built to avoid (F1).
-      // So we record the anomaly for reconciliation and continue.
-      if (rzpOrder?.status !== 'paid' || Number(rzpOrder?.amount_paid) < Number(rzpOrder?.amount)) {
-        console.warn(
-          '[Razorpay] verify: signature valid but order not shown as fully paid — proceeding anyway:',
-          JSON.stringify({
-            razorpay_order_id,
-            razorpay_payment_id,
-            status: rzpOrder?.status ?? null,
-            amount: rzpOrder?.amount ?? null,
-            amount_paid: rzpOrder?.amount_paid ?? null,
-          })
-        );
-      }
-
-      // 2. Create the final Database Order securely
-      const newOrder = await Order.create({
-        user: userId,
-        guestEmail: orderData.guestEmail || '',
-        guestPhone: orderData.guestPhone || orderData.shippingAddress?.phone || '',
-        // Record the amounts actually CHARGED (base × multiplier), so the order,
-        // the invoice/emails and the money captured all agree.
-        items: expectedPrices.verifiedItems,
-        shippingAddress: orderData.shippingAddress,
-        billingAddress: orderData.billingAddress,
-        paymentMethod: 'razorpay',
-        source: orderController.normalizeOrderSource(orderData.source),
-        itemsPrice: expectedPrices.itemsPrice,
-        shippingPrice: expectedPrices.shippingPrice,
-        taxPrice: expectedPrices.taxPrice,
-        discountPrice: expectedPrices.discountPrice,
-        couponCode: orderData.couponCode || null,
-        totalPrice: expectedTotal,
-        status: 'pending',
-        isPaid: true,
-        paidAt: Date.now(),
-        paymentResult: {
-          id: razorpay_payment_id,
-          status: 'completed',
-          update_time: new Date().toISOString(),
-        }
-      });
-
-      // Handle coupon usage
-      if (orderData.couponCode) {
-        const Coupon = require('../models/Coupon');
-        const coupon = await Coupon.findOne({ code: orderData.couponCode.toUpperCase() });
-        if (coupon) {
-          if (userId) {
-            const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === userId.toString());
-            if (userUsage) {
-              userUsage.useCount += 1;
-            } else {
-              coupon.usageHistory.push({ userId: userId, useCount: 1 });
-            }
-          } else if (guestIdentifier) {
-            const guestUsage = coupon.usageHistory.find(u => !u.userId && u.identifier && u.identifier.toLowerCase() === guestIdentifier.toLowerCase());
-            if (guestUsage) {
-              guestUsage.useCount += 1;
-            } else {
-              coupon.usageHistory.push({ userId: null, identifier: guestIdentifier, useCount: 1 });
-            }
-          }
-          await coupon.save();
-        }
-      }
-
-      // Decrement stock atomically now that payment is captured.
-      try {
-        await orderController.decrementStockForOrder(newOrder);
-      } catch (stockErr) {
-        console.error('Stock Decrement Error (Silently handled):', stockErr);
-      }
-
-      // Trigger notifications now that it's paid
-      try {
-        await orderController.triggerNewOrderNotifications(newOrder);
-      } catch (notifErr) {
-        console.error('Notification Error (Silently handled):', notifErr);
-      }
-
-      // Meta Conversions API — server-side Purchase event. This is the
-      // authoritative signal: it fires only after the DB write succeeds, so
-      // Meta's reported revenue stays in sync with real orders. The browser
-      // pixel fires the same event with the same event_id; Meta dedupes.
-      // Skipped for app orders: the apps send Meta nothing at all, which is what
-      // keeps App Tracking Transparency off the App Store submission.
-      // newOrder.source was normalized by Order.create above.
-      if (!orderController.isAppSource(newOrder.source)) {
-        try {
-          const ctx = metaCapi.extractClientContext(req);
-          const shipping = orderData.shippingAddress || {};
-          metaCapi.sendEvent({
-            eventName: 'Purchase',
-            eventId: orderData.eventIdPurchase,
-            eventSourceUrl: req.headers.referer || req.headers.referrer,
-            userData: {
-              email: newOrder.guestEmail || req.user?.email,
-              phone: newOrder.guestPhone || shipping.phone || req.user?.phone,
-              firstName: (shipping.fullName || req.user?.name || '').split(' ')[0],
-              lastName: (shipping.fullName || req.user?.name || '').split(' ').slice(1).join(' '),
-              city: shipping.city,
-              state: shipping.state,
-              zip: shipping.pincode,
-              country: shipping.country || 'India',
-              externalId: (req.user?._id || newOrder._id).toString(),
-              ...ctx,
-            },
-            customData: {
-              value: prices.totalPrice,
-              currency: 'INR',
-              num_items: prices.verifiedItems.length,
-              content_ids: prices.verifiedItems.map((i) => String(i.product)),
-              content_type: 'product',
-              contents: prices.verifiedItems.map((i) => ({ id: String(i.product), quantity: i.quantity, item_price: i.price })),
-              order_id: newOrder.orderNumber,
-            },
-          }).catch(() => {});
-        } catch (_) { /* never block the order response */ }
-      }
-
-      res.json({ message: 'Payment verified successfully', success: true, orderId: newOrder._id, orderNumber: newOrder.orderNumber });
-    } else {
-      res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
+    if (!safeEqual(expectedSign, razorpay_signature)) {
+      return res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
+
+    const result = await settleRazorpayPayment({
+      razorpayOrderId: razorpay_order_id,
+      paymentId: razorpay_payment_id,
+      // The webhook may be creating this order: wait for it rather than
+      // telling a shopper who has paid that something went wrong
+      waitMs: 20 * 1000,
+      request: {
+        orderData,
+        user: req.user || null,
+        clientContext: metaCapi.extractClientContext(req),
+        sourceUrl: req.headers.referer || req.headers.referrer || '',
+      },
+    });
+    if (!result.ok) {
+      return res.status(result.status).json({ message: result.message, success: false });
+    }
+    const { order, duplicate } = result;
+    if (duplicate) {
+      return res.json({
+        message: 'Payment already verified',
+        success: true,
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        duplicate: true,
+      });
+    }
+    res.json({ message: 'Payment verified successfully', success: true, orderId: order._id, orderNumber: order.orderNumber });
   } catch (error) {
-    if (error.message.includes('not found') || error.message.includes('not available') || error.message.includes('Invalid variation') || error.message.includes('Invalid quantity') || error.message.includes('Insufficient stock') || error.message.includes('Coupon')) {
+    if (isOrderDataError(error)) {
       return res.status(400).json({ message: error.message, success: false });
     }
     console.error('Razorpay Verification Error:', error);
     next(error);
+  }
+};
+
+// ─── POST /api/payments/razorpay/webhook ───
+// Razorpay calls this when a payment is captured (Dashboard → Settings →
+// Webhooks, event order.paid — payment.captured works too — secret in
+// RAZORPAY_WEBHOOK_SECRET). If the shopper paid but their browser never reached
+// /verify-payment, this creates the order from the cart saved with the
+// checkout; otherwise the order already exists and this changes nothing.
+//
+// Any non-2xx answer makes Razorpay retry (for up to 24 hours), so it is only
+// sent when trying again can help.
+exports.razorpayWebhook = async (req, res) => {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error('[Razorpay webhook] RAZORPAY_WEBHOOK_SECRET is not set — ignoring the call');
+    return res.status(503).json({ message: 'Webhook not configured' });
+  }
+
+  // Signed over the exact bytes Razorpay sent (kept by express.json in index.js)
+  const expected = req.rawBody ? crypto.createHmac('sha256', secret).update(req.rawBody).digest('hex') : '';
+  if (!expected || !safeEqual(expected, req.get('x-razorpay-signature'))) {
+    console.warn('[Razorpay webhook] invalid signature — ignoring the call');
+    return res.status(400).json({ message: 'Invalid signature' });
+  }
+
+  const { event, payload } = req.body || {};
+  const payment = payload?.payment?.entity;
+  if (!['payment.captured', 'order.paid'].includes(event) || !payment?.id || !payment?.order_id) {
+    return res.json({ ok: true, ignored: event || 'unknown event' });
+  }
+
+  try {
+    const result = await settleRazorpayPayment({
+      razorpayOrderId: payment.order_id,
+      paymentId: payment.id,
+      // Razorpay waits 5 seconds for an answer
+      waitMs: 3 * 1000,
+    });
+    if (result.ok) {
+      if (!result.duplicate) {
+        console.log(`[Razorpay webhook] order ${result.order.orderNumber} created for payment ${payment.id} (${event})`);
+      }
+      return res.json({ ok: true, orderNumber: result.order.orderNumber });
+    }
+    if (result.retry) return res.status(503).json({ message: result.message });
+    // Not one of our checkouts, or the saved cart no longer matches what was
+    // paid: retrying won't change that, so it's logged for the team instead
+    console.error(`[Razorpay webhook] no order for payment ${payment.id} on ${payment.order_id}: ${result.message}`);
+    return res.json({ ok: false, message: result.message });
+  } catch (error) {
+    if (isOrderDataError(error)) {
+      console.error(`[Razorpay webhook] no order for payment ${payment.id} on ${payment.order_id}: ${error.message}`);
+      return res.json({ ok: false, message: error.message });
+    }
+    console.error(`[Razorpay webhook] payment ${payment.id} failed, Razorpay will retry:`, error);
+    return res.status(500).json({ message: 'Could not process the payment yet' });
   }
 };

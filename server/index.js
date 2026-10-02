@@ -51,6 +51,9 @@ const globalLimiter = rateLimit({
     if (req.path === '/api/upload' && req.method === 'POST') return true;
     // Skip rate limiting for Shiprocket webhook routes (now header-authenticated)
     if (req.path.startsWith('/api/webhook')) return true;
+    // Razorpay's payment webhook: signature-authenticated, and a throttled call
+    // only delays an order a shopper has already paid for
+    if (req.path === '/api/payments/razorpay/webhook') return true;
     return false;
   },
 });
@@ -68,13 +71,15 @@ app.use('/api/webhook', express.json(), require('./routes/shiprocketWebhook'));
 app.use(cors(require('./config/corsOptions')));
 
 // ─── Body parsers ───
-// Keep the raw body for the Meta WhatsApp webhook only — its X-Hub-Signature-256
-// is an HMAC over the exact bytes, which are unrecoverable once parsed. Scoped
-// by path so we don't retain a buffer for every request (e.g. 10 MB uploads).
+// Keep the raw body for the Meta WhatsApp and Razorpay webhooks only — their
+// signatures are HMACs over the exact bytes, which are unrecoverable once
+// parsed. Scoped by path so we don't retain a buffer for every request (e.g.
+// 10 MB uploads).
+const RAW_BODY_PATHS = ['/webhook/whatsapp', '/api/payments/razorpay/webhook'];
 app.use(express.json({
   limit: '10mb',
   verify: (req, res, buf) => {
-    if (req.originalUrl && req.originalUrl.startsWith('/webhook/whatsapp')) {
+    if (req.originalUrl && RAW_BODY_PATHS.some((path) => req.originalUrl.startsWith(path))) {
       req.rawBody = buf;
     }
   },
@@ -171,6 +176,7 @@ const validateEnv = () => {
   const isRzpPlaceholder = (v) => !v || rzpPlaceholders.some((p) => v.includes(p));
   if (isRzpPlaceholder(process.env.RAZORPAY_KEY_ID))     errors.push('RAZORPAY_KEY_ID — Razorpay payments will fail (still set to placeholder)');
   if (isRzpPlaceholder(process.env.RAZORPAY_KEY_SECRET)) errors.push('RAZORPAY_KEY_SECRET — Razorpay payments will fail (still set to placeholder)');
+  if (isRzpPlaceholder(process.env.RAZORPAY_WEBHOOK_SECRET)) warnings.push('RAZORPAY_WEBHOOK_SECRET — a paid order whose browser never confirms it is not created (Razorpay webhook off)');
 
   // OTP delivery — WhatsApp + email verification won't work
   if (!process.env.WHATSAPP_TOKEN)    warnings.push('WHATSAPP_TOKEN — WhatsApp OTP delivery disabled');

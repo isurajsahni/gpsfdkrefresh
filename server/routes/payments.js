@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { createRazorpayOrder, verifyRazorpay, getRazorpayConfig, getPaymentHealth } = require('../controllers/paymentController');
+const { createRazorpayOrder, verifyRazorpay, getRazorpayConfig, getPaymentHealth, razorpayWebhook } = require('../controllers/paymentController');
 const { optionalAuth, protect, admin } = require('../middleware/auth');
 
 // Returns the public Razorpay key ID to the frontend at runtime.
@@ -26,6 +26,11 @@ router.post('/payments/razorpay/verify', optionalAuth, verifyRazorpay);
 // New requested production endpoints (Top-level under /api)
 router.post('/create-order', optionalAuth, createRazorpayOrder);
 router.post('/verify-payment', optionalAuth, verifyRazorpay);
+
+// Razorpay → server when a payment is captured; creates the order if the
+// shopper's browser never confirmed it. Authenticated by its signature
+// (RAZORPAY_WEBHOOK_SECRET), not by a login.
+router.post('/payments/razorpay/webhook', razorpayWebhook);
 
 
 module.exports = router;

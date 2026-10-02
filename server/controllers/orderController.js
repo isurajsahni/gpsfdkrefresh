@@ -490,11 +490,14 @@ async function decrementStockForOrder(order) {
     const variationId = item.variationId;
     if (!variationId) continue;
     try {
+      // $elemMatch: the id and the stock check must match the same variation,
+      // and `$` must point at it. Two separate 'variations.*' conditions match
+      // any variations, and `$` then lands on the one with enough stock — so
+      // an order for one size took the stock off another (often the first).
       const result = await Product.updateOne(
         {
           _id: item.product,
-          'variations._id': variationId,
-          'variations.stock': { $gte: item.quantity },
+          variations: { $elemMatch: { _id: variationId, stock: { $gte: item.quantity } } },
         },
         { $inc: { 'variations.$.stock': -item.quantity } }
       );

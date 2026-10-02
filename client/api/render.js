@@ -58,6 +58,14 @@ const getJson = async ({ url, params }) => {
   return { data: await res.json() }
 }
 
+// Why a request fell back to the bare app, for the X-Render-Fallback response
+// header: the step that failed and the error (header-safe, no secrets: API
+// paths and error messages only)
+const fallbackReason = (step, err) =>
+  `${step}: ${err?.name || 'Error'}: ${err?.message || err}${err?.cause ? ` (${err.cause.code || err.cause.message})` : ''}`
+    .replace(/[^\x20-\x7e]/g, ' ')
+    .slice(0, 200)
+
 const send = (res, status, html, cacheControl) => {
   res.statusCode = status
   res.setHeader('Content-Type', 'text/html; charset=utf-8')
@@ -81,21 +89,25 @@ export default async function handler(req, res) {
     return res.end('Service temporarily unavailable')
   }
 
+  let step = 'renderer'
   try {
     const ssr = await import('../.prerender/render.mjs')
     const requests = ssr.catalogueRequests(path, search)
     if (!requests) return send(res, 404, notFoundPage(shell), CACHE_404)
 
+    step = 'api'
     const results = await Promise.all(requests.map(getJson))
     if (results.some((result, i) => result.notFound && requests[i].required)) {
       return send(res, 404, notFoundPage(shell), CACHE_404)
     }
     if (results.some((result) => result.notFound)) throw new Error(`API 404 for a listing of ${path}`)
 
+    step = 'render'
     const data = Object.fromEntries(requests.map((request, i) => [request.key, results[i].data]))
     return send(res, 200, buildPage(shell, path, ssr.render(path + search, data)), CACHE_PAGE)
   } catch (err) {
     console.error(`[render] ${path}${search}: serving the bare app`, err)
+    res.setHeader('X-Render-Fallback', fallbackReason(step, err))
     return send(res, 200, shell, 'no-store')
   }
 }

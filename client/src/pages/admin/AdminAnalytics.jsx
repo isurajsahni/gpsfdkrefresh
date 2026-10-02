@@ -82,10 +82,17 @@ const AdminAnalytics = () => {
     'Email': '#F59E0B',
     'Bing': '#008373',
     'Pinterest': '#E60023',
+    'Google Ads': '#FBBC04',
+    'Facebook/Instagram': '#7B5CF0',
+    'Reddit': '#FF4500',
+    'LinkedIn': '#0A66C2',
+    'ChatGPT': '#10A37F',
     'Other': '#9CA3AF',
   };
 
-  const maxSourceViews = sources.length > 0 ? Math.max(...sources.map(s => s.views)) : 1;
+  // Sources and referring sites are counted per visitor (the API credits each
+  // visitor to where they came from); page views follow in brackets
+  const maxSourceVisitors = sources.length > 0 ? Math.max(...sources.map(s => s.visitors)) : 1;
   const maxPageViews = topPages.length > 0 ? Math.max(...topPages.map(p => p.views)) : 1;
 
   return (
@@ -180,7 +187,7 @@ const AdminAnalytics = () => {
                 <HiOutlineGlobeAlt className="w-5 h-5 text-[#0B5D3B]" />
                 <h3 className="text-base font-semibold text-gray-800">Traffic Sources</h3>
               </div>
-              <span className="text-xs text-gray-400">Views</span>
+              <span className="text-xs text-gray-400">Visitors (views)</span>
             </div>
             {sources.length === 0 ? (
               <div className="text-center py-8 text-gray-400 text-sm">No traffic data yet</div>
@@ -200,15 +207,15 @@ const AdminAnalytics = () => {
                         <span className="text-sm font-medium text-gray-700 truncate">{s.source}</span>
                       </div>
                       <div className="ml-3 flex-shrink-0 text-right whitespace-nowrap">
-                        <span className="text-sm font-semibold text-gray-700">{s.views.toLocaleString()}</span>
-                        <span className="text-xs text-gray-400 ml-1 hidden sm:inline">({s.visitors})</span>
+                        <span className="text-sm font-semibold text-gray-700">{s.visitors.toLocaleString()}</span>
+                        <span className="text-xs text-gray-400 ml-1 hidden sm:inline">({s.views.toLocaleString()})</span>
                       </div>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full transition-all duration-500"
                         style={{
-                          width: `${(s.views / maxSourceViews) * 100}%`,
+                          width: `${(s.visitors / maxSourceVisitors) * 100}%`,
                           backgroundColor: sourceColors[s.source] || '#9CA3AF',
                         }}
                       />
@@ -309,12 +316,12 @@ const AdminAnalytics = () => {
             className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-gray-100"
           >
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-gray-800">Referrers</h3>
-              <span className="text-xs text-gray-400">Views</span>
+              <h3 className="text-base font-semibold text-gray-800">Referring sites</h3>
+              <span className="text-xs text-gray-400">Visitors (views)</span>
             </div>
             <div className="space-y-0">
               {referrers.map((ref, i) => {
-                const maxRefViews = Math.max(...referrers.map(r => r.views));
+                const maxRefVisitors = Math.max(...referrers.map(r => r.visitors || r.views));
                 return (
                   <div
                     key={i}
@@ -323,13 +330,14 @@ const AdminAnalytics = () => {
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm text-gray-700 truncate min-w-0">{ref.source}</span>
                       <span className="text-sm font-semibold text-gray-700 ml-3 flex-shrink-0 whitespace-nowrap">
-                        {ref.views.toLocaleString()}
+                        {(ref.visitors ?? ref.views).toLocaleString()}
+                        <span className="text-xs font-normal text-gray-400 ml-1">({ref.views.toLocaleString()})</span>
                       </span>
                     </div>
                     <div className="w-full bg-gray-100 rounded-full h-1.5">
                       <div
                         className="h-1.5 bg-green-500 rounded-full transition-all duration-500"
-                        style={{ width: `${(ref.views / maxRefViews) * 100}%` }}
+                        style={{ width: `${((ref.visitors ?? ref.views) / maxRefVisitors) * 100}%` }}
                       />
                     </div>
                   </div>

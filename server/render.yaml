@@ -35,6 +35,10 @@ services:
         sync: false
       - key: RAZORPAY_KEY_SECRET
         sync: false
+      # Secret of the Razorpay webhook (event order.paid). Without it
+      # an order whose shopper closed the tab after paying is never created.
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
       - key: STRIPE_SECRET_KEY
         sync: false
       - key: STRIPE_WEBHOOK_SECRET

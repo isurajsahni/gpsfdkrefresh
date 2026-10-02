@@ -42,6 +42,13 @@
     </script>
 
     <!-- End Meta Pixel Code -->
+    <!-- CSP note: client/vercel.json connect-src lists two Meta Conversions API
+         Gateway hosts for pixel 953916107234506, which fbevents.js posts events to:
+           https://ov-1d104299d2a447049cdc73700c9309f7.ecs.us-west-2.on.aws
+           https://bded8a3c6ae-1-1053047382554.us-central1.run.app
+         If the gateway is moved or re-provisioned, update both there (exact
+         hosts, no *.on.aws / *.run.app wildcards). Don't edit the inline
+         scripts above without updating their sha256 hashes in script-src. -->
     <!-- Favicons: Google requires a multiple-of-48px icon; .ico fallback is fetched by
          crawlers that ignore link tags. Files generated from logo-fav.webp (brand logo). -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />

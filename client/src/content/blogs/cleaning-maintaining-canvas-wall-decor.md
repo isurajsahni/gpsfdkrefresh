@@ -127,4 +127,4 @@ If you want worry-free maintenance, these museum-grade designs are pre-coated wi
 
 A little routine care goes a long way. With monthly dusting, smart placement, and basic precautions against India's humidity and sun, your canvas wall art will remain as vibrant as the day you hung it — for decades to come.
 
-[Browse Our Premium Canvas Collection →](/wall-canvas)
+[Browse Our Premium Canvas Collection →](/canvas)

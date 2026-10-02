@@ -37,8 +37,8 @@ According to Vaastu, you should strictly avoid hanging:
 
 ## 8. Welcome Auspicious Energy at Your Entrance
 While interior walls benefit from the canvases mentioned above, the ultimate Vaastu boundary is your home's main entrance. Installing a beautiful spiritual nameplate invites positive energy and blessings inside.
-- **[Lord Ganesha Acrylic Nameplate](/product/lord-ganesha)**: Features a traditional Lord Ganesha motif in a modern gold-embossed finish to bless every guest crossing your threshold.
-- **[Trishula Nameplate](/product/trishula)**: Features the sacred trident, a powerful symbol of spiritual protection and prosperity for your house entrance.
+- **[Ganesha Nameplate](/product/ganesha)**: A Lord Ganesha motif at the door to bless every guest crossing your threshold.
+- **[Krishna's Flute Nameplate](/product/krishnas-flute)**: A devotional Krishna's flute motif that welcomes positive energy at your main entrance.
 
 By pairing beautiful **wall decor India** choices and spiritual entryway nameplates with these ancient principles, your home will look luxurious and feel incredibly peaceful.
 

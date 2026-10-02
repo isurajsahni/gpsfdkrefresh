@@ -132,4 +132,4 @@ Your home office is where ideas are born, deals are closed, and careers are buil
 
 Invest in your workspace. Your productivity (and your Zoom background) will thank you.
 
-[Shop Home Office Canvas Art →](/wall-canvas)
+[Shop Home Office Canvas Art →](/canvas)

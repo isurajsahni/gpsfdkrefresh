@@ -24,4 +24,4 @@ Experience true museum-grade quality in your own living space:
 ## Conclusion: Is it Worth It?
 If you are looking for a temporary poster for a dorm room, a budget canvas is fine. However, if you are styling a forever home, investing in a museum-grade **wall decor India** piece is undeniably worth it. The longevity, vibrant color depth, and structural integrity mean you'll only ever have to buy the piece once.
 
-[Explore Our Museum-Grade Collection →](/wall-canvas)
+[Explore Our Museum-Grade Collection →](/canvas)

@@ -107,4 +107,4 @@ Choosing eco-friendly canvas prints is one of the simplest ways to reduce your e
 
 Your walls deserve art that's good for your home AND good for the planet.
 
-[Explore Our Eco-Friendly Canvas Collection →](/wall-canvas)
+[Explore Our Eco-Friendly Canvas Collection →](/canvas)

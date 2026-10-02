@@ -65,7 +65,7 @@ Match your canvas with your room's existing palette:
 
 ## Pro Tips for Hanging Your Canvas
 
-![Hanging Canvas Alignment](https://images.unsplash.com/photo-1583847268964-b28e51515250?q=80&w=1400)
+![Lining up a picture while hanging it on a gallery wall](https://images.unsplash.com/photo-1789841418236-2060e2af1e78?q=80&w=1400)
 
 1. **Eye Level:** The center of the canvas should be at eye level (approximately 145-150cm from the floor).
 2. **Lighting:** Position a picture light or track light above the canvas for a dramatic gallery effect.
@@ -82,4 +82,4 @@ To help you get started, here are two of our absolute bestsellers for living roo
 
 Choosing the perfect wall canvas for your living room doesn't have to be overwhelming. By measuring your space, picking a style that resonates with you, and selecting quality materials, you can transform any living room into a stunning visual experience.
 
-Ready to find your perfect canvas? [Explore our Premium Wall Canvas Collection →](/wall-canvas)
+Ready to find your perfect canvas? [Explore our Premium Wall Canvas Collection →](/canvas)

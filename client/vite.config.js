@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import injectStaticSitemap from './vite.seo.plugin.js'
+import prerenderBlog from './vite.blog.plugin.js'
 
 // Vercel answers any URL that matches no rewrite in vercel.json with
 // dist/404.html and a real 404 status. Make that file the app itself, so the
@@ -29,6 +30,7 @@ export default defineConfig({
     react(),
     injectStaticSitemap(),
     emitNotFoundPage(),
+    prerenderBlog(),
     {
       name: 'mp4-no-cache',
       configureServer(server) {

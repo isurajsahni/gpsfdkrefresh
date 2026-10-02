@@ -1,66 +1,187 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import toast from 'react-hot-toast';
+import { FaWhatsapp, FaPinterestP, FaFacebookF, FaXTwitter, FaLink } from 'react-icons/fa6';
+import { HiChevronDown } from 'react-icons/hi';
 import SEO from '../components/seo/SEO';
 import blogs from '../content/blogs/index';
-import { optimizeImage } from '../utils/imageOptimizer';
+import {
+  DEFAULT_AUTHOR,
+  PROSE_CLASSES,
+  RSS_URL,
+  blogImage,
+  blogPostSchema,
+  blogSrcSet,
+  extractHeadings,
+  formatDate,
+  postSeoTitle,
+  postUrl,
+  readingMinutes,
+  relatedPosts,
+  sortByDate,
+  stripLeadingTitle,
+  topicPath,
+} from '../content/blogs/blogShared';
+import { markdownComponents } from '../content/blogs/markdownComponents';
+import { ArrowRight, BlogCard, Eyebrow } from '../components/blog/BlogUI';
+import useDropStaticSnapshot from '../components/blog/useDropStaticSnapshot';
+import ProductCard from '../components/product/ProductCard';
+import { KindCTA } from '../components/kindact/KindUI';
 import API from '../utils/api';
-import { useCurrency } from '../context/CurrencyContext';
 import NotFoundPage from './NotFoundPage';
 
-const BESTSELLER_LABELS = [
-  'Best Seller',
-  'Most Sold',
-  'Top Choice',
-  'Hot Seller',
-  'Most Loved',
-  'Top Seller',
-  'Best Selling',
-  'Customer Favorite'
-];
+// The header and article column are mirrored in content/blogs/blogStatic.js
+// (renderBlogPostBody); keep the two in step.
 
-const getBestsellerLabel = (id) => {
-  if (!id) return 'Best Seller';
-  let hash = 0;
-  const str = String(id);
-  for (let idx = 0; idx < str.length; idx++) {
-    hash = str.charCodeAt(idx) + ((hash << 5) - hash);
-  }
-  return BESTSELLER_LABELS[Math.abs(hash) % BESTSELLER_LABELS.length];
+const byDate = sortByDate(blogs);
+const renderLink = (to, children) => <Link to={to}>{children}</Link>;
+
+const NAMEPLATE_WORDS = ['nameplate', 'ganesha', 'naman', 'naam', 'trishula'];
+
+const ReadingProgress = ({ target }) => {
+  const { scrollYProgress } = useScroll({ target, offset: ['start start', 'end end'] });
+  const scaleX = useSpring(scrollYProgress, { stiffness: 200, damping: 30, restDelta: 0.001 });
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ scaleX }}
+      className="fixed top-0 left-0 right-0 h-[3px] bg-kind-lime origin-left z-[60]"
+    />
+  );
 };
 
+const ShareButtons = ({ post }) => {
+  const url = postUrl(post.slug);
+  const text = encodeURIComponent(post.title);
+  const link = encodeURIComponent(url);
+  const targets = [
+    { label: 'Share on WhatsApp', Icon: FaWhatsapp, href: `https://wa.me/?text=${text}%20${link}` },
+    {
+      label: 'Save to Pinterest',
+      Icon: FaPinterestP,
+      href: `https://pinterest.com/pin/create/button/?url=${link}&media=${encodeURIComponent(blogImage(post.image, 1200))}&description=${text}`,
+    },
+    { label: 'Share on Facebook', Icon: FaFacebookF, href: `https://www.facebook.com/sharer/sharer.php?u=${link}` },
+    { label: 'Share on X', Icon: FaXTwitter, href: `https://twitter.com/intent/tweet?url=${link}&text=${text}` },
+  ];
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied');
+    } catch {
+      toast.error("Couldn't copy the link");
+    }
+  };
+  const button =
+    'w-10 h-10 rounded-full border border-kind-forest/15 bg-white text-kind-forest flex items-center justify-center hover:bg-kind-forest hover:text-white hover:border-kind-forest transition-colors';
+  return (
+    <div className="flex items-center gap-2">
+      {targets.map(({ label, Icon, href }) => (
+        <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label} className={button}>
+          <Icon className="w-4 h-4" aria-hidden="true" />
+        </a>
+      ))}
+      <button type="button" onClick={copy} aria-label="Copy link" title="Copy link" className={button}>
+        <FaLink className="w-4 h-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+};
+
+// Highlights the section being read: the last heading scrolled past the top
+const useActiveHeading = (ids) => {
+  const [active, setActive] = useState(ids[0]);
+  useEffect(() => {
+    const update = () => {
+      let current = ids[0];
+      ids.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top < 140) current = id;
+      });
+      setActive(current);
+    };
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [ids]);
+  return active;
+};
+
+const scrollToHeading = (event, id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  event.preventDefault();
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
+const TocLinks = ({ toc, active }) => (
+  <ol className="space-y-0.5 border-l border-kind-forest/10">
+    {toc.map((h) => (
+      <li key={h.id}>
+        <a
+          href={`#${h.id}`}
+          onClick={(e) => scrollToHeading(e, h.id)}
+          aria-current={active === h.id ? 'location' : undefined}
+          className={`-ml-px block border-l-2 pl-4 py-1.5 text-[14px] leading-snug transition-colors ${
+            active === h.id ? 'border-kind-lime text-kind-ink font-semibold' : 'border-transparent text-kind-ink/55 hover:text-kind-ink'
+          }`}
+        >
+          {h.text}
+        </a>
+      </li>
+    ))}
+  </ol>
+);
+
 const BlogPost = () => {
+  useDropStaticSnapshot();
   const { slug } = useParams();
-  const blog = blogs.find(b => b.slug === slug);
+  const blog = blogs.find((b) => b.slug === slug);
+  const articleRef = useRef(null);
   const [products, setProducts] = useState([]);
-  const { formatPrice } = useCurrency();
+
+  const markdown = useMemo(() => stripLeadingTitle(blog?.content), [blog]);
+  const headings = useMemo(() => extractHeadings(markdown), [markdown]);
+  const toc = useMemo(() => headings.filter((h) => h.depth === 2), [headings]);
+  const tocIds = useMemo(() => toc.map((h) => h.id), [toc]);
+  const components = useMemo(
+    () => markdownComponents({ headingIds: new Map(headings.map((h) => [h.line, h.id])), renderLink }),
+    [headings],
+  );
+  const active = useActiveHeading(tocIds);
+
+  const contentLower = `${blog?.title || ''} ${blog?.content || ''}`.toLowerCase();
+  const shopPath = NAMEPLATE_WORDS.some((w) => contentLower.includes(w)) ? '/house-nameplates' : '/canvas';
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const contentLower = ((blog?.title || '') + ' ' + (blog?.content || '')).toLowerCase();
-        const isNameplate = contentLower.includes('nameplate') || 
-                            contentLower.includes('ganesha') || 
-                            contentLower.includes('naman') || 
-                            contentLower.includes('naam') || 
-                            contentLower.includes('trishula');
-        const categorySlug = isNameplate ? 'house-nameplates' : 'wall-canvas';
-        
-        const { data } = await API.get('/products', {
-          params: {
-            limit: 3,
-            categorySlug: categorySlug
-          }
-        });
-        setProducts(data.products || []);
-      } catch (err) {
-        // silent fail
-      }
+    if (!blog) return undefined;
+    let cancelled = false;
+    setProducts([]);
+    API.get('/products', {
+      params: { limit: 4, categorySlug: shopPath === '/house-nameplates' ? 'house-nameplates' : 'wall-canvas' },
+    })
+      .then(({ data }) => {
+        if (!cancelled) setProducts(data.products || []);
+      })
+      .catch(() => {
+        // The shop row is optional; the article stands on its own
+      });
+    return () => {
+      cancelled = true;
     };
-    if (blog) fetchProducts();
-  }, [slug, blog]);
+  }, [blog, shopPath]);
 
   // The shared 404 carries noindex; a bare "not found" block would be indexed
   // as a soft 404 with the homepage's title.
@@ -68,278 +189,207 @@ const BlogPost = () => {
     return <NotFoundPage />;
   }
 
-  // Related blogs — same category or random picks, excluding current
-  const related = blogs.filter(b => b.slug !== slug && b.category === blog.category).slice(0, 3);
-  if (related.length < 3) {
-    const extras = blogs.filter(b => b.slug !== slug && !related.find(r => r.slug === b.slug)).slice(0, 3 - related.length);
-    related.push(...extras);
-  }
-
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    "headline": blog.title,
-    "description": blog.excerpt,
-    "image": blog.image,
-    "datePublished": blog.date,
-    "author": {
-      "@type": "Organization",
-      "name": "GPSFDK"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "GPSFDK",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://www.gpsfdk.com/logo.webp"
-      }
-    },
-    "keywords": blog.keywords?.join(', '),
-    "url": `https://www.gpsfdk.com/blog/${blog.slug}`
-  };
+  const index = byDate.findIndex((p) => p.slug === blog.slug);
+  const newer = byDate[index - 1];
+  const older = byDate[index + 1];
+  const related = relatedPosts(blogs, blog, 3);
+  const author = blog.author || DEFAULT_AUTHOR;
 
   return (
-    <div className="min-h-screen bg-primary">
+    <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
-        title={`${blog.title} | GPSFDK Blog`}
+        title={postSeoTitle(blog.title)}
         description={blog.excerpt}
-        image={blog.image}
+        image={blogImage(blog.image, 1200)}
         type="article"
-        schema={articleSchema}
+        schema={blogPostSchema(blog, markdown)}
       />
+      <Helmet>
+        <meta property="article:published_time" content={blog.date} />
+        <meta property="article:modified_time" content={blog.updated || blog.date} />
+        <meta property="article:section" content={blog.category} />
+        {(blog.keywords || []).map((k) => (
+          <meta key={k} property="article:tag" content={k} />
+        ))}
+        <link rel="alternate" type="application/rss+xml" title="The GPSFDK Blog" href={RSS_URL} />
+      </Helmet>
+      <ReadingProgress target={articleRef} />
 
-      {/* Hero Banner Redesigned */}
-      <section className="bg-secondary pt-[120px] pb-16 lg:pb-24">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-            {/* Breadcrumb */}
-            <nav className="text-white/50 text-sm mb-8 flex flex-wrap gap-2">
-              <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              <span>/</span>
-              <Link to="/blog" className="hover:text-white transition-colors">Blog</Link>
-              <span>/</span>
-              <span className="text-white/80">{blog.title.length > 40 ? blog.title.slice(0, 40) + '...' : blog.title}</span>
-            </nav>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-white leading-tight mb-8">
-              {blog.title}
-            </h1>
-            
-            <div className="flex items-center gap-2 mb-6 text-white text-sm">
-              <span className="font-semibold">{blog.author || 'Suraj'}</span>
-              <span className="text-white/40">—</span>
-              <span className="text-white/80">
-                {new Date(blog.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-              </span>
-            </div>
-
-            <p className="text-white/80 leading-relaxed max-w-lg mb-8 text-sm md:text-base">
-              {blog.excerpt}
-            </p>
-
-            <span className="inline-block bg-white/10 text-white border border-white/20 text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full">
-              {blog.category}
+      {/* ─── Header ─── */}
+      <header className="max-w-7xl mx-auto px-4 sm:px-5 pt-6 sm:pt-10">
+        <nav aria-label="Breadcrumb" className="text-[13px] text-kind-ink/50 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Link to="/" className="hover:text-kind-forest transition-colors">Home</Link>
+          <span aria-hidden="true">/</span>
+          <Link to="/blog" className="hover:text-kind-forest transition-colors">Blog</Link>
+          <span aria-hidden="true">/</span>
+          <Link to={topicPath(blog.category)} className="hover:text-kind-forest transition-colors">{blog.category}</Link>
+        </nav>
+        <div className="max-w-4xl mt-6 sm:mt-8">
+          <Link
+            to={topicPath(blog.category)}
+            className="inline-flex rounded-full bg-kind-mint text-kind-forest px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] hover:bg-kind-sage transition-colors"
+          >
+            {blog.category}
+          </Link>
+          <h1 className="font-heading font-semibold text-kind-ink mt-4 text-[32px] leading-[1.12] sm:text-[44px] lg:text-[54px] lg:leading-[1.06] tracking-tight">
+            {blog.title}
+          </h1>
+          <p className="mt-5 text-[18px] sm:text-[20px] leading-relaxed text-kind-ink/65 max-w-3xl">{blog.excerpt}</p>
+          <div className="mt-7 flex items-center gap-3 text-[14px] text-kind-ink/60">
+            <span className="w-10 h-10 rounded-full bg-kind-forest text-white font-semibold flex items-center justify-center shrink-0" aria-hidden="true">
+              {author.charAt(0)}
             </span>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6, delay: 0.2 }}>
-            <div className="w-full aspect-square bg-white rounded-sm shadow-2xl flex items-center justify-center p-2 relative">
-              <img
-                src={optimizeImage(blog.image, 1000)}
-                alt={blog.title}
-                className="w-full h-full object-cover rounded-sm border border-gray-100"
-              />
-            </div>
-          </motion.div>
-
+            <p>
+              By <span className="font-semibold text-kind-ink">{author}</span>
+              <span className="block sm:inline">
+                <span className="hidden sm:inline"> · </span>
+                <time dateTime={blog.date}>{formatDate(blog.date)}</time> · {readingMinutes(markdown)} min read
+              </span>
+            </p>
+          </div>
         </div>
-      </section>
+        <figure className="mt-8 sm:mt-12 overflow-hidden rounded-[24px] sm:rounded-[32px] bg-kind-mist aspect-[4/3] sm:aspect-[2/1]">
+          <img
+            src={blogImage(blog.image, 1440)}
+            srcSet={blogSrcSet(blog.image, [640, 960, 1440, 2000])}
+            sizes="(min-width: 1280px) 1240px, 100vw"
+            alt={blog.title}
+            width="1440"
+            height="720"
+            fetchPriority="high"
+            className="w-full h-full object-cover"
+          />
+        </figure>
+      </header>
 
-      {/* Article Content */}
-      <article className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          {/* Markdown Content */}
-          <div className="prose prose-lg max-w-none
-            prose-headings:font-heading prose-headings:text-secondary prose-headings:font-bold
-            prose-h2:text-3xl prose-h2:md:text-4xl prose-h2:mt-8 prose-h2:mb-3
-            prose-h3:text-2xl prose-h3:md:text-3xl prose-h3:mt-6 prose-h3:mb-2
-            prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4
-            prose-li:text-gray-700 prose-li:mb-1
-            prose-ul:my-4
-            prose-ol:my-4
-            prose-strong:text-secondary
-            prose-a:text-accent prose-a:font-semibold hover:prose-a:underline
-            prose-table:rounded-xl prose-table:overflow-hidden prose-table:my-6
-            prose-th:bg-secondary prose-th:text-white prose-th:px-4 prose-th:py-3 prose-th:text-left prose-th:text-sm prose-th:font-semibold
-            prose-td:px-4 prose-td:py-3 prose-td:text-sm prose-td:border-b prose-td:border-gray-200
-          ">
-            <ReactMarkdown 
-              remarkPlugins={[remarkGfm]}
-              components={{
-                a: ({ href, children, ...props }) => {
-                  const isInternal = href && (href.startsWith('/') || href.startsWith('https://www.gpsfdk.com') || href.startsWith('https://gpsfdk.com'));
-                  const cleanHref = isInternal ? href.replace(/https?:\/\/(www\.)?gpsfdk\.com/, '') : href;
-                  if (isInternal) {
-                    return <Link to={cleanHref} className="text-accent font-semibold hover:underline" {...props}>{children}</Link>;
-                  }
-                  return <a href={href} target="_blank" rel="noopener noreferrer" className="text-accent font-semibold hover:underline" {...props}>{children}</a>;
-                }
-              }}
-            >
-              {blog.content}
+      {/* ─── Article ─── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-5 mt-10 sm:mt-16 lg:grid lg:grid-cols-12 lg:gap-10">
+        <aside className="lg:col-span-3">
+          <div className="lg:sticky lg:top-28">
+            <details className="lg:hidden group mb-8 rounded-2xl border border-kind-forest/10 bg-kind-mist/50">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 font-semibold text-kind-ink [&::-webkit-details-marker]:hidden">
+                On this page
+                <HiChevronDown className="w-5 h-5 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <div className="px-5 pb-5">
+                <TocLinks toc={toc} active={active} />
+              </div>
+            </details>
+            <nav aria-label="On this page" className="hidden lg:block">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-kind-ink/45">On this page</p>
+              <div className="mt-4">
+                <TocLinks toc={toc} active={active} />
+              </div>
+              <p className="mt-10 text-[11px] font-semibold uppercase tracking-[0.18em] text-kind-ink/45">Share</p>
+              <div className="mt-3">
+                <ShareButtons post={blog} />
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        <article ref={articleRef} className="lg:col-span-8 xl:col-span-7 lg:col-start-5 xl:col-start-5 min-w-0">
+          <div className={PROSE_CLASSES}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+              {markdown}
             </ReactMarkdown>
           </div>
 
-          {/* Keywords / Tags */}
-          {blog.keywords && blog.keywords.length > 0 && (
-            <div className="mt-12 pt-8 border-t border-gray-200">
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Related Topics</h4>
-              <div className="flex flex-wrap gap-2">
-                {blog.keywords.map(keyword => (
-                  <Link 
-                    key={keyword} 
-                    to={`/canvas`} 
-                    className="bg-secondary/5 hover:bg-secondary hover:text-white transition-colors text-secondary text-xs font-medium px-3 py-1.5 rounded-full"
-                  >
-                    {keyword}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Recommended Products (Shop This Look Section) */}
-          {products && products.length > 0 && (
-            <div className="mt-16 pt-12 border-t border-gray-200 text-left">
-              <h3 className="text-2xl font-heading font-bold text-secondary text-center mb-2 uppercase tracking-wide">
-                Shop This Look
-              </h3>
-              <p className="text-gray-500 text-center font-body text-sm sm:text-base mb-8">
-                Transform your home with these premium, high-quality recommendations.
-              </p>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {products.map(product => {
-                  const prices = [
-                    product.basePrice,
-                    ...(product.variations || []).map(v => v.price)
-                  ].filter(p => typeof p === 'number');
-                  const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
-
-                  // Determine badge type
-                  let badgeType = "";
-                  const variations = product.variations || [];
-                  const totalStock = variations.reduce((acc, v) => acc + (v.stock || 0), 0);
-                  if (variations.length > 0 && totalStock > 0 && totalStock <= 10) {
-                    badgeType = "lowstock";
-                  } else if (product.featured) {
-                    badgeType = "bestseller";
-                  } else if (product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) {
-                    badgeType = "new";
-                  }
-
-                  const badgeColors = {
-                    bestseller: 'bg-[#F5A623]',
-                    new: 'bg-[#27AE60]',
-                    lowstock: 'bg-[#E74C3C]'
-                  };
-
-                  const badgeLabels = {
-                    bestseller: 'Bestseller',
-                    new: 'New Arrival',
-                    lowstock: 'Low Stock'
-                  };
-
-                  return (
-                    <Link 
-                      key={product._id} 
-                      to={`/product/${product.slug}`} 
-                      className="group bg-white rounded-2xl overflow-hidden border border-cream-dark shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between"
-                    >
-                      <div className="relative aspect-[3/4] overflow-hidden bg-cream-dark">
-                        {badgeType && (
-                          badgeType === 'bestseller' ? (
-                            <div className="absolute top-3 left-3 z-10 text-[9px] px-3 py-1.5 rounded-full font-bold text-white uppercase tracking-widest bg-gradient-to-r from-[#F15A29] to-[#F5A623] shadow-[0_0_12px_rgba(241,90,41,0.6)] border border-white/20 flex items-center gap-1">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-white animate-pulse">
-                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />
-                              </svg>
-                              <span>{getBestsellerLabel(product._id)}</span>
-                            </div>
-                          ) : (
-                            <div className={`absolute top-3 left-3 z-10 text-[9px] px-2.5 py-1 rounded font-semibold text-white uppercase tracking-wider shadow ${badgeColors[badgeType]}`}>
-                              {badgeLabels[badgeType]}
-                            </div>
-                          )
-                        )}
-                        <img
-                          src={optimizeImage(product.images?.[0]?.url, 400) || 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=500'}
-                          alt={product.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="p-4 flex flex-col flex-grow justify-between">
-                        <h4 className="font-heading font-bold text-secondary text-sm group-hover:text-accent transition-colors line-clamp-2 leading-tight">
-                          {product.name}
-                        </h4>
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-50">
-                          <span className="text-accent font-bold text-sm">
-                            {formatPrice(minPrice)}
-                          </span>
-                          <span className="text-secondary font-heading font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1 group-hover:underline">
-                            View Details →
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </article>
-
-      {/* Related Articles */}
-      <section className="bg-secondary/5 py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl md:text-3xl font-heading font-bold text-secondary mb-10 text-center">
-            You Might Also Like
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {related.map((r, i) => (
-              <motion.div
-                key={r.slug}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <Link to={`/blog/${r.slug}`} className="group block h-full">
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-500 h-full flex flex-col hover:-translate-y-1">
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      <img
-                        src={optimizeImage(r.image, 500)}
-                        alt={r.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-5 flex flex-col flex-grow">
-                      <span className="text-xs text-gray-400 mb-2">{r.readTime}</span>
-                      <h3 className="font-heading font-bold text-secondary text-base mb-2 leading-snug group-hover:text-accent transition-colors line-clamp-2">
-                        {r.title}
-                      </h3>
-                      <span className="inline-flex items-center font-heading font-bold text-accent text-xs uppercase tracking-wider gap-1.5 mt-auto">
-                        Read →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
+          <div className="mt-14 pt-8 border-t border-kind-forest/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <p className="font-semibold text-kind-ink">Found this useful? Share it.</p>
+            <ShareButtons post={blog} />
           </div>
+
+          <div className="mt-8 rounded-[20px] bg-kind-mist p-6 flex gap-4 items-start">
+            <span className="w-12 h-12 rounded-full bg-kind-forest text-white text-lg font-semibold flex items-center justify-center shrink-0" aria-hidden="true">
+              {author.charAt(0)}
+            </span>
+            <div>
+              <p className="text-[13px] text-kind-ink/50">Written by</p>
+              <p className="font-semibold text-[17px] text-kind-ink">{author}</p>
+              <p className="mt-1 text-[15px] leading-relaxed text-kind-ink/65">
+                Writes the GPSFDK blog: guides to choosing, hanging and caring for wall art in Indian homes.{' '}
+                <Link to={topicPath(blog.category)} className="font-semibold text-kind-forest hover:underline">
+                  More {blog.category} articles
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          {(older || newer) && (
+            <nav aria-label="More articles" className="mt-8 grid sm:grid-cols-2 gap-4">
+              {[
+                { post: older, label: 'Previous article' },
+                { post: newer, label: 'Next article' },
+              ].map(({ post, label }) =>
+                post ? (
+                  <Link
+                    key={label}
+                    to={`/blog/${post.slug}`}
+                    className={`group rounded-[20px] border border-kind-forest/10 p-5 hover:border-kind-forest/40 transition-colors ${
+                      label === 'Next article' ? 'sm:text-right' : ''
+                    }`}
+                  >
+                    <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-kind-ink/45">{label}</span>
+                    <span className="mt-2 block font-heading font-semibold leading-snug text-kind-ink group-hover:text-kind-forest transition-colors">
+                      {post.title}
+                    </span>
+                  </Link>
+                ) : (
+                  <span key={label} className="hidden sm:block" />
+                ),
+              )}
+            </nav>
+          )}
+        </article>
+      </div>
+
+      {/* ─── Shop the look ─── */}
+      {products.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-5 mt-16 sm:mt-24">
+          <div className="rounded-[28px] bg-kind-mint/70 p-5 sm:p-10">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+              <div>
+                <Eyebrow>Shop the look</Eyebrow>
+                <h2 className="apple-headline font-heading mt-3 text-kind-ink">From the GPSFDK collection</h2>
+              </div>
+              <Link to={shopPath} className="group inline-flex items-center gap-1.5 text-sm font-semibold text-kind-forest">
+                View all <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+            <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {products.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── Keep reading ─── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-5 mt-16 sm:mt-24">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <Eyebrow>Keep reading</Eyebrow>
+            <h2 className="apple-headline font-heading mt-3 text-kind-ink">More from the blog</h2>
+          </div>
+          <Link to="/blog" className="group hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-kind-forest">
+            All articles <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        </div>
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+          {related.map((post) => (
+            <BlogCard key={post.slug} post={post} />
+          ))}
         </div>
       </section>
+
+      <KindCTA
+        title="Ready to transform your walls?"
+        text="Explore premium canvas prints and custom house nameplates, made to order and delivered across India."
+        to="/canvas"
+        cta="Shop canvas"
+      />
     </div>
   );
 };

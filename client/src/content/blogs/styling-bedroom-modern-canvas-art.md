@@ -134,4 +134,4 @@ To help you curate the perfect bedroom atmosphere, here are our top-recommended 
 
 Your bedroom canvas is the first thing you see when you wake up and the last thing you see before you fall asleep. Whether you choose one serene minimalist piece or build an exuberant maximalist gallery, make sure it brings you joy.
 
-[Find Your Perfect Bedroom Canvas →](/wall-canvas)
+[Find Your Perfect Bedroom Canvas →](/canvas)

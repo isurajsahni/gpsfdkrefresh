@@ -355,8 +355,9 @@ body {
   max-height: 500px;
 }
 
-/* Force Prose overrides for blog heading sizes and tight spacing */
-.prose h2 {
+/* Force Prose overrides for heading sizes and tight spacing. The blog
+   (.blog-prose) sets its own type scale in content/blogs/blogShared.js. */
+.prose:not(.blog-prose) h2 {
   font-size: 2.25rem !important; /* 36px equivalent */
   line-height: 2.5rem !important;
   margin-top: 2.5rem !important;
@@ -365,7 +366,7 @@ body {
   color: #0B5D3B !important;
 }
 
-.prose h3 {
+.prose:not(.blog-prose) h3 {
   font-size: 1.5rem !important; /* 24px equivalent */
   line-height: 2rem !important;
   margin-top: 2rem !important;
@@ -374,7 +375,7 @@ body {
   color: #0B5D3B !important;
 }
 
-.prose p {
+.prose:not(.blog-prose) p {
   margin-top: 0 !important;
   margin-bottom: 1.25rem !important;
   color: #374151 !important;

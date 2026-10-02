@@ -43,18 +43,7 @@
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/collection/:collection"
     },
     {
-      "source": "/blog/:slug",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot|Discordbot|Pinterestbot|Pinterest|SkypeUriPreview|Viber|viber).*"
-        }
-      ],
-      "destination": "https://gpsfdkrefresh.onrender.com/api/share/blog/:slug"
-    },
-    {
-      "source": "/:page(canvas|customize-canvas|house-nameplates|about|contact|consultancy|faq|blog|shipping-policy|returns-refunds|privacy-policy|terms-conditions|track-order|ceo|vision|support|premium-wall-canvas-india)",
+      "source": "/:page(canvas|customize-canvas|house-nameplates|about|contact|consultancy|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|track-order|ceo|vision|support|premium-wall-canvas-india)",
       "has": [
         {
           "type": "header",
@@ -64,9 +53,10 @@
       ],
       "destination": "https://gpsfdkrefresh.onrender.com/api/share/page/:page"
     },
-    { "source": "/:page(home|store|search|customize-canvas|cart|login|register|forgot-password|whatsapp-login|blog|about|ceo|vision|consultancy|contact|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|school-of-learning|love|partner|support|checkout|thank-you|dashboard|track-order|premium-wall-canvas-india|canvas|consultancy-v2-demo|house-nameplates)", "destination": "/index.html" },
+    { "source": "/:page(home|store|search|customize-canvas|cart|login|register|forgot-password|whatsapp-login|about|ceo|vision|consultancy|contact|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|school-of-learning|love|partner|support|checkout|thank-you|dashboard|track-order|premium-wall-canvas-india|canvas|consultancy-v2-demo|house-nameplates)", "destination": "/index.html" },
     { "source": "/product/:slug", "destination": "/index.html" },
-    { "source": "/blog/:slug", "destination": "/index.html" },
+    { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/blog/:slug", "destination": "/blog/:slug/index.html" },
     { "source": "/location/:city", "destination": "/index.html" },
     { "source": "/wall-canvas/:collection(ink--interval|the-sassy-classic|tethered-horizons|the-botanical-muse|the-celestial-frontier|the-ethereal-gaze|the-gaze-of-power|the-modern-legend|the-gilded-bloom|the-velocity-suite|millionaire-art|nostalgia-noir|the-after-hour-suite|the-wild-eccentrics)", "destination": "/index.html" },
     { "source": "/admin/:path*", "destination": "/index.html" },

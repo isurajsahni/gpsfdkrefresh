@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react';
+import { useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'react-hot-toast';
@@ -123,12 +123,23 @@ const captureUTM = () => {
     const val = params.get(key);
     if (val) sessionStorage.setItem(key, val);
   });
+  // Ad click IDs on the landing URL: which ad network (or Meta app) sent
+  // the visit when the link carried no UTM tags
+  const clickSource = ['gclid', 'gbraid', 'wbraid'].some((key) => params.has(key)) ? 'gclid'
+    : params.has('msclkid') ? 'msclkid'
+      : params.has('fbclid') ? 'fbclid' : '';
+  if (clickSource) sessionStorage.setItem('click_source', clickSource);
   // Capture referrer once
   if (document.referrer && !sessionStorage.getItem('initial_referrer')) {
     sessionStorage.setItem('initial_referrer', document.referrer);
   }
   sessionStorage.setItem('utm_captured', 'true');
 };
+
+// Our analytics, Meta Pixel and GA count shoppers on the live site: not the
+// admin and marketing pages, and not local or preview copies of the site
+const LIVE_HOST = 'www.gpsfdk.com';
+const INTERNAL_PATH = /^\/(admin|marketing|invoice-preview)(\/|$)/;
 
 const captureUTMOnce = () => {
   try {
@@ -169,14 +180,26 @@ function ScrollManager() {
     };
   }, [pathname, search, hash, anchorVisit]);
 
+  // index.html's gtag('config') already counts the page the visitor lands on
+  const isLandingPage = useRef(true);
+
   useEffect(() => {
+    const isLanding = isLandingPage.current;
+    isLandingPage.current = false;
+    if (window.location.hostname !== LIVE_HOST || INTERNAL_PATH.test(location.pathname)) return;
+
+    // Where the visit came from (UTM tags, click IDs, referrer), read here so
+    // it's in place before the landing page view is sent
+    captureUTMOnce();
+
     // Fire Meta Pixel PageView on every route change (SPA support)
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'PageView');
     }
 
-    // Fire Google Analytics pageview on every route change (SPA support)
-    if (typeof window.gtag === 'function') {
+    // Fire Google Analytics pageview on every route change after the first
+    // (SPA support)
+    if (typeof window.gtag === 'function' && !isLanding) {
       window.gtag('config', 'G-ZCBBBEV6VE', {
         page_path: location.pathname + location.search,
       });
@@ -194,6 +217,7 @@ function ScrollManager() {
           utmCampaign: sessionStorage.getItem('utm_campaign') || '',
           utmTerm: sessionStorage.getItem('utm_term') || '',
           utmContent: sessionStorage.getItem('utm_content') || '',
+          clickSource: sessionStorage.getItem('click_source') || '',
         });
       } catch (err) {
         // Silent fail — analytics should never block the user
@@ -327,10 +351,6 @@ const pageRoutes = (
 );
 
 function App() {
-  useEffect(() => {
-    captureUTMOnce();
-  }, []);
-
   // Fetch pages ahead of the click: the header's and footer's, and category
   // and product pages (the store's cards), once this one has loaded; any
   // other on hover, focus or touch

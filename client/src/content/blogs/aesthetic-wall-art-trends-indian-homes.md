@@ -32,7 +32,7 @@ A fascinating revival is happening in Indian art. Young artists and designers ar
 
 ## 3. Maximalist Gallery Walls — More is More
 
-![Maximalist Gallery Wall Display](https://images.unsplash.com/photo-1558618666-fcd25c85f82e?q=80&w=1400)
+![Maximalist gallery wall of colourful art above a blue sofa](https://images.unsplash.com/photo-1650138318699-a7916aced967?q=80&w=1400)
 
 Contrary to minimalism, the maximalist gallery wall trend embraces abundance:
 
@@ -81,7 +81,7 @@ You don't have to commit to just one trend. Here's how to blend them:
 ## Shop the 2026 Decor Trends
 
 Bring these modern styling trends into your own space with our handpicked selections:
-- **[The Gilded Bloom Canvas](/product/the-gilded-bloom)**: Tap into the rich Neo-Traditional trend with these premium golden florals over an opulent, dark textured backdrop.
+- **[The Gilded Bloom Canvas](/wall-canvas/the-gilded-bloom)**: Tap into the rich Neo-Traditional trend with these premium golden florals over an opulent, dark textured backdrop.
 - **[Azure Gaze Canvas](/product/azure-gaze)**: The ultimate minimalist and calm statement piece, drawing inspiration from ocean gradients and organic forms.
 
 ## Conclusion
@@ -90,4 +90,4 @@ Indian wall art is no longer an afterthought — it's a statement. Whether you g
 
 The most important rule? Choose art that makes **you** feel something every time you walk into the room.
 
-[Discover Trending Wall Art →](/wall-canvas)
+[Discover Trending Wall Art →](/canvas)

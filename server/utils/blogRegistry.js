@@ -42,7 +42,13 @@ const readClientRegistry = () => {
         return match ? unescape(match[1]) : '';
       };
       const field = (name) => read(`\\n\\s*${name}:\\s*${STR}`);
-      return { slug: read(`^\\s*${STR}`), title: field('title'), excerpt: field('excerpt'), image: field('image') };
+      return {
+        slug: read(`^\\s*${STR}`),
+        title: field('title'),
+        excerpt: field('excerpt'),
+        image: field('image'),
+        date: field('updated') || field('date'),
+      };
     }).filter((post) => post.slug);
     if (posts.length > 0) return posts;
   } catch {
@@ -53,8 +59,9 @@ const readClientRegistry = () => {
 
 const registry = readClientRegistry();
 
-// [{ slug, title, excerpt, image }]. Title/excerpt/image are empty strings
-// when only the fallback slug list is available.
-const blogPosts = registry || FALLBACK_BLOG_SLUGS.map((slug) => ({ slug, title: '', excerpt: '', image: '' }));
+// [{ slug, title, excerpt, image, date }]. All but slug are empty strings when
+// only the fallback slug list is available. date is YYYY-MM-DD (the post's
+// `updated` date if it has one, else its publish date).
+const blogPosts = registry || FALLBACK_BLOG_SLUGS.map((slug) => ({ slug, title: '', excerpt: '', image: '', date: '' }));
 
 module.exports = { blogPosts, hasBlogDetails: Boolean(registry) };

@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Build-time page renderer (vite.prerender.plugin.js), also used by api/render.js
+.prerender

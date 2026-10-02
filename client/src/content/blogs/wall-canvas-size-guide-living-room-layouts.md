@@ -28,4 +28,4 @@ If you have a narrow, tall wall (like beside a doorway), use a vertical (portrai
 Ready to find the perfect focal point for your large walls?
 - **[The Wolf of Wall Street Canvas](/product/the-wolf-of-wall-street)**: Available in various high-impact oversized layout dimensions, perfect for commanding attention above executive office desks or large living room sofas.
 
-[Shop Sized Canvases Now →](/wall-canvas)
+[Shop Sized Canvases Now →](/canvas)

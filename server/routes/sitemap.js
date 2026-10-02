@@ -5,7 +5,8 @@ const Category = require('../models/Category');
 
 // Blog slugs come from the client's blog registry when it's deployed alongside
 // the server, else from a fallback list (see utils/blogRegistry.js).
-const blogSlugs = require('../utils/blogRegistry').blogPosts.map((post) => post.slug);
+const { blogPosts } = require('../utils/blogRegistry');
+const { COLLECTIONS, collectionSlug } = require('../data/collections');
 
 // In-memory cache of the generated XML — sitemap data changes rarely, so skip
 // the DB queries for an hour at a time.
@@ -26,7 +27,7 @@ router.get('/', async (req, res) => {
     // Fetch dynamic data (images included so product entries can carry
     // <image:image> tags for Google Images indexing)
     const [products, categories] = await Promise.all([
-      Product.find({ isActive: true }).select('slug updatedAt images category').lean(),
+      Product.find({ isActive: true }).select('slug updatedAt images category subCategory').lean(),
       Category.find({ isActive: true }).select('slug updatedAt').lean()
     ]);
 
@@ -34,12 +35,14 @@ router.get('/', async (req, res) => {
     // only list categories that currently have active products.
     const stockedCategoryIds = new Set(products.map((p) => String(p.category)));
 
-    // Static pages
+    // Static pages. '/' is the homepage's canonical URL (with its slash).
     const staticPages = [
-      '',
+      '/',
       '/blog',
       '/about',
       '/ceo',
+      '/vision',
+      '/support',
       // Two separate pages: /consultancy is the services pitch (it used to be
       // served at /contact), /contact is general contact.
       '/consultancy',
@@ -79,7 +82,7 @@ router.get('/', async (req, res) => {
   <url>
     <loc>${baseUrl}${page}</loc>
     <changefreq>weekly</changefreq>
-    <priority>${page === '' ? '1.0' : '0.8'}</priority>
+    <priority>${page === '/' ? '1.0' : '0.8'}</priority>
   </url>`;
     });
 
@@ -93,6 +96,26 @@ router.get('/', async (req, res) => {
     <lastmod>${category.updatedAt ? category.updatedAt.toISOString() : new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
+  </url>`;
+    });
+
+    // Add canvas collections (/wall-canvas/<collection>) that have active
+    // products: the listing CategoryPage shows for each, matched the same way
+    // as its API request (wall-canvas category, exact subCategory). An empty
+    // one is noindex, so it's left out.
+    const wallCanvas = categories.find((category) => category.slug === 'wall-canvas');
+    COLLECTIONS.forEach((name) => {
+      const inCollection = wallCanvas
+        ? products.filter((p) => String(p.category) === String(wallCanvas._id) && p.subCategory === name)
+        : [];
+      if (inCollection.length === 0) return;
+      const lastmod = new Date(Math.max(...inCollection.map((p) => new Date(p.updatedAt || 0).getTime())));
+      xml += `
+  <url>
+    <loc>${baseUrl}/wall-canvas/${collectionSlug(name)}</loc>
+    <lastmod>${lastmod.toISOString()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>`;
     });
 
@@ -111,13 +134,18 @@ router.get('/', async (req, res) => {
   </url>`;
     });
 
-    // Add blogs
-    blogSlugs.forEach((slug) => {
+    // Add blogs (lastmod and the cover image when the client registry is
+    // deployed alongside the server; see utils/blogRegistry.js)
+    blogPosts.forEach((post) => {
       xml += `
   <url>
-    <loc>${baseUrl}/blog/${slug}</loc>
+    <loc>${baseUrl}/blog/${post.slug}</loc>${/^\d{4}-\d{2}-\d{2}$/.test(post.date) ? `
+    <lastmod>${post.date}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.7</priority>${post.image ? `
+    <image:image>
+      <image:loc>${escXml(post.image)}</image:loc>
+    </image:image>` : ''}
   </url>`;
     });
 

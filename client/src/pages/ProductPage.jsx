@@ -4,18 +4,21 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiOutlineShoppingCart, HiMinus, HiPlus, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import API, { cachedGet } from '../utils/api';
+import API, { cachedGet, isNotFound } from '../utils/api';
 import toast from 'react-hot-toast';
 import ProductSlider from '../components/home/ProductSlider';
 import SEO from '../components/seo/SEO';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { productSeoTitle, productSeoDescription, productSchemaDescription } from '../utils/productSeo';
 import NotFoundPage from './NotFoundPage';
+import LoadErrorNotice from '../components/common/LoadErrorNotice';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 import { validators, formatters } from '../utils/validation';
 import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
 import { categoryPath } from '../utils/categoryPath';
+import { usePrerenderData } from '../prerender/PrerenderData';
+import { dropStaticSnapshot } from '../prerender/snapshot';
 
 // The story sits below the fold, so its code (about two-thirds of this page's)
 // downloads alongside the product fetch rather than ahead of the buy box
@@ -25,10 +28,18 @@ const ProductStory = lazy(loadProductStory);
 const ProductPage = () => {
   const { slug } = useParams();
   const location = useLocation();
-  const [product, setProduct] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Rendered outside the browser (api/render.js), the product comes with the
+  // render; in the browser it's fetched below
+  const prerendered = usePrerenderData()?.product;
+  const initialProduct = prerendered?.slug === slug ? prerendered : null;
+  const [product, setProduct] = useState(initialProduct);
+  const [loading, setLoading] = useState(!initialProduct);
+  // 'notFound' only when the API answered 404; 'error' for anything temporary
+  const [loadFailure, setLoadFailure] = useState(null);
+  const [attempt, setAttempt] = useState(0);
+  const autoRetriedSlug = useRef(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariation, setSelectedVariation] = useState({});
+  const [selectedVariation, setSelectedVariation] = useState(() => initialProduct?.variations?.[0] || {});
   const [customText, setCustomText] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
   // Custom size isn't a variation: selectedVariation keeps a real one (for the
@@ -85,10 +96,14 @@ const ProductPage = () => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    let retryTimer;
     const fetchProduct = async () => {
       setLoading(true);
+      setLoadFailure(null);
       try {
         const data = await cachedGet(`/products/${slug}`);
+        if (cancelled) return;
         setProduct(data);
         // Size and text the buyer already picked on the category listing
         const prefill = location.state || {};
@@ -110,27 +125,50 @@ const ProductPage = () => {
           });
         }
       } catch (err) {
+        if (cancelled) return;
         console.error(err);
         // Don't leave the previous product on screen (and addable to the cart)
         // under this product's URL
         setProduct(null);
+        if (isNotFound(err)) {
+          setLoadFailure('notFound');
+        } else if (autoRetriedSlug.current !== slug) {
+          // A rate limit or blip: try once more by itself, still showing the
+          // spinner, before asking the shopper to retry
+          autoRetriedSlug.current = slug;
+          retryTimer = setTimeout(() => setAttempt((n) => n + 1), 2500);
+          return;
+        } else {
+          setLoadFailure('error');
+          dropStaticSnapshot();
+        }
       }
       setLoading(false);
     };
     fetchProduct();
+    return () => {
+      cancelled = true;
+      clearTimeout(retryTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- prefill is read once per product load
-  }, [slug]);
+  }, [slug, attempt]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center pt-[60px]">
-        <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (loadFailure === 'notFound') {
+    return <NotFoundPage />;
   }
 
-  if (!product) {
-    return <NotFoundPage />;
+  // Loading, or a temporary failure: no <SEO> here, so the page never carries
+  // a robots tag or another page's title while its product isn't on screen
+  if (loading || !product) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center pt-[60px]">
+        {loadFailure === 'error' ? (
+          <LoadErrorNotice title="We couldn't load this product just now" onRetry={() => setAttempt((n) => n + 1)} />
+        ) : (
+          <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
+        )}
+      </div>
+    );
   }
 
   // Determine if this is a nameplate product (show custom text only for nameplates)

@@ -1,8 +1,9 @@
 User-agent: *
 Allow: /
+# Private tools. Other non-public pages (checkout, account, search, login…)
+# stay crawlable so search engines can read their X-Robots-Tag: noindex
+# header (vercel.json); a Disallow would hide that header from them.
 Disallow: /admin
 Disallow: /marketing
-Disallow: /checkout
-Disallow: /dashboard
 
 Sitemap: https://www.gpsfdk.com/sitemap.xml

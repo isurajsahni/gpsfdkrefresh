@@ -26,6 +26,6 @@ Structured nature is having a massive moment. Pairings (diptychs) of highly symm
 
 Stay ahead of the curve with our curated luxury decor picks:
 - **[The Social Outcast Canvas](/product/the-social-outcast)**: The epitome of the raw Japandi minimalist wabi-sabi trend, styled in muted tones and textured strokes.
-- **[Sunehra Naam Acrylic Nameplate](/product/sunehra-naam)**: A gorgeous, ultra-luxury gold-embossed entrance statement piece to match your high-end interior.
+- **[Golden Heritage Nameplate](/product/golden-heritage)**: A golden entrance statement piece to match your high-end interior.
 
-[Explore Our Luxury Decor Collection →](/wall-canvas)
+[Explore Our Luxury Decor Collection →](/canvas)

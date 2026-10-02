@@ -4,15 +4,17 @@ import { motion } from 'framer-motion';
 import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
-import { cachedGet } from '../utils/api';
+import { cachedGet, isNotFound as isApiNotFound } from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
 import ProductCard, { ProductCardSkeleton } from '../components/product/ProductCard';
 import Pagination from '../components/common/Pagination';
 import NotFoundPage from './NotFoundPage';
+import LoadErrorNotice from '../components/common/LoadErrorNotice';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
-import { COLLECTIONS as SUBCATEGORIES, collectionSlug as generateSlug } from '../utils/collections';
+import { COLLECTIONS as SUBCATEGORIES, collectionSlug as generateSlug, LISTING_PAGE_SIZE as PAGE_SIZE } from '../utils/collections';
+import { usePrerenderData } from '../prerender/PrerenderData';
 import { CANVAS_PATH } from '../utils/categoryPath';
 import { SectionHeading } from '../components/canvas-v2/Layout';
 import StyleCircle from '../components/canvas-v2/StyleCircle';
@@ -22,7 +24,6 @@ import { ART_STYLES, ALL_PRODUCTS_STYLE } from '../components/canvas-v2/artStyle
 // /wall-canvas/all redirect to /canvas, which lists every canvas.
 
 const SITE_URL = 'https://www.gpsfdk.com';
-const PAGE_SIZE = 12;
 
 // Rendered by ProductZigzagPage, which fetches its own products
 const ZIGZAG_SLUG = 'house-nameplates';
@@ -38,15 +39,23 @@ const CategoryPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const [products, setProducts] = useState([]);
-  const [category, setCategory] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [totalProducts, setTotalProducts] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  // Rendered outside the browser (api/render.js), the category and its listing
+  // come with the render; in the browser they're fetched below
+  const prerendered = usePrerenderData();
+  const listing = prerendered?.listing;
+  const [products, setProducts] = useState(listing?.products || []);
+  const [category, setCategory] = useState(prerendered?.category || null);
+  const [loading, setLoading] = useState(!prerendered);
+  const [totalProducts, setTotalProducts] = useState(listing?.total || 0);
+  const [totalPages, setTotalPages] = useState(listing?.pages || 1);
   const [isNotFound, setIsNotFound] = useState(false);
   // True only when the listing loaded and has no products; a failed request
   // must never mark the page noindex.
-  const [isEmpty, setIsEmpty] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(listing?.total === 0);
+  // The product list failed to load (timeout, rate limit, server error):
+  // offer a retry rather than "Coming Soon"
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
   
@@ -81,6 +90,7 @@ const CategoryPage = () => {
       setLoading(true);
       setIsNotFound(false);
       setIsEmpty(false);
+      setLoadError(false);
 
       const params = {
         categorySlug: slug,
@@ -101,7 +111,7 @@ const CategoryPage = () => {
       ]);
       if (cancelled) return;
 
-      if (catResult.status === 'rejected' && catResult.reason?.response?.status === 404) {
+      if (catResult.status === 'rejected' && isApiNotFound(catResult.reason)) {
         setIsNotFound(true);
         setLoading(false);
         return;
@@ -110,6 +120,7 @@ const CategoryPage = () => {
 
       if (productsResult.status === 'rejected') {
         console.error(productsResult.reason);
+        setLoadError(true);
       } else if (productsResult.value) {
         const data = productsResult.value;
         setIsEmpty(data.total === 0);
@@ -133,7 +144,7 @@ const CategoryPage = () => {
     fetchProducts();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, subcategorySlug, currentPage]);
+  }, [slug, subcategorySlug, currentPage, reloadKey]);
 
   const handlePageChange = (newPage) => {
     if (newPage < 1 || newPage > totalPages) return;
@@ -193,14 +204,18 @@ const CategoryPage = () => {
     // Wall Canvas listings are white like /canvas, whose art-style circles head them
     <div className={`min-h-screen ${slug === 'wall-canvas' ? 'bg-white' : 'bg-gray-50'} pt-[60px] pb-12`}>
       {/* An empty listing is a soft 404; it becomes indexable again on its own
-          once products are added. */}
-      <SEO
-        title={dynamicTitle}
-        description={dynamicDescription}
-        image={products[0]?.images?.[0]?.url ? optimizeImage(products[0].images[0].url, 1200) : undefined}
-        schema={[breadcrumbSchema, itemListSchema].filter(Boolean)}
-        noindex={isEmpty}
-      />
+          once products are added. Rendered once the listing has loaded: until
+          then the page keeps the head tags it was served with, and the static
+          copy of the page stays on screen (SEO.jsx removes it). */}
+      {!loading && (
+        <SEO
+          title={dynamicTitle}
+          description={dynamicDescription}
+          image={products[0]?.images?.[0]?.url ? optimizeImage(products[0].images[0].url, 1200) : undefined}
+          schema={[breadcrumbSchema, itemListSchema].filter(Boolean)}
+          noindex={isEmpty}
+        />
+      )}
       
       {/* Header Area */}
       {slug === 'wall-canvas' ? (
@@ -264,6 +279,11 @@ const CategoryPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" aria-busy="true" aria-label="Loading products">
             {Array.from({ length: 8 }, (_, i) => <ProductCardSkeleton key={i} />)}
           </div>
+        ) : loadError ? (
+          <LoadErrorNotice
+            onRetry={() => setReloadKey((k) => k + 1)}
+            className="bg-white rounded-2xl shadow-sm border border-gray-100"
+          />
         ) : products.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-sm border border-gray-100">
             <h3 className="text-2xl font-heading font-semibold text-secondary mb-2">Coming Soon</h3>

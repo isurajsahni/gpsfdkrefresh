@@ -4,20 +4,29 @@ import { motion } from 'framer-motion';
 import ProductRow from './ProductRow';
 import API from '../../utils/api';
 import SEO from '../seo/SEO';
+import LoadErrorNotice from '../common/LoadErrorNotice';
+import { usePrerenderData } from '../../prerender/PrerenderData';
 import heroImage from '../../assets/image/housenameplate_poster.webp';
 
 const ProductZigzagPage = ({ category, slug }) => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Rendered outside the browser (api/render.js), the products come with the
+  // render; in the browser they're fetched below
+  const prerendered = usePrerenderData()?.listing?.products;
+  const [products, setProducts] = useState(prerendered || []);
+  const [loading, setLoading] = useState(!prerendered);
   const [visibleCount, setVisibleCount] = useState(16);
   // True only when the listing loaded and has no products; a failed request
   // must never mark the page noindex.
-  const [isEmpty, setIsEmpty] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(prerendered?.length === 0);
+  // The list failed to load: offer a retry rather than "Coming Soon"
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setIsEmpty(false);
+      setLoadError(false);
       try {
         // Only this category's products — not the whole catalogue
         const { data } = await API.get('/products', {
@@ -27,12 +36,13 @@ const ProductZigzagPage = ({ category, slug }) => {
         setIsEmpty(data.products.length === 0);
       } catch (err) {
         console.error(err);
+        setLoadError(true);
       }
       setLoading(false);
     };
     setVisibleCount(16);
     fetchProducts();
-  }, [slug]);
+  }, [slug, reloadKey]);
 
   // Intersection Observer for scroll animations
   const containerRef = useRef(null);
@@ -110,8 +120,12 @@ const ProductZigzagPage = ({ category, slug }) => {
   return (
     <div className="min-h-screen bg-cream pb-12 w-full">
       {/* Empty (e.g. while nameplates are out of stock) is a soft 404; the page
-          becomes indexable again on its own once products are added. */}
-      <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} noindex={isEmpty} />
+          becomes indexable again on its own once products are added. Rendered
+          once the list has loaded, so until then the page keeps the head tags
+          it was served with and its static copy stays on screen. */}
+      {!loading && (
+        <SEO title={dynamicTitle} description={dynamicDescription} schema={breadcrumbSchema} noindex={isEmpty} />
+      )}
 
       {/* Hero Header - 100vh 50/50 Split */}
       <div className="relative w-full h-[100vh] flex flex-col md:flex-row overflow-hidden bg-secondary">
@@ -168,7 +182,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       {/* Product Count */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
         <p className="text-gray-500 text-sm">
-          {loading ? 'Loading...' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
+          {loading ? 'Loading...' : loadError ? '' : `${products.length} product${products.length !== 1 ? 's' : ''}`}
         </p>
       </div>
 
@@ -180,6 +194,8 @@ const ProductZigzagPage = ({ category, slug }) => {
             <SkeletonRow isEven={false} />
             <SkeletonRow isEven={true} />
           </>
+        ) : loadError ? (
+          <LoadErrorNotice onRetry={() => setReloadKey((k) => k + 1)} />
         ) : products.length === 0 ? (
           <div className="text-center py-20">
             <h3 className="text-2xl font-heading font-semibold text-secondary mb-2">Coming Soon</h3>

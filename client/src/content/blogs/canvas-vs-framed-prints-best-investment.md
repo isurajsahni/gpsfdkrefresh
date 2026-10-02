@@ -27,7 +27,7 @@ Framed prints involve printing an image on paper (glossy, matte, or fine art pap
 
 ## When to Choose Canvas
 
-![Framed and Canvas Art Side by Side](https://images.unsplash.com/photo-1513519245088-0e12902e35ca?q=80&w=1400)
+![A gallery wall of framed prints above a sofa](https://images.unsplash.com/photo-1615876234886-fd9a39fda97f?q=80&w=1400)
 
 ### You Want a Modern, Clean Aesthetic
 Canvas prints' frameless design creates a sleek, contemporary look. They appear to "float" on the wall, which suits modern apartments and minimalist interiors.
@@ -99,4 +99,4 @@ Ready to invest in high-fidelity wall canvas art? Here are two highly rated opti
 
 Both canvas and framed prints have their place in Indian homes. For most modern homeowners looking for a stylish, affordable, and hassle-free wall decor option, **canvas prints offer the best overall value**. But if you crave the timeless elegance of a beautifully framed photograph, don't let anyone talk you out of it.
 
-[Explore Our Premium Wall Canvas Collection →](/wall-canvas)
+[Explore Our Premium Wall Canvas Collection →](/canvas)

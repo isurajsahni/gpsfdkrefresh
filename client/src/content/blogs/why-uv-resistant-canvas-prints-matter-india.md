@@ -28,4 +28,4 @@ Bring worry-free, long-lasting vibrancy to your sun-drenched rooms:
 ## Conclusion
 Before you buy **large wall art for bedroom india** or living room aesthetics, check the fine print. UV-resistant canvases might cost slightly more upfront, but they are the singular difference between temporary posters and true, lifelong luxury art investments.
 
-[Explore Our UV-Resistant Collection →](/wall-canvas)
+[Explore Our UV-Resistant Collection →](/canvas)

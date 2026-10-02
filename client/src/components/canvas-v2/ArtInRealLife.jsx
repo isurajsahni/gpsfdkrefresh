@@ -17,7 +17,10 @@ import wolfOfWallStreet from '../../assets/videos/The Wolf of Wall Street.mp4';
 import nextCircle from '../../assets/image/canvas-v2/icons/carousel-next-circle.svg';
 import nextChevron from '../../assets/image/canvas-v2/icons/carousel-chevron.svg';
 
-/* ── Art in real life ─────────────────────────────────────────────────────────
+/* ── Artworks in motion ───────────────────────────────────────────────────────
+   The heading is the Store page's video section's, two-tone as there (the
+   frame says "Art in real life").
+
    The frame's 277.5x450 grey cards (radius 20, 30px apart) are placeholders
    for the product reels, so the store's artwork clips fill them. Measured
    from the heading's line box top at 1440: cards at 76.4, section bottom at
@@ -174,7 +177,10 @@ export default function ArtInRealLife() {
     <section className="overflow-x-clip px-5 sm:px-8">
       <Shell>
         <motion.div {...inView}>
-          <SectionHeading>Art in real life</SectionHeading>
+          <SectionHeading>
+            Artworks in motion.{' '}
+            <span className="text-[#686868]">This is what people say about us.</span>
+          </SectionHeading>
         </motion.div>
       </Shell>
 

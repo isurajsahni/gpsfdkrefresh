@@ -5,7 +5,7 @@ const Category = require('../models/Category');
 
 // Blog slugs come from the client's blog registry when it's deployed alongside
 // the server, else from a fallback list (see utils/blogRegistry.js).
-const blogSlugs = require('../utils/blogRegistry').blogPosts.map((post) => post.slug);
+const { blogPosts } = require('../utils/blogRegistry');
 
 // In-memory cache of the generated XML — sitemap data changes rarely, so skip
 // the DB queries for an hour at a time.
@@ -111,13 +111,18 @@ router.get('/', async (req, res) => {
   </url>`;
     });
 
-    // Add blogs
-    blogSlugs.forEach((slug) => {
+    // Add blogs (lastmod and the cover image when the client registry is
+    // deployed alongside the server; see utils/blogRegistry.js)
+    blogPosts.forEach((post) => {
       xml += `
   <url>
-    <loc>${baseUrl}/blog/${slug}</loc>
+    <loc>${baseUrl}/blog/${post.slug}</loc>${/^\d{4}-\d{2}-\d{2}$/.test(post.date) ? `
+    <lastmod>${post.date}</lastmod>` : ''}
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.7</priority>${post.image ? `
+    <image:image>
+      <image:loc>${escXml(post.image)}</image:loc>
+    </image:image>` : ''}
   </url>`;
     });
 

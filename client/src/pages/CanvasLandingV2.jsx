@@ -58,6 +58,11 @@ const FAQS = [
   },
 ];
 
+// "Find your next favourite" (the six best sellers) is hidden for now: the
+// listing under the art styles opens with them. Set this to true to bring it
+// back.
+const SHOW_NEXT_FAVOURITE = false;
+
 const BREADCRUMB_SCHEMA = {
   '@context': 'https://schema.org',
   '@type': 'BreadcrumbList',
@@ -88,9 +93,11 @@ export default function CanvasLandingV2() {
       <div className="mt-20 lg:mt-[120px]">
         <ArtInRealLife />
       </div>
-      <div className="mt-20 lg:mt-[120px]">
-        <ProductGrid />
-      </div>
+      {SHOW_NEXT_FAVOURITE && (
+        <div className="mt-20 lg:mt-[120px]">
+          <ProductGrid />
+        </div>
+      )}
       <FaqSection
         className="mt-20 lg:mt-[120px]"
         headingClassName="text-black"

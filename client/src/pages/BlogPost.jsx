@@ -30,7 +30,7 @@ import { markdownComponents } from '../content/blogs/markdownComponents';
 import { ArrowRight, BlogCard, Eyebrow } from '../components/blog/BlogUI';
 import ProductCard from '../components/product/ProductCard';
 import { KindCTA } from '../components/kindact/KindUI';
-import API from '../utils/api';
+import { cachedGet } from '../utils/api';
 import NotFoundPage from './NotFoundPage';
 
 const byDate = sortByDate(blogs);
@@ -164,10 +164,10 @@ const BlogPost = () => {
     if (!blog) return undefined;
     let cancelled = false;
     setProducts([]);
-    API.get('/products', {
+    cachedGet('/products', {
       params: { limit: 4, categorySlug: shopPath === '/house-nameplates' ? 'house-nameplates' : 'wall-canvas' },
     })
-      .then(({ data }) => {
+      .then((data) => {
         if (!cancelled) setProducts(data.products || []);
       })
       .catch(() => {

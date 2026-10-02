@@ -205,9 +205,15 @@ function ScrollManager() {
     }
 
     // ─── Track page view to our analytics ───
-    const trackPageView = async () => {
-      try {
-        await API.post('/analytics/track', {
+    // A low-priority keepalive fetch: fire-and-forget, never awaited, and it
+    // still goes out if the visitor leaves the page straight away. Not
+    // sendBeacon: the API only parses application/json, and a cross-origin
+    // beacon can't reliably carry that content type.
+    try {
+      fetch(`${API.defaults.baseURL}/analytics/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           visitorId: getVisitorId(),
           pageUrl: location.pathname,
           referrer: sessionStorage.getItem('initial_referrer') || '',
@@ -217,12 +223,15 @@ function ScrollManager() {
           utmTerm: sessionStorage.getItem('utm_term') || '',
           utmContent: sessionStorage.getItem('utm_content') || '',
           clickSource: sessionStorage.getItem('click_source') || '',
-        });
-      } catch (err) {
+        }),
+        keepalive: true,
+        priority: 'low',
+      }).catch(() => {
         // Silent fail — analytics should never block the user
-      }
-    };
-    trackPageView();
+      });
+    } catch {
+      // Storage or fetch unavailable: analytics is best-effort
+    }
   }, [location.pathname, location.search]);
 
   return null;

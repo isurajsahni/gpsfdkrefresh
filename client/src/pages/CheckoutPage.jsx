@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import API from '../utils/api';
+import API, { getMe } from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
@@ -264,7 +264,7 @@ const CheckoutPage = () => {
       try {
         // `silent: true` tells the API interceptor not to force-logout on 401 —
         // a transient blip here must not interrupt an in-progress checkout.
-        const { data } = await API.get('/auth/me', { silent: true });
+        const data = await getMe();
         applyAddresses(data.addresses || []);
       } catch {
         if (!user.addresses?.length) setShowNewForm(true);

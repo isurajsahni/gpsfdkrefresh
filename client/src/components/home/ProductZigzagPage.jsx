@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import ProductRow from './ProductRow';
-import API from '../../utils/api';
+import { cachedGet } from '../../utils/api';
 import SEO from '../seo/SEO';
 import LoadErrorNotice from '../common/LoadErrorNotice';
 import { usePrerenderData } from '../../prerender/PrerenderData';
@@ -29,7 +29,7 @@ const ProductZigzagPage = ({ category, slug }) => {
       setLoadError(false);
       try {
         // Only this category's products — not the whole catalogue
-        const { data } = await API.get('/products', {
+        const data = await cachedGet('/products', {
           params: { categorySlug: slug, limit: 1000 }
         });
         setProducts(data.products);

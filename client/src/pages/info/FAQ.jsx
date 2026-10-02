@@ -19,7 +19,7 @@ const FAQ = () => {
     },
     {
       question: 'What sizes are available?',
-      answer: 'Canvases come in sizes from 12x18 to 36x60 inches (square designs from 12x12 to 48x48 inches), rolled or stretched. Posters come in A4 and A3, as a sticker or on soft board. Each product page lists its exact sizes and prices.'
+      answer: 'Canvases come in sizes from 12x18 to 36x60 inches (square designs from 12x12 to 48x48 inches), rolled or stretched. Posters come in A4 and A3, on soft board. Each product page lists its exact sizes and prices.'
     },
     {
       question: 'How long does shipping take?',

@@ -10,7 +10,7 @@ const faqData = [
   { q: 'What is your return policy?', a: 'Non-customised items can be returned within 7 days of delivery. If your order arrives damaged, or we get a customisation wrong, we’ll replace it or refund you in full.' },
   { q: 'Can I customize my nameplate?', a: 'Absolutely! All our house nameplates are fully customizable. You can choose the color, size, and enter your family name on the product page.' },
   { q: 'What payment methods do you accept?', a: 'UPI, credit and debit cards and net banking, all through Razorpay’s secure checkout. Cash on Delivery is also available on orders within India.' },
-  { q: 'Are the canvases framed?', a: 'We offer multiple options: Poster (paper/sticker/soft board), Rolled Canvas, and Stretched Canvas (gallery-wrapped on wooden frame). Choose your preference on the product page.' },
+  { q: 'Are the canvases framed?', a: 'We offer multiple options: Poster (on soft board), Rolled Canvas, and Stretched Canvas (gallery-wrapped on wooden frame). Choose your preference on the product page.' },
   { q: 'Do you ship internationally?', a: 'Yes, we deliver worldwide. Just enter your address at checkout: prices are shown in your local currency, and every order comes with a tracking link. Cash on Delivery is only available within India.' },
 ];
 

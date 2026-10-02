@@ -41,9 +41,12 @@ const CANVAS_SIZES = [
   { label: '36 x 60', rolledPrice: 5999, stretchedPrice: 7999 },
 ];
 
+// Posters come on soft board only: sticker (and paper) posters aren't sold
+// any more. The server prices a custom order from The Dapper Predator's
+// variations, so these must match that product's.
 const POSTER_SIZES = [
-  { label: 'A4', paperPrice: 99, stickerPrice: 149, softBoardPrice: 599 },
-  { label: 'A3', paperPrice: 199, stickerPrice: 299, softBoardPrice: 999 },
+  { label: 'A4', softBoardPrice: 599 },
+  { label: 'A3', softBoardPrice: 999 },
 ];
 
 const CANVAS_FRAMES = [
@@ -70,16 +73,6 @@ const CANVAS_FRAMES = [
 
 const POSTER_FRAMES = [
   { 
-    id: 'sticker', 
-    label: 'Sticker', 
-    icon: (props) => (
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.125 1.125 0 001.591 0l4.318-4.318a1.125 1.125 0 000-1.591L9.568 3.659A2.25 2.25 0 008.97 3z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
-      </svg>
-    )
-  },
-  { 
     id: 'softboard', 
     label: 'Soft Board', 
     icon: (props) => (
@@ -101,7 +94,6 @@ const QUALITY_COPY = {
 const mockupShadow = (materialId, frameId) => {
   if (materialId === 'canvas' && frameId === 'stretched') return 'shadow-[4px_6px_0_rgba(0,0,0,0.18),0_18px_30px_rgba(0,0,0,0.28)]';
   if (materialId === 'poster' && frameId === 'softboard') return 'shadow-[2px_3px_0_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.2)]';
-  if (materialId === 'poster') return 'shadow-[0_2px_6px_rgba(0,0,0,0.15)]';
   return 'shadow-[0_6px_16px_rgba(0,0,0,0.2)]';
 };
 
@@ -241,9 +233,7 @@ const CustomizeCanvasPage = () => {
     // Poster Pricing
     if (selectedMaterial.id === 'poster') {
       // Ensure we are looking at a poster size object
-      if (selectedSize.stickerPrice === undefined) return 0;
-      if (selectedFrame.id === 'softboard') return selectedSize.softBoardPrice;
-      return selectedSize.stickerPrice;
+      return selectedSize.softBoardPrice ?? 0;
     }
 
     return 0;

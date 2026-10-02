@@ -22,7 +22,7 @@ import { ART_STYLES_ID } from '../utils/collections';
    MCP. Each section lives in components/canvas-v2 and starts at its heading's
    line box; the gaps below are the frame's own spacing between sections
    (measured from where the site's 60px navbar ends, where Figma's is 50px),
-   except around "Art in real life" and above the FAQ, which are deliberately
+   except around "Artworks in motion" and above the FAQ, which are deliberately
    roomier than the frame's 88 / 91 / 87px. The FAQ is the same component the
    Consultancy page uses — Figma lays both out identically.
    ─────────────────────────────────────────────────────────────────────────── */

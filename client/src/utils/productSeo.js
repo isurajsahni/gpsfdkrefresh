@@ -54,7 +54,7 @@ const describeSizes = (sizes) => {
 const productType = (product) => PRODUCT_TYPES[product.category?.slug] || '';
 
 // e.g. "The Sovereign canvas wall art from the Gaze of Power collection.
-// Canvas: rolled or stretched, 12x18 to 36x60 in. Poster: sticker or soft board, A4 or A3."
+// Canvas: rolled or stretched, 12x18 to 36x60 in. Poster: soft board, A4 or A3."
 export const productSummary = (product) => {
   const type = productType(product).toLowerCase();
   const collection = (product.subCategory || '').trim().replace(/^the\s+/i, '');

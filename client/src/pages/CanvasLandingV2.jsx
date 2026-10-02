@@ -16,7 +16,7 @@ import { ART_STYLES_ID } from '../utils/collections';
    all-canvas listing, right under "Find your art style": that listing was a
    page of its own at /wall-canvas/all (and before that /wall-canvas), and both
    now redirect here. Each art style still opens its collection at
-   /wall-canvas/<collection>. "Explore Collections" lands on the art styles.
+   /wall-canvas/<collection>. "Explore Collection" lands on the art styles.
 
    Sizes, colours, radii and gaps are read from the Figma layers via the Figma
    MCP. Each section lives in components/canvas-v2 and starts at its heading's

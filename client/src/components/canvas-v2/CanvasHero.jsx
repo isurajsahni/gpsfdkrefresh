@@ -89,7 +89,7 @@ export default function CanvasHero() {
             to={ART_STYLES_PATH}
             className="-ml-[3px] mt-7 flex h-[45px] w-[171px] sm:mt-[20.92px] items-center justify-center rounded-[40px] bg-accent text-[14px] font-medium text-white shadow-[0px_4px_11.4px_0px_rgba(255,255,255,0.16)] transition-colors duration-300 hover:bg-accent-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
-            Explore Collections
+            Explore Collection
           </Link>
         </motion.div>
       </Shell>

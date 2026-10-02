@@ -513,7 +513,7 @@ const StorePage = () => {
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
-            action={<ArrowLink to={ART_STYLES_PATH}>Explore Collections</ArrowLink>}
+            action={<ArrowLink to={ART_STYLES_PATH}>Explore Collection</ArrowLink>}
           />
         </div>
 

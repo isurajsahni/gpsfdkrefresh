@@ -65,6 +65,18 @@
   ],
   "headers": [
     {
+      "source": "/(register|login|search|cart|checkout|thank-you|dashboard|forgot-password|whatsapp-login|track-order|consultancy-v2-demo)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
+      "source": "/(admin|marketing|invoice-preview)(/.*)?",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex" }
+      ]
+    },
+    {
       "source": "/assets/((?!store-entry-).*\\.mp4)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store" }

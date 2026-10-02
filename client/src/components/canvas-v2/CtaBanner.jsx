@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { inView } from './motion';
+import { ART_STYLES_PATH } from '../../utils/collections';
 
 import ctaBanner from '../../assets/image/canvas-v2/cta-banner.webp';
 
@@ -59,10 +60,10 @@ export default function CtaBanner() {
             Find a canvas that feels like it was made for your space.
           </p>
           <Link
-            to="/wall-canvas/all"
+            to={ART_STYLES_PATH}
             className="mt-5 inline-flex h-10 w-[150px] items-center justify-center rounded-[40px] bg-white text-[13px] font-medium leading-[1.19] text-black shadow-[0px_4px_11.4px_0px_rgba(255,255,255,0.16)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:mt-4 md:mt-5 md:w-[160px] md:text-[14px] lg:mt-[26.798px] lg:h-[45px] lg:w-[171px]"
           >
-            Explore Collections
+            Explore Collection
           </Link>
         </div>
       </motion.div>

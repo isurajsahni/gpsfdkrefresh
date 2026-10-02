@@ -15,6 +15,9 @@ import SearchOverlay from './components/layout/SearchOverlay';
 import API from './utils/api';
 import ChatBot from './components/common/ChatBot';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import NavigationProgress from './components/common/NavigationProgress';
+import { lazyPage, startRoutePrefetch } from './utils/routePrefetch';
+import { ALL_CANVASES_PATH } from './utils/collections';
 
 // Isolated Testing Pages (lazy — bypasses Router entirely)
 const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
@@ -25,69 +28,68 @@ import NotFoundPage from './pages/NotFoundPage';
 
 // ─── Common next steps: on demand, but fetched in the background once the
 // first page has settled (see App), so opening one is still instant ───
-const loadCategoryPage = () => import('./pages/CategoryPage');
-const loadProductPage = () => import('./pages/ProductPage');
-const CategoryPage = lazy(loadCategoryPage);
-const ProductPage = lazy(loadProductPage);
-const HomePage = lazy(() => import('./pages/HomePage'));
-const CartPage = lazy(() => import('./pages/CartPage'));
-const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
+const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
+const ProductPage = lazyPage(() => import('./pages/ProductPage'));
+const HomePage = lazyPage(() => import('./pages/HomePage'));
+const CartPage = lazyPage(() => import('./pages/CartPage'));
+const AdminLayout = lazyPage(() => import('./components/admin/AdminLayout'));
 
 // ─── Code-split (everything else loads on demand) ───
-// Each lazy() call becomes its own chunk, so guests on the homepage no longer
-// download admin + marketing + invoice bundles.
-const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
-const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
-const LoginPage = lazy(() => import('./pages/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/RegisterPage'));
-const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
-const UserDashboard = lazy(() => import('./pages/UserDashboard'));
-const SearchPage = lazy(() => import('./pages/SearchPage'));
-const AboutUs = lazy(() => import('./pages/info/AboutUs'));
+// Each lazyPage() call becomes its own chunk, so guests on the homepage no
+// longer download admin + marketing + invoice bundles. A page is fetched as
+// soon as someone points at or taps a link to it (see startRoutePrefetch).
+const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
+const ThankYouPage = lazyPage(() => import('./pages/ThankYouPage'));
+const LoginPage = lazyPage(() => import('./pages/LoginPage'));
+const RegisterPage = lazyPage(() => import('./pages/RegisterPage'));
+const ForgotPasswordPage = lazyPage(() => import('./pages/ForgotPasswordPage'));
+const UserDashboard = lazyPage(() => import('./pages/UserDashboard'));
+const SearchPage = lazyPage(() => import('./pages/SearchPage'));
+const AboutUs = lazyPage(() => import('./pages/info/AboutUs'));
 // Contact.jsx is the consultancy landing page (routed at /consultancy);
 // ContactUs.jsx is the general contact page at /contact.
-const Contact = lazy(() => import('./pages/info/Contact'));
-const ContactUs = lazy(() => import('./pages/info/ContactUs'));
-const FAQ = lazy(() => import('./pages/info/FAQ'));
-const ShippingPolicy = lazy(() => import('./pages/support/ShippingPolicy'));
-const ReturnsRefunds = lazy(() => import('./pages/support/ReturnsRefunds'));
-const PrivacyPolicy = lazy(() => import('./pages/info/PrivacyPolicy'));
-const CEOPage = lazy(() => import('./pages/info/CEOPage'));
-const Vision = lazy(() => import('./pages/info/Vision'));
-const SchoolOfLearning = lazy(() => import('./pages/info/SchoolOfLearning'));
-const Love = lazy(() => import('./pages/info/Love'));
-const Partner = lazy(() => import('./pages/info/Partner'));
-const Support = lazy(() => import('./pages/info/Support'));
-const TermsConditions = lazy(() => import('./pages/support/TermsConditions'));
-const LocationPage = lazy(() => import('./pages/LocationPage'));
-const BlogList = lazy(() => import('./pages/BlogList'));
-const BlogPost = lazy(() => import('./pages/BlogPost'));
-const TrackOrderPage = lazy(() => import('./pages/TrackOrderPage'));
-const CustomizeCanvasPage = lazy(() => import('./pages/CustomizeCanvasPage'));
+const Contact = lazyPage(() => import('./pages/info/Contact'));
+const ContactUs = lazyPage(() => import('./pages/info/ContactUs'));
+const FAQ = lazyPage(() => import('./pages/info/FAQ'));
+const ShippingPolicy = lazyPage(() => import('./pages/support/ShippingPolicy'));
+const ReturnsRefunds = lazyPage(() => import('./pages/support/ReturnsRefunds'));
+const PrivacyPolicy = lazyPage(() => import('./pages/info/PrivacyPolicy'));
+const CEOPage = lazyPage(() => import('./pages/info/CEOPage'));
+const Vision = lazyPage(() => import('./pages/info/Vision'));
+const SchoolOfLearning = lazyPage(() => import('./pages/info/SchoolOfLearning'));
+const Love = lazyPage(() => import('./pages/info/Love'));
+const Partner = lazyPage(() => import('./pages/info/Partner'));
+const Support = lazyPage(() => import('./pages/info/Support'));
+const TermsConditions = lazyPage(() => import('./pages/support/TermsConditions'));
+const LocationPage = lazyPage(() => import('./pages/LocationPage'));
+const BlogList = lazyPage(() => import('./pages/BlogList'));
+const BlogPost = lazyPage(() => import('./pages/BlogPost'));
+const TrackOrderPage = lazyPage(() => import('./pages/TrackOrderPage'));
+const CustomizeCanvasPage = lazyPage(() => import('./pages/CustomizeCanvasPage'));
 // Canvas Page v2 — internal demo of the Figma rebuild. Not linked from nav, noindex.
-const CanvasLandingV2 = lazy(() => import('./pages/CanvasLandingV2'));
+const CanvasLandingV2 = lazyPage(() => import('./pages/CanvasLandingV2'));
 // Consultancy v2 — internal demo of the Figma "Consultancy" frame. Not linked from nav, noindex.
-const ConsultancyLandingV2 = lazy(() => import('./pages/ConsultancyLandingV2'));
-const SEO_PremiumWallCanvasIndia = lazy(() => import('./pages/SEO_PremiumWallCanvasIndia'));
-const WhatsAppLogin = lazy(() => import('./pages/WhatsAppLogin'));
+const ConsultancyLandingV2 = lazyPage(() => import('./pages/ConsultancyLandingV2'));
+const SEO_PremiumWallCanvasIndia = lazyPage(() => import('./pages/SEO_PremiumWallCanvasIndia'));
+const WhatsAppLogin = lazyPage(() => import('./pages/WhatsAppLogin'));
 
 // Admin Pages (heavy — never need to ship to anonymous visitors)
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
-const AdminOrders = lazy(() => import('./pages/admin/AdminOrders'));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
-const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons'));
-const AdminAbandonedCarts = lazy(() => import('./pages/admin/AdminAbandonedCarts'));
-const AdminWishlist = lazy(() => import('./pages/admin/AdminWishlist'));
-const AdminLeads = lazy(() => import('./pages/admin/AdminLeads'));
-const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
-const AdminMarketingPerformance = lazy(() => import('./pages/admin/AdminMarketingPerformance'));
+const AdminDashboard = lazyPage(() => import('./pages/admin/AdminDashboard'));
+const AdminProducts = lazyPage(() => import('./pages/admin/AdminProducts'));
+const AdminOrders = lazyPage(() => import('./pages/admin/AdminOrders'));
+const AdminUsers = lazyPage(() => import('./pages/admin/AdminUsers'));
+const AdminCategories = lazyPage(() => import('./pages/admin/AdminCategories'));
+const AdminCoupons = lazyPage(() => import('./pages/admin/AdminCoupons'));
+const AdminAbandonedCarts = lazyPage(() => import('./pages/admin/AdminAbandonedCarts'));
+const AdminWishlist = lazyPage(() => import('./pages/admin/AdminWishlist'));
+const AdminLeads = lazyPage(() => import('./pages/admin/AdminLeads'));
+const AdminAnalytics = lazyPage(() => import('./pages/admin/AdminAnalytics'));
+const AdminMarketingPerformance = lazyPage(() => import('./pages/admin/AdminMarketingPerformance'));
 
 // Marketing Pages
-const MarketingLayout = lazy(() => import('./components/marketing/MarketingLayout'));
-const MarketingDashboard = lazy(() => import('./pages/marketing/MarketingDashboard'));
-const MarketingUsageHistory = lazy(() => import('./pages/marketing/MarketingUsageHistory'));
+const MarketingLayout = lazyPage(() => import('./components/marketing/MarketingLayout'));
+const MarketingDashboard = lazyPage(() => import('./pages/marketing/MarketingDashboard'));
+const MarketingUsageHistory = lazyPage(() => import('./pages/marketing/MarketingUsageHistory'));
 
 // Lightweight inline fallback shown while a chunk is downloading.
 const SuspenseFallback = () => (
@@ -138,11 +140,36 @@ const captureUTMOnce = () => {
 
 function ScrollManager() {
   const location = useLocation();
+  const { pathname, search, hash, key } = location;
+  // Every visit to an #anchor counts, even to the one already in the address
+  // bar: "Explore Collection" at the foot of /canvas goes back up to it
+  const anchorVisit = hash ? key : '';
+
+  // To the top of each new page, or to the #anchor a link points at
+  // (e.g. /canvas#all-canvases). On a first load the page is still on its way,
+  // so wait a few seconds for the anchor to appear.
+  useEffect(() => {
+    const anchor = () => (hash.length > 1 ? document.getElementById(hash.slice(1)) : null);
+    if (anchor()) {
+      anchor().scrollIntoView();
+      return undefined;
+    }
+    window.scrollTo(0, 0);
+    if (!hash) return undefined;
+    const observer = new MutationObserver(() => {
+      if (!anchor()) return;
+      observer.disconnect();
+      anchor().scrollIntoView();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const giveUp = setTimeout(() => observer.disconnect(), 5000);
+    return () => {
+      observer.disconnect();
+      clearTimeout(giveUp);
+    };
+  }, [pathname, search, hash, anchorVisit]);
 
   useEffect(() => {
-    // Simple scroll to top on route change
-    window.scrollTo(0, 0);
-
     // Fire Meta Pixel PageView on every route change (SPA support)
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'PageView');
@@ -186,6 +213,7 @@ const GlobalUI = () => {
 
   return (
     <>
+      <NavigationProgress />
       <Navbar />
       <CartDrawer />
       <SearchOverlay />
@@ -194,19 +222,119 @@ const GlobalUI = () => {
   );
 };
 
+// Every route here also needs a rewrite in client/vercel.json. Without one,
+// Vercel serves it from 404.html: the page still renders, but with a 404
+// status, so search engines drop it.
+const pageRoutes = (
+  <>
+    {/* Public */}
+    <Route path="/" element={<><StorePage /><Footer /></>} />
+    <Route path="/home" element={<><HomePage /><Footer /></>} />
+    <Route path="/store" element={<><StorePage /><Footer /></>} />
+    <Route path="/search" element={<><SearchPage /><Footer /></>} />
+    <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />
+    <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
+    <Route path="/cart" element={<><CartPage /><Footer /></>} />
+    <Route path="/login" element={<><LoginPage /><Footer /></>} />
+    <Route path="/register" element={<><RegisterPage /><Footer /></>} />
+    <Route path="/forgot-password" element={<><ForgotPasswordPage /><Footer /></>} />
+    <Route path="/whatsapp-login" element={<><WhatsAppLogin /><Footer /></>} />
+
+    {/* Location SEO Landing Pages */}
+    <Route path="/location/:city" element={<><LocationPage /><Footer /></>} />
+
+    {/* Blog */}
+    <Route path="/blog" element={<><BlogList /><Footer /></>} />
+    <Route path="/blog/:slug" element={<><BlogPost /><Footer /></>} />
+
+    {/* Info & Policy */}
+    <Route path="/about" element={<><AboutUs /><Footer /></>} />
+    <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
+    <Route path="/vision" element={<><Vision /><Footer /></>} />
+    {/* Two distinct pages. /consultancy is the services pitch with its
+        own enquiry funnel (it used to sit at /contact, which is what
+        made the URL contradict the label); /contact is general
+        contact — channels, a message form, and self-serve links. */}
+    <Route path="/consultancy" element={<><Contact /><Footer /></>} />
+    <Route path="/contact" element={<><ContactUs /><Footer /></>} />
+    <Route path="/faq" element={<><FAQ /><Footer /></>} />
+    <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
+    <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />
+    <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
+    <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
+
+    {/* GPS Business Group pillars (coming soon) */}
+    <Route path="/school-of-learning" element={<><SchoolOfLearning /><Footer /></>} />
+    <Route path="/love" element={<><Love /><Footer /></>} />
+    <Route path="/partner" element={<><Partner /><Footer /></>} />
+    <Route path="/support" element={<><Support /><Footer /></>} />
+
+    {/* Checkout & ThankYou are guest-accessible — the server-side guest
+        order endpoint (/orders/guest) handles unauthenticated buyers.
+        Gating these behind ProtectedRoute forced every buyer to register,
+        killing conversions. */}
+    <Route path="/checkout" element={<><CheckoutPage /><Footer /></>} />
+    <Route path="/thank-you" element={<><ThankYouPage /><Footer /></>} />
+    <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
+
+    {/* Admin */}
+    <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
+      <Route index element={<AdminDashboard />} />
+      <Route path="products" element={<AdminProducts />} />
+      <Route path="orders" element={<AdminOrders />} />
+      <Route path="users" element={<AdminUsers />} />
+      <Route path="categories" element={<AdminCategories />} />
+      <Route path="coupons" element={<AdminCoupons />} />
+      <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
+      <Route path="wishlist" element={<AdminWishlist />} />
+      <Route path="leads" element={<AdminLeads />} />
+      <Route path="analytics" element={<AdminAnalytics />} />
+      <Route path="marketing-performance" element={<AdminMarketingPerformance />} />
+    </Route>
+
+    {/* Marketing Dashboard */}
+    <Route path="/marketing" element={<ProtectedRoute marketingOnly><MarketingLayout /></ProtectedRoute>}>
+      <Route index element={<MarketingDashboard />} />
+      <Route path="usage" element={<MarketingUsageHistory />} />
+    </Route>
+
+    {/* Order Tracking */}
+    <Route path="/track-order" element={<><TrackOrderPage /><Footer /></>} />
+
+    {/* SEO Top Landing Pages */}
+    <Route path="/premium-wall-canvas-india" element={<><SEO_PremiumWallCanvasIndia /><Footer /></>} />
+
+    {/* Canvas — the Wall Canvas landing page. The old all-canvas listing
+        at /wall-canvas and the v2 demo URL redirect here (vercel.json
+        301s them too); collections stay at /wall-canvas/<collection>. */}
+    <Route path="/canvas" element={<><CanvasLandingV2 /><Footer /></>} />
+    <Route path="/wall-canvas" element={<Navigate to="/canvas" replace />} />
+    <Route path="/canvas-v2-demo" element={<Navigate to="/canvas" replace />} />
+    {/* Every canvas is listed on /canvas now, under the art styles */}
+    <Route path="/wall-canvas/all" element={<Navigate to={ALL_CANVASES_PATH} replace />} />
+
+    {/* Consultancy v2 — internal demo only. Not linked from nav; SEO noindex.
+        The live /consultancy page and its enquiry form are unchanged. */}
+    <Route path="/consultancy-v2-demo" element={<><ConsultancyLandingV2 /><Footer /></>} />
+
+    {/* Category pages — MUST be last (catch-all pattern) */}
+    <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />
+    <Route path="/:slug/:subcategorySlug" element={<><CategoryPage /><Footer /></>} />
+
+    {/* 404 Fallback */}
+    <Route path="*" element={<NotFoundPage />} />
+  </>
+);
+
 function App() {
   useEffect(() => {
     captureUTMOnce();
   }, []);
 
-  // Warm the category and product pages once the browser is idle
-  useEffect(() => {
-    const whenIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 2000));
-    whenIdle(() => {
-      loadCategoryPage().catch(() => {});
-      loadProductPage().catch(() => {});
-    });
-  }, []);
+  // Fetch pages ahead of the click: the header's and footer's, and category
+  // and product pages (the store's cards), once this one has loaded; any
+  // other on hover, focus or touch
+  useEffect(() => startRoutePrefetch(pageRoutes, { warm: [CategoryPage, ProductPage] }), []);
 
   // --- ISOLATED PREVIEW ROUTE ---
   // Completely bypasses all providers, routers, and API calls to guarantee no reload loops
@@ -235,105 +363,7 @@ function App() {
               <GlobalUI />
 
               <Suspense fallback={<SuspenseFallback />}>
-              {/* Every route here also needs a rewrite in client/vercel.json.
-                  Without one, Vercel serves it from 404.html: the page still
-                  renders, but with a 404 status, so search engines drop it. */}
-              <Routes>
-                {/* Public */}
-                <Route path="/" element={<><StorePage /><Footer /></>} />
-                <Route path="/home" element={<><HomePage /><Footer /></>} />
-                <Route path="/store" element={<><StorePage /><Footer /></>} />
-                <Route path="/search" element={<><SearchPage /><Footer /></>} />
-                <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />
-                <Route path="/product/:slug" element={<><ProductPage /><Footer /></>} />
-                <Route path="/cart" element={<><CartPage /><Footer /></>} />
-                <Route path="/login" element={<><LoginPage /><Footer /></>} />
-                <Route path="/register" element={<><RegisterPage /><Footer /></>} />
-                <Route path="/forgot-password" element={<><ForgotPasswordPage /><Footer /></>} />
-                <Route path="/whatsapp-login" element={<><WhatsAppLogin /><Footer /></>} />
-                
-                {/* Location SEO Landing Pages */}
-                <Route path="/location/:city" element={<><LocationPage /><Footer /></>} />
-                
-                {/* Blog */}
-                <Route path="/blog" element={<><BlogList /><Footer /></>} />
-                <Route path="/blog/:slug" element={<><BlogPost /><Footer /></>} />
-                
-                {/* Info & Policy */}
-                <Route path="/about" element={<><AboutUs /><Footer /></>} />
-                <Route path="/ceo" element={<><CEOPage /><Footer /></>} />
-                <Route path="/vision" element={<><Vision /><Footer /></>} />
-                {/* Two distinct pages. /consultancy is the services pitch with its
-                    own enquiry funnel (it used to sit at /contact, which is what
-                    made the URL contradict the label); /contact is general
-                    contact — channels, a message form, and self-serve links. */}
-                <Route path="/consultancy" element={<><Contact /><Footer /></>} />
-                <Route path="/contact" element={<><ContactUs /><Footer /></>} />
-                <Route path="/faq" element={<><FAQ /><Footer /></>} />
-                <Route path="/shipping-policy" element={<><ShippingPolicy /><Footer /></>} />
-                <Route path="/returns-refunds" element={<><ReturnsRefunds /><Footer /></>} />
-                <Route path="/privacy-policy" element={<><PrivacyPolicy /><Footer /></>} />
-                <Route path="/terms-conditions" element={<><TermsConditions /><Footer /></>} />
-
-                {/* GPS Business Group pillars (coming soon) */}
-                <Route path="/school-of-learning" element={<><SchoolOfLearning /><Footer /></>} />
-                <Route path="/love" element={<><Love /><Footer /></>} />
-                <Route path="/partner" element={<><Partner /><Footer /></>} />
-                <Route path="/support" element={<><Support /><Footer /></>} />
-
-              {/* Checkout & ThankYou are guest-accessible — the server-side guest
-                  order endpoint (/orders/guest) handles unauthenticated buyers.
-                  Gating these behind ProtectedRoute forced every buyer to register,
-                  killing conversions. */}
-              <Route path="/checkout" element={<><CheckoutPage /><Footer /></>} />
-              <Route path="/thank-you" element={<><ThankYouPage /><Footer /></>} />
-              <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
-
-              {/* Admin */}
-              <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="products" element={<AdminProducts />} />
-                <Route path="orders" element={<AdminOrders />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="categories" element={<AdminCategories />} />
-                <Route path="coupons" element={<AdminCoupons />} />
-                <Route path="abandoned-carts" element={<AdminAbandonedCarts />} />
-                <Route path="wishlist" element={<AdminWishlist />} />
-                <Route path="leads" element={<AdminLeads />} />
-                <Route path="analytics" element={<AdminAnalytics />} />
-                <Route path="marketing-performance" element={<AdminMarketingPerformance />} />
-              </Route>
-
-              {/* Marketing Dashboard */}
-              <Route path="/marketing" element={<ProtectedRoute marketingOnly><MarketingLayout /></ProtectedRoute>}>
-                <Route index element={<MarketingDashboard />} />
-                <Route path="usage" element={<MarketingUsageHistory />} />
-              </Route>
-
-              {/* Order Tracking */}
-              <Route path="/track-order" element={<><TrackOrderPage /><Footer /></>} />
-
-              {/* SEO Top Landing Pages */}
-              <Route path="/premium-wall-canvas-india" element={<><SEO_PremiumWallCanvasIndia /><Footer /></>} />
-
-              {/* Canvas — the Wall Canvas landing page. The old all-canvas listing
-                  at /wall-canvas and the v2 demo URL redirect here (vercel.json
-                  301s them too); collections stay at /wall-canvas/<collection>. */}
-              <Route path="/canvas" element={<><CanvasLandingV2 /><Footer /></>} />
-              <Route path="/wall-canvas" element={<Navigate to="/canvas" replace />} />
-              <Route path="/canvas-v2-demo" element={<Navigate to="/canvas" replace />} />
-
-              {/* Consultancy v2 — internal demo only. Not linked from nav; SEO noindex.
-                  The live /consultancy page and its enquiry form are unchanged. */}
-              <Route path="/consultancy-v2-demo" element={<><ConsultancyLandingV2 /><Footer /></>} />
-
-              {/* Category pages — MUST be last (catch-all pattern) */}
-              <Route path="/:slug" element={<><CategoryPage /><Footer /></>} />
-              <Route path="/:slug/:subcategorySlug" element={<><CategoryPage /><Footer /></>} />
-
-              {/* 404 Fallback */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+              <Routes>{pageRoutes}</Routes>
               </Suspense>
           </CartProvider>
             </CurrencyProvider>

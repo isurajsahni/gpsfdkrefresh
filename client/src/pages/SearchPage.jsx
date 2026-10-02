@@ -6,6 +6,7 @@ import ProductCard, { ProductCardSkeleton } from '../components/product/ProductC
 import {
   loadSearchIndex, searchCatalogue, popularProducts, POPULAR_COLLECTIONS, SEARCH_CATEGORIES,
 } from '../utils/searchIndex';
+import { ALL_CANVASES_PATH } from '../utils/collections';
 
 const chipClass = 'px-4 py-2 rounded-full text-sm font-semibold bg-white border border-gray-200 text-secondary hover:border-accent hover:text-accent transition-colors';
 
@@ -75,7 +76,7 @@ const SearchPage = () => {
           <div className="text-center py-16 bg-white rounded-3xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
             <h2 className="text-2xl font-bold text-secondary mb-2">Search isn't available right now</h2>
             <p className="text-gray-500 mb-8">Please try again in a moment, or browse the collections.</p>
-            <Link to="/wall-canvas/all" className="btn-primary">Browse all canvases</Link>
+            <Link to={ALL_CANVASES_PATH} className="btn-primary">Browse all canvases</Link>
           </div>
         )}
 

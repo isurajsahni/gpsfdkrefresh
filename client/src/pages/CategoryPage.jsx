@@ -1,24 +1,25 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { HiOutlineShoppingCart, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
+import { HiOutlineShoppingCart } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import { cachedGet } from '../utils/api';
 import SEO from '../components/seo/SEO';
 import ProductZigzagPage from '../components/home/ProductZigzagPage';
 import ProductCard, { ProductCardSkeleton } from '../components/product/ProductCard';
+import Pagination from '../components/common/Pagination';
 import NotFoundPage from './NotFoundPage';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
-import { COLLECTIONS as SUBCATEGORIES, ALL_PRODUCTS_SLUG, collectionSlug as generateSlug } from '../utils/collections';
+import { COLLECTIONS as SUBCATEGORIES, collectionSlug as generateSlug } from '../utils/collections';
 import { CANVAS_PATH } from '../utils/categoryPath';
 import { SectionHeading } from '../components/canvas-v2/Layout';
 import StyleCircle from '../components/canvas-v2/StyleCircle';
 import { ART_STYLES, ALL_PRODUCTS_STYLE } from '../components/canvas-v2/artStyles';
 
-// /wall-canvas/all lists every canvas; /wall-canvas itself redirects to the
-// /canvas landing page.
+// /wall-canvas/<collection> lists one canvas collection. /wall-canvas and
+// /wall-canvas/all redirect to /canvas, which lists every canvas.
 
 const SITE_URL = 'https://www.gpsfdk.com';
 const PAGE_SIZE = 12;
@@ -57,13 +58,9 @@ const CategoryPage = () => {
     ? SUBCATEGORIES.find(s => generateSlug(s) === subcategorySlug)
     : null;
 
-  const isAllProducts = slug === 'wall-canvas' && subcategorySlug === ALL_PRODUCTS_SLUG;
-
-  // Only the collections in SUBCATEGORIES (plus "all") exist. Any other
-  // /:slug/:subcategory is a 404 rather than an indexable, empty "collection"
-  // for whatever was typed.
-  const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory && !isAllProducts;
-  const displaySubcategory = exactSubcategory || (isAllProducts ? 'All Canvas Wall Art' : null);
+  // Only the collections in SUBCATEGORIES exist. Any other /:slug/:subcategory
+  // is a 404 rather than an indexable, empty "collection" for whatever was typed.
+  const isUnknownSubcategory = Boolean(subcategorySlug) && !exactSubcategory;
 
   // Below lg the art styles are one sideways-scrolling row: bring the current
   // collection's circle into view
@@ -92,7 +89,6 @@ const CategoryPage = () => {
       };
 
       if (exactSubcategory) params.subCategoryExact = exactSubcategory;
-      if (isAllProducts) params.sort = 'best_selling';
 
       // The category and its products don't depend on each other, so they're
       // fetched together rather than one after the other.
@@ -156,8 +152,8 @@ const CategoryPage = () => {
   }
 
   // Generate dynamic SEO based on category
-  const dynamicTitle = displaySubcategory
-    ? `${displaySubcategory} | Premium Custom Designs India`
+  const dynamicTitle = exactSubcategory
+    ? `${exactSubcategory} | Premium Custom Designs India`
     : category?.name
       ? `${category.name} | Shop Custom Designs in India`
       : 'Explore Premium Products | GPSFDK';
@@ -170,10 +166,10 @@ const CategoryPage = () => {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-      displaySubcategory
+      exactSubcategory
         ? { '@type': 'ListItem', position: 2, name: category.name, item: `${SITE_URL}${slug === 'wall-canvas' ? CANVAS_PATH : `/${slug}`}` }
         : { '@type': 'ListItem', position: 2, name: category.name },
-      ...(displaySubcategory ? [{ '@type': 'ListItem', position: 3, name: displaySubcategory }] : []),
+      ...(exactSubcategory ? [{ '@type': 'ListItem', position: 3, name: exactSubcategory }] : []),
     ],
   } : null;
   // The collection's own products, for search engines' "ItemList" rich results
@@ -209,20 +205,20 @@ const CategoryPage = () => {
       {/* Header Area */}
       {slug === 'wall-canvas' ? (
         // The /canvas page's "Find your art style" circles, led by All Products
-        // and ending with Custom Canvas (which opens the customiser), in the
-        // same column and on the same tracks as there. Kept short so the first
-        // products are visible without scrolling: one sideways-scrolling row
-        // below lg, two rows of eight from lg.
+        // (the listing on /canvas) and ending with Custom Canvas (which opens
+        // the customiser), in the same column and on the same tracks as there.
+        // Kept short so the first products are visible without scrolling: one
+        // sideways-scrolling row below lg, two rows of eight from lg.
         <div className={`${CANVAS_COLUMN} pt-8 lg:pt-12`}>
           <SectionHeading as="h1">
-            {displaySubcategory && !isAllProducts ? displaySubcategory : 'Canvas for your soul'}
+            {exactSubcategory || 'Canvas for your soul'}
           </SectionHeading>
 
           {/* Fixed-width items in the row keep the overhanging labels clear of
               each other; py-1 leaves room for the active ring's offset. */}
           <ul ref={styleRowRef} className="relative -mx-5 mt-5 flex gap-x-1 overflow-x-auto px-5 py-1 scrollbar-hide sm:-mx-8 sm:mt-7 sm:gap-x-2 sm:px-8 lg:mx-0 lg:mt-[31.18px] lg:grid lg:grid-cols-8 lg:gap-x-0 lg:gap-y-[42.18px] lg:overflow-visible lg:px-0 xl:grid-cols-[repeat(8,80px)] xl:gap-x-20 xl:pl-1">
             {[ALL_PRODUCTS_STYLE, ...ART_STYLES].map((style) => {
-              const isActive = style === ALL_PRODUCTS_STYLE ? isAllProducts : Boolean(style.collection) && style.collection === exactSubcategory;
+              const isActive = Boolean(style.collection) && style.collection === exactSubcategory;
               return (
                 <li key={style.to} data-active={isActive} className="w-[76px] shrink-0 sm:w-[96px] lg:w-auto">
                   <StyleCircle {...style} active={isActive} />
@@ -240,14 +236,14 @@ const CategoryPage = () => {
                 {subcategorySlug ? (
                   <>
                     <Link to={`/${slug}`} className="hover:text-white">{category?.name || '…'}</Link>
-                    <span className="mx-2">/</span> <span className="text-white">{displaySubcategory}</span>
+                    <span className="mx-2">/</span> <span className="text-white">{exactSubcategory}</span>
                   </>
                 ) : (
                   <span className="text-white">{category?.name || '…'}</span>
                 )}
               </nav>
-              {displaySubcategory || category?.name ? (
-                <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{displaySubcategory || category.name}</h1>
+              {exactSubcategory || category?.name ? (
+                <h1 className="text-4xl md:text-5xl font-heading font-bold text-white">{exactSubcategory || category.name}</h1>
               ) : (
                 <div className="h-12 w-64 max-w-full rounded-lg bg-white/10 animate-pulse" aria-hidden="true" />
               )}
@@ -377,28 +373,7 @@ const CategoryPage = () => {
               })}
             </div>
 
-            {/* Traditional Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-4 mt-16 pb-8">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all shadow-sm border ${currentPage === 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-secondary border-gray-200 hover:border-accent hover:text-accent'}`}
-                >
-                  <HiChevronLeft className="w-5 h-5" /> Previous
-                </button>
-                <div className="hidden sm:flex text-sm font-semibold text-gray-500 items-center justify-center min-w-[80px]">
-                  {currentPage} <span className="mx-1 text-gray-300">/</span> {totalPages}
-                </div>
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all shadow-sm border ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-secondary border-gray-200 hover:border-accent hover:text-accent'}`}
-                >
-                  Next <HiChevronRight className="w-5 h-5" />
-                </button>
-              </div>
-            )}
+            <Pagination page={currentPage} pages={totalPages} onChange={handlePageChange} />
           </>
         )}
       </div>

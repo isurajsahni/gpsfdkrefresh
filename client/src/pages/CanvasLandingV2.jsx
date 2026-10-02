@@ -1,18 +1,22 @@
 import SEO from '../components/seo/SEO';
 import CanvasHero from '../components/canvas-v2/CanvasHero';
 import ArtStyleGrid from '../components/canvas-v2/ArtStyleGrid';
+import CanvasCollection from '../components/canvas-v2/CanvasCollection';
 import ArtInRealLife from '../components/canvas-v2/ArtInRealLife';
 import ProductGrid from '../components/canvas-v2/ProductGrid';
 import CtaBanner from '../components/canvas-v2/CtaBanner';
 import FaqSection from '../components/landing/FaqSection';
+import { ART_STYLES_ID } from '../utils/collections';
 
 /* ───────────────────────────────────────────────────────────────────────────
    Canvas — the Wall Canvas landing page, served at /canvas.
 
    Rebuild of the "Canvas Page" frame in the Canvas Page Figma file
-   (figma.com/design/7gCw9F9RUAYrudmzJtsHWM, node 22:7). It replaces the old
-   all-canvas listing at /wall-canvas, which now redirects here; each art style
-   still opens its collection at /wall-canvas/<collection>.
+   (figma.com/design/7gCw9F9RUAYrudmzJtsHWM, node 22:7). It also holds the
+   all-canvas listing, right under "Find your art style": that listing was a
+   page of its own at /wall-canvas/all (and before that /wall-canvas), and both
+   now redirect here. Each art style still opens its collection at
+   /wall-canvas/<collection>. "Explore Collection" lands on the art styles.
 
    Sizes, colours, radii and gaps are read from the Figma layers via the Figma
    MCP. Each section lives in components/canvas-v2 and starts at its heading's
@@ -74,8 +78,12 @@ export default function CanvasLandingV2() {
         schema={BREADCRUMB_SCHEMA}
       />
       <CanvasHero />
-      <div className="mt-14 lg:mt-[90px]">
+      {/* scroll-mt: anchor links land just under the 60px fixed navbar */}
+      <div id={ART_STYLES_ID} className="mt-14 scroll-mt-20 lg:mt-[90px]">
         <ArtStyleGrid />
+      </div>
+      <div className="mt-10 lg:mt-12">
+        <CanvasCollection />
       </div>
       <div className="mt-20 lg:mt-[120px]">
         <ArtInRealLife />

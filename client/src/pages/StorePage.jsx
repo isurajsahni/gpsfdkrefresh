@@ -7,6 +7,7 @@ import { handleImageError } from '../utils/imageOptimizer';
 import useClickOutside from '../hooks/useClickOutside';
 import { ORGANIZATION_SCHEMA, WEBSITE_SCHEMA } from '../utils/siteSchema';
 import SEO from '../components/seo/SEO';
+import { ART_STYLES_PATH } from '../utils/collections';
 import 'swiper/css';
 
 // ─── Figma store-page imagery (client/src/assets/image/store page) ───
@@ -512,7 +513,7 @@ const StorePage = () => {
           <Heading
             bold="Artworks in motion."
             light="This is what people say about us."
-            action={<ArrowLink to="/wall-canvas/all">Explore Collections</ArrowLink>}
+            action={<ArrowLink to={ART_STYLES_PATH}>Explore Collection</ArrowLink>}
           />
         </div>
 

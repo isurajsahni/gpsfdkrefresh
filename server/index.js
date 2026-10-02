@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 
 const connectDB = require('./config/db');
+const { catalogueLimiter, isCatalogueRead } = require('./middleware/catalogueLimiter');
 
 dotenv.config();
 
@@ -39,6 +40,8 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
   message: { message: 'Too many requests, please try again later.' },
   skip: (req) => {
+    // Public product/category GETs are counted by catalogueLimiter instead
+    if (isCatalogueRead(req)) return true;
     // Skip rate limiting for admin product upload routes
     // These routes are already protected by auth + admin middleware
     if (req.path.startsWith('/api/products') && ['POST', 'PUT'].includes(req.method)) return true;
@@ -52,6 +55,7 @@ const globalLimiter = rateLimit({
   },
 });
 app.use(globalLimiter);
+app.use(catalogueLimiter);
 
 // ─── Shiprocket Webhook (mounted BEFORE CORS — server-to-server, no browser origin) ───
 // Needs its own JSON parser since it's mounted before the global express.json()

@@ -30,7 +30,6 @@ import NotFoundPage from './pages/NotFoundPage';
 // first page has settled (see App), so opening one is still instant ───
 const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
 const ProductPage = lazyPage(() => import('./pages/ProductPage'));
-const HomePage = lazyPage(() => import('./pages/HomePage'));
 const CartPage = lazyPage(() => import('./pages/CartPage'));
 const AdminLayout = lazyPage(() => import('./components/admin/AdminLayout'));
 
@@ -253,7 +252,9 @@ const pageRoutes = (
   <>
     {/* Public */}
     <Route path="/" element={<><StorePage /><Footer /></>} />
-    <Route path="/home" element={<><HomePage /><Footer /></>} />
+    {/* / is the homepage; the old second homepage at /home 301s
+        there (vercel.json does it for crawlers and direct loads) */}
+    <Route path="/home" element={<Navigate to="/" replace />} />
     <Route path="/store" element={<><StorePage /><Footer /></>} />
     <Route path="/search" element={<><SearchPage /><Footer /></>} />
     <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />

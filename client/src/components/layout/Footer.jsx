@@ -76,7 +76,7 @@ const Footer = () => (
             "GPS" wordmark, per Figma. */}
         <ol className="flex items-end gap-3">
           <li className="flex items-center">
-            <Link to="/" className="flex items-center">
+            <Link to="/home" className="flex items-center">
               {/* Same rendered size as the navbar logo (50×50). */}
               <img src={logo} alt="GPSFDK Logo" className="w-[50px] h-auto object-contain" loading="lazy" decoding="async" />
             </Link>

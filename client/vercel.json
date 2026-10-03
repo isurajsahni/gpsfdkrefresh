@@ -6,7 +6,6 @@
     }
   },
   "redirects": [
-    { "source": "/home(/?)", "destination": "https://www.gpsfdk.com/", "statusCode": 301 },
     { "source": "/staging-page(/?)", "destination": "https://www.gpsfdk.com/", "statusCode": 301 },
     { "source": "/wall-canvas(/?)", "destination": "https://www.gpsfdk.com/canvas", "statusCode": 301 },
     { "source": "/wall-canvas/all(/?)", "destination": "https://www.gpsfdk.com/canvas", "statusCode": 301 },
@@ -60,7 +59,7 @@
     },
     { "source": "/store", "destination": "/index.html" },
     { "source": "/:page(about|ceo|vision|consultancy|faq|shipping-policy|returns-refunds|privacy-policy|terms-conditions|support|customize-canvas|premium-wall-canvas-india|canvas|blog)", "destination": "/:page/index.html" },
-    { "source": "/:page(search|cart|login|register|forgot-password|whatsapp-login|contact|school-of-learning|love|partner|checkout|thank-you|dashboard|track-order|consultancy-v2-demo)", "destination": "/app.html" },
+    { "source": "/:page(home|search|cart|login|register|forgot-password|whatsapp-login|contact|school-of-learning|love|partner|checkout|thank-you|dashboard|track-order|consultancy-v2-demo)", "destination": "/app.html" },
     { "source": "/house-nameplates", "destination": "/api/render?path=/house-nameplates" },
     { "source": "/product/:slug", "destination": "/api/render?path=/product/:slug" },
     { "source": "/blog/:slug", "destination": "/blog/:slug/index.html" },

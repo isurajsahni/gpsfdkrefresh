@@ -33,6 +33,8 @@ const ProductPage = lazyPage(() => import('./pages/ProductPage'));
 const CartPage = lazyPage(() => import('./pages/CartPage'));
 const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
 const AdminLayout = lazyPage(() => import('./components/admin/AdminLayout'));
+// The original home page, where the logo leads; / is the Store page
+const HomePage = lazyPage(() => import('./pages/HomePage'));
 
 // ─── Code-split (everything else loads on demand) ───
 // Each lazyPage() call becomes its own chunk, so guests on the homepage no
@@ -261,9 +263,7 @@ const pageRoutes = (
   <>
     {/* Public */}
     <Route path="/" element={<><StorePage /><Footer /></>} />
-    {/* / is the homepage; the old second homepage at /home 301s
-        there (vercel.json does it for crawlers and direct loads) */}
-    <Route path="/home" element={<Navigate to="/" replace />} />
+    <Route path="/home" element={<><HomePage /><Footer /></>} />
     <Route path="/store" element={<><StorePage /><Footer /></>} />
     <Route path="/search" element={<><SearchPage /><Footer /></>} />
     <Route path="/customize-canvas" element={<><CustomizeCanvasPage /><Footer /></>} />

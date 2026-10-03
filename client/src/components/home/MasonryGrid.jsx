@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import API from '../../utils/api';
+import { cachedGet } from '../../utils/api';
 import { useCurrency } from '../../context/CurrencyContext';
 import { optimizeImage } from '../../utils/imageOptimizer';
 
@@ -33,7 +33,7 @@ const MasonryGrid = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data } = await API.get('/products', {
+        const data = await cachedGet('/products', {
           params: {
             // Series of the Month — currently Millionaire Art.
             // Swap this to a different subCategory value to feature

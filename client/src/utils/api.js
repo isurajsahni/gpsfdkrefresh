@@ -111,4 +111,40 @@ export const cachedGet = (url, config = {}, ttlMs = READ_CACHE_TTL_MS) => {
   return promise;
 };
 
+// ─── The signed-in user's profile, once per session ───
+// AuthContext refreshes it on load and checkout reads saved addresses from it;
+// both share one request instead of each asking again. Kept per login token,
+// and dropped after any successful write under /auth/ (addresses, profile,
+// avatar) so nobody sees a list from before their own edit. Resolves to the
+// response data.
+let me = null; // { token, promise }
+
+const storedToken = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user'))?.token;
+  } catch {
+    return undefined;
+  }
+};
+
+export const forgetMe = () => {
+  me = null;
+};
+
+export const getMe = () => {
+  const token = storedToken();
+  if (me && me.token === token) return me.promise;
+  const promise = API.get('/auth/me', { silent: true }).then((res) => res.data);
+  me = { token, promise };
+  promise.catch(() => {
+    if (me?.promise === promise) me = null;
+  });
+  return promise;
+};
+
+API.interceptors.response.use((res) => {
+  if (res.config?.method !== 'get' && (res.config?.url || '').startsWith('/auth/')) forgetMe();
+  return res;
+});
+
 export default API;

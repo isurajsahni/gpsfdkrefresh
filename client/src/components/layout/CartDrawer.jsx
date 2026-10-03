@@ -38,6 +38,7 @@ const CartDrawer = () => {
               <h2 className="text-xl font-heading font-bold text-secondary">Your Cart ({cartCount})</h2>
               <button 
                 onClick={() => setIsCartOpen(false)}
+                aria-label="Close cart"
                 className="p-2 text-gray-400 hover:text-secondary hover:bg-cream rounded-full transition-colors"
               >
                 <HiOutlineX className="w-6 h-6" />
@@ -80,17 +81,17 @@ const CartDrawer = () => {
                               {item.variation?.size} {item.variation?.material && `• ${item.variation.material}`}
                             </p>
                           </div>
-                          <button onClick={() => removeFromCart(item.key)} className="text-gray-400 hover:text-red-500 p-1">
+                          <button onClick={() => removeFromCart(item.key)} aria-label={`Remove ${item.name} from cart`} className="text-gray-400 hover:text-red-500 p-1">
                             <HiOutlineTrash className="w-4 h-4" />
                           </button>
                         </div>
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center border border-gray-200 rounded-full scale-90 origin-left">
-                            <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="px-2 py-1 hover:bg-cream-dark rounded-l-full">
+                            <button onClick={() => updateQuantity(item.key, item.quantity - 1)} aria-label="Decrease quantity" className="px-2 py-1 hover:bg-cream-dark rounded-l-full">
                               <HiMinus className="w-3 h-3" />
                             </button>
                             <span className="px-3 text-xs font-semibold">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.key, item.quantity + 1)} className="px-2 py-1 hover:bg-cream-dark rounded-r-full">
+                            <button onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label="Increase quantity" className="px-2 py-1 hover:bg-cream-dark rounded-r-full">
                               <HiPlus className="w-3 h-3" />
                             </button>
                           </div>

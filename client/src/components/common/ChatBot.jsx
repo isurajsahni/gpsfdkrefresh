@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiChatAlt2, HiX, HiPaperAirplane, HiDotsHorizontal } from 'react-icons/hi';
 import API from '../../utils/api';
+import { useUI } from '../../context/UIContext';
 
 const QUICK_OPTIONS = [
   "Suggest canvas for living room",
@@ -18,6 +20,8 @@ const ChatBot = () => {
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef(null);
+  const { isCartOpen } = useUI();
+  const { pathname } = useLocation();
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -52,6 +56,11 @@ const ChatBot = () => {
     }
   };
 
+  // Out of the way while the cart drawer is open and on the cart and checkout
+  // pages: at phone widths it sits over the totals and the Checkout buttons,
+  // which scroll under it. The conversation is kept for when it's back.
+  if (isCartOpen || pathname === '/cart' || pathname === '/checkout') return null;
+
   return (
     <div className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 z-[9999] flex flex-col items-end">
       {/* Chat Window */}
@@ -76,6 +85,7 @@ const ChatBot = () => {
               </div>
               <button 
                 onClick={() => setIsOpen(false)}
+                aria-label="Close chat"
                 className="p-2 hover:bg-white/10 rounded-full transition-colors"
               >
                 <HiX className="w-5 h-5" />
@@ -157,6 +167,7 @@ const ChatBot = () => {
                 <button 
                   type="submit"
                   disabled={!message.trim() || isLoading}
+                  aria-label="Send message"
                   className="bg-accent text-white p-3 rounded-2xl shadow-lg hover:bg-accent-dark transition-all disabled:opacity-50 disabled:scale-95"
                 >
                   <HiPaperAirplane className="w-5 h-5 rotate-90" />
@@ -175,6 +186,8 @@ const ChatBot = () => {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? 'Close chat' : 'Open chat'}
+        aria-expanded={isOpen}
         className="w-14 h-14 bg-accent text-white rounded-2xl shadow-2xl flex items-center justify-center hover:bg-accent-dark transition-colors relative overflow-hidden group"
       >
         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />

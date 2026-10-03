@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import API from '../utils/api';
+import API, { getMe } from '../utils/api';
 import toast from 'react-hot-toast';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
@@ -264,7 +264,7 @@ const CheckoutPage = () => {
       try {
         // `silent: true` tells the API interceptor not to force-logout on 401 —
         // a transient blip here must not interrupt an in-progress checkout.
-        const { data } = await API.get('/auth/me', { silent: true });
+        const data = await getMe();
         applyAddresses(data.addresses || []);
       } catch {
         if (!user.addresses?.length) setShowNewForm(true);
@@ -755,15 +755,27 @@ const CheckoutPage = () => {
               {/* Saved addresses */}
               {savedAddresses.length > 0 && !showNewForm && (
                 <div className="space-y-3 mb-6">
+                  {/* Each card is a radio (the hidden input) with Remove and
+                      Edit beside it, not inside it: a button can't hold
+                      other buttons. A click anywhere on the card selects it. */}
+                  <div role="radiogroup" aria-label="Saved addresses" className="space-y-3">
                   {savedAddresses.map(addr => (
-                    <button
+                    <div
                       key={addr._id}
                       onClick={() => setSelectedAddressId(addr._id)}
-                      className={`w-full text-left p-4 rounded-xl border-2 transition-all relative ${selectedAddressId === addr._id ? 'border-accent bg-accent/5' : 'border-gray-200 hover:border-gray-300'}`}
+                      className={`w-full text-left p-4 rounded-xl border-2 transition-all relative cursor-pointer has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${selectedAddressId === addr._id ? 'border-accent bg-accent/5' : 'border-gray-200 hover:border-gray-300'}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedAddressId === addr._id ? 'border-accent' : 'border-gray-300'}`}>
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="savedAddress"
+                            value={addr._id}
+                            checked={selectedAddressId === addr._id}
+                            onChange={() => setSelectedAddressId(addr._id)}
+                            className="sr-only"
+                          />
+                          <div aria-hidden="true" className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${selectedAddressId === addr._id ? 'border-accent' : 'border-gray-300'}`}>
                             {selectedAddressId === addr._id && <div className="w-2.5 h-2.5 rounded-full bg-accent" />}
                           </div>
                           <div>
@@ -773,17 +785,19 @@ const CheckoutPage = () => {
                               {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}, {addr.city}, {addr.state} - {addr.pincode}
                             </p>
                           </div>
-                        </div>
+                        </label>
                         <div className="flex flex-col items-end gap-1">
                           <button
+                            type="button"
                             onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
                             className="text-gray-400 hover:text-red-500 text-xs font-medium px-2 py-1 rounded transition-colors"
                           >
                             Remove
                           </button>
                           <button
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setIsEditing(addr._id);
                               // Pass the full phone number, SmartPhoneInput handles splitting it
                               setAddress({ ...addr, phone: addr.phone || '' });
@@ -799,8 +813,9 @@ const CheckoutPage = () => {
                       {addr.isDefault && (
                         <span className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium hidden sm:inline">Default</span>
                       )}
-                    </button>
+                    </div>
                   ))}
+                  </div>
 
                   <button
                     onClick={() => {

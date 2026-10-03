@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import API from '../utils/api';
+import API, { getMe, forgetMe } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -27,8 +27,8 @@ export const AuthProvider = ({ children }) => {
     // token (getMe doesn't return one). Silent + best-effort: offline or a
     // transient error just keeps the cached user.
     if (parsed?.token) {
-      API.get('/auth/me', { silent: true })
-        .then(({ data }) => {
+      getMe()
+        .then((data) => {
           if (data && data._id) {
             const merged = { ...parsed, ...data, token: parsed.token };
             localStorage.setItem('user', JSON.stringify(merged));
@@ -63,11 +63,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    forgetMe();
     localStorage.removeItem('user');
     setUser(null);
   };
 
   const updateUser = (userData) => {
+    forgetMe();
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };

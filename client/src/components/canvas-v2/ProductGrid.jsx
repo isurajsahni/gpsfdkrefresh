@@ -6,7 +6,7 @@ import { Shell, SectionHeading } from './Layout';
 import { fadeUp, stagger } from './motion';
 import { useCurrency } from '../../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
-import API from '../../utils/api';
+import { cachedGet } from '../../utils/api';
 import { ALL_CANVASES_PATH } from '../../utils/collections';
 
 import viewCircle from '../../assets/image/canvas-v2/icons/view-circle.svg';
@@ -135,15 +135,15 @@ export default function ProductGrid() {
     const load = async () => {
       let list = null;
       try {
-        const res = await API.get('/products/hot-selling');
-        list = res.data?.products || [];
+        const data = await cachedGet('/products/hot-selling');
+        list = data?.products || [];
       } catch {
         // Fall through to featured.
       }
       if (!list?.length) {
         try {
-          const res = await API.get('/products', { params: { featured: true, limit: 6 } });
-          list = res.data?.products || [];
+          const data = await cachedGet('/products', { params: { featured: true, limit: 6 } });
+          list = data?.products || [];
         } catch {
           // Keep the hot-selling result, if that request got through.
         }

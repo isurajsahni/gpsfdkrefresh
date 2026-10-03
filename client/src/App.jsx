@@ -26,19 +26,20 @@ const InvoicePreview = lazy(() => import('./pages/InvoicePreview'));
 import StorePage from './pages/StorePage';
 import NotFoundPage from './pages/NotFoundPage';
 
-// ─── Common next steps: on demand, but fetched in the background once the
+// ─── The purchase path: on demand, but fetched in the background once the
 // first page has settled (see App), so opening one is still instant ───
 const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
 const ProductPage = lazyPage(() => import('./pages/ProductPage'));
-const HomePage = lazyPage(() => import('./pages/HomePage'));
 const CartPage = lazyPage(() => import('./pages/CartPage'));
+const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
 const AdminLayout = lazyPage(() => import('./components/admin/AdminLayout'));
+// The original home page, where the logo leads; / is the Store page
+const HomePage = lazyPage(() => import('./pages/HomePage'));
 
 // ─── Code-split (everything else loads on demand) ───
 // Each lazyPage() call becomes its own chunk, so guests on the homepage no
 // longer download admin + marketing + invoice bundles. A page is fetched as
 // soon as someone points at or taps a link to it (see startRoutePrefetch).
-const CheckoutPage = lazyPage(() => import('./pages/CheckoutPage'));
 const ThankYouPage = lazyPage(() => import('./pages/ThankYouPage'));
 const LoginPage = lazyPage(() => import('./pages/LoginPage'));
 const RegisterPage = lazyPage(() => import('./pages/RegisterPage'));
@@ -206,9 +207,15 @@ function ScrollManager() {
     }
 
     // ─── Track page view to our analytics ───
-    const trackPageView = async () => {
-      try {
-        await API.post('/analytics/track', {
+    // A low-priority keepalive fetch: fire-and-forget, never awaited, and it
+    // still goes out if the visitor leaves the page straight away. Not
+    // sendBeacon: the API only parses application/json, and a cross-origin
+    // beacon can't reliably carry that content type.
+    try {
+      fetch(`${API.defaults.baseURL}/analytics/track`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           visitorId: getVisitorId(),
           pageUrl: location.pathname,
           referrer: sessionStorage.getItem('initial_referrer') || '',
@@ -218,12 +225,15 @@ function ScrollManager() {
           utmTerm: sessionStorage.getItem('utm_term') || '',
           utmContent: sessionStorage.getItem('utm_content') || '',
           clickSource: sessionStorage.getItem('click_source') || '',
-        });
-      } catch (err) {
+        }),
+        keepalive: true,
+        priority: 'low',
+      }).catch(() => {
         // Silent fail — analytics should never block the user
-      }
-    };
-    trackPageView();
+      });
+    } catch {
+      // Storage or fetch unavailable: analytics is best-effort
+    }
   }, [location.pathname, location.search]);
 
   return null;
@@ -351,10 +361,10 @@ const pageRoutes = (
 );
 
 function App() {
-  // Fetch pages ahead of the click: the header's and footer's, and category
-  // and product pages (the store's cards), once this one has loaded; any
-  // other on hover, focus or touch
-  useEffect(() => startRoutePrefetch(pageRoutes, { warm: [CategoryPage, ProductPage] }), []);
+  // Fetch pages ahead of the click: the purchase path (category, product,
+  // cart, checkout) once this one has loaded; any other only on hover, focus
+  // or touch of a link to it
+  useEffect(() => startRoutePrefetch(pageRoutes, { warm: [CategoryPage, ProductPage, CartPage, CheckoutPage] }), []);
 
   // --- ISOLATED PREVIEW ROUTE ---
   // Completely bypasses all providers, routers, and API calls to guarantee no reload loops

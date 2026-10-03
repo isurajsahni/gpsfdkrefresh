@@ -112,7 +112,7 @@ const Navbar = () => {
             <div className="flex items-center justify-between lg:justify-center lg:gap-10 h-[60px]">
 
               <div className="flex items-center gap-10 h-full">
-                {/* Logo → Home Page (legacy /home) */}
+                {/* Logo → Home Page (/home). / is the Store page. */}
                 <Link to="/home" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 group h-full">
                   <img src={logo} alt="GPSFDK" className="max-w-[50px] h-full w-auto object-contain" />
                 </Link>

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import SEO from '../components/seo/SEO';
 import ProductSlider from '../components/home/ProductSlider';
 import FeaturesSection from '../components/home/FeaturesSection';
-import API from '../utils/api';
+import { cachedGet } from '../utils/api';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { CONTACT } from '../utils/contactChannels';
@@ -75,7 +75,7 @@ const LocationPage = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const { data } = await API.get('/products', {
+        const data = await cachedGet('/products', {
           params: { limit: 24 }
         });
         setProducts(data.products || []);

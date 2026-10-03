@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Google Tag Manager -->
+    <!-- The CSP's script-src in client/vercel.json allows this inline script by
+         its sha256 hash: changing a single character means updating the hash. -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-NBZG73VV');</script>
+    <!-- End Google Tag Manager -->
+    <!-- Microsoft Clarity (project yrs94oxmyu; GTM loads the same project, and
+         Clarity starts only once). Allowed in script-src by its sha256 hash. -->
+    <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "yrs94oxmyu");
+</script>
     <!-- Resource hints: connect early to third-party origins used on first paint -->
     <link rel="preconnect" href="https://res.cloudinary.com" />
     <link rel="preconnect" href="https://images.unsplash.com" />
@@ -42,6 +60,13 @@
     </script>
 
     <!-- End Meta Pixel Code -->
+    <!-- CSP note: client/vercel.json connect-src lists two Meta Conversions API
+         Gateway hosts for pixel 953916107234506, which fbevents.js posts events to:
+           https://ov-1d104299d2a447049cdc73700c9309f7.ecs.us-west-2.on.aws
+           https://bded8a3c6ae-1-1053047382554.us-central1.run.app
+         If the gateway is moved or re-provisioned, update both there (exact
+         hosts, no *.on.aws / *.run.app wildcards). Don't edit the inline
+         scripts above without updating their sha256 hashes in script-src. -->
     <!-- Favicons: Google requires a multiple-of-48px icon; .ico fallback is fetched by
          crawlers that ignore link tags. Files generated from logo-fav.webp (brand logo). -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
@@ -73,6 +98,10 @@
     <meta name="theme-color" content="#0B5D3B" />
   </head>
   <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NBZG73VV"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <noscript><img height="1" width="1" style="display:none"
       src="https://www.facebook.com/tr?id=953916107234506&ev=PageView&noscript=1"
     /></noscript>

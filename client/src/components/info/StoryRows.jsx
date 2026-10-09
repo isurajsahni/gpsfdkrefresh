@@ -9,8 +9,9 @@ import { motion } from 'framer-motion';
    - rows       [{ eyebrow, title, paragraphs: [string], tagline?, image? }]
                 `tagline` is the medium-weight line set between paragraphs
                 one and two. `image` is optional: the frames are still in
-                design and their photos are grey placeholders, so a row
-                without one keeps a neutral block in the photo's place.
+                design, so a row without one keeps a neutral block in the
+                photo's place. Photos take the site's 20px corners rather
+                than the frame's square ones.
    - bodyClass  Paragraph colour; the two frames differ (#2f2f2f vs #333).
    - id         Anchor for the hero's call-to-action.
    ─────────────────────────────────────────────────────────────────────────── */
@@ -29,9 +30,9 @@ const inView = {
 
 function Photo({ image, alt }) {
   if (image) {
-    return <img src={image} alt={alt} loading="lazy" className="aspect-[562/330] w-full object-cover" />;
+    return <img src={image} alt={alt} loading="lazy" className="aspect-[562/330] w-full rounded-[20px] object-cover" />;
   }
-  return <div aria-hidden className="aspect-[562/330] w-full bg-[#d9d9d9]" />;
+  return <div aria-hidden className="aspect-[562/330] w-full rounded-[20px] bg-[#d9d9d9]" />;
 }
 
 export default function StoryRows({ rows, bodyClass = 'text-[#2f2f2f]', id }) {

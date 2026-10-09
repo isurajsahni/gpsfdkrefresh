@@ -3,25 +3,26 @@ import { HiArrowRight } from 'react-icons/hi';
 import SEO from '../../components/seo/SEO';
 import StoryRows from '../../components/info/StoryRows';
 import heroImage from '../../assets/image/figma/love-hero.jpg';
-// DEMO photos borrowed from elsewhere on the site until the Figma frame's
-// story images are designed; swap these four imports for the real ones.
-import demoCare from '../../assets/image/store page/grandparent.webp';
-import demoFamily from '../../assets/image/store page/Rectangle 102.webp';
-import demoTogether from '../../assets/image/store page/newimg.webp';
-import demoKites from '../../assets/image/figma/sol-discover.jpg';
+// DEMO: AI-generated stand-ins until the Figma frame's story photos are
+// designed; swap these four imports for the real ones.
+import storyCare from '../../assets/image/figma/love-care.jpg';
+import storyMeals from '../../assets/image/figma/love-meals.jpg';
+import storyPartners from '../../assets/image/figma/love-partners.jpg';
+import storyFuture from '../../assets/image/figma/love-future.jpg';
 
 /* ───────────────────────────────────────────────────────────────────────────
    GPS Love, built from the "Love" frame of the gps Figma file
    (figma.com/design/hb5MRVdJB40DeurZ7KoKb5, node 1:150). The frame is still
    being designed — its four story photos are grey placeholders — so the
-   rows show demo photos for now.
+   rows show AI-generated demo photos for now. The story photos take the
+   site's 20px corners; the hero stays full-bleed.
    ─────────────────────────────────────────────────────────────────────────── */
 
 const ROWS = [
   {
     eyebrow: 'The foundational idea',
     title: 'When care becomes a responsibility',
-    image: demoCare,
+    image: storyCare,
     paragraphs: [
       'Every child deserves to grow up with love, care and a sense of belonging. For children who grow up without consistent parental care, the absence of these basics can shape the earliest part of their lives. GPS wants to help create a better beginning — one where a child is cared for, supported and given the chance to simply be a child.',
       'Our responsibility starts with the basics — care, nutrition, health and support through trusted child-care partners. Over time, we want that support to grow with the child.',
@@ -30,7 +31,7 @@ const ROWS = [
   {
     eyebrow: 'Current work',
     title: 'Turning responsibility into action',
-    image: demoFamily,
+    image: storyMeals,
     paragraphs: [
       'GPS is committing 10% of its revenue toward supporting the basic needs of children growing up without consistent parental care.',
       'We are beginning by connecting with trusted child-care organisations to help direct that support toward care, nutrition, health and everyday needs — creating a stronger foundation for early childhood.',
@@ -39,7 +40,7 @@ const ROWS = [
   {
     eyebrow: 'Next phase',
     title: 'From care today to opportunity tomorrow',
-    image: demoTogether,
+    image: storyPartners,
     paragraphs: [
       'As our foundation grows, GPS will build stronger partnerships with trusted child-care organisations, professionals and communities to reach more children and strengthen the support around them.',
       'We want that support to continue as children grow — creating a connected path from early care toward learning, exploration and opportunity.',
@@ -48,7 +49,7 @@ const ROWS = [
   {
     eyebrow: 'Long-term vision',
     title: 'A beginning should never limit what comes next',
-    image: demoKites,
+    image: storyFuture,
     paragraphs: [
       'Our long-term vision is to let support grow with the child — from early care and belonging to learning, exploration and opportunities through the wider GPS ecosystem.',
       'As children grow, we want the journey to continue through School of Learning and future GPS initiatives, giving them more space to discover their interests, build confidence and shape their own path.',
@@ -105,7 +106,7 @@ function Hero() {
 
 export default function Love() {
   return (
-    <main className="overflow-x-clip bg-white pb-24 pt-[72px] lg:pb-[226px]">
+    <main className="overflow-x-clip bg-white pb-24 pt-[60px] lg:pb-[226px]">
       <SEO
         title="GPS Love — Every Child Deserves a Safe Beginning | GPSFDK"
         description="GPS commits 10% of its revenue to the basic needs of children growing up without consistent parental care — care, nutrition, health and a path to opportunity."

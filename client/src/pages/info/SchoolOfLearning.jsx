@@ -7,25 +7,26 @@ import FaqSection from '../../components/landing/FaqSection';
 import { CONTACT } from '../../utils/contactChannels';
 import heroImage from '../../assets/image/figma/sol-hero.jpg';
 import discoverImage from '../../assets/image/figma/sol-discover.jpg';
-// DEMO photos borrowed from elsewhere on the site until the Figma frame's
-// story images are designed; swap these four imports for the real ones.
-import demoReading from '../../assets/image/store page/Rectangle 174 (1).webp';
-import demoLaptops from '../../assets/image/store page/Rectangle 174 (2).webp';
-import demoStudio from '../../assets/image/about_us_demo.webp';
-import demoSeminar from '../../assets/image/store page/Rectangle 174.webp';
+// DEMO: AI-generated stand-ins until the Figma frame's story photos are
+// designed; swap these four imports for the real ones.
+import storyFoundation from '../../assets/image/figma/sol-foundation.jpg';
+import storyComputers from '../../assets/image/figma/sol-computers.jpg';
+import storyProjects from '../../assets/image/figma/sol-projects.jpg';
+import storyVision from '../../assets/image/figma/sol-vision.jpg';
 
 /* ───────────────────────────────────────────────────────────────────────────
    School of Learning, built from the "School of learning" frame of the gps
    Figma file (figma.com/design/hb5MRVdJB40DeurZ7KoKb5, node 1:4). The frame is
    still being designed — its four story photos are grey placeholders — so
-   the rows show demo photos for now.
+   the rows show AI-generated demo photos for now. The story photos and the
+   CTA banner take the site's 20px corners; the hero stays full-bleed.
    ─────────────────────────────────────────────────────────────────────────── */
 
 const ROWS = [
   {
     eyebrow: 'The foundational idea',
     title: 'Why does GPS School of Learning exist?',
-    image: demoReading,
+    image: storyFoundation,
     paragraphs: [
       'GPS gives children the freedom to learn what they want, at their own pace. Whether they want to explore one interest or discover many, we provide the space, guidance and opportunities to keep learning — without forcing a fixed path.',
       'Once they understand what technology can do, children can decide where their interest takes them — whether that means going deeper into a skill, building something of their own, or exploring future opportunities through GPS and beyond.',
@@ -35,7 +36,7 @@ const ROWS = [
   {
     eyebrow: 'Current focus',
     title: 'From using a computer to understanding what it can do',
-    image: demoLaptops,
+    image: storyComputers,
     paragraphs: [
       'Many children get access to computers, but access alone does not always mean meaningful digital learning. GPS School of Learning is starting by closing that gap — taking children from computer fundamentals to deeper digital skills, technology and AI.',
       'Once they understand what technology can do, children can decide where their interest takes them — whether that means going deeper into a skill, building something of their own, or exploring future opportunities through GPS and beyond.',
@@ -45,7 +46,7 @@ const ROWS = [
   {
     eyebrow: 'Next phase',
     title: 'From Learning Skills to Exploring Possibilities',
-    image: demoStudio,
+    image: storyProjects,
     paragraphs: [
       'As the foundation grows, GPS plans to expand beyond computer and AI learning into more hands-on experiences, projects and guided exploration in various fields.',
       'The aim is to give children more ways to explore their interests and gradually understand where their skills, ideas and curiosity can take them.',
@@ -55,7 +56,7 @@ const ROWS = [
   {
     eyebrow: 'Long-term vision',
     title: 'A Place Where Learning Keeps Evolving',
-    image: demoSeminar,
+    image: storyVision,
     paragraphs: [
       'Our long-term vision is to build an environment that grows with the child — where interests can change, new skills can emerge, and learning can continue without a fixed path.',
       'From the first question to a skill, an idea or a chosen direction, we want children to have the freedom to keep exploring and shape their own journey.',
@@ -134,7 +135,7 @@ function Discover() {
       variants={fadeUp}
       className="mx-auto mt-20 max-w-[1200px] px-5 sm:px-8 lg:mt-[130px] lg:px-0"
     >
-      <div className="relative flex min-h-[360px] items-center overflow-hidden lg:h-[432px]">
+      <div className="relative flex min-h-[360px] items-center overflow-hidden rounded-[20px] lg:h-[432px]">
         <img
           src={discoverImage}
           alt="Children and educators flying kites in an open green field at golden hour"
@@ -167,7 +168,7 @@ function Discover() {
 
 export default function SchoolOfLearning() {
   return (
-    <main className="overflow-x-clip bg-white pb-20 pt-[72px] lg:pb-[124px]">
+    <main className="overflow-x-clip bg-white pb-20 pt-[60px] lg:pb-[124px]">
       <SEO
         title="School of Learning | GPSFDK"
         description="GPS School of Learning gives children the freedom to learn what they want, at their own pace — from computer fundamentals to digital skills, technology and AI."

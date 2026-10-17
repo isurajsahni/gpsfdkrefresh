@@ -138,11 +138,11 @@ export default function FaqSection({ heading, headingClassName = 'text-[#353535]
           className="w-full rounded-[10px] px-5 pb-[30px] pt-6 sm:px-[25px] lg:col-start-1 lg:row-start-2 lg:mb-1 lg:self-end"
           style={{ backgroundImage: QUESTION_CARD_BG }}
         >
-          <p className="text-[22px] font-medium leading-[1.19] text-black sm:text-[25px]">Still have a question ?</p>
+          <p className="text-[22px] font-medium leading-[1.19] text-black sm:text-[25px]">Still have a question?</p>
           <p className="mt-[15px] max-w-[375px] text-[16px] leading-[1.19] text-[#595959] sm:text-[18px]">
-            Can&rsquo;t find the answer to you questions?
+            Can&rsquo;t find the answer to your questions?
             <br />
-            <Lines lines={['Send us an email and we’ll get back to you', 'as soon as possible !']} />
+            <Lines lines={['Send us an email and we’ll get back to you', 'as soon as possible!']} />
           </p>
           <a
             href={`mailto:${CONTACT.email}`}

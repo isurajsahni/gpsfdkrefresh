@@ -196,7 +196,7 @@ function Foundation() {
         <Eyebrow color="text-[#005231]">The foundation idea</Eyebrow>
         <SectionTitle>When care becomes a responsibility</SectionTitle>
         <p className={`mt-4 max-w-[503px] text-[#404040] ${BODY}`}>
-          Our responsibility starts with the basics care, nutrition, health and support through trusted child-care
+          Our responsibility starts with the basics — care, nutrition, health and support through trusted child-care
           partners. Over time, we want that support to grow with the child.
         </p>
         <ul className="mt-[22px] grid max-w-[484px] grid-cols-[146fr_169fr_169fr] lg:-ml-[3px]">
@@ -241,10 +241,10 @@ function CurrentFocus() {
             care and support.
           </p>
         </div>
-        <h3 className="mt-1 text-[20px] font-semibold leading-[35px] text-black">Starting with the matters more</h3>
+        <h3 className="mt-1 text-[20px] font-semibold leading-[35px] text-black">Starting with what matters most</h3>
         <p className={`mt-[2px] max-w-[483px] text-[#333] ${BODY}`}>
           We are beginning by connecting with trusted child-care organisations to help direct that support toward
-          care, nutrition, health and everyday needs creating a stronger foundation for early childhood.
+          care, nutrition, health and everyday needs, creating a stronger foundation for early childhood.
         </p>
       </div>
     </motion.section>
@@ -279,8 +279,8 @@ function NextPhase() {
               icon: <PiUsersThree className="size-[26px] text-accent" />,
               style: { left: 12, top: 12, width: 26, height: 26 },
             }}
-            title="Wild reach"
-            text="Support more children and communitites"
+            title="Wide reach"
+            text="Support more children and communities"
             textClass="max-w-[129px]"
           />
           <Feature
@@ -311,7 +311,7 @@ function LongTermVision() {
         <SectionTitle className="max-w-[498px]">A beginning should never limit what comes next</SectionTitle>
         <div className={`mt-[15px] max-w-[532px] space-y-[15px] text-[#333] ${BODY}`}>
           <p className="max-w-[505px]">
-            Our long-term vision is to let support grow with the child from early care and belonging to learning,
+            Our long-term vision is to let support grow with the child — from early care and belonging to learning,
             exploration and opportunities through the wider GPS ecosystem.
           </p>
           <p>

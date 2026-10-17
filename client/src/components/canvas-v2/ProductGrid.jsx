@@ -40,15 +40,7 @@ const IMAGE_BOX = 'aspect-[380/330] overflow-hidden rounded-t-[15px]';
 const TEXT_BLOCK = 'flex min-h-[110px] items-start gap-3 pl-5 pr-[20.5px]';
 const MESSAGE = 'mt-6 text-[14px] leading-[1.5] text-[#6b6b70] lg:mt-[31.18px]';
 
-/* "Starting from" = the cheapest of the base price and every variation. */
-const minPriceOf = (p) => {
-  const prices = [p.basePrice, ...(p.variations || []).map((v) => v.price)].filter(
-    (n) => Number.isFinite(n) && n > 0,
-  );
-  return prices.length ? Math.min(...prices) : p.basePrice || 0;
-};
-
-function ProductCard({ product: p, formatPrice }) {
+function ProductCard({ product: p, formatAmount, priceRangeOf }) {
   // subCategory carries the collection name the mock shows in the brand line
   // ("The Wild Eccentrics"); category is the coarser bucket, so only a fallback.
   const brand = p.subCategory || p.category?.name || 'GPSFDK';
@@ -80,7 +72,7 @@ function ProductCard({ product: p, formatPrice }) {
             </p>
             <h3 className="mt-[7.744px] truncate text-[20px] font-medium leading-[1.19] text-black">{p.name}</h3>
             <p className="mt-[6.188px] truncate text-[16px] font-normal leading-[1.19] text-accent">
-              Starting from {formatPrice(minPriceOf(p))}
+              Starting from {formatAmount(priceRangeOf(p).min)}
             </p>
           </div>
 
@@ -122,7 +114,7 @@ function CardSkeleton() {
 }
 
 export default function ProductGrid() {
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf } = useCurrency();
   const [products, setProducts] = useState([]);
   const [state, setState] = useState('loading');
 
@@ -202,7 +194,7 @@ export default function ProductGrid() {
             className={GRID}
           >
             {products.map((p) => (
-              <ProductCard key={p._id} product={p} formatPrice={formatPrice} />
+              <ProductCard key={p._id} product={p} formatAmount={formatAmount} priceRangeOf={priceRangeOf} />
             ))}
           </motion.ul>
         )}

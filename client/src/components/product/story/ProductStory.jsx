@@ -31,9 +31,10 @@ export default function ProductStory({
   product, selectedVariation, isCustomSize, quantity, needsText, onPick, onCustomSize, onAddToCart, onShowBuyBox,
   shortcutsSlot,
 }) {
-  const { formatPrice } = useCurrency();
+  // Prices below are in the visitor's currency already; formatAmount only formats
+  const { priceOf, formatAmount: formatPrice } = useCurrency();
   const kind = storyKind(product);
-  const finishes = useMemo(() => getFinishes(product.variations), [product.variations]);
+  const finishes = useMemo(() => getFinishes(product.variations, priceOf), [product.variations, priceOf]);
   const art = useMemo(() => artworkSource(product, kind), [product, kind]);
   const artRatio = useImageRatio(art.url);
   const finishRef = useRef(null);
@@ -55,11 +56,11 @@ export default function ProductStory({
     const bySize = new Map();
     for (const variation of product.variations || []) {
       if (finishKey(variation) === activeKey && !bySize.has(variation.size)) {
-        bySize.set(variation.size, { size: variation.size, price: variation.price });
+        bySize.set(variation.size, { size: variation.size, price: variation.price > 0 ? priceOf(variation) : 0 });
       }
     }
     return [...bySize.values()];
-  }, [product.variations, activeKey]);
+  }, [product.variations, activeKey, priceOf]);
 
   const collection = collectionOf(product);
   const leadHtml = toPlainText(product.description) ? product.description : '';
@@ -73,7 +74,7 @@ export default function ProductStory({
   const pickLabel = kind === 'nameplate'
     ? `${product.name} · ${isCustomSize ? 'Custom size' : sizeText}`
     : [activeFinish?.name, sizeText].filter(Boolean).join(' · ');
-  const price = selectedVariation?.price || 0;
+  const price = selectedVariation?.price > 0 ? priceOf(selectedVariation) : 0;
   const priceText = !isCustomSize && price > 0 ? `${formatPrice(price * quantity)}${quantity > 1 ? ` for ${quantity}` : ''}` : '';
   const cta = isCustomSize
     ? { label: 'Request a price above', up: true, onClick: onShowBuyBox }

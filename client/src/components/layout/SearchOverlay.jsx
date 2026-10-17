@@ -21,7 +21,7 @@ const toEntries = ({ products, collections, categories }) => [
 
 const SearchOverlay = () => {
   const { isSearchOpen, setIsSearchOpen } = useUI();
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf } = useCurrency();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [index, setIndex] = useState(null);
@@ -261,7 +261,7 @@ const SearchOverlay = () => {
                               <p className="text-gray-100 font-medium truncate">{entry.item.name}</p>
                               <p className="text-gray-400 text-xs truncate">
                                 {entry.item.collection || entry.item.category}
-                                {entry.item.price > 0 && <> · Starting from {formatPrice(entry.item.price)}</>}
+                                {entry.item.price > 0 && <> · Starting from {formatAmount(priceRangeOf(entry.item.product).min)}</>}
                               </p>
                             </div>
                           </div>
@@ -318,7 +318,7 @@ const SearchOverlay = () => {
                     <span className="text-xs font-bold text-accent uppercase tracking-wider mb-2">{previewProduct.collection || previewProduct.category}</span>
                     <h2 className="text-2xl font-bold text-white mb-2 leading-tight">{previewProduct.name}</h2>
                     {previewProduct.price > 0 && (
-                      <p className="text-gray-300 font-semibold text-lg mb-6">Starting from {formatPrice(previewProduct.price)}</p>
+                      <p className="text-gray-300 font-semibold text-lg mb-6">Starting from {formatAmount(priceRangeOf(previewProduct.product).min)}</p>
                     )}
                     <button
                       type="button"

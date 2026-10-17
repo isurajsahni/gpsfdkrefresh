@@ -61,7 +61,7 @@ const CategoryPage = () => {
   
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf, showComparePrice } = useCurrency();
 
   const exactSubcategory = subcategorySlug 
     ? SUBCATEGORIES.find(s => generateSlug(s) === subcategorySlug)
@@ -296,12 +296,7 @@ const CategoryPage = () => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {products.map((product, i) => {
-                const prices = [
-                  product.basePrice,
-                  ...(product.variations || []).map(v => v.price)
-                ].filter(p => typeof p === 'number' && p > 0);
-                const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
-                const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
+                const { min: minPrice, max: maxPrice } = priceRangeOf(product);
                 const hasPriceRange = minPrice !== maxPrice;
 
                 // Determine badge type
@@ -373,14 +368,14 @@ const CategoryPage = () => {
                           <h3 className="font-heading text-lg font-bold text-secondary group-hover:text-accent transition-colors leading-tight mb-2">{product.name}</h3>
                           <div className="mb-2">
                             <span className="font-heading text-base font-bold text-[#1A1A1A]">
-                              {hasPriceRange ? `Starting from ${formatPrice(minPrice)}` : formatPrice(product.basePrice)}
+                              {hasPriceRange ? `Starting from ${formatAmount(minPrice)}` : formatAmount(minPrice)}
                             </span>
                           </div>
                           <div className="mt-auto pt-2">
                             <p className="text-accent font-bold text-lg">
-                              {formatPrice(product.basePrice)}
-                              {product.variations?.[0]?.comparePrice > 0 && (
-                                <span className="text-gray-400 text-sm line-through ml-2 font-medium">{formatPrice(product.variations[0].comparePrice)}</span>
+                              {formatAmount(minPrice)}
+                              {showComparePrice && product.variations?.[0]?.comparePrice > 0 && (
+                                <span className="text-gray-400 text-sm line-through ml-2 font-medium">{formatAmount(product.variations[0].comparePrice)}</span>
                               )}
                             </p>
                           </div>

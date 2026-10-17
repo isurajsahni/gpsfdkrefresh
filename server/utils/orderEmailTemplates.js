@@ -60,11 +60,13 @@ const esc = (value) => String(value ?? '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#39;');
 
-// Format currency
-const formatPrice = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
+// Format currency: an order's own currency (USD for orders shipped abroad), INR otherwise
+const formatPrice = (amount, currency = 'INR') => (currency === 'USD'
+  ? `$${Number(amount).toLocaleString('en-US')}`
+  : `₹${Number(amount).toLocaleString('en-IN')}`);
 
 // Render order items table
-const renderItems = (items) => {
+const renderItems = (items, currency) => {
   if (!items || items.length === 0) return '';
   
   let rows = items.map(item => `
@@ -84,7 +86,7 @@ const renderItems = (items) => {
         </div>
       </td>
       <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: center; color: #666; font-size: 14px;">×${item.quantity}</td>
-      <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: 600; color: #333; font-size: 14px;">${formatPrice(item.price * item.quantity)}</td>
+      <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0; text-align: right; font-weight: 600; color: #333; font-size: 14px;">${formatPrice(item.price * item.quantity, currency)}</td>
     </tr>
   `).join('');
 
@@ -107,25 +109,25 @@ const renderPriceSummary = (order) => `
   <table width="100%" cellspacing="0" cellpadding="0" style="margin-top: 10px;">
     <tr>
       <td style="padding: 6px 0; color: #666; font-size: 14px;">Subtotal</td>
-      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${formatPrice(order.itemsPrice)}</td>
+      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${formatPrice(order.itemsPrice, order.currency)}</td>
     </tr>
     <tr>
       <td style="padding: 6px 0; color: #666; font-size: 14px;">Shipping</td>
-      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${order.shippingPrice > 0 ? formatPrice(order.shippingPrice) : 'Free'}</td>
+      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${order.shippingPrice > 0 ? formatPrice(order.shippingPrice, order.currency) : 'Free'}</td>
     </tr>
     ${order.discountPrice > 0 ? `
     <tr>
       <td style="padding: 6px 0; color: #16a34a; font-size: 14px;">Discount${order.couponCode ? ' (' + esc(order.couponCode) + ')' : ''}</td>
-      <td style="padding: 6px 0; text-align: right; color: #16a34a; font-size: 14px;">-${formatPrice(order.discountPrice)}</td>
+      <td style="padding: 6px 0; text-align: right; color: #16a34a; font-size: 14px;">-${formatPrice(order.discountPrice, order.currency)}</td>
     </tr>` : ''}
     ${order.taxPrice > 0 ? `
     <tr>
       <td style="padding: 6px 0; color: #666; font-size: 14px;">Tax</td>
-      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${formatPrice(order.taxPrice)}</td>
+      <td style="padding: 6px 0; text-align: right; color: #333; font-size: 14px;">${formatPrice(order.taxPrice, order.currency)}</td>
     </tr>` : ''}
     <tr>
       <td style="padding: 12px 0; font-weight: 700; font-size: 16px; color: #333; border-top: 2px solid ${brandColor};">Total</td>
-      <td style="padding: 12px 0; text-align: right; font-weight: 700; font-size: 16px; color: ${brandColor}; border-top: 2px solid ${brandColor};">${formatPrice(order.totalPrice)}</td>
+      <td style="padding: 12px 0; text-align: right; font-weight: 700; font-size: 16px; color: ${brandColor}; border-top: 2px solid ${brandColor};">${formatPrice(order.totalPrice, order.currency)}</td>
     </tr>
   </table>
 `;
@@ -181,7 +183,7 @@ const orderPlaced = (order, customerName) => {
     </div>` : ''}
 
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Order Summary</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
     ${renderPriceSummary(order)}
     ${renderAddress(order.shippingAddress)}
 
@@ -215,7 +217,7 @@ const orderProcessing = (order, customerName) => {
 
     <div class="divider"></div>
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items in Your Order</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
   `;
   return emailWrapper(content, `Your order ${order.orderNumber} is being prepared!`);
 };
@@ -274,7 +276,7 @@ const orderShipped = (order, customerName) => {
 
     <div class="divider"></div>
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items Shipped</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
 
     <div style="text-align: center; margin-top: 25px;">
       <p style="color: #666; font-size: 14px;">Estimated delivery: 5-7 business days</p>
@@ -316,7 +318,7 @@ const awbAssigned = (order, customerName) => {
 
     <div class="divider"></div>
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Items in Your Order</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
   `;
   return emailWrapper(content, `Tracking number ${esc(awb)} assigned to your order ${order.orderNumber}`);
 };
@@ -339,7 +341,7 @@ const orderDelivered = (order, customerName) => {
     </div>
 
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Order Summary</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
     ${renderPriceSummary(order)}
 
     <div style="text-align: center; margin-top: 30px; background: #fafafa; border-radius: 12px; padding: 25px;">
@@ -368,12 +370,12 @@ const orderCancelled = (order, customerName) => {
     </div>
 
     <h3 style="color: #333; font-size: 16px; margin-bottom: 5px;">Cancelled Items</h3>
-    ${renderItems(order.items)}
+    ${renderItems(order.items, order.currency)}
 
     ${order.isPaid ? `
       <div style="background: #fff8e1; border-radius: 10px; padding: 18px; margin-top: 20px;">
         <p style="color: #f57f17; font-weight: 600; margin: 0 0 5px 0;">💰 Refund Information</p>
-        <p style="color: #666; font-size: 14px; margin: 0;">If you've already paid, your refund of <strong>${formatPrice(order.totalPrice)}</strong> will be processed within 5-7 business days.</p>
+        <p style="color: #666; font-size: 14px; margin: 0;">If you've already paid, your refund of <strong>${formatPrice(order.totalPrice, order.currency)}</strong> will be processed within 5-7 business days.</p>
       </div>
     ` : ''}
 

@@ -78,7 +78,7 @@ const ProductPage = () => {
 
   const { addToCart } = useCart();
   const { setIsCartOpen } = useUI();
-  const { formatPrice } = useCurrency();
+  const { formatVariationPrice, formatAmount, showComparePrice } = useCurrency();
   const { user } = useAuth();
 
   // Logged-in buyers shouldn't have to retype who they are for a quote
@@ -454,10 +454,10 @@ const ProductPage = () => {
               </div>
             ) : (
               <div className="mt-6">
-                <span className="text-4xl font-bold text-accent">{formatPrice(selectedVariation.price * quantity)}</span>
-                {selectedVariation.comparePrice > 0 && (
+                <span className="text-4xl font-bold text-accent">{formatVariationPrice(selectedVariation, quantity)}</span>
+                {showComparePrice && selectedVariation.comparePrice > 0 && (
                   <>
-                    <span className="text-xl text-gray-400 line-through ml-3">{formatPrice(selectedVariation.comparePrice * quantity)}</span>
+                    <span className="text-xl text-gray-400 line-through ml-3">{formatAmount(selectedVariation.comparePrice * quantity)}</span>
                     <span className="ml-3 bg-green-100 text-green-700 text-sm font-semibold px-3 py-1 rounded-full">
                       {Math.round((1 - selectedVariation.price / selectedVariation.comparePrice) * 100)}% OFF
                     </span>

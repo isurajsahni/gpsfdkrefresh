@@ -28,7 +28,7 @@ const getBestsellerLabel = (id) => {
 
 const MasonryGrid = () => {
   const [products, setProducts] = useState([]);
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf } = useCurrency();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -107,7 +107,7 @@ const MasonryGrid = () => {
                         {products[0].name}
                       </h3>
                       <p className="text-[#E3543A] font-bold text-2xl md:text-3xl mb-6">
-                        {formatPrice(products[0].basePrice || products[0].variations?.[0]?.price)}
+                        {formatAmount(priceRangeOf(products[0]).min)}
                       </p>
                       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center text-white font-bold text-lg md:text-xl">
                         <span className="bg-[#E3543A] px-8 py-3 rounded-full hover:bg-[#c93d25] transition-colors">
@@ -162,7 +162,7 @@ const MasonryGrid = () => {
                           {product.name}
                         </h3>
                         <p className="text-[#E3543A] font-bold text-xl mb-3">
-                          {formatPrice(product.basePrice || product.variations?.[0]?.price)}
+                          {formatAmount(priceRangeOf(product).min)}
                         </p>
                         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                           <span className="text-white font-bold text-sm bg-[#E3543A] px-4 py-2 rounded-full">

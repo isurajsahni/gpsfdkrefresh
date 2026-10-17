@@ -7,7 +7,7 @@ import { CUSTOM_SIZE, isNameplateProduct } from '../../utils/nameplate';
 const ProductRow = ({ product, index }) => {
   const isEven = index % 2 === 0;
   const navigate = useNavigate();
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf, priceOf, showComparePrice } = useCurrency();
   const isNameplate = isNameplateProduct(product);
 
   // Typed here, carried to the product page through router state so the
@@ -27,10 +27,12 @@ const ProductRow = ({ product, index }) => {
   };
 
   // Price range
-  const prices = product.variations?.map(v => v.price) || [product.basePrice];
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const comparePrice = product.variations?.[0]?.comparePrice;
+  const { min: minPrice, max: maxPrice } = priceRangeOf(product);
+  // Compare-at price is per variation and INR-only; shown against the first
+  // variation's own price
+  const firstVariation = product.variations?.[0];
+  const comparePrice = showComparePrice ? firstVariation?.comparePrice : 0;
+  const firstPrice = firstVariation ? priceOf(firstVariation) : minPrice;
 
   // Determine thumbnail
   const thumbnailSrc =
@@ -75,16 +77,16 @@ const ProductRow = ({ product, index }) => {
         {/* Price Range */}
         <div className="mb-8 flex flex-wrap items-center justify-center gap-2">
           <span className="text-2xl md:text-3xl font-bold text-accent">
-            {formatPrice(minPrice)}
+            {formatAmount(minPrice)}
           </span>
           {minPrice !== maxPrice && (
             <span className="text-2xl md:text-3xl font-bold text-accent">
-              {' '}– {formatPrice(maxPrice)}
+              {' '}– {formatAmount(maxPrice)}
             </span>
           )}
-          {comparePrice > 0 && minPrice < comparePrice && (
+          {comparePrice > 0 && firstPrice < comparePrice && (
             <span className="text-base text-gray-400 line-through">
-              {formatPrice(comparePrice)}
+              {formatAmount(comparePrice)}
             </span>
           )}
         </div>

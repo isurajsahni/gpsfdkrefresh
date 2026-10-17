@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCurrency } from '../../context/CurrencyContext';
 import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
-import { lowestPrice } from '../../utils/collections';
 
 const BADGE_COLORS = {
   bestseller: 'bg-[#F5A623]',
@@ -29,9 +28,9 @@ const badgeFor = (product) => {
  * details"), shared by the canvas collections and search results.
  */
 const ProductCard = ({ product, onClick }) => {
-  const { formatPrice } = useCurrency();
-  const minPrice = lowestPrice(product);
-  const hasPriceRange = (product.variations || []).some((v) => v.price > 0 && v.price !== minPrice);
+  const { formatAmount, priceRangeOf } = useCurrency();
+  const { min: minPrice, max: maxPrice } = priceRangeOf(product);
+  const hasPriceRange = minPrice !== maxPrice;
   const badge = badgeFor(product);
 
   return (
@@ -55,7 +54,7 @@ const ProductCard = ({ product, onClick }) => {
         <div className="flex flex-col flex-grow items-center justify-center text-center px-1">
           <h3 className="font-heading text-[16px] font-semibold text-secondary uppercase tracking-wider mb-2 leading-snug">{product.name}</h3>
           <p className="text-accent font-bold text-[16px] mb-5 tracking-wide">
-            {hasPriceRange ? `Starting from ${formatPrice(minPrice)}` : formatPrice(minPrice)}
+            {hasPriceRange ? `Starting from ${formatAmount(minPrice)}` : formatAmount(minPrice)}
           </p>
         </div>
         <div className="w-full font-heading bg-accent text-white font-bold py-3.5 text-center transition-all hover:bg-accent-dark mt-auto rounded-lg shadow-sm hover:shadow-md">

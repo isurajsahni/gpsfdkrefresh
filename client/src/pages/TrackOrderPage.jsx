@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { optimizeImage } from '../utils/imageOptimizer';
 import { KindButton, KindHero } from '../components/kindact/KindUI';
 import heroImage from '../assets/image/shipping_demo.webp';
+import { formatMoney } from '../utils/intlPricing';
 
 const TrackOrderPage = () => {
   const [searchParams] = useSearchParams();
@@ -205,7 +206,7 @@ const TrackOrderPage = () => {
                    orderData.status.charAt(0).toUpperCase() + orderData.status.slice(1)}
                 </span>
                 <p className="text-kind-ink font-semibold mt-2 text-lg">
-                  Total: ₹{orderData.totalPrice}
+                  Total: {formatMoney(orderData.totalPrice, orderData.currency)}
                 </p>
               </div>
             </div>
@@ -427,7 +428,7 @@ const TrackOrderPage = () => {
                         {item.name}
                       </Link>
                       <p className="text-sm text-kind-ink/60 mt-1">
-                        Qty: {item.quantity} × ₹{item.price}
+                        Qty: {item.quantity} × {formatMoney(item.price, orderData.currency)}
                       </p>
                       {item.variation && (
                         <p className="text-xs text-kind-ink/50 mt-1 capitalize">

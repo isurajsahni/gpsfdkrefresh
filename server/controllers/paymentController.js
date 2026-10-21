@@ -5,7 +5,8 @@ const RazorpayCheckout = require('../models/RazorpayCheckout');
 const PaymentClaim = require('../models/PaymentClaim');
 const User = require('../models/User');
 const orderController = require('./orderController');
-const { detectCountry, getCurrency, getPriceMultiplier, applyPriceMultiplier } = require('../utils/geoPricing');
+const { detectCountry, applyPriceMultiplier } = require('../utils/geoPricing');
+const { currencyForDestination } = require('../utils/intlPricing');
 const metaCapi = require('../utils/metaCapi');
 
 const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
@@ -158,6 +159,37 @@ exports.getPaymentHealth = async (req, res) => {
   }
 };
 
+// POST /api/checkout-quote — the totals checkout shows for an order shipped
+// outside India, from the same calculation createRazorpayOrder charges. The
+// page sends the figure back with the order; createRazorpayOrder refuses to
+// open a payment for any other one.
+exports.quoteOrder = async (req, res, next) => {
+  try {
+    const { orderData } = req.body;
+    if (!orderData || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      return res.status(400).json({ message: 'Order data is required' });
+    }
+    const userId = req.user ? req.user._id : null;
+    const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
+    const currency = currencyForDestination(orderData.shippingAddress?.country);
+    const { calculateOrderPrices } = require('./orderController');
+    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { currency });
+    res.json({
+      currency: prices.currency,
+      items: prices.verifiedItems.map((it) => ({ product: it.product, variationId: it.variationId, price: it.price, quantity: it.quantity })),
+      itemsPrice: prices.itemsPrice,
+      shippingPrice: prices.shippingPrice,
+      discountPrice: prices.discountPrice,
+      totalPrice: prices.totalPrice,
+    });
+  } catch (error) {
+    if (isOrderDataError(error)) {
+      return res.status(400).json({ message: error.message });
+    }
+    next(error);
+  }
+};
+
 // Razorpay create order
 exports.createRazorpayOrder = async (req, res, next) => {
   try {
@@ -177,35 +209,46 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const userId = req.user ? req.user._id : null;
     const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
     const { calculateOrderPrices } = require('./orderController');
-    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier);
 
-    // ─── Geo-Pricing ───
-    // NOTE: Razorpay only supports INR for Indian merchant accounts, so the
-    // order is always denominated in INR.
+    // ─── Currency: decided by where the order ships ───
+    // India → INR at the catalogue price, exactly as before. Anywhere else →
+    // USD from the international price list (utils/intlPricing), free
+    // shipping, charged in USD (needs International Payments with USD enabled
+    // on the Razorpay account).
     //
-    // The international 10x multiplier is DELIBERATELY NOT APPLIED here.
-    // It was, briefly, to close the "shown $119 / charged ~$12" gap (H-3) — but
-    // the storefront decides the displayed multiplier from its own /api/pricing
-    // call while this decided it from a fresh server-side geo lookup, and the
-    // two can disagree: /api/pricing is served with `Cache-Control: public,
-    // max-age=3600`, so a shopper (or a shared cache) can hold an INR quote
-    // while the server now resolves them as international. The result was a
-    // customer shown ₹499 and billed ₹4,990.
-    //
-    // Overcharging a real buyer 10x is far worse than under-collecting on
-    // international orders, so the charge is pinned back to the quoted INR
-    // total. Re-applying the multiplier requires the DISPLAYED total and the
-    // CHARGED total to come from one server-side computation — see the note in
-    // verifyRazorpay, which still honours the multiplier recorded on orders
-    // created while it was live.
+    // History: an earlier attempt priced international orders by the shopper's
+    // IP instead, which could disagree with the currency the storefront had
+    // shown them (a customer was shown ₹499 and billed ₹4,990), so the
+    // international multiplier was switched off. The shipping country is
+    // chosen on the checkout form itself, so the page and this call price
+    // from the same input; and the client's quote check below refuses to
+    // open a payment for any other figure.
+    const chargeCurrency = currencyForDestination(orderData.shippingAddress?.country);
+    const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { currency: chargeCurrency });
+
+    // The checkout sends the total and currency it is showing. If they differ
+    // from what we would charge (a stale page, a price change), stop here —
+    // no money moves — and let the page re-quote. Older clients don't send a
+    // quote; they are only ever shown INR prices for Indian addresses.
+    const quoted = orderData.quote;
+    if (quoted && (quoted.currency !== chargeCurrency || Math.abs(Number(quoted.total) - prices.totalPrice) > 0.01)) {
+      return res.status(409).json({
+        message: 'Prices have been updated. Please review your order total and try again.',
+        quote: { currency: chargeCurrency, total: prices.totalPrice },
+      });
+    }
+    if (!quoted && chargeCurrency !== 'INR') {
+      return res.status(409).json({
+        message: 'Please refresh the page to see prices for your shipping country.',
+        quote: { currency: chargeCurrency, total: prices.totalPrice },
+      });
+    }
+
+    // Detected for the record only; it no longer affects the price.
     const country = await detectCountry(req, { trusted: true });
-    const currency = getCurrency(country);
-    const priceMultiplier = 1;
-    const chargedPrices = applyPriceMultiplier(prices, priceMultiplier);
 
-    // Always charge in INR (Razorpay requirement for Indian merchants)
-    const chargeAmount = Math.round(chargedPrices.totalPrice * 100); // paise
-    const chargeCurrency = 'INR';
+    // Smallest currency unit: paise for INR, cents for USD
+    const chargeAmount = Math.round(prices.totalPrice * 100);
 
     const instance = new Razorpay({ key_id: keyId, key_secret: keySecret });
 
@@ -214,17 +257,14 @@ exports.createRazorpayOrder = async (req, res, next) => {
       currency: chargeCurrency,
       receipt: 'rcpt_' + Date.now().toString().slice(-8),
       notes: {
-        inr_total: chargedPrices.totalPrice.toString(),
-        // Persist the multiplier ON THE RAZORPAY ORDER. Verification re-reads it
-        // from here rather than re-deriving it from geo: the verify call is a
-        // separate request, and if the shopper's IP resolved to a different
-        // country by then (network switch, VPN toggle) a re-derived multiplier
-        // would not match the captured amount — taking their money and refusing
-        // to create the order. Notes are written by us and returned by
-        // orders.fetch, so the client cannot influence them.
-        price_multiplier: String(priceMultiplier),
+        // The order total in the charged currency. `inr_total` is kept as the
+        // name for INR orders, which older code and dashboards read.
+        ...(chargeCurrency === 'INR'
+          ? { inr_total: prices.totalPrice.toString() }
+          : { order_total: prices.totalPrice.toString() }),
+        price_multiplier: '1',
         geo_country: country,
-        geo_currency: currency, // what the user's local currency is (for display)
+        ship_country: String(orderData.shippingAddress?.country || 'India').slice(0, 64),
       },
     };
 
@@ -293,7 +333,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
           },
           customData: {
             value: prices.totalPrice,
-            currency: 'INR',
+            currency: chargeCurrency,
             num_items: orderData.items.length,
             content_ids: orderData.items.map((i) => i.product),
             content_type: 'product',
@@ -327,18 +367,39 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   const userId = user ? user._id : null;
   const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
   const { calculateOrderPrices } = require('./orderController');
-  // Payment is already captured — allowOversell ensures a product that went
-  // low-stock/inactive between checkout and capture can't block order creation
-  // and strand the customer's money with no order (F1).
-  const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { allowOversell: true });
-  
-  // Verify the payment amount matches what we expect
-  // Fetch the Razorpay order to confirm the amount paid
+
+  // Fetch the Razorpay order: its amount and currency are what was charged
   const instance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
   });
   const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpayOrderId));
+
+  // Price the cart in the currency Razorpay charged — never one re-derived
+  // from this request. It must also be the currency the order's shipping
+  // address is priced in: otherwise a cart paid in INR for an Indian address
+  // could be claimed with an address abroad, getting an international order
+  // at the domestic price. Razorpay orders created before currencies followed
+  // the shipping country carry no `ship_country` note and were all INR: those
+  // keep the old behaviour, so a payment made across a deploy still becomes an
+  // order.
+  const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
+  const destinationCurrency = currencyForDestination(orderData.shippingAddress?.country);
+  if (rzpOrder?.notes?.ship_country !== undefined && paidCurrency !== destinationCurrency) {
+    console.error(
+      '[Razorpay] verify: charged currency does not match the shipping country — refusing to create order:',
+      JSON.stringify({ razorpayOrderId, paymentId, paidCurrency, destinationCurrency })
+    );
+    return { ok: false, status: 400, message: 'Payment verification failed: Amount mismatch' };
+  }
+
+  // Payment is already captured — allowOversell ensures a product that went
+  // low-stock/inactive between checkout and capture can't block order creation
+  // and strand the customer's money with no order (F1).
+  const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, {
+    allowOversell: true,
+    currency: paidCurrency,
+  });
   
   // ─── Amount verification — fails CLOSED ───
   // `rzpOrder.amount` (paise) is the figure Razorpay itself holds for this
@@ -367,11 +428,9 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   // through. The only newly-rejected requests are ones whose captured
   // amount genuinely does not match the cart being claimed.
   //
-  // The currency guard exists because comparing paise across currencies is
-  // meaningless: createRazorpayOrder hardcodes INR (Razorpay only supports
-  // INR for Indian merchant accounts — see the geo-pricing note there), so
-  // a non-INR order here cannot have come from our checkout.
-  // International orders are charged `base * multiplier` (see
+  // The cart was priced above in the currency Razorpay charged (INR, or USD
+  // for orders shipped abroad), so both sides are in the same smallest unit.
+  // Legacy INR orders were charged `base * multiplier` (see
   // createRazorpayOrder). Recover that multiplier from the note WE wrote on
   // the Razorpay order rather than re-deriving it from the caller's geo —
   // this request may resolve to a different country than the one that priced
@@ -381,13 +440,14 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   const expectedPrices = applyPriceMultiplier(prices, orderMultiplier);
   const expectedTotal = expectedPrices.totalPrice;
 
-  const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
-  const paidInr = Number(rzpOrder?.amount) / 100;
+  const paidAmount = Number(rzpOrder?.amount) / 100;
+  // ±₹1 for INR as before; USD prices are whole dollars, so ±1 cent
+  const tolerance = paidCurrency === 'INR' ? 1 : 0.01;
   if (
-    paidCurrency !== 'INR' ||
-    !Number.isFinite(paidInr) ||
-    paidInr <= 0 ||
-    Math.abs(paidInr - expectedTotal) > 1
+    (paidCurrency !== 'INR' && paidCurrency !== 'USD') ||
+    !Number.isFinite(paidAmount) ||
+    paidAmount <= 0 ||
+    Math.abs(paidAmount - expectedTotal) > tolerance
   ) {
     console.error(
       '[Razorpay] verify: amount/currency mismatch — refusing to create order:',
@@ -407,8 +467,8 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   // as defence in depth (it would catch an order whose amount was somehow
   // right but whose recorded INR total was not); still advisory-only when
   // the note is absent, since the authoritative check above already ran.
-  const storedInrTotal = parseFloat(rzpOrder.notes?.inr_total || '0');
-  if (storedInrTotal > 0 && Math.abs(storedInrTotal - expectedTotal) > 1) {
+  const storedTotal = parseFloat(rzpOrder.notes?.inr_total || rzpOrder.notes?.order_total || '0');
+  if (storedTotal > 0 && Math.abs(storedTotal - expectedTotal) > tolerance) {
     return { ok: false, status: 400, message: 'Payment verification failed: Amount mismatch' };
   }
 
@@ -453,6 +513,7 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
     discountPrice: expectedPrices.discountPrice,
     couponCode: orderData.couponCode || null,
     totalPrice: expectedTotal,
+    currency: paidCurrency,
     status: 'pending',
     isPaid: true,
     paidAt: Date.now(),
@@ -527,8 +588,8 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
           ...ctx,
         },
         customData: {
-          value: prices.totalPrice,
-          currency: 'INR',
+          value: expectedTotal,
+          currency: paidCurrency,
           num_items: prices.verifiedItems.length,
           content_ids: prices.verifiedItems.map((i) => String(i.product)),
           content_type: 'product',

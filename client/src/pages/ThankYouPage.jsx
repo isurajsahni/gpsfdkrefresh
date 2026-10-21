@@ -4,12 +4,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { HiCheckCircle } from 'react-icons/hi';
 import SEO from '../components/seo/SEO';
 import API from '../utils/api';
-import { useCurrency } from '../context/CurrencyContext';
+import { formatMoney } from '../utils/intlPricing';
 import { useAuth } from '../context/AuthContext';
 
 const ThankYouPage = () => {
     const location = useLocation();
-    const { formatPrice } = useCurrency();
     const { user } = useAuth();
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -83,21 +82,21 @@ const ThankYouPage = () => {
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Subtotal</span>
-                                <span className="text-secondary">{formatPrice(Math.round(order.itemsPrice || 0))}</span>
+                                <span className="text-secondary">{formatMoney(Math.round(order.itemsPrice || 0), order.currency)}</span>
                             </div>
                             {order.discountPrice > 0 && (
                                 <div className="flex justify-between text-sm">
                                     <span className="text-gray-500">Discount</span>
-                                    <span className="text-green-600">-{formatPrice(Math.round(order.discountPrice))}</span>
+                                    <span className="text-green-600">-{formatMoney(Math.round(order.discountPrice), order.currency)}</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Shipping</span>
-                                <span className="text-secondary">{order.shippingPrice > 0 ? formatPrice(Math.round(order.shippingPrice)) : 'FREE'}</span>
+                                <span className="text-secondary">{order.shippingPrice > 0 ? formatMoney(Math.round(order.shippingPrice), order.currency) : 'FREE'}</span>
                             </div>
                             <div className="flex justify-between text-base font-bold border-t border-gray-200 pt-2 mt-2">
                                 <span className="text-secondary">Total</span>
-                                <span className="text-secondary">{formatPrice(Math.round(order.totalPrice || 0))}</span>
+                                <span className="text-secondary">{formatMoney(Math.round(order.totalPrice || 0), order.currency)}</span>
                             </div>
                         </div>
                     )}

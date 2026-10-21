@@ -73,6 +73,10 @@ const orderSchema = new mongoose.Schema({
   discountPrice: { type: Number, default: 0 },
   couponCode: { type: String, default: null },
   totalPrice: { type: Number, required: true },
+  // Currency of every price on this order (items, shipping, discount, total).
+  // 'USD' for orders shipped outside India, charged in USD; older orders have
+  // none and are INR.
+  currency: { type: String, enum: ['INR', 'USD'], default: 'INR' },
   isPaid: { type: Boolean, default: false },
   paidAt: Date,
   status: {

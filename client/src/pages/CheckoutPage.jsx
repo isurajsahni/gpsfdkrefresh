@@ -9,6 +9,7 @@ import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress }
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
+import { currencyForDestination, intlUnitPrice, formatMoney } from '../utils/intlPricing';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
@@ -23,6 +24,19 @@ import SEO from '../components/seo/SEO';
 // read-only, and each create-order just mints another *unpaid* Razorpay order —
 // only the one the buyer actually pays is ever verified, and verify is
 // idempotent on the payment id.
+// A cart line as the order and quote endpoints take it
+const toOrderItem = (item) => ({
+  product: item.productId,
+  name: item.name,
+  image: item.image,
+  variationId: item.variation?._id || undefined,
+  variation: item.variation,
+  customText: item.customText,
+  uploadedImageUrl: item.uploadedImageUrl,
+  price: item.price,
+  quantity: item.quantity,
+});
+
 const retryTransient = async (fn, { retries = 2, delayMs = 1500 } = {}) => {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -107,7 +121,8 @@ const CheckoutPage = () => {
   // flushes before navigate, the cartItems.length===0 redirect below would otherwise
   // bounce us to /cart. `orderPlaced` short-circuits that race.
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const { formatPrice, currency, country } = useCurrency();
+  // Visitor's detected country — only pre-fills the shipping country
+  const { country } = useCurrency();
   const headingRef = useRef(null);
 
   useEffect(() => {
@@ -121,6 +136,12 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
+
+  // Orders shipped outside India are priced in USD by the server (see
+  // utils/intlPricing); `intlQuote` is its figure, and the one we charge.
+  const [intlQuote, setIntlQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState('');
+  const [quoteNonce, setQuoteNonce] = useState(0);
 
   // Address state
   const [savedAddresses, setSavedAddresses] = useState([]);
@@ -429,6 +450,43 @@ const CheckoutPage = () => {
     setStep(2);
   };
 
+  // ─── Currency of this order: where it ships decides ───
+  const shipCountry = getSelectedAddress()?.country;
+  const orderCurrency = currencyForDestination(shipCountry);
+  const isIntlOrder = orderCurrency !== 'INR';
+  const money = (amount) => formatMoney(amount, orderCurrency);
+
+  useEffect(() => {
+    if (!isIntlOrder || cartItems.length === 0) {
+      setIntlQuote(null);
+      setQuoteError('');
+      return undefined;
+    }
+    let cancelled = false;
+    setIntlQuote(null);
+    setQuoteError('');
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await retryTransient(() => API.post('/checkout-quote', {
+          orderData: {
+            items: cartItems.map(toOrderItem),
+            shippingAddress: { country: shipCountry },
+            couponCode: appliedCoupon ? appliedCoupon.code : null,
+          },
+        }));
+        if (!cancelled) setIntlQuote(data);
+      } catch (err) {
+        if (!cancelled) setQuoteError(err.response?.data?.message || 'Could not load prices for your shipping country. Please try again.');
+      }
+    }, 250);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [isIntlOrder, shipCountry, cartItems, appliedCoupon, quoteNonce]);
+
+  // Cash on Delivery is for addresses in India only
+  useEffect(() => {
+    if (isIntlOrder && paymentMethod === 'cod') setPaymentMethod('razorpay');
+  }, [isIntlOrder, paymentMethod]);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setLoading(true);
@@ -473,6 +531,21 @@ const CheckoutPage = () => {
   // 3. Final Total (never negative)
   const finalTotal = Math.max(cartTotal + shippingFee - appliedDiscount, 0);
 
+  // What the summary shows and the order is paid at, in the order's currency.
+  // Abroad: the server's quote (null until it arrives).
+  const summary = isIntlOrder
+    ? {
+        items: intlQuote?.itemsPrice,
+        shipping: intlQuote?.shippingPrice ?? 0,
+        discount: intlQuote?.discountPrice ?? 0,
+        total: intlQuote?.totalPrice,
+      }
+    : { items: cartTotal, shipping: shippingFee, discount: appliedDiscount, total: finalTotal };
+  const quoteReady = !isIntlOrder || (intlQuote && intlQuote.currency === orderCurrency);
+  const lineTotal = (item, index) => (isIntlOrder
+    ? (intlQuote?.items?.[index]?.price ?? intlUnitPrice({ ...item.variation, price: item.price })) * item.quantity
+    : item.price * item.quantity);
+
   // If cart drops below the coupon's minimum, surface the issue and drop the coupon
   // so the user isn't confused by a "Coupon applied" badge with zero effect.
   useEffect(() => {
@@ -488,8 +561,13 @@ const CheckoutPage = () => {
 
 
   const handlePlaceOrder = async () => {
+    if (!quoteReady) {
+      toast.error(quoteError || 'Still calculating your total. Please wait a moment.');
+      return;
+    }
     setLoading(true);
     const shippingAddress = getSelectedAddress();
+    const payableTotal = summary.total;
     try {
       // Guest checkout requires an email for order confirmation/tracking.
       if (!user) {
@@ -508,26 +586,19 @@ const CheckoutPage = () => {
       const { fbp, fbc } = getFbCookies();
 
       const orderData = {
-        items: cartItems.map(item => ({
-          product: item.productId,
-          name: item.name,
-          image: item.image,
-          variationId: item.variation?._id || undefined,
-          variation: item.variation,
-          customText: item.customText,
-          uploadedImageUrl: item.uploadedImageUrl,
-          price: item.price,
-          quantity: item.quantity,
-        })),
+        items: cartItems.map(toOrderItem),
         shippingAddress,
         billingAddress: shippingAddress,
         paymentMethod,
-        itemsPrice: cartTotal,
-        shippingPrice: shippingFee,
+        itemsPrice: summary.items,
+        shippingPrice: summary.shipping,
         taxPrice: 0,
-        discountPrice: appliedDiscount,
+        discountPrice: summary.discount,
         couponCode: appliedCoupon ? appliedCoupon.code : null,
-        totalPrice: finalTotal,
+        totalPrice: payableTotal,
+        // The total and currency on screen. The server refuses to open a
+        // payment for any other figure (USD orders must send it).
+        ...(isIntlOrder ? { quote: { currency: orderCurrency, total: payableTotal } } : {}),
         // Meta CAPI: event IDs for dedup + first-party Meta identifiers.
         eventIdPurchase,
         eventIdInitiateCheckout,
@@ -538,7 +609,7 @@ const CheckoutPage = () => {
       };
 
       // CASE 1: Zero-Value Order (Fully Paid by Coupon)
-      if (finalTotal === 0) {
+      if (payableTotal === 0) {
         const endpoint = user ? '/orders' : '/orders/guest';
         const { data: zeroOrder } = await API.post(endpoint, orderData);
 
@@ -550,8 +621,8 @@ const CheckoutPage = () => {
             content_ids: cartItems.map(item => item.productId),
             contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
             num_items: cartItems.length,
-            value: finalTotal,
-            currency: 'INR',
+            value: payableTotal,
+            currency: orderCurrency,
             order_id: zeroOrder?.orderNumber || zeroOrder?._id,
           }, { eventID: eventIdPurchase });
         }
@@ -615,7 +686,8 @@ const CheckoutPage = () => {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
                   email: user?.email || shippingAddress?.email,
-                  total: finalTotal,
+                  total: payableTotal,
+                  currency: orderCurrency,
                   at: new Date().toISOString(),
                 }));
               } catch (_) { /* localStorage full / disabled — ignore */ }
@@ -637,8 +709,8 @@ const CheckoutPage = () => {
                     content_ids: cartItems.map(item => item.productId),
                     contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
                     num_items: cartItems.length,
-                    value: finalTotal,
-                    currency: 'INR',
+                    value: payableTotal,
+                    currency: orderCurrency,
                     order_id: verifiedOrder?.orderNumber || verifiedOrder?._id,
                   }, { eventID: eventIdPurchase });
                 }
@@ -678,6 +750,9 @@ const CheckoutPage = () => {
         } catch (err) {
           console.error('[Razorpay] init error:', err?.response?.status, err?.response?.data || err?.message || err);
           const serverMsg = err?.response?.data?.message;
+          // 409: the total changed (or the page held an old one). Nothing was
+          // charged; fetch the current figure so the customer can review it.
+          if (err?.response?.status === 409) setQuoteNonce((n) => n + 1);
           toast.error(serverMsg || 'Payment initialization failed. Please try again.');
           setLoading(false);
         }
@@ -695,8 +770,8 @@ const CheckoutPage = () => {
             content_ids: cartItems.map(item => item.productId),
             contents: cartItems.map(item => ({ id: item.productId, quantity: item.quantity, item_price: item.price })),
             num_items: cartItems.length,
-            value: finalTotal,
-            currency: 'INR',
+            value: payableTotal,
+            currency: orderCurrency,
             order_id: codOrder?.orderNumber || codOrder?._id,
           }, { eventID: eventIdPurchase });
         }
@@ -1070,7 +1145,7 @@ const CheckoutPage = () => {
               <div className="space-y-3">
                 {[
                   { value: 'razorpay', label: 'Razorpay / Online Payment', icon: '💳', desc: 'Secure payment via UPI, Cards, Net Banking' },
-                  ...(country === 'IN' || currency === 'INR' ? [
+                  ...(!isIntlOrder ? [
                     { value: 'cod', label: 'Cash on Delivery (COD)', icon: '💵', desc: 'Pay with cash upon delivery' }
                   ] : [])
                 ].map(method => (
@@ -1100,12 +1175,17 @@ const CheckoutPage = () => {
               <h2 ref={headingRef} tabIndex={-1} className="text-xl font-heading font-semibold text-secondary mb-6 focus:outline-none">Review Your Order</h2>
               
               {/* Shipping Banner - Based on cartTotal (Subtotal) */}
-              {currency === 'INR' && (
+              {isIntlOrder ? (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
+                  <span className="text-xl">✈️</span>
+                  <span className="leading-relaxed">Shipping to {shipCountry}: prices are in <strong>US dollars</strong> and include <strong>free international shipping</strong>.</span>
+                </div>
+              ) : (
                 shippingFee > 0 ? (
                   <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mb-6 text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                     <div className="flex items-start sm:items-center gap-3">
                       <span className="text-xl">🚚</span>
-                      <span className="leading-relaxed">You&apos;re only <strong className="text-amber-900 border-b border-amber-300">{formatPrice(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
+                      <span className="leading-relaxed">You&apos;re only <strong className="text-amber-900 border-b border-amber-300">{money(999 - cartTotal)}</strong> away from <strong>Free Shipping!</strong></span>
                     </div>
                     <Link to="/" className="bg-amber-100 whitespace-nowrap font-bold hover:bg-amber-200 text-amber-900 px-4 py-2 rounded-lg text-center transition-colors">
                       Add Items
@@ -1121,7 +1201,7 @@ const CheckoutPage = () => {
 
 
               <div className="space-y-3 mb-6">
-                {cartItems.map(item => (
+                {cartItems.map((item, index) => (
                   <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                       <img src={optimizeImage(item.image, 200)} alt={item.name} onError={handleImageError} className="w-12 h-12 rounded-lg object-cover" />
@@ -1130,7 +1210,7 @@ const CheckoutPage = () => {
                         <p className="text-xs text-gray-500">{item.variation?.size} × {item.quantity}</p>
                       </div>
                     </div>
-                    <span className="font-bold text-accent">{formatPrice(item.price * item.quantity)}</span>
+                    <span className="font-bold text-accent">{money(lineTotal(item, index))}</span>
                   </div>
                 ))}
               </div>
@@ -1160,15 +1240,23 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
-                {appliedCoupon && appliedDiscount > 0 && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{formatPrice(Math.round(appliedDiscount))})</p>}
+                {appliedCoupon && summary.discount > 0 && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{money(Math.round(summary.discount))})</p>}
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
-                <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatPrice(cartTotal)}</span></div>
+                {isIntlOrder && !intlQuote && (
+                  <p className={`text-sm mb-2 ${quoteError ? 'text-red-600' : 'text-gray-500'}`}>
+                    {quoteError || 'Calculating your total in US dollars…'}
+                    {quoteError && (
+                      <button type="button" onClick={() => setQuoteNonce((n) => n + 1)} className="ml-2 underline font-medium">Try again</button>
+                    )}
+                  </p>
+                )}
+                <div className="flex justify-between text-sm"><span>Subtotal</span><span>{summary.items != null ? money(summary.items) : '—'}</span></div>
                 <div className="flex justify-between text-sm mt-1">
                   <span>Shipping</span>
-                  {shippingFee > 0 ? (
-                    <span className="text-secondary font-medium">+{formatPrice(shippingFee)}</span>
+                  {summary.shipping > 0 ? (
+                    <span className="text-secondary font-medium">+{money(summary.shipping)}</span>
                   ) : (
                     <span className="text-green-600 font-bold">FREE</span>
                   )}
@@ -1176,17 +1264,17 @@ const CheckoutPage = () => {
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
                     <span>Discount ({appliedCoupon.code})</span>
-                    <span>-{formatPrice(Math.round(appliedDiscount))}</span>
+                    <span>-{money(Math.round(summary.discount))}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">{formatPrice(Math.round(finalTotal))}</span></div>
+                <div className="flex justify-between text-lg font-bold mt-3 pt-3 border-t border-gray-200"><span>Total</span><span className="text-accent">{summary.total != null ? money(Math.round(summary.total)) : '—'}</span></div>
 
               </div>
               <div className="flex gap-3 items-center sm:gap-4">
                 <button onClick={() => setStep(2)} className="btn-outline">Back</button>
                 <button
                   onClick={handlePlaceOrder}
-                  disabled={loading}
+                  disabled={loading || !quoteReady}
                   className="btn-primary flex-1 text-base sm:text-lg disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading ? (

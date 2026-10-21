@@ -7,8 +7,9 @@ import { useUI } from '../../context/UIContext';
 import { optimizeImage, handleImageError } from '../../utils/imageOptimizer';
 
 const CartDrawer = () => {
-  const { cartItems, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
-  const { formatPrice } = useCurrency();
+  const { cartItems, removeFromCart, updateQuantity, cartCount } = useCart();
+  const { formatAmount, linePriceOf } = useCurrency();
+  const subtotal = cartItems.reduce((sum, item) => sum + linePriceOf(item) * item.quantity, 0);
   const { isCartOpen, setIsCartOpen } = useUI();
   const navigate = useNavigate();
 
@@ -95,7 +96,7 @@ const CartDrawer = () => {
                               <HiPlus className="w-3 h-3" />
                             </button>
                           </div>
-                          <span className="font-bold text-accent text-sm">{formatPrice(item.price * item.quantity)}</span>
+                          <span className="font-bold text-accent text-sm">{formatAmount(linePriceOf(item) * item.quantity)}</span>
                         </div>
                       </div>
                     </div>
@@ -109,7 +110,7 @@ const CartDrawer = () => {
               <div className="bg-white border-t border-gray-100 p-6">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-500 font-medium">Subtotal</span>
-                  <span className="text-xl font-heading font-bold text-secondary">{formatPrice(cartTotal)}</span>
+                  <span className="text-xl font-heading font-bold text-secondary">{formatAmount(subtotal)}</span>
                 </div>
                 <div className="space-y-3">
                   <button 

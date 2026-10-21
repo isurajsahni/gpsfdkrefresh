@@ -50,9 +50,10 @@ const REELS = [
 
 /* What a canvas costs across every size and finish, as the store lists them.
    The reels aren't loaded from the API, so the range is the catalogue's rather
-   than each product's; formatPrice converts it for overseas visitors. */
-const PRICE_FROM = 599;
-const PRICE_TO = 7999;
+   than each product's: the cheapest finish (A4 soft board) to the dearest
+   (36x60 stretched), priced in the visitor's currency. */
+const PRICE_FROM = { material: 'Poster', frame: 'Soft Board', size: 'A4', price: 599 };
+const PRICE_TO = { material: 'Canvas', frame: 'Stretched', size: '36x60', price: 7999 };
 
 /* Swiper's loop needs at least one more slide than fits in the track. A 3440px
    ultrawide fits nine of these cards, so the six reels go round twice. */
@@ -67,7 +68,7 @@ const ARROW =
 const SOUND_BUTTON =
   'absolute right-3 top-3 z-20 grid size-9 place-items-center rounded-full border border-white/20 bg-black/40 text-white shadow-lg backdrop-blur-md transition duration-300 hover:scale-110 hover:bg-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white';
 
-function ReelCard({ name, slug, src, unmuted, onToggleSound, formatPrice }) {
+function ReelCard({ name, slug, src, unmuted, onToggleSound, formatVariationPrice }) {
   const videoRef = useRef(null);
 
   // Play only while on screen, as VideoShowcase does: with preload="metadata"
@@ -140,7 +141,7 @@ function ReelCard({ name, slug, src, unmuted, onToggleSound, formatPrice }) {
         </Link>
       </h3>
       <p className="mt-[6px] truncate text-[14px] font-normal leading-[1.19] text-accent md:text-[16px]">
-        {formatPrice(PRICE_FROM)} – {formatPrice(PRICE_TO)}
+        {formatVariationPrice(PRICE_FROM)} – {formatVariationPrice(PRICE_TO)}
       </p>
     </div>
   );
@@ -148,7 +149,7 @@ function ReelCard({ name, slug, src, unmuted, onToggleSound, formatPrice }) {
 
 export default function ArtInRealLife() {
   const swiperRef = useRef(null);
-  const { formatPrice } = useCurrency();
+  const { formatVariationPrice } = useCurrency();
 
   // The key of the one card playing with sound (null = all muted), so two
   // clips never talk over each other — including the two copies of a reel the
@@ -238,7 +239,7 @@ export default function ArtInRealLife() {
               <SwiperSlide key={key} className="!w-[220px] md:!w-[277.5px]">
                 <ReelCard
                   {...reel}
-                  formatPrice={formatPrice}
+                  formatVariationPrice={formatVariationPrice}
                   unmuted={unmutedKey === key}
                   onToggleSound={() => toggleSound(key)}
                 />

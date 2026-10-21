@@ -37,7 +37,7 @@ const getBestsellerLabel = (id) => {
 const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId, showBadges = true }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf, showComparePrice } = useCurrency();
   const { setIsCartOpen } = useUI();
   const swiperRef = useRef(null);
 
@@ -142,12 +142,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
             className={`product-slider product-slider-${sliderId} relative`}
           >
             {products.map((product, i) => {
-              const prices = [
-                product.basePrice,
-                ...(product.variations || []).map(v => v.price)
-              ].filter(p => typeof p === 'number');
-              const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
-              const maxPrice = prices.length > 0 ? Math.max(...prices) : (product.basePrice || 0);
+              const { min: minPrice, max: maxPrice } = priceRangeOf(product);
 
               // Determine badge type
               let badgeType = "";
@@ -203,10 +198,10 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-5">
                         <h3 className="text-white font-heading text-lg font-semibold">{product.name}</h3>
                         <p className="text-accent font-bold text-lg mt-1">
-                          {formatPrice(minPrice)}
-                          {minPrice !== maxPrice && ` - ${formatPrice(maxPrice)}`}
-                          {product.variations?.[0]?.comparePrice > 0 && (
-                            <span className="text-white/50 text-sm line-through ml-2">{formatPrice(product.variations[0].comparePrice)}</span>
+                          {formatAmount(minPrice)}
+                          {minPrice !== maxPrice && ` - ${formatAmount(maxPrice)}`}
+                          {showComparePrice && product.variations?.[0]?.comparePrice > 0 && (
+                            <span className="text-white/50 text-sm line-through ml-2">{formatAmount(product.variations[0].comparePrice)}</span>
                           )}
                         </p>
                         <button

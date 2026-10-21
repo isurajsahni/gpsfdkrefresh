@@ -9,7 +9,7 @@ const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
-const { detectCountry } = require('../utils/geoPricing');
+const { INTL_CURRENCY, USD_INR_RATE, intlUnitPrice, currencyForDestination, isIndiaDestination } = require('../utils/intlPricing');
 
 // Which client placed an order. Coerce any caller-supplied hint to a known value,
 // defaulting to 'web', so an unexpected string never fails schema validation.
@@ -231,8 +231,14 @@ const MAX_ITEM_QUANTITY = 100;
 // inactive or out of stock in the seconds between checkout and payment can no longer
 // be a hard error — that would charge the customer and create no order. Prices are
 // still recalculated from the DB; only the availability *blocks* are relaxed.
+//
+// `options.currency` is the currency the order is priced in — 'INR' (default)
+// uses each variation's stored price; 'USD' (orders shipped outside India) uses
+// the international price list in utils/intlPricing and ships free. Use
+// currencyForDestination(shippingAddress.country) to pick it.
 const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null, options = {}) => {
-  const { allowOversell = false } = options;
+  const { allowOversell = false, currency = 'INR' } = options;
+  const isIntl = currency === INTL_CURRENCY;
   let calculatedItemsPrice = 0;
   const verifiedItems = [];
   const stockOps = []; // [{ productId, variationId, qty }] — applied post-order
@@ -335,7 +341,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       console.warn(`[oversell] Order proceeding post-payment despite low stock: product=${product._id} variation=${variation.size} need=${quantity} have=${variation.stock}`);
     }
 
-    const serverPrice = variation.price;
+    const serverPrice = isIntl ? intlUnitPrice(variation) : variation.price;
     calculatedItemsPrice += serverPrice * quantity;
 
     // Record the stock-decrement op the caller must run AFTER the order is
@@ -378,8 +384,9 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   // ... already calculated in the loop above: calculatedItemsPrice
 
   // 2. Determine Shipping based on ORIGINAL Subtotal (before discount)
-  // Rule: If subtotal >= ₹999 -> FREE, else ₹50
-  const shippingPrice = calculatedItemsPrice >= 999 ? 0 : 50;
+  // Rule: If subtotal >= ₹999 -> FREE, else ₹50. International orders always
+  // ship free (the USD price list includes shipping).
+  const shippingPrice = isIntl || calculatedItemsPrice >= 999 ? 0 : 50;
   const taxPrice = 0;
   let discountPrice = 0;
 
@@ -458,19 +465,26 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
       // Check min order value against itemsPrice. Coerce the threshold: an
       // undefined minOrderValue made `itemsPrice >= undefined` false, which
       // silently skipped the discount entirely — another F-1 path.
+      // Coupon amounts are set in INR. A USD order converts them at the
+      // benchmark rate (₹95 = $1): the minimum, a fixed discount and a cap.
+      const fromInr = (inr) => (isIntl ? (Number(inr) || 0) / USD_INR_RATE : Number(inr) || 0);
       const minOrderValue = Number(coupon.minOrderValue) || 0;
-      if (calculatedItemsPrice < minOrderValue) {
-        couponBlocked(`Coupon requires a minimum order value of ₹${minOrderValue}.`);
+      if (calculatedItemsPrice < fromInr(minOrderValue)) {
+        couponBlocked(isIntl
+          ? `Coupon requires a minimum order value of $${Math.ceil(fromInr(minOrderValue))}.`
+          : `Coupon requires a minimum order value of ₹${minOrderValue}.`);
       } else {
         if (coupon.discountType === 'percentage') {
           discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;
           // Apply percentage cap
-          if (coupon.maxDiscountAmount > 0 && discountPrice > coupon.maxDiscountAmount) {
-            discountPrice = coupon.maxDiscountAmount;
+          if (coupon.maxDiscountAmount > 0 && discountPrice > fromInr(coupon.maxDiscountAmount)) {
+            discountPrice = fromInr(coupon.maxDiscountAmount);
           }
         } else {
-          discountPrice = coupon.discountValue;
+          discountPrice = fromInr(coupon.discountValue);
         }
+        // Whole dollars, so the total is a price the customer recognises
+        if (isIntl) discountPrice = Math.round(discountPrice);
 
         // FINAL SAFETY: Discount must NOT exceed subtotal
         discountPrice = Math.min(discountPrice, calculatedItemsPrice);
@@ -482,6 +496,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   const totalPrice = Math.max(calculatedItemsPrice + shippingPrice + taxPrice - discountPrice, 0);
 
   return {
+    currency: isIntl ? INTL_CURRENCY : 'INR',
     verifiedItems,
     stockOps,
     itemsPrice: calculatedItemsPrice,
@@ -558,15 +573,15 @@ exports.createOrder = async (req, res, next) => {
     if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
 
     // Server-side price calculation — never trust client prices
-    const prices = await calculateOrderPrices(items, couponCode, req.user._id);
+    const prices = await calculateOrderPrices(items, couponCode, req.user._id, null, {
+      currency: currencyForDestination(shippingAddress?.country),
+    });
 
     // Enforce region check for Cash on Delivery (COD)
+    // COD is for addresses in India only: an order shipped abroad is priced
+    // in USD and has to be paid online.
     if (paymentMethod === 'cod') {
-      // trusted: this gates COD eligibility, so it must ignore caller-supplied
-      // country hints (?country=, cf-ipcountry, x-vercel-ip-country).
-      const country = await detectCountry(req, { trusted: true });
-      const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
-      if (country !== 'IN' && !isShippingToIndia) {
+      if (!isIndiaDestination(shippingAddress?.country)) {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
       }
     }
@@ -590,6 +605,7 @@ exports.createOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
+      currency: prices.currency,
       status: (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
@@ -646,15 +662,15 @@ exports.createGuestOrder = async (req, res, next) => {
     // Server-side price calculation — never trust client prices
     // Support coupons for guests too for production-ready feature
     const guestIdentifier = guestEmail || guestPhone || shippingAddress?.phone || null;
-    const prices = await calculateOrderPrices(items, couponCode, null, guestIdentifier);
+    const prices = await calculateOrderPrices(items, couponCode, null, guestIdentifier, {
+      currency: currencyForDestination(shippingAddress?.country),
+    });
 
     // Enforce region check for Cash on Delivery (COD)
+    // COD is for addresses in India only: an order shipped abroad is priced
+    // in USD and has to be paid online.
     if (paymentMethod === 'cod') {
-      // trusted: this gates COD eligibility, so it must ignore caller-supplied
-      // country hints (?country=, cf-ipcountry, x-vercel-ip-country).
-      const country = await detectCountry(req, { trusted: true });
-      const isShippingToIndia = shippingAddress?.country && ['india', 'in'].includes(shippingAddress.country.toLowerCase());
-      if (country !== 'IN' && !isShippingToIndia) {
+      if (!isIndiaDestination(shippingAddress?.country)) {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
       }
     }
@@ -677,6 +693,7 @@ exports.createGuestOrder = async (req, res, next) => {
       discountPrice: prices.discountPrice,
       couponCode: couponCode || null,
       totalPrice: prices.totalPrice,
+      currency: prices.currency,
       status: (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') ? 'pending' : 'payment_pending',
       isPaid,
       paidAt: isPaid ? Date.now() : null,
@@ -1110,6 +1127,7 @@ exports.trackOrder = async (req, res, next) => {
         state: order.shippingAddress?.state,
       },
       totalPrice: order.totalPrice,
+      currency: order.currency || 'INR',
       isPaid: order.isPaid,
       trackingNumber: order.trackingNumber,
       awbCode: order.awbCode,

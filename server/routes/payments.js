@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { createRazorpayOrder, verifyRazorpay, getRazorpayConfig, getPaymentHealth, razorpayWebhook } = require('../controllers/paymentController');
+const { createRazorpayOrder, quoteOrder, verifyRazorpay, getRazorpayConfig, getPaymentHealth, razorpayWebhook } = require('../controllers/paymentController');
 const { optionalAuth, protect, admin } = require('../middleware/auth');
 
 // Returns the public Razorpay key ID to the frontend at runtime.
@@ -24,6 +24,8 @@ router.post('/payments/razorpay', optionalAuth, createRazorpayOrder);
 router.post('/payments/razorpay/verify', optionalAuth, verifyRazorpay);
 
 // New requested production endpoints (Top-level under /api)
+// Totals for an order shipped abroad (USD), as create-order will charge them
+router.post('/checkout-quote', optionalAuth, quoteOrder);
 router.post('/create-order', optionalAuth, createRazorpayOrder);
 router.post('/verify-payment', optionalAuth, verifyRazorpay);
 

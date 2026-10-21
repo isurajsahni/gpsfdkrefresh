@@ -35,7 +35,7 @@ const getBestsellerLabel = (id) => {
 
 const LocationPage = () => {
   const { city } = useParams();
-  const { formatPrice } = useCurrency();
+  const { formatAmount, priceRangeOf } = useCurrency();
   
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -215,11 +215,7 @@ const LocationPage = () => {
         ) : (
           <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {curatedProducts.map((product) => {
-              const prices = [
-                product.basePrice,
-                ...(product.variations || []).map(v => v.price)
-              ].filter(p => typeof p === 'number' && p > 0);
-              const minPrice = prices.length > 0 ? Math.min(...prices) : (product.basePrice || 0);
+              const { min: minPrice } = priceRangeOf(product);
 
               // Badge check
               let badgeType = "";
@@ -274,7 +270,7 @@ const LocationPage = () => {
                         {product.name}
                       </h4>
                       <p className="text-accent font-bold text-sm mt-2">
-                        Starting from {formatPrice(minPrice)}
+                        Starting from {formatAmount(minPrice)}
                       </p>
                     </div>
                     <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">

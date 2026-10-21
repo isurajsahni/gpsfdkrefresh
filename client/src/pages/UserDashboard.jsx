@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
 import SEO from '../components/seo/SEO';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
+import { formatMoney } from '../utils/intlPricing';
 import {
   HiOutlineUser, HiOutlineShoppingBag, HiOutlineLocationMarker,
   HiOutlineMail, HiOutlinePhone, HiOutlinePencil, HiOutlineCheck,
@@ -734,7 +735,7 @@ const UserDashboard = () => {
                             <span className={`px-4 py-1.5 rounded-full text-xs font-bold capitalize ${statusColors[order.status] || 'bg-gray-100 text-gray-600'}`}>
                               {order.status}
                             </span>
-                            <span className="font-bold text-accent text-xl">₹{order.totalPrice?.toLocaleString()}</span>
+                            <span className="font-bold text-accent text-xl">{formatMoney(order.totalPrice || 0, order.currency)}</span>
                             {canDownloadInvoice(order, invoicesEnabled) && (
                               <button
                                 onClick={() => handleDownloadInvoice(order)}
@@ -778,7 +779,7 @@ const UserDashboard = () => {
                                 <span className="font-bold text-secondary group-hover:text-accent transition-colors line-clamp-1">{item.name}</span>
                                 <div className="text-sm text-gray-500 mt-1 flex justify-between">
                                   <span>Qty: {item.quantity}</span>
-                                  <span className="font-medium text-secondary">₹{(item.price * item.quantity).toLocaleString()}</span>
+                                  <span className="font-medium text-secondary">{formatMoney(item.price * item.quantity, order.currency)}</span>
                                 </div>
                               </div>
                             </Link>

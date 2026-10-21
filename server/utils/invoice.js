@@ -61,7 +61,10 @@ const getConfig = () => {
 // ─── Money / dates ───
 
 const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
-const money = (n) => '₹' + round2(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// USD for orders shipped abroad (Order.currency), INR otherwise
+const money = (n, currency = 'INR') => (currency === 'USD'
+  ? '$' + round2(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  : '₹' + round2(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', {
   timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric',
 });
@@ -96,9 +99,10 @@ const intToWords = (n) => {
   if (n) parts.push(threeDigits(n));
   return parts.join(' ');
 };
-const amountInWords = (amount) => {
+const amountInWords = (amount, currency = 'INR') => {
   const rupees = Math.floor(round2(amount));
   const paise = Math.round((round2(amount) - rupees) * 100);
+  if (currency === 'USD') return `US Dollars ${intToWords(rupees)}${paise ? ` and ${twoDigits(paise)} Cents` : ''} Only`;
   return `Rupees ${intToWords(rupees)}${paise ? ` and ${twoDigits(paise)} Paise` : ''} Only`;
 };
 
@@ -214,7 +218,8 @@ const buildInvoiceData = (order, customer = {}) => {
     taxable,
     taxLines,
     totalTax: tax,
-    amountInWords: amountInWords(total),
+    amountInWords: amountInWords(total, order.currency),
+    currency: order.currency || 'INR',
     payment,
   };
 };
@@ -320,8 +325,8 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
     if (it.details) iy = text(it.details, col.item.x, iy + 1, { size: 8, color: MUTED, width: col.item.w });
     if (col.hsn) text(it.hsn, col.hsn.x, rowTop, { color: MUTED, width: col.hsn.w });
     text(it.qty, col.qty.x, rowTop, { width: col.qty.w, align: 'right' });
-    text(money(it.rate), col.rate.x, rowTop, { width: col.rate.w, align: 'right', tabular: true });
-    text(money(it.amount), col.amount.x, rowTop, { font: 'B', width: col.amount.w, align: 'right', tabular: true });
+    text(money(it.rate, d.currency), col.rate.x, rowTop, { width: col.rate.w, align: 'right', tabular: true });
+    text(money(it.amount, d.currency), col.amount.x, rowTop, { font: 'B', width: col.amount.w, align: 'right', tabular: true });
     y = Math.max(iy, rowTop + h) + 8;
     rule(y - 4);
   });
@@ -341,17 +346,17 @@ const renderPdf = (d) => new Promise((resolve, reject) => {
     y = doc.y + 5;
   };
   const blockTop = y;
-  row('Items total', money(d.itemsTotal));
-  row('Shipping', d.shipping > 0 ? money(d.shipping) : 'Free');
-  if (d.discount > 0) row(`Discount${d.couponCode ? ` (${d.couponCode})` : ''}`, `−${money(d.discount)}`, { color: '#16a34a' });
+  row('Items total', money(d.itemsTotal, d.currency));
+  row('Shipping', d.shipping > 0 ? money(d.shipping, d.currency) : 'Free');
+  if (d.discount > 0) row(`Discount${d.couponCode ? ` (${d.couponCode})` : ''}`, `−${money(d.discount, d.currency)}`, { color: '#16a34a' });
   doc.moveTo(totalsX, y).lineTo(PAGE.right, y).lineWidth(1).strokeColor(BRAND).stroke();
   y += 7;
-  row(d.gst ? 'Total (incl. GST)' : 'Total', money(d.total), { bold: true, size: 11, color: BRAND });
+  row(d.gst ? 'Total (incl. GST)' : 'Total', money(d.total, d.currency), { bold: true, size: 11, color: BRAND });
   if (d.gst) {
     y += 4;
-    row('Taxable value', money(d.taxable));
-    for (const t of d.taxLines) row(t.label, money(t.amount));
-    row('Total GST', money(d.totalTax), { bold: true });
+    row('Taxable value', money(d.taxable, d.currency));
+    for (const t of d.taxLines) row(t.label, money(t.amount, d.currency));
+    row('Total GST', money(d.totalTax, d.currency), { bold: true });
   }
   const totalsBottom = y;
 

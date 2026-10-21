@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import API from '../utils/api';
+import { unitPriceIn, formatMoney, legacyUsdFromInr, INTL_CURRENCY } from '../utils/intlPricing';
 
 const CurrencyContext = createContext();
 
@@ -136,6 +137,43 @@ export const CurrencyProvider = ({ children }) => {
     }
   }, [geoData, roundClean]);
 
+  // Display currency for browsing: INR in India, USD elsewhere. (Checkout
+  // prices by the shipping country instead — see utils/intlPricing.)
+  const displayCurrency = geoData.currency === INTL_CURRENCY ? INTL_CURRENCY : 'INR';
+
+  /** Unit price of a product variation in the display currency */
+  const priceOf = useCallback((variation) => unitPriceIn(variation, displayCurrency), [displayCurrency]);
+
+  /** Unit price of a cart line: its stored INR price, or its USD list price */
+  const linePriceOf = useCallback(
+    (item) => (displayCurrency === 'INR' ? Number(item?.price) || 0 : unitPriceIn({ ...item?.variation, price: item?.price }, displayCurrency)),
+    [displayCurrency]
+  );
+
+  /** Format an amount that is already in `currency` (default: the display currency) */
+  const formatAmount = useCallback(
+    (amount, currency = displayCurrency) => formatMoney(amount, currency),
+    [displayCurrency]
+  );
+
+  /** "$95", "₹3,699 for 2" … a variation's price × quantity */
+  const formatVariationPrice = useCallback(
+    (variation, quantity = 1) => formatMoney(priceOf(variation) * quantity, displayCurrency),
+    [priceOf, displayCurrency]
+  );
+
+  /**
+   * Cheapest and dearest variation of a product, in the display currency.
+   * Products without variations fall back to their base (INR) price.
+   */
+  const priceRangeOf = useCallback((product) => {
+    const variations = (product?.variations || []).filter((v) => Number(v?.price) > 0);
+    const prices = variations.length
+      ? variations.map(priceOf)
+      : [displayCurrency === INTL_CURRENCY ? legacyUsdFromInr(product?.basePrice) : Number(product?.basePrice) || 0];
+    return { min: Math.min(...prices), max: Math.max(...prices) };
+  }, [priceOf, displayCurrency]);
+
   /**
    * Get just the numeric converted price (no formatting)
    */
@@ -152,8 +190,16 @@ export const CurrencyProvider = ({ children }) => {
     loaded: geoData.loaded,
     formatPrice,
     getPrice,
+    displayCurrency,
+    priceOf,
+    linePriceOf,
+    formatAmount,
+    formatVariationPrice,
+    priceRangeOf,
+    // Compare-at ("was") prices exist in INR only; there is no USD one to show
+    showComparePrice: displayCurrency === 'INR',
     setCountryOverride: setManualCountry,
-  }), [geoData, formatPrice, getPrice]);
+  }), [geoData, formatPrice, getPrice, displayCurrency, priceOf, linePriceOf, formatAmount, formatVariationPrice, priceRangeOf]);
 
   return (
     <CurrencyContext.Provider value={value}>

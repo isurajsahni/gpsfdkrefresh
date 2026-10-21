@@ -116,7 +116,9 @@ const FINISH_ORDER = ['stretched', 'rolled', 'softboard', 'sticker', 'paper', 'g
 // and lower-cased — but keep the raw values to pick the variation with.
 export const finishKey = (variation) => `${lower(variation?.material)}|${lower(variation?.frame)}`;
 
-export const getFinishes = (variations = []) => {
+// `priceOf` gives a variation's price in the visitor's currency (default: the
+// stored INR price); each finish's minPrice is in that currency.
+export const getFinishes = (variations = [], priceOf = (v) => v.price) => {
   const byKey = new Map();
   for (const variation of variations) {
     if (!clean(variation.material) && !clean(variation.frame)) continue;
@@ -135,7 +137,8 @@ export const getFinishes = (variations = []) => {
       finish = { ...copy, key, material: variation.material, frame: variation.frame, minPrice: 0, sizes: [] };
       byKey.set(key, finish);
     }
-    if (variation.price > 0 && (!finish.minPrice || variation.price < finish.minPrice)) finish.minPrice = variation.price;
+    const price = variation.price > 0 ? priceOf(variation) : 0;
+    if (price > 0 && (!finish.minPrice || price < finish.minPrice)) finish.minPrice = price;
     if (!finish.sizes.includes(variation.size)) finish.sizes.push(variation.size);
   }
   return [...byKey.values()].sort((a, b) => FINISH_ORDER.indexOf(a.kind) - FINISH_ORDER.indexOf(b.kind));

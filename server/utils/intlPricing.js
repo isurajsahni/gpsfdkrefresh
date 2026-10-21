@@ -15,7 +15,7 @@
  * rather than charging a different amount — but it would still show the wrong
  * price everywhere else.
  */
-const { roundClean, INR_EXCHANGE_RATES, INTERNATIONAL_PRICE_MULTIPLIER } = require('./geoPricing');
+const { roundClean, INR_EXCHANGE_RATES, INTERNATIONAL_PRICE_MULTIPLIER, detectCountry } = require('./geoPricing');
 
 const INTL_CURRENCY = 'USD';
 
@@ -80,10 +80,27 @@ const isIndiaDestination = (country) => {
   return c === '' || c === 'india' || c === 'in';
 };
 
-// The currency an order is priced and charged in: where it ships decides.
 // An empty country is India — the address form and the Order model default
 // to it.
 const currencyForDestination = (country) => (isIndiaDestination(country) ? 'INR' : INTL_CURRENCY);
+
+/**
+ * The currency an order is priced and charged in. USD when it ships outside
+ * India OR the shopper is outside India — the storefront already shows them
+ * USD prices by location, so checkout must not switch them to INR (and offer
+ * COD) just because the address form says India. INR only for a shopper in
+ * India shipping to India.
+ *
+ * The location is the trusted lookup (the request's real IP, never
+ * caller-set headers or ?country=). Checkout shows the quote this decides and
+ * create-order refuses any other figure, so the page and the charge always
+ * agree even if location detection differs between calls.
+ */
+const resolveOrderCurrency = async (req, shipCountry) => {
+  if (!isIndiaDestination(shipCountry)) return INTL_CURRENCY;
+  const country = await detectCountry(req, { trusted: true });
+  return country && country !== 'IN' ? INTL_CURRENCY : 'INR';
+};
 
 module.exports = {
   INTL_CURRENCY,
@@ -94,4 +111,5 @@ module.exports = {
   intlUnitPrice,
   isIndiaDestination,
   currencyForDestination,
+  resolveOrderCurrency,
 };

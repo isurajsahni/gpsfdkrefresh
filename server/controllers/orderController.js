@@ -9,7 +9,7 @@ const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
-const { INTL_CURRENCY, USD_INR_RATE, intlUnitPrice, currencyForDestination, isIndiaDestination } = require('../utils/intlPricing');
+const { INTL_CURRENCY, USD_INR_RATE, intlUnitPrice, resolveOrderCurrency } = require('../utils/intlPricing');
 
 // Which client placed an order. Coerce any caller-supplied hint to a known value,
 // defaulting to 'web', so an unexpected string never fails schema validation.
@@ -235,7 +235,7 @@ const MAX_ITEM_QUANTITY = 100;
 // `options.currency` is the currency the order is priced in — 'INR' (default)
 // uses each variation's stored price; 'USD' (orders shipped outside India) uses
 // the international price list in utils/intlPricing and ships free. Use
-// currencyForDestination(shippingAddress.country) to pick it.
+// resolveOrderCurrency(req, shippingAddress.country) to pick it.
 const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier = null, options = {}) => {
   const { allowOversell = false, currency = 'INR' } = options;
   const isIntl = currency === INTL_CURRENCY;
@@ -573,15 +573,16 @@ exports.createOrder = async (req, res, next) => {
     if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
 
     // Server-side price calculation — never trust client prices
+    const orderCurrency = await resolveOrderCurrency(req, shippingAddress?.country);
     const prices = await calculateOrderPrices(items, couponCode, req.user._id, null, {
-      currency: currencyForDestination(shippingAddress?.country),
+      currency: orderCurrency,
     });
 
     // Enforce region check for Cash on Delivery (COD)
-    // COD is for addresses in India only: an order shipped abroad is priced
-    // in USD and has to be paid online.
+    // COD is for shoppers in India shipping to India only: every other order
+    // is priced in USD and has to be paid online.
     if (paymentMethod === 'cod') {
-      if (!isIndiaDestination(shippingAddress?.country)) {
+      if (orderCurrency !== 'INR') {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
       }
     }
@@ -662,15 +663,16 @@ exports.createGuestOrder = async (req, res, next) => {
     // Server-side price calculation — never trust client prices
     // Support coupons for guests too for production-ready feature
     const guestIdentifier = guestEmail || guestPhone || shippingAddress?.phone || null;
+    const orderCurrency = await resolveOrderCurrency(req, shippingAddress?.country);
     const prices = await calculateOrderPrices(items, couponCode, null, guestIdentifier, {
-      currency: currencyForDestination(shippingAddress?.country),
+      currency: orderCurrency,
     });
 
     // Enforce region check for Cash on Delivery (COD)
-    // COD is for addresses in India only: an order shipped abroad is priced
-    // in USD and has to be paid online.
+    // COD is for shoppers in India shipping to India only: every other order
+    // is priced in USD and has to be paid online.
     if (paymentMethod === 'cod') {
-      if (!isIndiaDestination(shippingAddress?.country)) {
+      if (orderCurrency !== 'INR') {
         return res.status(400).json({ message: 'Cash on Delivery (COD) is only available for orders within India.' });
       }
     }

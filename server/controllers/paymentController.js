@@ -6,7 +6,7 @@ const PaymentClaim = require('../models/PaymentClaim');
 const User = require('../models/User');
 const orderController = require('./orderController');
 const { detectCountry, applyPriceMultiplier } = require('../utils/geoPricing');
-const { currencyForDestination } = require('../utils/intlPricing');
+const { resolveOrderCurrency, isIndiaDestination } = require('../utils/intlPricing');
 const metaCapi = require('../utils/metaCapi');
 
 const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
@@ -171,7 +171,7 @@ exports.quoteOrder = async (req, res, next) => {
     }
     const userId = req.user ? req.user._id : null;
     const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
-    const currency = currencyForDestination(orderData.shippingAddress?.country);
+    const currency = await resolveOrderCurrency(req, orderData.shippingAddress?.country);
     const { calculateOrderPrices } = require('./orderController');
     const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { currency });
     res.json({
@@ -210,26 +210,25 @@ exports.createRazorpayOrder = async (req, res, next) => {
     const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
     const { calculateOrderPrices } = require('./orderController');
 
-    // ─── Currency: decided by where the order ships ───
-    // India → INR at the catalogue price, exactly as before. Anywhere else →
-    // USD from the international price list (utils/intlPricing), free
-    // shipping, charged in USD (needs International Payments with USD enabled
-    // on the Razorpay account).
+    // ─── Currency (utils/intlPricing → resolveOrderCurrency) ───
+    // A shopper in India shipping to India → INR at the catalogue price,
+    // exactly as before. Shipping abroad, or shopping from abroad → USD from
+    // the international price list, free shipping, charged in USD (needs
+    // International Payments with USD enabled on the Razorpay account).
     //
-    // History: an earlier attempt priced international orders by the shopper's
-    // IP instead, which could disagree with the currency the storefront had
-    // shown them (a customer was shown ₹499 and billed ₹4,990), so the
-    // international multiplier was switched off. The shipping country is
-    // chosen on the checkout form itself, so the page and this call price
-    // from the same input; and the client's quote check below refuses to
-    // open a payment for any other figure.
-    const chargeCurrency = currencyForDestination(orderData.shippingAddress?.country);
+    // History: an earlier attempt priced by location with no check against
+    // what the page showed, and a customer was shown ₹499 and billed ₹4,990.
+    // Now the checkout displays the server's own quote (/checkout-quote, the
+    // same decision as here) and the quote check below refuses to open a
+    // payment for any other figure — the page and the charge always agree.
+    const chargeCurrency = await resolveOrderCurrency(req, orderData.shippingAddress?.country);
     const prices = await calculateOrderPrices(orderData.items, orderData.couponCode, userId, guestIdentifier, { currency: chargeCurrency });
 
     // The checkout sends the total and currency it is showing. If they differ
-    // from what we would charge (a stale page, a price change), stop here —
-    // no money moves — and let the page re-quote. Older clients don't send a
-    // quote; they are only ever shown INR prices for Indian addresses.
+    // from what we would charge (a stale page, a price change, the shopper's
+    // location changed), stop here — no money moves — and let the page
+    // re-quote. Older clients don't send a quote; they only ever showed INR,
+    // so they may still pay in INR but never in USD.
     const quoted = orderData.quote;
     if (quoted && (quoted.currency !== chargeCurrency || Math.abs(Number(quoted.total) - prices.totalPrice) > 0.01)) {
       return res.status(409).json({
@@ -376,19 +375,19 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   const rzpOrder = await rzpCallWithRetry('orders.fetch', () => instance.orders.fetch(razorpayOrderId));
 
   // Price the cart in the currency Razorpay charged — never one re-derived
-  // from this request. It must also be the currency the order's shipping
-  // address is priced in: otherwise a cart paid in INR for an Indian address
-  // could be claimed with an address abroad, getting an international order
-  // at the domestic price. Razorpay orders created before currencies followed
-  // the shipping country carry no `ship_country` note and were all INR: those
-  // keep the old behaviour, so a payment made across a deploy still becomes an
-  // order.
+  // from this request. An address abroad is always a USD order, so a cart
+  // paid in INR (for an Indian address) can't be claimed with an address
+  // abroad, getting an international order at the domestic price. (USD paid
+  // for an Indian address is fine: a shopper abroad sending it to India.)
+  // Razorpay orders created before currencies were tracked carry no
+  // `ship_country` note and were all INR: those keep the old behaviour, so a
+  // payment made across a deploy still becomes an order.
   const paidCurrency = (rzpOrder?.currency || 'INR').toUpperCase();
-  const destinationCurrency = currencyForDestination(orderData.shippingAddress?.country);
-  if (rzpOrder?.notes?.ship_country !== undefined && paidCurrency !== destinationCurrency) {
+  const shipCountry = orderData.shippingAddress?.country;
+  if (rzpOrder?.notes?.ship_country !== undefined && paidCurrency === 'INR' && !isIndiaDestination(shipCountry)) {
     console.error(
-      '[Razorpay] verify: charged currency does not match the shipping country — refusing to create order:',
-      JSON.stringify({ razorpayOrderId, paymentId, paidCurrency, destinationCurrency })
+      '[Razorpay] verify: paid in INR for an address outside India — refusing to create order:',
+      JSON.stringify({ razorpayOrderId, paymentId, paidCurrency, shipCountry })
     );
     return { ok: false, status: 400, message: 'Payment verification failed: Amount mismatch' };
   }

@@ -9,7 +9,7 @@ import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress }
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
-import { currencyForDestination, intlUnitPrice, formatMoney } from '../utils/intlPricing';
+import { INTL_CURRENCY, currencyForDestination, intlUnitPrice, formatMoney } from '../utils/intlPricing';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
 import { calculateShipping } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
@@ -121,8 +121,9 @@ const CheckoutPage = () => {
   // flushes before navigate, the cartItems.length===0 redirect below would otherwise
   // bounce us to /cart. `orderPlaced` short-circuits that race.
   const [orderPlaced, setOrderPlaced] = useState(false);
-  // Visitor's detected country — only pre-fills the shipping country
-  const { country } = useCurrency();
+  // Visitor's detected location: pre-fills the shipping country, and a
+  // shopper abroad (shown USD prices in the store) is priced in USD here too
+  const { country, displayCurrency } = useCurrency();
   const headingRef = useRef(null);
 
   useEffect(() => {
@@ -137,9 +138,9 @@ const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
 
-  // Orders shipped outside India are priced in USD by the server (see
-  // utils/intlPricing); `intlQuote` is its figure, and the one we charge.
-  const [intlQuote, setIntlQuote] = useState(null);
+  // The server's quote for this cart and address: its currency and totals
+  // are what the summary shows and what create-order charges.
+  const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState('');
   const [quoteNonce, setQuoteNonce] = useState(0);
 
@@ -450,20 +451,24 @@ const CheckoutPage = () => {
     setStep(2);
   };
 
-  // ─── Currency of this order: where it ships decides ───
+  // ─── Currency of this order ───
+  // USD when it ships outside India or the shopper is outside India; INR for
+  // a shopper in India shipping to India. The server decides (its quote);
+  // until the quote arrives, the same rule on what this page knows.
   const shipCountry = getSelectedAddress()?.country;
-  const orderCurrency = currencyForDestination(shipCountry);
+  const expectedCurrency = displayCurrency === INTL_CURRENCY ? INTL_CURRENCY : currencyForDestination(shipCountry);
+  const orderCurrency = quote?.currency || expectedCurrency;
   const isIntlOrder = orderCurrency !== 'INR';
   const money = (amount) => formatMoney(amount, orderCurrency);
 
   useEffect(() => {
-    if (!isIntlOrder || cartItems.length === 0) {
-      setIntlQuote(null);
+    if (cartItems.length === 0) {
+      setQuote(null);
       setQuoteError('');
       return undefined;
     }
     let cancelled = false;
-    setIntlQuote(null);
+    setQuote(null);
     setQuoteError('');
     const timer = setTimeout(async () => {
       try {
@@ -474,15 +479,15 @@ const CheckoutPage = () => {
             couponCode: appliedCoupon ? appliedCoupon.code : null,
           },
         }));
-        if (!cancelled) setIntlQuote(data);
+        if (!cancelled) setQuote(data);
       } catch (err) {
-        if (!cancelled) setQuoteError(err.response?.data?.message || 'Could not load prices for your shipping country. Please try again.');
+        if (!cancelled) setQuoteError(err.response?.data?.message || 'Could not load your order total. Please try again.');
       }
     }, 250);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [isIntlOrder, shipCountry, cartItems, appliedCoupon, quoteNonce]);
+  }, [shipCountry, cartItems, appliedCoupon, quoteNonce]);
 
-  // Cash on Delivery is for addresses in India only
+  // Cash on Delivery is for shoppers in India shipping to India only
   useEffect(() => {
     if (isIntlOrder && paymentMethod === 'cod') setPaymentMethod('razorpay');
   }, [isIntlOrder, paymentMethod]);
@@ -531,20 +536,26 @@ const CheckoutPage = () => {
   // 3. Final Total (never negative)
   const finalTotal = Math.max(cartTotal + shippingFee - appliedDiscount, 0);
 
-  // What the summary shows and the order is paid at, in the order's currency.
-  // Abroad: the server's quote (null until it arrives).
-  const summary = isIntlOrder
+  // What the summary shows and the order is paid at, in the order's currency:
+  // the server's quote. A USD order waits for it; an INR order can fall back
+  // to this page's own figures (the rules mirror the server's), as it always
+  // has, if the quote is slow or unavailable.
+  const summary = quote
     ? {
-        items: intlQuote?.itemsPrice,
-        shipping: intlQuote?.shippingPrice ?? 0,
-        discount: intlQuote?.discountPrice ?? 0,
-        total: intlQuote?.totalPrice,
+        items: quote.itemsPrice,
+        shipping: quote.shippingPrice ?? 0,
+        discount: quote.discountPrice ?? 0,
+        total: quote.totalPrice,
       }
-    : { items: cartTotal, shipping: shippingFee, discount: appliedDiscount, total: finalTotal };
-  const quoteReady = !isIntlOrder || (intlQuote && intlQuote.currency === orderCurrency);
-  const lineTotal = (item, index) => (isIntlOrder
-    ? (intlQuote?.items?.[index]?.price ?? intlUnitPrice({ ...item.variation, price: item.price })) * item.quantity
-    : item.price * item.quantity);
+    : isIntlOrder
+      ? { items: undefined, shipping: 0, discount: 0, total: undefined }
+      : { items: cartTotal, shipping: shippingFee, discount: appliedDiscount, total: finalTotal };
+  const quoteReady = Boolean(quote) || !isIntlOrder;
+  const lineTotal = (item, index) => (quote
+    ? (quote.items?.[index]?.price ?? 0) * item.quantity
+    : isIntlOrder
+      ? intlUnitPrice({ ...item.variation, price: item.price }) * item.quantity
+      : item.price * item.quantity);
 
   // If cart drops below the coupon's minimum, surface the issue and drop the coupon
   // so the user isn't confused by a "Coupon applied" badge with zero effect.
@@ -598,7 +609,7 @@ const CheckoutPage = () => {
         totalPrice: payableTotal,
         // The total and currency on screen. The server refuses to open a
         // payment for any other figure (USD orders must send it).
-        ...(isIntlOrder ? { quote: { currency: orderCurrency, total: payableTotal } } : {}),
+        ...(quote ? { quote: { currency: quote.currency, total: quote.totalPrice } } : {}),
         // Meta CAPI: event IDs for dedup + first-party Meta identifiers.
         eventIdPurchase,
         eventIdInitiateCheckout,
@@ -1178,7 +1189,7 @@ const CheckoutPage = () => {
               {isIntlOrder ? (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl p-4 mb-6 text-sm flex items-center gap-3 shadow-sm">
                   <span className="text-xl">✈️</span>
-                  <span className="leading-relaxed">Shipping to {shipCountry}: prices are in <strong>US dollars</strong> and include <strong>free international shipping</strong>.</span>
+                  <span className="leading-relaxed">Your order is priced in <strong>US dollars</strong>, with <strong>free international shipping</strong> included.</span>
                 </div>
               ) : (
                 shippingFee > 0 ? (
@@ -1244,7 +1255,7 @@ const CheckoutPage = () => {
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
-                {isIntlOrder && !intlQuote && (
+                {isIntlOrder && !quote && (
                   <p className={`text-sm mb-2 ${quoteError ? 'text-red-600' : 'text-gray-500'}`}>
                     {quoteError || 'Calculating your total in US dollars…'}
                     {quoteError && (

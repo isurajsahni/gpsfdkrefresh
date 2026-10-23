@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiOutlineShoppingCart, HiMinus, HiPlus, HiOutlineX, HiOutlineInformationCircle } from 'react-icons/hi';
+import { HiOutlineShoppingCart, HiMinus, HiPlus, HiOutlineX, HiOutlineInformationCircle, HiOutlineCamera } from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import API, { cachedGet, isNotFound } from '../utils/api';
@@ -24,6 +24,8 @@ import { dropStaticSnapshot } from '../prerender/snapshot';
 // downloads alongside the product fetch rather than ahead of the buy box
 const loadProductStory = () => import('../components/product/story/ProductStory');
 const ProductStory = lazy(loadProductStory);
+// The camera viewer only downloads when someone opens it
+const WallView = lazy(() => import('../components/product/WallView'));
 
 const ProductPage = () => {
   const { slug } = useParams();
@@ -53,6 +55,7 @@ const ProductPage = () => {
   const [zoomStyle, setZoomStyle] = useState({});
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
+  const [isWallView, setIsWallView] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
   // The story below the fold sends buyers back up here (to name a nameplate,
   // or to request a custom-size price)
@@ -644,6 +647,15 @@ const ProductPage = () => {
                   <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
                 </button>
               )}
+              {/* The selected size on the buyer's own wall, through the camera */}
+              {!isCustomSize && product.images?.length > 0 && (
+                <button
+                  onClick={() => setIsWallView(true)}
+                  className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-secondary py-3 font-semibold text-secondary hover:bg-secondary hover:text-white transition-colors"
+                >
+                  <HiOutlineCamera className="w-5 h-5" /> View on your wall
+                </button>
+              )}
               {/* Nameplates' shapes vary with the design, so their sizes come with a disclaimer */}
               {isNameplate && (
                 <p className="flex items-start gap-2 rounded-xl bg-gray-100 px-4 py-3 text-sm text-gray-600">
@@ -688,6 +700,18 @@ const ProductPage = () => {
             excludeId={product._id}
           />
         </div>
+      )}
+
+      {isWallView && (
+        <Suspense fallback={null}>
+          <WallView
+            product={product}
+            selectedVariation={selectedVariation}
+            sizes={sizes}
+            onPickSize={(size) => pickVariation({ size })}
+            onClose={() => setIsWallView(false)}
+          />
+        </Suspense>
       )}
 
       {/* Fullscreen HD Zoom Modal */}

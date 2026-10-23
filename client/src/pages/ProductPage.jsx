@@ -697,6 +697,7 @@ const ProductPage = () => {
             title="Related Products"
             categorySlug={product.category.slug}
             featured={false}
+            bestSelling
             excludeId={product._id}
           />
         </div>

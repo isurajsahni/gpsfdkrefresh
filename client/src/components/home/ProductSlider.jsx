@@ -34,7 +34,7 @@ const getBestsellerLabel = (id) => {
   return BESTSELLER_LABELS[Math.abs(hash) % BESTSELLER_LABELS.length];
 };
 
-const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, excludeId, showBadges = true }) => {
+const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = false, bestSelling = false, excludeId, showBadges = true }) => {
   const [products, setProducts] = useState([]);
   const { addToCart } = useCart();
   const { formatAmount, priceRangeOf, showComparePrice } = useCurrency();
@@ -48,6 +48,13 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
         if (hotSelling) {
           // Use the dedicated hot-selling endpoint
           data = await cachedGet('/products/hot-selling');
+        } else if (bestSelling) {
+          // The category's most-sold products first (ranked by the server from
+          // real orders; never-sold ones fall back to newest). One extra, so
+          // there are still 12 once the current product is left out.
+          const params = { limit: 13, categorySlug, sort: 'best_selling' };
+          const ranked = await cachedGet('/products', { params });
+          data = { products: (ranked.products || []).filter((p) => p._id !== excludeId).slice(0, 12) };
         } else {
           const params = { limit: 12 };
           if (featured) params.featured = true;
@@ -79,7 +86,7 @@ const ProductSlider = ({ title, categorySlug, featured = true, hotSelling = fals
       }
     };
     fetchProducts();
-  }, [categorySlug, featured, hotSelling]);
+  }, [categorySlug, featured, hotSelling, bestSelling, excludeId]);
 
   const handleQuickAdd = useCallback((e, product) => {
     e.preventDefault();

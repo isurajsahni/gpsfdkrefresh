@@ -17,32 +17,10 @@ const WALL_INCHES_ACROSS = 72;
 // Used to draw a custom or unreadable size, at the artwork's proportions
 const FALLBACK_LONG = 36;
 
-// How far each finish stands off the wall, in inches. Drawn a little deeper
-// than life: on a phone screen a true 1.5 in edge is a pixel or two.
-const DEPTH = { stretched: 1.5, flat: 0.25 };
-const DEPTH_BOOST = 1.6;
-// The tilt that shows the edges: a little at rest (light from the top left,
-// the right and bottom edges in view), more as the piece moves off centre,
-// like walking past it
-const REST_TILT = { x: 5, y: -12 };
-const MOVE_TILT = { x: 18, y: 24 };
-const MAX_TILT = 22;
-
-// Light falls from the top left; canvas gets a faint weave
-const LIGHT = 'linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 38%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.16) 100%)';
-const WEAVE = 'repeating-linear-gradient(0deg, rgba(0,0,0,0.018) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(0,0,0,0.018) 0 1px, transparent 1px 3px)';
-// The wrapped edges turn away from the light
-const EDGE_SHADE = { right: 0.38, bottom: 0.5, left: 0.18, top: 0.08 };
+const STRETCHED_SHADOW = '4px 6px 0 rgba(0,0,0,0.28), 0 22px 40px -12px rgba(0,0,0,0.55)';
+const FLAT_SHADOW = '0 14px 28px -12px rgba(0,0,0,0.5)';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-const DEG = Math.PI / 180;
-
-// Within a few degrees of square, it clicks to square: the usual intent
-const SNAP_DEGREES = 3;
-const snapRotation = (deg) => {
-  const square = Math.round(deg / 90) * 90;
-  return Math.abs(deg - square) <= SNAP_DEGREES ? square : deg;
-};
 
 // Where `source` lands when drawn to cover a `w` × `h` box, like object-fit: cover
 const coverRect = (sw, sh, w, h) => {
@@ -53,7 +31,6 @@ const coverRect = (sw, sh, w, h) => {
 export default function WallView({ product, selectedVariation, sizes, onPickSize, onClose }) {
   const art = artworkSource(product, storyKind(product));
   const stretched = /stretch/i.test(selectedVariation?.frame || '');
-  const isCanvas = /canvas/i.test(selectedVariation?.material || '');
 
   const stageRef = useRef(null);
   const videoRef = useRef(null);
@@ -67,8 +44,6 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
   const [ratio, setRatio] = useState(null);
   const [ppi, setPpi] = useState(() => window.innerWidth / WALL_INCHES_ACROSS);
   const [pos, setPos] = useState(() => ({ x: window.innerWidth / 2, y: window.innerHeight * 0.4 }));
-  // Turned in the wall's plane, in degrees, to line up with a tilted camera
-  const [rotation, setRotation] = useState(0);
   const [saving, setSaving] = useState(false);
 
   // The back camera, released when the viewer closes
@@ -117,20 +92,8 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
     : { w: ratio && ratio < 1 ? FALLBACK_LONG * ratio : FALLBACK_LONG, h: ratio && ratio < 1 ? FALLBACK_LONG : FALLBACK_LONG / (ratio || 1.5) };
   const width = shape.w * ppi;
   const height = shape.h * ppi;
-  const depth = Math.max(1, (stretched ? DEPTH.stretched : DEPTH.flat) * ppi * DEPTH_BOOST);
-  const tiltY = clamp(REST_TILT.y + ((pos.x - window.innerWidth / 2) / window.innerWidth) * MOVE_TILT.y, -MAX_TILT, MAX_TILT);
-  const tiltX = clamp(REST_TILT.x - ((pos.y - window.innerHeight / 2) / window.innerHeight) * MOVE_TILT.x, -MAX_TILT, MAX_TILT);
 
-  // The art as it's cropped onto the front, so the wrapped edges continue it
-  const artCover = coverRect(ratio || width / height, 1, width, height);
-  const edgeStyle = (side, x, y) => ({
-    backgroundImage: `linear-gradient(rgba(0,0,0,${EDGE_SHADE[side]}), rgba(0,0,0,${EDGE_SHADE[side]})), url("${art.url}")`,
-    backgroundSize: `100% 100%, ${artCover.w}px ${artCover.h}px`,
-    backgroundPosition: `0 0, ${x}px ${y}px`,
-    backgroundRepeat: 'no-repeat',
-  });
-
-  /* ── Drag with one finger; pinch, twist and move with two ── */
+  /* ── Drag with one finger; pinch and move with two. Always hung straight. ── */
   const startGesture = () => {
     const pts = [...pointers.current.values()];
     if (pts.length === 1) {
@@ -140,11 +103,9 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
       gesture.current = {
         kind: 'pinch',
         dist: Math.hypot(a.x - b.x, a.y - b.y),
-        angle: Math.atan2(b.y - a.y, b.x - a.x) / DEG,
         mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
         ppi,
         pos,
-        rotation,
       };
     }
   };
@@ -165,10 +126,6 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
     } else if (g?.kind === 'pinch' && pts.length >= 2) {
       const [a, b] = pts;
       setPpi(clamp(g.ppi * (Math.hypot(a.x - b.x, a.y - b.y) / g.dist), 0.5, 40));
-      // The turn of the line between the fingers, taken the short way round
-      let turn = Math.atan2(b.y - a.y, b.x - a.x) / DEG - g.angle;
-      turn = ((turn + 540) % 360) - 180;
-      setRotation(snapRotation(g.rotation + turn));
       setPos({ x: g.pos.x + (a.x + b.x) / 2 - g.mid.x, y: g.pos.y + (a.y + b.y) / 2 - g.mid.y });
     }
   };
@@ -178,18 +135,10 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
     startGesture();
   };
 
-  // Desktop: the wheel stands in for a pinch, Shift + wheel for a twist
-  const onWheel = (e) => {
-    if (e.shiftKey) {
-      const step = (e.deltaY || e.deltaX) < 0 ? -1 : 1;
-      setRotation((r) => snapRotation(r + step));
-    } else {
-      setPpi((p) => clamp(p * (e.deltaY < 0 ? 1.08 : 1 / 1.08), 0.5, 40));
-    }
-  };
+  // Desktop: the wheel stands in for a pinch
+  const onWheel = (e) => setPpi((p) => clamp(p * (e.deltaY < 0 ? 1.08 : 1 / 1.08), 0.5, 40));
 
   const reset = () => {
-    setRotation(0);
     setPpi(window.innerWidth / WALL_INCHES_ACROSS);
     setPos({ x: window.innerWidth / 2, y: window.innerHeight * 0.4 });
   };
@@ -235,65 +184,22 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
         ctx.fillRect(0, 0, sw, sh);
       }
 
-      // The 3D piece, flattened: drawn in its own frame, turned with it,
-      // around where its front lands on screen. The shadow, then the edges
-      // the tilt shows, then the lit front over them.
-      const origin = stage.getBoundingClientRect();
-      const frontBox = stage.querySelector('[data-part="front"]').getBoundingClientRect();
-      const drawArt = (x, y, w, h) => {
-        const r = coverRect(artImg.naturalWidth, artImg.naturalHeight, w, h);
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, y, w, h);
-        ctx.clip();
-        ctx.drawImage(artImg, x + r.x, y + r.y, r.w, r.h);
-        ctx.restore();
-      };
+      // The piece: its shadow, then the art
+      const x = pos.x - width / 2;
+      const y = pos.y - height / 2;
       ctx.save();
-      ctx.translate(frontBox.left + frontBox.width / 2 - origin.left, frontBox.top + frontBox.height / 2 - origin.top);
-      ctx.rotate(rotation * DEG);
-      const x = -width / 2;
-      const y = -height / 2;
-
-      ctx.save();
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = depth * 2 + 18;
-      ctx.shadowOffsetX = depth * 0.5;
-      ctx.shadowOffsetY = depth * 1.2 + 6;
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.shadowColor = 'rgba(0,0,0,0.45)';
+      ctx.shadowBlur = 28;
+      ctx.shadowOffsetY = 14;
+      ctx.fillStyle = '#ddd';
       ctx.fillRect(x, y, width, height);
       ctx.restore();
-
-      // An edge continues the art from the front's border: a thin slice of
-      // the part shown on the front, stretched over the edge and shaded
-      const cover = coverRect(artImg.naturalWidth, artImg.naturalHeight, width, height);
-      const perPx = artImg.naturalWidth / cover.w;
-      const src = { x: -cover.x * perPx, y: -cover.y * perPx, w: width * perPx, h: height * perPx };
-      const drawEdge = (edge, dx, dy, dw, dh) => {
-        const slice = Math.max(1, depth * perPx);
-        const from = {
-          right: [src.x + src.w - slice, src.y, slice, src.h],
-          left: [src.x, src.y, slice, src.h],
-          bottom: [src.x, src.y + src.h - slice, src.w, slice],
-          top: [src.x, src.y, src.w, slice],
-        }[edge];
-        ctx.drawImage(artImg, ...from, dx, dy, dw, dh);
-        ctx.fillStyle = `rgba(0,0,0,${EDGE_SHADE[edge]})`;
-        ctx.fillRect(dx, dy, dw, dh);
-      };
-      const side = depth * Math.sin(Math.abs(tiltY) * DEG);
-      const lip = depth * Math.sin(Math.abs(tiltX) * DEG);
-      if (side > 0.5) drawEdge(tiltY < 0 ? 'right' : 'left', tiltY < 0 ? -x : x - side, y, side, height);
-      if (lip > 0.5) drawEdge(tiltX > 0 ? 'bottom' : 'top', x, tiltX > 0 ? -y : y - lip, width, lip);
-
-      drawArt(x, y, width, height);
-      const light = ctx.createLinearGradient(x, y, -x, -y);
-      light.addColorStop(0, 'rgba(255,255,255,0.16)');
-      light.addColorStop(0.38, 'rgba(255,255,255,0)');
-      light.addColorStop(0.62, 'rgba(0,0,0,0)');
-      light.addColorStop(1, 'rgba(0,0,0,0.16)');
-      ctx.fillStyle = light;
-      ctx.fillRect(x, y, width, height);
+      const r = coverRect(artImg.naturalWidth, artImg.naturalHeight, width, height);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, width, height);
+      ctx.clip();
+      ctx.drawImage(artImg, x + r.x, y + r.y, r.w, r.h);
       ctx.restore();
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
@@ -341,44 +247,26 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
           <div className="absolute inset-0 bg-gradient-to-b from-[#e9e4dc] to-[#d8d1c6]" />
         )}
 
-        {/* The piece in 3D: the wall at z = 0, the front `depth` px out, the
-            four wrapped edges between them, tilted on a perspective stage */}
         {art.url && (
-          <div className="absolute inset-0 pointer-events-none" style={{ perspective: 900, perspectiveOrigin: '50% 45%' }}>
-            <div
-              className="absolute"
-              style={{
-                left: pos.x - width / 2,
-                top: pos.y - height / 2,
-                width,
-                height,
-                transformStyle: 'preserve-3d',
-                transformOrigin: `50% 50% ${depth / 2}px`,
-                transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${rotation}deg)`,
-              }}
-            >
-              {/* Its shadow on the wall, longer the further it stands out */}
-              <div
-                className="absolute inset-0 bg-black/30"
-                style={{ boxShadow: `${depth * 0.5}px ${depth * 1.2 + 6}px ${depth * 2 + 18}px rgba(0,0,0,0.5)` }}
-              />
-              <div className="absolute top-0 left-0" style={{ width: depth, height, transformOrigin: 'left center', transform: 'rotateY(-90deg)', ...edgeStyle('left', artCover.x, artCover.y) }} />
-              <div className="absolute top-0" style={{ left: width, width: depth, height, transformOrigin: 'left center', transform: 'rotateY(-90deg)', ...edgeStyle('right', artCover.x - (width - depth), artCover.y) }} />
-              <div className="absolute top-0 left-0" style={{ width, height: depth, transformOrigin: 'center top', transform: 'rotateX(90deg)', ...edgeStyle('top', artCover.x, artCover.y) }} />
-              <div className="absolute left-0" style={{ top: height, width, height: depth, transformOrigin: 'center top', transform: 'rotateX(90deg)', ...edgeStyle('bottom', artCover.x, artCover.y - (height - depth)) }} />
-              <div data-part="front" className="absolute inset-0 overflow-hidden" style={{ transform: `translateZ(${depth}px)` }}>
-                <img
-                  ref={artRef}
-                  src={art.url}
-                  crossOrigin="anonymous"
-                  alt={product.name}
-                  draggable={false}
-                  onLoad={(e) => setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
-                  className="size-full object-cover"
-                />
-                <div className="absolute inset-0" style={{ backgroundImage: isCanvas ? `${LIGHT}, ${WEAVE}` : LIGHT }} />
-              </div>
-            </div>
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              left: pos.x - width / 2,
+              top: pos.y - height / 2,
+              width,
+              height,
+              boxShadow: stretched ? STRETCHED_SHADOW : FLAT_SHADOW,
+            }}
+          >
+            <img
+              ref={artRef}
+              src={art.url}
+              crossOrigin="anonymous"
+              alt={product.name}
+              draggable={false}
+              onLoad={(e) => setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
+              className="size-full object-cover"
+            />
           </div>
         )}
       </div>
@@ -388,7 +276,7 @@ export default function WallView({ product, selectedVariation, sizes, onPickSize
         <div className="pointer-events-auto max-w-[70%]">
           <p className="font-semibold leading-tight truncate">{product.name}</p>
           <p className="text-xs text-white/80 mt-1">
-            {mode === 'starting' ? 'Starting the camera…' : 'Drag to move · pinch to resize · twist with two fingers to turn'}
+            {mode === 'starting' ? 'Starting the camera…' : 'Drag to move · pinch to fit your wall'}
           </p>
         </div>
         <button onClick={onClose} aria-label="Close" className="pointer-events-auto p-2 rounded-full bg-black/40 hover:bg-black/60">

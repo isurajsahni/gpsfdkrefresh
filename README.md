@@ -1,4 +1,4 @@
-# The Borgo – Luxury MERN E-Commerce Store
+# The GPSFDK – Luxury MERN E-Commerce Store
 
 An ultra-premium, full-stack MERN e-commerce application designed for high-end retail, featuring responsive layouts, custom customization flows, advanced analytics, multiple payment gateways, and automated marketing integrations.
 

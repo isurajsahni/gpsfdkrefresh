@@ -162,17 +162,22 @@ const AdminCoupons = () => {
                   <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Coupon Code</label>
                   <input type="text" required value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none uppercase font-mono font-bold text-secondary" placeholder="e.g. WELCOME10" />
                 </div>
-                <div>
+                <div className={form.discountType === 'free_shipping' ? 'col-span-2' : ''}>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Type</label>
-                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none appearance-none">
+                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value, ...(e.target.value === 'free_shipping' ? { discountValue: 0 } : {}) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none appearance-none">
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed (₹)</option>
+                    <option value="free_shipping">Free Delivery</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Value</label>
-                  <input type="number" required min="1" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none" />
-                </div>
+                {form.discountType === 'free_shipping' ? (
+                  <p className="col-span-2 text-xs text-gray-500 ml-1">Waives the delivery charge at checkout. Item prices are not discounted.</p>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Value</label>
+                    <input type="number" required min="1" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none" />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -284,15 +289,15 @@ const AdminCoupons = () => {
                       {coupon.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cream text-secondary uppercase tracking-wider">
-                      {coupon.discountType}
+                      {coupon.discountType === 'free_shipping' ? 'free delivery' : coupon.discountType}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-black text-accent">
-                    {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
+                    {coupon.discountType === 'free_shipping' ? 'FREE' : coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
                   </div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">OFF</div>
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{coupon.discountType === 'free_shipping' ? 'DELIVERY' : 'OFF'}</div>
                 </div>
               </div>
 

@@ -386,7 +386,8 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   // 2. Determine Shipping based on ORIGINAL Subtotal (before discount)
   // Rule: If subtotal >= ₹999 -> FREE, else ₹50. International orders always
   // ship free (the USD price list includes shipping).
-  const shippingPrice = isIntl || calculatedItemsPrice >= 999 ? 0 : 50;
+  // `let`: a free-delivery coupon below waives it.
+  let shippingPrice = isIntl || calculatedItemsPrice >= 999 ? 0 : 50;
   const taxPrice = 0;
   let discountPrice = 0;
 
@@ -473,6 +474,9 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
         couponBlocked(isIntl
           ? `Coupon requires a minimum order value of $${Math.ceil(fromInr(minOrderValue))}.`
           : `Coupon requires a minimum order value of ₹${minOrderValue}.`);
+      } else if (coupon.discountType === 'free_shipping') {
+        // Waives the delivery charge; items are not discounted.
+        shippingPrice = 0;
       } else {
         if (coupon.discountType === 'percentage') {
           discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;

@@ -511,13 +511,17 @@ const CheckoutPage = () => {
   };
 
   // 1. Calculate Shipping based on ORIGINAL Subtotal (uses shared helper — mirrors server)
-  const shippingFee = calculateShipping(cartTotal);
+  // A free-delivery coupon waives it (the server applies the same rule).
+  const freeShippingCoupon = appliedCoupon?.discountType === 'free_shipping'
+    && !(appliedCoupon.minOrderValue && cartTotal < appliedCoupon.minOrderValue);
+  const shippingFee = freeShippingCoupon ? 0 : calculateShipping(cartTotal);
 
   // 2. Recompute the discount LIVE from the current cart — mirrors the
   // server's calculateOrderPrices logic so the UI never shows a stale snapshot
   // (e.g., when the user adds/removes items from the cart drawer after applying).
   const computeDiscount = (coupon, total) => {
     if (!coupon || total <= 0) return 0;
+    if (coupon.discountType === 'free_shipping') return 0;
     // If the cart no longer meets the coupon's minimum, the coupon doesn't apply.
     if (coupon.minOrderValue && total < coupon.minOrderValue) return 0;
     let discount;
@@ -1252,6 +1256,7 @@ const CheckoutPage = () => {
                 </div>
                 {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
                 {appliedCoupon && summary.discount > 0 && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! (-{money(Math.round(summary.discount))})</p>}
+                {appliedCoupon?.discountType === 'free_shipping' && <p className="text-green-600 text-sm mt-1 font-medium">Coupon &apos;{appliedCoupon.code}&apos; applied! Free delivery on this order.</p>}
               </div>
 
               <div className="bg-cream-dark rounded-xl p-5 mb-6">
@@ -1272,7 +1277,7 @@ const CheckoutPage = () => {
                     <span className="text-green-600 font-bold">FREE</span>
                   )}
                 </div>
-                {appliedCoupon && (
+                {appliedCoupon && appliedCoupon.discountType !== 'free_shipping' && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
                     <span>Discount ({appliedCoupon.code})</span>
                     <span>-{money(Math.round(summary.discount))}</span>

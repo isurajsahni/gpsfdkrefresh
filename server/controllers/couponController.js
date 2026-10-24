@@ -15,7 +15,7 @@ const createCoupon = async (req, res) => {
     const coupon = await Coupon.create({
       code,
       discountType,
-      discountValue,
+      discountValue: discountType === 'free_shipping' ? 0 : discountValue,
       minOrderValue: minOrderValue || 0,
       maxDiscountAmount: maxDiscountAmount || 0,
       maxUsers: maxUsers || 100,
@@ -122,8 +122,12 @@ const validateCoupon = async (req, res) => {
     }
 
 
+    // Free-delivery coupons waive shipping rather than discounting items, so
+    // the item discount stays 0; checkout and the server quote drop the fee.
     let calculatedDiscount = 0;
-    if (coupon.discountType === 'percentage') {
+    if (coupon.discountType === 'free_shipping') {
+      calculatedDiscount = 0;
+    } else if (coupon.discountType === 'percentage') {
       calculatedDiscount = (orderTotal * coupon.discountValue) / 100;
       // Cap percentage discount if maxDiscountAmount is set
       if (coupon.maxDiscountAmount > 0 && calculatedDiscount > coupon.maxDiscountAmount) {
@@ -177,6 +181,7 @@ const updateCoupon = async (req, res) => {
     if (code) coupon.code = code.toUpperCase();
     if (discountType) coupon.discountType = discountType;
     if (discountValue !== undefined) coupon.discountValue = discountValue;
+    if (coupon.discountType === 'free_shipping') coupon.discountValue = 0;
     if (minOrderValue !== undefined) coupon.minOrderValue = minOrderValue;
     if (maxDiscountAmount !== undefined) coupon.maxDiscountAmount = maxDiscountAmount;
     if (maxUsers !== undefined) coupon.maxUsers = maxUsers;

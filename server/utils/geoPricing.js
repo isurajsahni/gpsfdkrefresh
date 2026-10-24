@@ -134,9 +134,9 @@ const setCachedCountry = (ip, country) => {
 /**
  * Detect country from Express request.
  * Priority:
- *   1. ?country= query param (manual override, for testing)
- *   2. cf-ipcountry header (Cloudflare / Render)
- *   3. x-vercel-ip-country header (Vercel)
+ *   1. ?country= query param (manual override, for testing; display only)
+ *   2. cf-ipcountry header (set by Cloudflare in front of Render; trusted)
+ *   3. x-vercel-ip-country header (Vercel; display only)
  *   4. Free ipinfo.io API lookup
  *   5. Fallback to "IN"
  */
@@ -145,20 +145,27 @@ const detectCountry = async (req, options = {}) => {
   // whether COD is offered). Such calls MUST ignore anything the caller can set.
   const { trusted = false } = options;
 
-  // 1./2. Caller-supplied hints — DISPLAY ONLY.
-  // The browser talks to this API directly (gpsfdkrefresh.onrender.com), not
-  // through Vercel or Cloudflare, so `cf-ipcountry` and `x-vercel-ip-country`
-  // are ordinary request headers anyone can set, exactly like `?country=`.
-  // They're fine for "show me prices in my currency" but must never influence
-  // the charged amount — otherwise an international shopper sends `?country=IN`
-  // and pays the 1x domestic price.
-  if (!trusted) {
-    if (req.query.country && /^[A-Z]{2}$/i.test(req.query.country)) {
-      return req.query.country.toUpperCase();
-    }
-    const cfCountry = req.headers['cf-ipcountry'];
-    if (cfCountry && cfCountry !== 'XX') return cfCountry.toUpperCase();
+  // 1. Caller-supplied hints — DISPLAY ONLY. `?country=` and
+  // `x-vercel-ip-country` (the browser calls this API directly, not through
+  // Vercel) are ordinary values anyone can set. Fine for "show me prices in my
+  // currency", but they must never influence the charged amount — otherwise an
+  // international shopper sends `?country=IN` and pays the domestic price.
+  if (!trusted && req.query.country && /^[A-Z]{2}$/i.test(req.query.country)) {
+    return req.query.country.toUpperCase();
+  }
 
+  // 2. cf-ipcountry — TRUSTED. onrender.com sits behind Cloudflare, which
+  // overwrites this header with its own lookup of the connecting IP (checked:
+  // a request sending `cf-ipcountry: US` from India arrives as IN). It is the
+  // same answer the storefront shows, so checkout must use it too: req.ip
+  // behind Render's edge is not the shopper's address, and looking it up
+  // priced shoppers in India in USD.
+  const cfCountry = req.headers['cf-ipcountry'];
+  if (cfCountry && /^[A-Z]{2}$/i.test(cfCountry) && cfCountry.toUpperCase() !== 'XX') {
+    return cfCountry.toUpperCase();
+  }
+
+  if (!trusted) {
     const vercelCountry = req.headers['x-vercel-ip-country'];
     if (vercelCountry) return vercelCountry.toUpperCase();
   }

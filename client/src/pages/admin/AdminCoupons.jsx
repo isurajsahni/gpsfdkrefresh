@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineEye, HiOutlineTicket } from 'react-icons/hi';
 import API from '../../utils/api';
+import { FLAT_SHIPPING_FEE, FREE_SHIPPING_THRESHOLD } from '../../utils/shipping';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
@@ -164,15 +165,22 @@ const AdminCoupons = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Type</label>
-                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none appearance-none">
+                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value, ...(e.target.value === 'free_shipping' ? { discountValue: 0 } : {}) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none appearance-none">
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed (₹)</option>
+                    <option value="free_shipping">Free delivery</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Value</label>
-                  <input type="number" required min="1" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none" />
-                </div>
+                {form.discountType === 'free_shipping' ? (
+                  <p className="self-end pb-1 text-xs text-gray-500 leading-snug">
+                    Removes the ₹{FLAT_SHIPPING_FEE} delivery charge on orders under ₹{FREE_SHIPPING_THRESHOLD}. Orders of ₹{FREE_SHIPPING_THRESHOLD}+ already ship free.
+                  </p>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Value</label>
+                    <input type="number" required min="1" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} className="w-full px-4 py-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-accent outline-none" />
+                  </div>
+                )}
               </div>
 
               <div>
@@ -284,15 +292,15 @@ const AdminCoupons = () => {
                       {coupon.isActive ? 'Active' : 'Inactive'}
                     </span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cream text-secondary uppercase tracking-wider">
-                      {coupon.discountType}
+                      {coupon.discountType === 'free_shipping' ? 'free delivery' : coupon.discountType}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-black text-accent">
-                    {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
+                    {coupon.discountType === 'free_shipping' ? 'FREE' : coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
                   </div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">OFF</div>
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{coupon.discountType === 'free_shipping' ? 'DELIVERY' : 'OFF'}</div>
                 </div>
               </div>
 

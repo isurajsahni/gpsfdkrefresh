@@ -1,4 +1,5 @@
 const Coupon = require('../models/Coupon');
+const { FREE_SHIPPING_THRESHOLD, domesticShipping } = require('../utils/shipping');
 
 // @desc    Create a regular coupon
 // @route   POST /api/coupons
@@ -123,7 +124,12 @@ const validateCoupon = async (req, res) => {
 
 
     let calculatedDiscount = 0;
-    if (coupon.discountType === 'percentage') {
+    if (coupon.discountType === 'free_shipping') {
+      if (domesticShipping(total) === 0) {
+        return res.status(400).json({ message: `Delivery is already free on orders of ₹${FREE_SHIPPING_THRESHOLD} and above` });
+      }
+      calculatedDiscount = domesticShipping(total);
+    } else if (coupon.discountType === 'percentage') {
       calculatedDiscount = (orderTotal * coupon.discountValue) / 100;
       // Cap percentage discount if maxDiscountAmount is set
       if (coupon.maxDiscountAmount > 0 && calculatedDiscount > coupon.maxDiscountAmount) {

@@ -11,7 +11,7 @@ import SmartPhoneInput from '../components/common/SmartPhoneInput';
 import { useCurrency } from '../context/CurrencyContext';
 import { INTL_CURRENCY, currencyForDestination, intlUnitPrice, formatMoney } from '../utils/intlPricing';
 import { optimizeImage, handleImageError } from '../utils/imageOptimizer';
-import { calculateShipping } from '../utils/shipping';
+import { calculateShipping, FREE_SHIPPING_THRESHOLD } from '../utils/shipping';
 import CheckoutOtpModal from '../components/checkout/CheckoutOtpModal';
 import { newEventId, getFbCookies } from '../utils/metaPixel';
 import SEO from '../components/seo/SEO';
@@ -521,7 +521,10 @@ const CheckoutPage = () => {
     // If the cart no longer meets the coupon's minimum, the coupon doesn't apply.
     if (coupon.minOrderValue && total < coupon.minOrderValue) return 0;
     let discount;
-    if (coupon.discountType === 'percentage') {
+    if (coupon.discountType === 'free_shipping') {
+      // Waives the delivery charge, which is nothing at the threshold and over
+      discount = calculateShipping(total);
+    } else if (coupon.discountType === 'percentage') {
       discount = (total * coupon.discountValue) / 100;
       if (coupon.maxDiscountAmount > 0 && discount > coupon.maxDiscountAmount) {
         discount = coupon.maxDiscountAmount;
@@ -566,6 +569,10 @@ const CheckoutPage = () => {
       cartTotal < appliedCoupon.minOrderValue
     ) {
       toast.error(`Coupon ${appliedCoupon.code} needs a minimum order of ₹${appliedCoupon.minOrderValue}. Removed.`);
+      setAppliedCoupon(null);
+    } else if (appliedCoupon?.discountType === 'free_shipping' && cartTotal >= FREE_SHIPPING_THRESHOLD) {
+      // The server would refuse it, and there's no charge left to waive
+      toast.success(`Your order now ships free, so ${appliedCoupon.code} isn't needed. Removed.`);
       setAppliedCoupon(null);
     }
   }, [cartTotal, appliedCoupon]);
@@ -1274,7 +1281,7 @@ const CheckoutPage = () => {
                 </div>
                 {appliedCoupon && (
                   <div className="flex justify-between text-sm mt-1 text-green-600 font-medium">
-                    <span>Discount ({appliedCoupon.code})</span>
+                    <span>{appliedCoupon.discountType === 'free_shipping' ? 'Free delivery' : 'Discount'} ({appliedCoupon.code})</span>
                     <span>-{money(Math.round(summary.discount))}</span>
                   </div>
                 )}

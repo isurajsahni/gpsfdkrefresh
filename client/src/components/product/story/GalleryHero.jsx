@@ -244,13 +244,9 @@ export default function GalleryHero({ product, kind, art, artRatio, photo, headl
           ) : null}
         </motion.div>
 
-        <motion.div
-          className="md:col-span-5"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        >
+        {/* Not faded in: the description must be readable the moment it
+            scrolls into view, however long it is */}
+        <div className="md:col-span-5">
           {collection ? (
             <Link
               to={collectionPath(collection)}
@@ -279,7 +275,7 @@ export default function GalleryHero({ product, kind, art, artRatio, photo, headl
           )}
 
           {kind === 'nameplate' ? <BrassPlaque {...label} /> : <MuseumLabel {...label} />}
-        </motion.div>
+        </div>
       </div>
 
       {stats.length > 0 && (

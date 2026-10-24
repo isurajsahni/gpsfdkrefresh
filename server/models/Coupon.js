@@ -8,14 +8,17 @@ const couponSchema = new mongoose.Schema({
     uppercase: true,
     trim: true,
   },
+  // free_shipping waives the delivery charge on orders under the free
+  // shipping threshold; it has no value of its own
   discountType: {
     type: String,
-    enum: ['percentage', 'fixed'],
+    enum: ['percentage', 'fixed', 'free_shipping'],
     default: 'percentage',
   },
   discountValue: {
     type: Number,
-    required: true,
+    required: function () { return this.discountType !== 'free_shipping'; },
+    default: 0,
   },
   minOrderValue: {
     type: Number,

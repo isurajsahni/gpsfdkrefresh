@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Coupon = require('../models/Coupon');
 const CouponUsage = require('../models/CouponUsage');
+const { domesticShipping } = require('../utils/shipping');
 const Product = require('../models/Product');
 const sendEmail = require('../utils/sendEmail');
 const { sendOrderWhatsAppAlert } = require('../utils/whatsappOrderAlert');
@@ -386,7 +387,7 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
   // 2. Determine Shipping based on ORIGINAL Subtotal (before discount)
   // Rule: If subtotal >= ₹999 -> FREE, else ₹50. International orders always
   // ship free (the USD price list includes shipping).
-  const shippingPrice = isIntl || calculatedItemsPrice >= 999 ? 0 : 50;
+  const shippingPrice = isIntl ? 0 : domesticShipping(calculatedItemsPrice);
   const taxPrice = 0;
   let discountPrice = 0;
 
@@ -473,8 +474,15 @@ const calculateOrderPrices = async (items, couponCode, userId, guestIdentifier =
         couponBlocked(isIntl
           ? `Coupon requires a minimum order value of $${Math.ceil(fromInr(minOrderValue))}.`
           : `Coupon requires a minimum order value of ₹${minOrderValue}.`);
+      } else if (coupon.discountType === 'free_shipping' && shippingPrice === 0) {
+        // Nothing to waive: don't spend one of the shopper's uses on it
+        couponBlocked('Coupon is for free delivery, and this order already ships free — please remove it.');
       } else {
-        if (coupon.discountType === 'percentage') {
+        if (coupon.discountType === 'free_shipping') {
+          // Taken off as a discount the size of the delivery charge, so
+          // invoices, emails and coupon reports show what it saved
+          discountPrice = shippingPrice;
+        } else if (coupon.discountType === 'percentage') {
           discountPrice = (calculatedItemsPrice * coupon.discountValue) / 100;
           // Apply percentage cap
           if (coupon.maxDiscountAmount > 0 && discountPrice > fromInr(coupon.maxDiscountAmount)) {

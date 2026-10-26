@@ -13,8 +13,8 @@ export const CONTACT = {
   phoneDisplay: '+91 62803-10103',
   phoneDial: '+916280310103',
   whatsapp: 'https://wa.me/916280310103',
-  instagram: 'https://www.instagram.com/canvas.gps/',
-  instagramHandle: '@canvas.gps',
+  instagram: 'https://www.instagram.com/canvas.gpsfdk/',
+  instagramHandle: '@canvas.gpsfdk',
 };
 
 /** Fire the Meta Pixel Contact event once per channel click. */

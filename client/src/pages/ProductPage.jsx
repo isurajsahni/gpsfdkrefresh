@@ -27,6 +27,15 @@ const ProductStory = lazy(loadProductStory);
 // The camera viewer only downloads when someone opens it
 const WallView = lazy(() => import('../components/product/WallView'));
 
+// Canvases open on Stretched (ready to hang) rather than whichever variation
+// happens to be first, which is usually Rolled
+const isStretched = (v) => /stretch/i.test(v.frame || '');
+const defaultVariation = (variations = [], size) => {
+  const sized = size ? variations.filter((v) => v.size === size) : [];
+  const pool = sized.length ? sized : variations;
+  return pool.find(isStretched) || pool[0];
+};
+
 const ProductPage = () => {
   const { slug } = useParams();
   const location = useLocation();
@@ -41,7 +50,7 @@ const ProductPage = () => {
   const [attempt, setAttempt] = useState(0);
   const autoRetriedSlug = useRef(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedVariation, setSelectedVariation] = useState(() => initialProduct?.variations?.[0] || {});
+  const [selectedVariation, setSelectedVariation] = useState(() => defaultVariation(initialProduct?.variations) || {});
   const [customText, setCustomText] = useState('');
   const [houseNumber, setHouseNumber] = useState('');
   // Custom size isn't a variation: selectedVariation keeps a real one (for the
@@ -115,7 +124,7 @@ const ProductPage = () => {
         if (prefill.familyName) setCustomText(prefill.familyName);
         if (prefill.houseNumber) setHouseNumber(prefill.houseNumber);
         if (data.variations?.length > 0) {
-          setSelectedVariation(data.variations.find(v => prefill.size && v.size === prefill.size) || data.variations[0]);
+          setSelectedVariation(defaultVariation(data.variations, prefill.size));
         }
         // Meta Pixel: ViewContent event
         if (typeof window.fbq === 'function') {

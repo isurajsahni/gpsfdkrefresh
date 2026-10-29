@@ -49,7 +49,7 @@ export const CartProvider = ({ children }) => {
   }, [cartItems]);
 
   // `details`: extra fields kept on a new cart line (the canvas customiser
-  // stores the original photo and the chosen crop there)
+  // stores the original photo there)
   const addToCart = (product, variation, quantity = 1, customText = '', uploadedImageUrl = '', details = {}) => {
     // Meta Pixel: AddToCart event
     if (typeof window.fbq === 'function') {

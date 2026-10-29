@@ -1,16 +1,37 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Cropper from 'react-easy-crop';
-import { HiOutlineUpload, HiOutlineShoppingBag, HiOutlineChevronLeft, HiStar, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineRefresh } from 'react-icons/hi';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  HiCheck, HiOutlineUpload, HiOutlineShoppingBag, HiOutlineChevronLeft, HiStar,
+  HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineRefresh, HiOutlinePhotograph,
+  HiOutlineAdjustments, HiOutlineTruck,
+} from 'react-icons/hi';
 import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import toast from 'react-hot-toast';
 import SEO from '../components/seo/SEO';
-import BeforeAfterSection from '../components/home/BeforeAfterSection';
 import {
-  MIN_LONG_EDGE, readImageSize, prepareForUpload, uploadCanvasPhoto,
-  printDimensions, printQuality, largestCrop, croppedPhotoUrl,
+  readImageSize, prepareForUpload, uploadCanvasPhoto,
 } from '../utils/canvasUpload';
+import { CANVAS_SIZES } from '../utils/canvasSizes';
+import workFamily from '../assets/image/custom-work/family-portrait.jpg';
+import workPeacock from '../assets/image/custom-work/peacock-lotus.jpg';
+import workLifeGoals from '../assets/image/custom-work/life-goals.webp';
+import workAutumn from '../assets/image/custom-work/autumn-city.webp';
+import workBts from '../assets/image/custom-work/bts-poster.webp';
+import workKohli from '../assets/image/custom-work/kohli-poster.webp';
+import workHanuman from '../assets/image/custom-work/bal-hanuman.jpg';
+
+// Pieces we've made from customers' photos, shown under the upload box
+const OUR_WORK = [
+  { src: workFamily, alt: 'Family photo by the pool, printed on canvas' },
+  { src: workPeacock, alt: 'Peacock feather rising from a glowing lotus' },
+  { src: workKohli, alt: 'Cricket poster: King Kohli, Run Machine' },
+  { src: workAutumn, alt: 'Abstract city with an autumn tree' },
+  { src: workHanuman, alt: 'Bal Hanuman in prayer, ringed by Ram naam' },
+  { src: workBts, alt: 'BTS fan poster under a purple galaxy' },
+  { src: workLifeGoals, alt: 'Life goals mood board collage' },
+];
 
 const MATERIALS = [
   { 
@@ -31,14 +52,6 @@ const MATERIALS = [
       </svg>
     )
   },
-];
-
-const CANVAS_SIZES = [
-  { label: '12 x 18', rolledPrice: 999, stretchedPrice: 1499 },
-  { label: '18 x 24', rolledPrice: 1499, stretchedPrice: 2499 },
-  { label: '24 x 36', rolledPrice: 2899, stretchedPrice: 3699 },
-  { label: '30 x 48', rolledPrice: 4199, stretchedPrice: 5999 },
-  { label: '36 x 60', rolledPrice: 5999, stretchedPrice: 7999 },
 ];
 
 // Posters come on soft board only: sticker (and paper) posters aren't sold
@@ -71,6 +84,9 @@ const CANVAS_FRAMES = [
   },
 ];
 
+// Canvases start on Stretched (ready to hang); Rolled is the cheaper option
+const DEFAULT_CANVAS_FRAME = CANVAS_FRAMES.find((f) => f.id === 'stretched');
+
 const POSTER_FRAMES = [
   { 
     id: 'softboard', 
@@ -84,28 +100,118 @@ const POSTER_FRAMES = [
   },
 ];
 
-const QUALITY_COPY = {
-  great: { label: 'Great quality for this size', dot: 'bg-green-500', text: 'text-green-700', box: 'bg-green-50 border-green-200' },
-  ok: { label: 'OK quality — may look slightly soft up close', dot: 'bg-amber-500', text: 'text-amber-800', box: 'bg-amber-50 border-amber-200' },
-  low: { label: 'Low quality for this size — a smaller size will look sharper', dot: 'bg-red-500', text: 'text-red-700', box: 'bg-red-50 border-red-200' },
+// One-line descriptions shown under each choice
+const BLURBS = {
+  canvas: 'Textured canvas, our signature finish',
+  poster: 'Smooth print mounted on soft board',
+  rolled: 'Shipped rolled in a tube, ready to frame your way',
+  stretched: 'Wrapped on a wooden frame, ready to hang',
+  softboard: 'Light, rigid board, ready to hang',
 };
+
+// The price of a material in a size and finish
+const priceFor = (material, size, frame) => {
+  if (!size || !frame) return 0;
+  if (material.id === 'canvas') {
+    if (size.rolledPrice === undefined) return 0;
+    return frame.id === 'rolled' ? size.rolledPrice : size.stretchedPrice;
+  }
+  if (material.id === 'poster') return size.softBoardPrice ?? 0;
+  return 0;
+};
+
+const formatRupees = (amount) => `₹${amount.toLocaleString('en-IN')}`;
+
+const STEPS = ['Upload', 'Customize'];
+
+// "1 Upload — 2 Customize", the current step filled in
+const StepIndicator = ({ step }) => (
+  <ol className="flex items-center justify-center gap-3" aria-label="Progress">
+    {STEPS.map((label, i) => {
+      const n = i + 1;
+      const done = step > n;
+      const current = step === n;
+      return (
+        <li key={label} className="flex items-center gap-3">
+          {i > 0 && <span className={`h-px w-8 sm:w-12 ${step >= n ? 'bg-accent' : 'bg-black/10'}`} aria-hidden="true" />}
+          <span className="flex items-center gap-2" aria-current={current ? 'step' : undefined}>
+            <span
+              className={`flex size-6 items-center justify-center rounded-full text-[12px] font-semibold transition-colors ${
+                current || done ? 'bg-accent text-white' : 'bg-black/[0.06] text-[#686868]'
+              }`}
+            >
+              {done ? <HiCheck className="size-3.5" /> : n}
+            </span>
+            <span className={`apple-caption font-semibold ${current ? 'text-[#1D1D1F]' : 'text-[#686868]'}`}>{label}</span>
+          </span>
+        </li>
+      );
+    })}
+  </ol>
+);
+
+// A heading over a group of choices, with the current pick on the right
+const OptionGroup = ({ title, value, children }) => (
+  <section className="border-t border-black/[0.08] pt-6">
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <h2 className="apple-body font-semibold text-[#1D1D1F]">{title}</h2>
+      {value && <span className="apple-caption text-[#686868]">{value}</span>}
+    </div>
+    {children}
+  </section>
+);
+
+// A selectable card: label, optional blurb and price
+const OptionCard = ({ active, onClick, icon: Icon, label, blurb, price, className = '' }) => (
+  <button
+    type="button"
+    role="radio"
+    aria-checked={active}
+    onClick={onClick}
+    className={`flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition-all ${
+      active
+        ? 'border-accent bg-white shadow-[0_4px_16px_rgba(241,90,41,0.16)] ring-1 ring-accent'
+        : 'border-black/[0.1] bg-white hover:border-black/25'
+    } ${className}`}
+  >
+    {Icon && <Icon className={`mt-0.5 size-6 shrink-0 ${active ? 'text-accent' : 'text-[#686868]'}`} />}
+    <span className="min-w-0 flex-1">
+      <span className="flex items-baseline justify-between gap-2">
+        <span className="text-[15px] font-semibold text-[#1D1D1F]">{label}</span>
+        {price != null && <span className="text-[14px] text-[#1D1D1F]">{price}</span>}
+      </span>
+      {blurb && <span className="apple-caption mt-0.5 block text-[#686868]">{blurb}</span>}
+    </span>
+  </button>
+);
+
+// The photo hung on a softly lit wall, in the chosen finish
+const WallPreview = ({ src, shadow, poster }) => (
+  <div
+    className="relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-3xl px-[14%] pb-[22%] pt-[12%] sm:aspect-square"
+    style={{ background: 'linear-gradient(180deg, #EFE8DC 0%, #E7DECF 100%)' }}
+    aria-label="Preview on a wall"
+  >
+    <div
+      className="pointer-events-none absolute inset-0"
+      style={{ background: 'radial-gradient(ellipse 55% 45% at 50% 42%, rgba(255,250,240,0.9), transparent 70%)' }}
+    />
+    <div className="absolute inset-x-0 bottom-0 h-[9%] bg-gradient-to-b from-[#C9A27E] to-[#B48B66]" />
+    <div className="absolute inset-x-0 bottom-[9%] h-[1.2%] bg-[#F7F3EC]" />
+    <img
+      src={src}
+      alt="Your photo on the wall"
+      decoding="async"
+      className={`relative max-h-full max-w-full object-contain transition-shadow duration-300 ${shadow} ${poster ? 'rounded-[2px]' : 'rounded-[3px]'}`}
+    />
+  </div>
+);
 
 // How each finish sits on the wall in the preview
 const mockupShadow = (materialId, frameId) => {
   if (materialId === 'canvas' && frameId === 'stretched') return 'shadow-[4px_6px_0_rgba(0,0,0,0.18),0_18px_30px_rgba(0,0,0,0.28)]';
   if (materialId === 'poster' && frameId === 'softboard') return 'shadow-[2px_3px_0_rgba(0,0,0,0.15),0_10px_20px_rgba(0,0,0,0.2)]';
   return 'shadow-[0_6px_16px_rgba(0,0,0,0.2)]';
-};
-
-// CSS background that shows just the cropped part of the photo
-const cropBackground = (url, area) => {
-  if (!area) return { backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-  const pos = (offset, size) => (size >= 100 ? 0 : (offset / (100 - size)) * 100);
-  return {
-    backgroundImage: `url(${url})`,
-    backgroundSize: `${10000 / area.width}% ${10000 / area.height}%`,
-    backgroundPosition: `${pos(area.x, area.width)}% ${pos(area.y, area.height)}%`,
-  };
 };
 
 const UPLOAD_IDLE = { status: 'idle', progress: 0, url: '', size: null, error: '' };
@@ -123,21 +229,15 @@ const CustomizeCanvasPage = () => {
 
   const [selectedMaterial, setSelectedMaterial] = useState(MATERIALS[0]);
   const [selectedSize, setSelectedSize] = useState(CANVAS_SIZES[0]);
-  const [selectedFrame, setSelectedFrame] = useState(CANVAS_FRAMES[0]);
+  const [selectedFrame, setSelectedFrame] = useState(DEFAULT_CANVAS_FRAME);
   const [instructions, setInstructions] = useState('');
-
-  const [orientation, setOrientation] = useState('portrait');
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  // The chosen framing: { percent, pixels } (pixels of the photo as uploaded)
-  const [cropArea, setCropArea] = useState(null);
 
   // Handle Material Switching Robustly
   const handleMaterialChange = (material) => {
     setSelectedMaterial(material);
     if (material.id === 'canvas') {
       setSelectedSize(CANVAS_SIZES[0]);
-      setSelectedFrame(CANVAS_FRAMES[0]);
+      setSelectedFrame(DEFAULT_CANVAS_FRAME);
     } else {
       setSelectedSize(POSTER_SIZES[0]);
       setSelectedFrame(POSTER_FRAMES[0]);
@@ -169,17 +269,9 @@ const CustomizeCanvasPage = () => {
     setPreparing(true);
     try {
       const size = await readImageSize(selectedFile);
-      if (Math.max(size.width, size.height) < MIN_LONG_EDGE) {
-        setPhotoError(`This photo is too small to print (${size.width} × ${size.height} px). Please choose one at least ${MIN_LONG_EDGE} px on its longest side — the original from your phone or camera works best.`);
-        return;
-      }
       const prepared = await prepareForUpload(selectedFile, size);
       setPhoto({ ...prepared, url: URL.createObjectURL(prepared.file) });
-      // Start in the photo's own orientation, framed in full
-      setOrientation(prepared.width > prepared.height ? 'landscape' : 'portrait');
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-      setCropArea(null);
+      return true;
     } catch {
       setPhotoError("We couldn't read this photo. Please upload a JPG, PNG or WEBP image.");
     } finally {
@@ -218,44 +310,40 @@ const CustomizeCanvasPage = () => {
   // photo is chosen (handleFile)
   const handleChangePhoto = () => setStep(1);
 
-  const onCropComplete = useCallback((percent, pixels) => setCropArea({ percent, pixels }), []);
+  // A photo handed over by the Store page's "Make it yours" preview, with the
+  // size and finish chosen there: open on the customize step.
+  // The state is cleared at once so a reload or Back doesn't replay it.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const handoffRef = useRef(location.state?.photo instanceof File ? location.state : null);
+  const [autoContinue, setAutoContinue] = useState(false);
+  useEffect(() => {
+    const handoff = handoffRef.current;
+    if (!handoff) return;
+    handoffRef.current = null;
+    navigate(location.pathname, { replace: true, state: null });
+    handleFile(handoff.photo).then((ok) => {
+      if (!ok) return;
+      const size = CANVAS_SIZES.find((s) => s.label === handoff.size);
+      if (size) setSelectedSize(size);
+      const frame = CANVAS_FRAMES.find((f) => f.id === handoff.frame);
+      if (frame) setSelectedFrame(frame);
+      setAutoContinue(true);
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!autoContinue || !photo) return;
+    setAutoContinue(false);
+    handleContinue();
+  }, [autoContinue, photo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getPrice = () => {
-    if (!selectedSize || !selectedFrame) return 0;
+  const getPrice = () => priceFor(selectedMaterial, selectedSize, selectedFrame);
 
-    // Canvas Pricing
-    if (selectedMaterial.id === 'canvas') {
-      // Ensure we are looking at a canvas size object
-      if (selectedSize.rolledPrice === undefined) return 0;
-      return selectedFrame.id === 'rolled' ? selectedSize.rolledPrice : selectedSize.stretchedPrice;
-    }
-
-    // Poster Pricing
-    if (selectedMaterial.id === 'poster') {
-      // Ensure we are looking at a poster size object
-      return selectedSize.softBoardPrice ?? 0;
-    }
-
-    return 0;
-  };
-
-  const printSize = printDimensions(selectedSize.label, orientation);
-  const aspect = printSize.width / printSize.height;
-
-  // Quality if the whole photo were used at a size (for the size buttons)
-  const qualityForSize = (size) => {
-    if (!photo) return null;
-    const inches = printDimensions(size.label, orientation);
-    return printQuality(largestCrop(photo, inches.width / inches.height), inches).level;
-  };
-  // The selected size, judged on the part of the photo actually framed
-  const selectedQuality = photo
-    ? printQuality(cropArea?.pixels || largestCrop(photo, aspect), printSize).level
-    : null;
-
+  // The photo is printed whole, as uploaded, and we set the exact print
+  // dimensions for the chosen size ourselves
   const handleAddToCart = () => {
     if (upload.status !== 'done') return;
-    const imageUrl = croppedPhotoUrl(upload.url, cropArea?.pixels, photo, upload.size);
+    const imageUrl = upload.url;
 
     const product = {
       _id: 'custom-canvas-id',
@@ -272,14 +360,8 @@ const CustomizeCanvasPage = () => {
       price: getPrice()
     };
 
-    const pixels = cropArea?.pixels;
     addToCart(product, variation, 1, instructions, imageUrl, {
       originalImageUrl: upload.url,
-      crop: pixels ? {
-        x: Math.round(pixels.x), y: Math.round(pixels.y),
-        width: Math.round(pixels.width), height: Math.round(pixels.height),
-        orientation,
-      } : null,
     });
     setIsCartOpen(true);
     toast.success('Added to cart!');
@@ -287,6 +369,12 @@ const CustomizeCanvasPage = () => {
 
   const total = getPrice();
   const uploadPercent = Math.round(upload.progress * 100);
+  const sizes = selectedMaterial.id === 'canvas' ? CANVAS_SIZES : POSTER_SIZES;
+  const frames = selectedMaterial.id === 'canvas' ? CANVAS_FRAMES : POSTER_FRAMES;
+  const fromPrice = {
+    canvas: Math.min(...CANVAS_SIZES.map((s) => s.rolledPrice)),
+    poster: Math.min(...POSTER_SIZES.map((s) => s.softBoardPrice)),
+  };
 
   const addButtonLabel = {
     idle: 'Add to Cart',
@@ -295,380 +383,340 @@ const CustomizeCanvasPage = () => {
     done: 'Add to Cart',
   }[upload.status];
 
+  const addButton = (className = '') => (
+    <button
+      type="button"
+      onClick={handleAddToCart}
+      disabled={upload.status !== 'done'}
+      className={`flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-[17px] font-semibold text-white transition-all hover:bg-accent-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-[#686868] ${className}`}
+    >
+      {upload.status === 'done' && <HiOutlineShoppingBag className="size-5" />}
+      {addButtonLabel}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-[#FFF7E7] text-secondary pt-24 sm:pt-28 pb-20 px-4">
+    <div className="store-apple min-h-screen bg-white pb-24 pt-[100px] text-[#1D1D1F] lg:pb-20">
       <SEO
         title="Customize Your Canvas | Turn Photos Into Art"
         description="Upload your photo and customize your own museum-grade canvas portrait."
       />
 
-      <div className="max-w-5xl mx-auto">
-        {/* Progress Header */}
-        <div className="flex items-center justify-center gap-3 sm:gap-4 mb-8 sm:mb-12 text-xs sm:text-sm font-medium tracking-[0.2em] font-body uppercase">
-          <span className={`${step >= 1 ? 'text-accent' : 'text-gray-400'} transition-colors`}>Step 1: Upload</span>
-          <span className="text-gray-300">/</span>
-          <span className={`${step >= 2 ? 'text-accent' : 'text-gray-400'} transition-colors`}>Step 2: Customize</span>
-        </div>
+      <div className="section-padding">
+        <div className="mx-auto max-w-[1200px]">
+          <StepIndicator step={step} />
 
-        <AnimatePresence mode="wait">
-          {step === 1 ? (
-            <motion.div
-              key="step1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="text-center max-w-4xl mx-auto"
-            >
-              <h1 className="text-3xl sm:text-4xl md:text-6xl font-heading font-bold mb-4 sm:mb-6 text-secondary leading-tight">
-                Turn Your Photos Into <span className="text-accent underline decoration-[#adc140]">Timeless Art</span>
-              </h1>
-              <p className="text-gray-600 font-body text-base sm:text-lg mb-8 sm:mb-12 max-w-2xl mx-auto px-2">
-                Upload a photo. Choose your style. We'll create the masterpiece.
-              </p>
-
-              {/* Upload Box */}
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label={photo ? 'Change photo' : 'Upload your photo'}
-                aria-describedby="upload-help"
-                className={`max-w-xl mx-auto bg-white border-2 border-dashed rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-12 mb-4 cursor-pointer shadow-sm transition-all focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 ${isDragging ? 'border-accent bg-accent/5' : 'border-[#0B5D3B]/20 hover:border-accent'}`}
-                onClick={() => fileInputRef.current?.click()}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  handleFile(e.dataTransfer.files?.[0]);
-                }}
+          <AnimatePresence mode="wait">
+            {step === 1 ? (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
               >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={(e) => { handleFile(e.target.files[0]); e.target.value = ''; }}
-                  accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
-                  className="hidden"
-                />
-
-                {preparing ? (
-                  <div className="py-10 space-y-4" aria-live="polite">
-                    <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
-                    <p className="text-secondary font-semibold">Optimizing your photo…</p>
-                  </div>
-                ) : photo ? (
-                  <div className="relative group">
-                    <img src={photo.url} alt="Your photo" className="max-h-64 sm:max-h-80 mx-auto rounded-2xl shadow-xl" decoding="async" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-2xl">
-                      <p className="text-white text-xs sm:text-sm font-bold uppercase tracking-widest">Change Image</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3 sm:space-y-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-accent/10 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                      <HiOutlineUpload className="w-8 h-8 sm:w-10 sm:h-10 text-accent" />
-                    </div>
-                    <h2 className="text-xl sm:text-2xl font-heading font-bold text-secondary">Upload your photo</h2>
-                    <p className="text-gray-500 text-sm sm:text-base font-body">or drag & drop here</p>
-                  </div>
-                )}
-              </div>
-
-              <div id="upload-help" className="max-w-xl mx-auto mb-6 sm:mb-8 min-h-[1.5rem] px-2" aria-live="polite">
-                {photoError ? (
-                  <p className="flex items-start gap-2 text-left text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-                    <HiOutlineExclamationCircle className="w-5 h-5 shrink-0 mt-px" /> {photoError}
-                  </p>
-                ) : photo ? (
-                  <p className="text-sm text-gray-600">
-                    Photo ready · {photo.width.toLocaleString()} × {photo.height.toLocaleString()} px
-                    {photo.resized && ' · resized for upload, still sharp enough to print'}
-                  </p>
-                ) : (
-                  <p className="text-gray-400 text-[10px] sm:text-xs uppercase tracking-widest">JPG, PNG or WEBP · at least {MIN_LONG_EDGE} px · big photos are resized automatically</p>
-                )}
-              </div>
-
-              <button
-                onClick={handleContinue}
-                disabled={!photo || preparing}
-                className={`w-full max-w-xl py-3.5 sm:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl font-bold text-base sm:text-lg md:text-xl transition-all font-heading ${
-                  !photo || preparing
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-accent hover:bg-accent-dark text-white shadow-xl shadow-accent/20 active:scale-95'
-                }`}
-              >
-                {preparing ? 'Optimizing…' : 'Continue to Customize →'}
-              </button>
-
-              {/* Before & After Inspiration Section */}
-              <div className="mt-16 max-w-4xl mx-auto border-t border-[#0B5D3B]/5 pt-12 text-left">
-                <h3 className="text-center text-xl sm:text-2xl font-heading font-bold mb-6 text-secondary uppercase tracking-wider">See the Transformation</h3>
-                <BeforeAfterSection showCTA={false} showTitle={false} compact={true} />
-              </div>
-
-              <div className="mt-8 sm:mt-12 space-y-3 sm:space-y-4 px-2">
-                <div className="flex flex-wrap items-center justify-center gap-1 text-[#adc140]">
-                  <div className="flex">
-                    <HiStar className="w-4 h-4 sm:w-5 h-5 fill-current" />
-                    <HiStar className="w-4 h-4 sm:w-5 h-5 fill-current" />
-                    <HiStar className="w-4 h-4 sm:w-5 h-5 fill-current" />
-                    <HiStar className="w-4 h-4 sm:w-5 h-5 fill-current" />
-                    <HiStar className="w-4 h-4 sm:w-5 h-5 fill-current" />
-                  </div>
-                  <span className="text-secondary text-xs sm:text-sm font-bold ml-1sm:ml-2">4.8/5</span>
-                  <span className="text-gray-400 text-xs sm:text-sm ml-1 sm:ml-2">from 1500+ happy customers</span>
-                </div>
-                <p className="text-accent font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] font-body">Premium Quality Guaranteed</p>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="step2"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-8 sm:space-y-12"
-            >
-              <div className="text-center px-2">
-                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold mb-3 sm:mb-4 text-secondary">
-                  Customize Your <span className="text-accent">{selectedMaterial.label}</span>
-                </h1>
-                <p className="text-gray-600 text-sm sm:text-base">Drag your photo to frame it, then pick a material and size — the preview updates as you go.</p>
-              </div>
-
-              <button
-                onClick={handleChangePhoto}
-                className="flex items-center gap-2 text-secondary font-bold hover:text-accent transition-colors uppercase text-[10px] sm:text-xs tracking-widest pl-2"
-              >
-                <HiOutlineChevronLeft className="w-4 h-4 sm:w-5 h-5" /> Change Photo
-              </button>
-
-              {/* Live preview: frame the photo, and see it on a wall */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
-                <div className="space-y-3">
-                  <div className="relative w-full aspect-square bg-[#0B5D3B]/5 rounded-2xl sm:rounded-[2rem] overflow-hidden">
-                    <Cropper
-                      image={photo.url}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={aspect}
-                      onCropChange={setCrop}
-                      onZoomChange={setZoom}
-                      onCropComplete={onCropComplete}
-                      showGrid={false}
-                      objectFit="contain"
-                      style={{ cropAreaStyle: { border: '3px solid #fff', boxShadow: '0 0 0 9999em rgba(11, 93, 59, 0.55)' } }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="crop-zoom" className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[#0B5D3B]/60">Zoom</label>
-                    <input
-                      id="crop-zoom"
-                      type="range"
-                      min={1}
-                      max={3}
-                      step={0.01}
-                      value={zoom}
-                      onChange={(e) => setZoom(Number(e.target.value))}
-                      className="flex-1 accent-accent"
-                    />
-                  </div>
-                  <div role="radiogroup" aria-label="Orientation" className="grid grid-cols-2 gap-3">
-                    {['portrait', 'landscape'].map((o) => (
-                      <button
-                        key={o}
-                        role="radio"
-                        aria-checked={orientation === o}
-                        onClick={() => { setOrientation(o); setCrop({ x: 0, y: 0 }); setZoom(1); }}
-                        className={`py-2.5 rounded-xl border-2 font-bold text-sm capitalize transition-all ${orientation === o ? 'border-accent bg-accent text-white' : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'}`}
-                      >
-                        {o}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-500">Drag to reposition · pinch, scroll or use the slider to zoom</p>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="rounded-2xl sm:rounded-[2rem] bg-[#e9e2d6] aspect-[4/3] flex items-center justify-center p-8" aria-label="Preview on a wall">
-                    <div
-                      className={`${mockupShadow(selectedMaterial.id, selectedFrame.id)} ${selectedMaterial.id === 'poster' ? 'rounded-[2px]' : ''}`}
-                      style={{
-                        aspectRatio: `${printSize.width} / ${printSize.height}`,
-                        ...(aspect >= 1 ? { width: '80%' } : { height: '100%' }),
-                        ...cropBackground(photo.url, cropArea?.percent),
-                      }}
-                    />
-                  </div>
-                  <p className="text-center text-sm font-semibold text-secondary">
-                    {selectedMaterial.label} · {selectedFrame.label} · {printSize.width} × {printSize.height} in
-                  </p>
-
-                  {selectedQuality && (
-                    <p className={`flex items-center gap-2 text-sm font-medium border rounded-xl px-4 py-3 ${QUALITY_COPY[selectedQuality].box} ${QUALITY_COPY[selectedQuality].text}`} aria-live="polite">
-                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${QUALITY_COPY[selectedQuality].dot}`} aria-hidden="true" />
-                      {QUALITY_COPY[selectedQuality].label}
+                {/* ─── Upload: the pitch on the left, the drop zone on the right ─── */}
+                <div className="mt-10 grid grid-cols-1 items-center gap-10 sm:mt-14 lg:grid-cols-[5fr_6fr] lg:gap-16">
+                  <div className="text-center lg:text-left">
+                    <p className="apple-eyebrow uppercase text-accent">Customize</p>
+                    <h1 className="mt-3 font-heading text-[40px] font-semibold leading-[1.05] tracking-[-0.02em] sm:text-[56px]">
+                      Your photo,
+                      <br />
+                      <span className="text-accent">made into art.</span>
+                    </h1>
+                    <p className="apple-body mx-auto mt-5 max-w-md text-[#686868] lg:mx-0">
+                      Upload a photo, pick a size and finish, and we'll print it on canvas or poster, sized exactly for your wall.
                     </p>
-                  )}
-
-                  {/* Upload status */}
-                  <div className="bg-white rounded-xl px-4 py-3 shadow-sm" aria-live="polite">
-                    {upload.status === 'uploading' && (
-                      <>
-                        <div className="flex justify-between text-sm font-semibold text-secondary mb-2">
-                          <span>{uploadPercent >= 100 ? 'Finishing up…' : 'Uploading your photo…'}</span>
-                          <span>{uploadPercent}%</span>
-                        </div>
-                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden" role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadPercent}>
-                          <div className="h-full bg-accent rounded-full transition-[width] duration-200" style={{ width: `${uploadPercent}%` }} />
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">You can keep choosing your options while this finishes.</p>
-                      </>
-                    )}
-                    {upload.status === 'done' && (
-                      <p className="flex items-center gap-2 text-sm font-semibold text-green-700">
-                        <HiOutlineCheckCircle className="w-5 h-5" /> Photo uploaded
-                      </p>
-                    )}
-                    {upload.status === 'error' && (
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="flex items-center gap-2 text-sm font-semibold text-red-700">
-                          <HiOutlineExclamationCircle className="w-5 h-5 shrink-0" /> {upload.error}
-                        </p>
-                        <button onClick={() => startUpload(photo.file)} className="flex items-center gap-1.5 text-sm font-bold text-accent hover:text-accent-dark">
-                          <HiOutlineRefresh className="w-4 h-4" /> Retry upload
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Material Selection */}
-              <div className="space-y-3 sm:space-y-4 px-2">
-                <h3 className="uppercase text-[10px] sm:text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Select Material</h3>
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  {MATERIALS.map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => handleMaterialChange(m)}
-                      className={`flex items-center justify-center gap-2 sm:gap-3 py-3.5 sm:py-4 rounded-xl sm:rounded-2xl border-2 font-bold text-sm sm:text-base transition-all ${
-                        selectedMaterial.id === m.id
-                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
-                        : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'
-                      }`}
-                    >
-                      <m.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${selectedMaterial.id === m.id ? 'text-white' : 'text-accent'}`} /> {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Size Selection */}
-              <div className="space-y-3 sm:space-y-4 px-2">
-                <h3 className="uppercase text-[10px] sm:text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Select Size (In Inches)</h3>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  {(selectedMaterial.id === 'canvas' ? CANVAS_SIZES : POSTER_SIZES).map(s => {
-                    const quality = qualityForSize(s);
-                    return (
-                      <button
-                        key={s.label}
-                        onClick={() => setSelectedSize(s)}
-                        title={quality ? QUALITY_COPY[quality].label : undefined}
-                        className={`relative px-4 sm:px-6 py-3 rounded-xl sm:rounded-2xl border-2 font-bold text-xs sm:text-sm md:text-base transition-all flex-1 sm:flex-initial text-center justify-center min-w-[70px] sm:min-w-[100px] ${
-                          selectedSize?.label === s.label
-                          ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
-                          : 'border-white bg-white text-secondary hover:border-accent/30 shadow-sm'
-                        }`}
-                      >
-                        {s.label}
-                        {quality && (
-                          <span className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${QUALITY_COPY[quality].dot}`} aria-label={QUALITY_COPY[quality].label} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
-                  {['great', 'ok', 'low'].map((level) => (
-                    <span key={level} className="flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${QUALITY_COPY[level].dot}`} aria-hidden="true" />
-                      {{ great: 'Great', ok: 'OK', low: 'Low' }[level]} print quality
-                    </span>
-                  ))}
-                </p>
-              </div>
-
-              {/* Frame Selection */}
-              <div className="space-y-3 sm:space-y-4 px-2">
-                <h3 className="uppercase text-[10px] sm:text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">Choose Frame Style</h3>
-                <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-3 sm:gap-4 justify-items-center">
-                  {(selectedMaterial.id === 'canvas' ? CANVAS_FRAMES : POSTER_FRAMES).map(f => (
-                    <button
-                      key={f.id}
-                      onClick={() => setSelectedFrame(f)}
-                      className="group flex flex-col items-center gap-2 sm:gap-3"
-                    >
-                      <div className={`w-16 h-16 sm:w-24 sm:h-24 rounded-xl sm:rounded-[2rem] border-2 flex items-center justify-center transition-all ${
-                        selectedFrame?.id === f.id
-                        ? 'border-accent bg-accent text-white shadow-lg shadow-accent/20'
-                        : 'border-white bg-white text-secondary group-hover:border-accent/30 shadow-sm'
-                      }`}>
-                        <f.icon className={`w-8 h-8 sm:w-10 sm:h-10 ${selectedFrame?.id === f.id ? 'text-white' : 'text-accent'}`} />
-                      </div>
-                      <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-center leading-tight transition-colors ${
-                        selectedFrame?.id === f.id ? 'text-secondary font-extrabold' : 'text-gray-400'
-                      }`}>
-                        {f.label}
+                    <p className="apple-body mt-5 font-semibold">
+                      Canvas from {formatRupees(fromPrice.canvas)}
+                      <span className="mx-2 text-black/20">·</span>
+                      Posters from {formatRupees(fromPrice.poster)}
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                      <span className="flex text-[#F5A623]" aria-hidden="true">
+                        {[0, 1, 2, 3, 4].map((n) => <HiStar key={n} className="size-4" />)}
                       </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Special Instructions */}
-              <div className="space-y-3 sm:space-y-4 px-2">
-                <h3 className="uppercase text-[10px] sm:text-xs font-bold tracking-[0.2em] text-[#0B5D3B]/60">
-                  Notes for Design Team <span className="text-gray-400 lowercase font-normal italic">(optional)</span>
-                </h3>
-                <textarea
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                  placeholder="Tell us about color preferences, custom text placements, etc."
-                  className="w-full h-28 sm:h-32 bg-white border-2 border-transparent rounded-xl sm:rounded-[2rem] p-4 sm:p-6 focus:outline-none focus:border-accent/30 shadow-sm transition-all text-secondary text-sm sm:text-base"
-                />
-              </div>
-
-              {/* Enhanced Sticky Price Bar */}
-              <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6 bg-[#FFF7E7]/80 backdrop-blur-xl border-t border-[#0B5D3B]/5 md:relative md:bg-transparent md:border-none md:p-0">
-                <div className="max-w-5xl mx-auto bg-secondary rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 flex flex-row items-center justify-between gap-4 shadow-2xl">
-                  <div className="text-left pl-2 sm:pl-4">
-                    <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase font-bold tracking-[0.2em] sm:tracking-[0.3em]">Total Price</p>
-                    <p className="text-2xl sm:text-4xl font-heading font-bold text-accent">₹{total.toLocaleString()}</p>
+                      <span className="apple-caption font-semibold">4.8/5</span>
+                      <span className="apple-caption text-[#686868]">from 1500+ happy customers</span>
+                    </div>
                   </div>
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={upload.status !== 'done'}
-                    className="bg-accent hover:bg-accent-dark disabled:bg-white/15 disabled:text-white/70 disabled:shadow-none disabled:cursor-not-allowed text-white font-bold py-3.5 sm:py-5 px-5 sm:px-12 rounded-xl sm:rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 shadow-xl shadow-accent/20 font-heading text-sm sm:text-lg"
-                  >
-                    {upload.status === 'done' ? (
-                      <>Add <span className="hidden sm:inline">to Cart</span> <HiOutlineShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" /></>
-                    ) : addButtonLabel}
-                  </button>
+
+                  <div className="rounded-3xl bg-[#F5F5F7] p-4 sm:p-6">
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-label={photo ? 'Change photo' : 'Upload your photo'}
+                      aria-describedby="upload-help"
+                      className={`group relative flex min-h-[320px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed bg-white p-6 text-center transition-colors focus:outline-none focus-visible:ring-4 focus-visible:ring-accent/30 sm:min-h-[400px] ${
+                        isDragging ? 'border-accent bg-accent/5' : 'border-black/[0.12] hover:border-accent/60'
+                      }`}
+                      onClick={() => fileInputRef.current?.click()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setIsDragging(false);
+                        handleFile(e.dataTransfer.files?.[0]);
+                      }}
+                    >
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={(e) => { handleFile(e.target.files[0]); e.target.value = ''; }}
+                        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*"
+                        className="hidden"
+                      />
+
+                      {preparing ? (
+                        <div className="space-y-4" aria-live="polite">
+                          <div className="mx-auto size-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+                          <p className="apple-body font-semibold">Getting your photo ready…</p>
+                        </div>
+                      ) : photo ? (
+                        <>
+                          <img src={photo.url} alt="Your photo" className="max-h-[300px] max-w-full rounded-xl object-contain shadow-[0_12px_32px_rgba(0,0,0,0.18)] sm:max-h-[360px]" decoding="async" />
+                          <span className="apple-caption absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-[#1D1D1F]/80 px-3 py-1.5 font-semibold text-white opacity-0 backdrop-blur transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                            Change photo
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex size-16 items-center justify-center rounded-2xl bg-accent/10">
+                            <HiOutlineUpload className="size-8 text-accent" />
+                          </span>
+                          <p className="apple-tile-title mt-5 font-heading">Upload your photo</p>
+                          <p className="apple-body mt-1 text-[#686868]">Click to choose, or drag and drop it here</p>
+                          <p className="apple-caption mt-4 text-[#686868]">JPG, PNG or WEBP · big photos are resized automatically</p>
+                        </>
+                      )}
+                    </div>
+
+                    <div id="upload-help" className="mt-3 min-h-[1.25rem] px-1" aria-live="polite">
+                      {photoError ? (
+                        <p className="apple-caption flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+                          <HiOutlineExclamationCircle className="mt-px size-4 shrink-0" /> {photoError}
+                        </p>
+                      ) : photo ? (
+                        <p className="apple-caption flex items-center gap-1.5 text-green-700">
+                          <HiOutlineCheckCircle className="size-4" /> Photo ready
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleContinue}
+                      disabled={!photo || preparing}
+                      className="mt-3 w-full rounded-full bg-accent px-6 py-3.5 text-[17px] font-semibold text-white transition-all hover:bg-accent-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-[#686868]"
+                    >
+                      {preparing ? 'Getting it ready…' : 'Continue to customize'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="h-24 md:hidden"></div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+                {/* ─── Our work: canvases made from customers' photos ─── */}
+                <div className="mt-20 sm:mt-24">
+                  <h2 className="apple-headline font-heading">
+                    Our work. <span className="text-[#686868]">Made from our customers' photos.</span>
+                  </h2>
+                  <ul className="mt-8 columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4">
+                    {OUR_WORK.map(({ src, alt }) => (
+                      <li key={src} className="mb-4 break-inside-avoid sm:mb-5">
+                        <img
+                          src={src}
+                          alt={alt}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full rounded-2xl bg-[#F5F5F7] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* ─── How it works ─── */}
+                <div className="mt-20 sm:mt-24">
+                  <h2 className="apple-headline font-heading">
+                    How it works. <span className="text-[#686868]">Three simple steps.</span>
+                  </h2>
+                  <ol className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
+                    {[
+                      { icon: HiOutlinePhotograph, title: 'Upload your photo', text: 'Any photo from your phone or camera.' },
+                      { icon: HiOutlineAdjustments, title: 'Pick a size and finish', text: 'Canvas or poster, rolled or ready to hang.' },
+                      { icon: HiOutlineTruck, title: 'We print and deliver', text: 'We size it exactly and ship it to your door.' },
+                    ].map(({ icon: Icon, title, text }, i) => (
+                      <li key={title} className="rounded-3xl bg-[#F5F5F7] p-6 sm:p-7">
+                        <div className="flex items-center justify-between">
+                          <Icon className="size-7 text-accent" />
+                          <span className="apple-caption font-semibold text-[#686868]">0{i + 1}</span>
+                        </div>
+                        <p className="apple-tile-title mt-6 font-heading">{title}</p>
+                        <p className="apple-body mt-1.5 text-[#686868]">{text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="mt-10 grid grid-cols-1 items-start gap-8 sm:mt-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14"
+              >
+                {/* ─── Preview: stays in view while the options scroll on desktop ─── */}
+                <div className="lg:sticky lg:top-24">
+                  <WallPreview
+                    src={photo.url}
+                    shadow={mockupShadow(selectedMaterial.id, selectedFrame.id)}
+                    poster={selectedMaterial.id === 'poster'}
+                  />
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={handleChangePhoto}
+                      className="apple-caption flex items-center gap-1 font-semibold text-[#1D1D1F] transition-colors hover:text-accent"
+                    >
+                      <HiOutlineChevronLeft className="size-4" /> Change photo
+                    </button>
+
+                    {/* Upload status */}
+                    <div aria-live="polite" className="apple-caption">
+                      {upload.status === 'uploading' && (
+                        <div className="flex items-center gap-2 text-[#686868]">
+                          <span>{uploadPercent >= 100 ? 'Finishing up…' : `Uploading ${uploadPercent}%`}</span>
+                          <span className="h-1.5 w-24 overflow-hidden rounded-full bg-black/[0.08]" role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadPercent}>
+                            <span className="block h-full rounded-full bg-accent transition-[width] duration-200" style={{ width: `${uploadPercent}%` }} />
+                          </span>
+                        </div>
+                      )}
+                      {upload.status === 'done' && (
+                        <p className="flex items-center gap-1.5 font-semibold text-green-700">
+                          <HiOutlineCheckCircle className="size-4" /> Photo uploaded
+                        </p>
+                      )}
+                      {upload.status === 'error' && (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="flex items-center gap-1.5 font-semibold text-red-700">
+                            <HiOutlineExclamationCircle className="size-4 shrink-0" /> {upload.error}
+                          </p>
+                          <button type="button" onClick={() => startUpload(photo.file)} className="flex items-center gap-1 font-semibold text-accent hover:text-accent-dark">
+                            <HiOutlineRefresh className="size-4" /> Retry
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {upload.status === 'uploading' && (
+                    <p className="apple-caption mt-1 text-right text-[#686868]">You can keep choosing while this finishes.</p>
+                  )}
+                </div>
+
+                {/* ─── Options ─── */}
+                <div>
+                  <p className="apple-eyebrow uppercase text-accent">Custom {selectedMaterial.label.toLowerCase()}</p>
+                  <h1 className="mt-2 font-heading text-[32px] font-semibold leading-[1.1] tracking-[-0.01em] sm:text-[40px]">
+                    Make it yours.
+                  </h1>
+                  <p className="mt-3 text-[28px] font-semibold tracking-tight">{formatRupees(total)}</p>
+                  <p className="apple-caption mt-1 text-[#686868]">
+                    {selectedMaterial.label} · {selectedFrame.label} · {selectedSize.label}
+                  </p>
+
+                  <div className="mt-6 space-y-6">
+                    <OptionGroup title="Material">
+                      <div role="radiogroup" aria-label="Material" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                        {MATERIALS.map((m) => (
+                          <OptionCard
+                            key={m.id}
+                            active={selectedMaterial.id === m.id}
+                            onClick={() => handleMaterialChange(m)}
+                            icon={m.icon}
+                            label={m.label}
+                            blurb={BLURBS[m.id]}
+                          />
+                        ))}
+                      </div>
+                    </OptionGroup>
+
+                    <OptionGroup title="Size" value="In inches">
+                      <div role="radiogroup" aria-label="Size" className="grid grid-cols-3 gap-2.5">
+                        {sizes.map((s) => {
+                          const active = selectedSize?.label === s.label;
+                          return (
+                            <button
+                              key={s.label}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => setSelectedSize(s)}
+                              className={`rounded-2xl border px-2 py-3 text-center transition-all ${
+                                active
+                                  ? 'border-accent bg-white shadow-[0_4px_16px_rgba(241,90,41,0.16)] ring-1 ring-accent'
+                                  : 'border-black/[0.1] bg-white hover:border-black/25'
+                              }`}
+                            >
+                              <span className={`block text-[15px] font-semibold ${active ? 'text-accent' : 'text-[#1D1D1F]'}`}>{s.label}</span>
+                              <span className="apple-caption block text-[#686868]">{formatRupees(priceFor(selectedMaterial, s, selectedFrame))}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </OptionGroup>
+
+                    <OptionGroup title="Finish">
+                      <div role="radiogroup" aria-label="Finish" className="space-y-2.5">
+                        {frames.map((f) => (
+                          <OptionCard
+                            key={f.id}
+                            active={selectedFrame?.id === f.id}
+                            onClick={() => setSelectedFrame(f)}
+                            icon={f.icon}
+                            label={f.label}
+                            blurb={BLURBS[f.id]}
+                            price={formatRupees(priceFor(selectedMaterial, selectedSize, f))}
+                          />
+                        ))}
+                      </div>
+                    </OptionGroup>
+
+                    <OptionGroup title="Notes for our design team" value="Optional">
+                      <textarea
+                        value={instructions}
+                        onChange={(e) => setInstructions(e.target.value)}
+                        placeholder="Colour preferences, text to add, anything we should know"
+                        className="apple-body h-28 w-full resize-none rounded-2xl border border-black/[0.1] bg-white p-4 text-[#1D1D1F] placeholder:text-[#686868]/70 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                      />
+                    </OptionGroup>
+
+                    <div className="hidden border-t border-black/[0.08] pt-6 lg:block">
+                      {addButton('w-full')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phones and tablets: price and Add to Cart pinned to the bottom */}
+                <div className="fixed inset-x-0 bottom-0 z-50 border-t border-black/[0.08] bg-white/90 px-4 py-3 backdrop-blur-xl lg:hidden">
+                  <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[22px] font-semibold leading-none tracking-tight">{formatRupees(total)}</p>
+                      <p className="apple-caption mt-1 text-[#686868]">{selectedFrame.label} · {selectedSize.label}</p>
+                    </div>
+                    {addButton('min-w-[150px]')}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

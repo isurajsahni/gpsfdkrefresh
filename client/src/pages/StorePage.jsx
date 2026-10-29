@@ -498,7 +498,7 @@ const StorePage = () => {
                   </div>
                   <p className="apple-body text-[#1D1D1F] mt-1">or drag and drop here</p>
                   <p className="apple-caption text-[#1D1D1F]">
-                    JPG, PNG or WEBP · 500 KB TO 10 MB (3 MB+ recommended)
+                    JPG, PNG or WEBP
                   </p>
                 </Link>
               </div>

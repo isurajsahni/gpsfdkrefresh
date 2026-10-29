@@ -14,10 +14,11 @@ const NAV_LINKS = [
     path: '/',
     // `match`: the paths that count as being in that section, for the highlight
     children: [
-      { name: 'Canvas', path: '/canvas', match: ['/canvas', '/wall-canvas', '/customize-canvas'] },
+      { name: 'Canvas', path: '/canvas', match: ['/canvas', '/wall-canvas'] },
       { name: 'House Nameplates', path: '/house-nameplates', match: ['/house-nameplates'] },
     ],
   },
+  { name: 'Customize', path: '/customize-canvas' },
   { name: 'School of Learning', path: '/school-of-learning' },
   { name: 'Love', path: '/love' },
   { name: 'Vision', path: '/vision' },

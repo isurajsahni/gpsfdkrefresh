@@ -10,6 +10,7 @@ import { useCart } from '../context/CartContext';
 import { useUI } from '../context/UIContext';
 import toast from 'react-hot-toast';
 import SEO from '../components/seo/SEO';
+import IdeaSearch from '../components/customize/IdeaSearch';
 import {
   readImageSize, prepareForUpload, uploadCanvasPhoto,
 } from '../utils/canvasUpload';
@@ -23,14 +24,18 @@ import workKohli from '../assets/image/custom-work/kohli-poster.webp';
 import workHanuman from '../assets/image/custom-work/bal-hanuman.jpg';
 import workFarmer from '../assets/image/custom-work/farmer-bulls.jpg';
 
+// The "Have an idea?" design search is built but paused until products have
+// search keywords; flip this to show it
+const SHOW_IDEA_SEARCH = false;
+
 // Pieces we've made from customers' photos, shown under the upload box
 const OUR_WORK = [
   { src: workFamily, alt: 'Family photo by the pool, printed on canvas' },
-  { src: workPeacock, alt: 'Peacock feather rising from a glowing lotus' },
+  { src: workHanuman, alt: 'Bal Hanuman in prayer, ringed by Ram naam' },
   { src: workKohli, alt: 'Cricket poster: King Kohli, Run Machine' },
   { src: workAutumn, alt: 'Abstract city with an autumn tree' },
   { src: workFarmer, alt: 'Textured relief of a farmer riding two bulls' },
-  { src: workHanuman, alt: 'Bal Hanuman in prayer, ringed by Ram naam' },
+  { src: workPeacock, alt: 'Peacock feather rising from a glowing lotus' },
   { src: workBts, alt: 'BTS fan poster under a purple galaxy' },
   { src: workLifeGoals, alt: 'Life goals mood board collage' },
 ];
@@ -522,24 +527,37 @@ const CustomizeCanvasPage = () => {
                   </div>
                 </div>
 
+                {/* ─── Have an idea: search the catalogue instead of uploading ─── */}
+                {SHOW_IDEA_SEARCH && (
+                  <IdeaSearch
+                    onUploadInstead={() => {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      fileInputRef.current?.click();
+                    }}
+                  />
+                )}
+
                 {/* ─── Our work: canvases made from customers' photos ─── */}
                 <div className="mt-20 sm:mt-24">
                   <h2 className="apple-headline font-heading">
                     Our work. <span className="text-[#686868]">Made from our customers' photos.</span>
                   </h2>
-                  <ul className="mt-8 columns-2 gap-4 sm:columns-3 sm:gap-5 lg:columns-4">
-                    {OUR_WORK.map(({ src, alt }) => (
-                      <li key={src} className="mb-4 break-inside-avoid sm:mb-5">
-                        <img
-                          src={src}
-                          alt={alt}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full rounded-2xl bg-[#F5F5F7] shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
-                        />
-                      </li>
-                    ))}
-                  </ul>
+                  {/* An endless row: the list runs twice and slides by half its
+                      width, so the second copy takes over seamlessly */}
+                  <div className="mt-8 overflow-hidden py-4 [mask-image:linear-gradient(to_right,transparent,white_6%,white_94%,transparent)] motion-reduce:overflow-x-auto">
+                    <ul className="flex w-max animate-marquee hover:[animation-play-state:paused] motion-reduce:animate-none" style={{ animationDuration: '45s' }}>
+                      {[...OUR_WORK, ...OUR_WORK].map(({ src, alt }, i) => (
+                        <li key={i} aria-hidden={i >= OUR_WORK.length || undefined} className="shrink-0 pr-4 sm:pr-5">
+                          <img
+                            src={src}
+                            alt={i < OUR_WORK.length ? alt : ''}
+                            decoding="async"
+                            className="h-72 w-auto rounded-2xl bg-[#F5F5F7] shadow-[0_8px_24px_rgba(0,0,0,0.12)] sm:h-96"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* ─── How it works ─── */}

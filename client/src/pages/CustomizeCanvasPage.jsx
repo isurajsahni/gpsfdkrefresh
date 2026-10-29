@@ -21,6 +21,7 @@ import workAutumn from '../assets/image/custom-work/autumn-city.webp';
 import workBts from '../assets/image/custom-work/bts-poster.webp';
 import workKohli from '../assets/image/custom-work/kohli-poster.webp';
 import workHanuman from '../assets/image/custom-work/bal-hanuman.jpg';
+import workFarmer from '../assets/image/custom-work/farmer-bulls.jpg';
 
 // Pieces we've made from customers' photos, shown under the upload box
 const OUR_WORK = [
@@ -28,6 +29,7 @@ const OUR_WORK = [
   { src: workPeacock, alt: 'Peacock feather rising from a glowing lotus' },
   { src: workKohli, alt: 'Cricket poster: King Kohli, Run Machine' },
   { src: workAutumn, alt: 'Abstract city with an autumn tree' },
+  { src: workFarmer, alt: 'Textured relief of a farmer riding two bulls' },
   { src: workHanuman, alt: 'Bal Hanuman in prayer, ringed by Ram naam' },
   { src: workBts, alt: 'BTS fan poster under a purple galaxy' },
   { src: workLifeGoals, alt: 'Life goals mood board collage' },

@@ -17,8 +17,8 @@ const HomePage = () => {
   return (
     <>
       <SEO
-        title="Premium Wall Canvas Prints & Custom House Nameplates India | GPSFDK"
-        description="Shop premium wall canvas prints and custom house nameplates online in India. Museum-grade quality, custom sizes, fast delivery across India & worldwide."
+        title="Wall Canvas Art & Custom House Nameplates in India | GPSFDK"
+        description="Canvas wall art in abstract, floral and modern styles, custom photo canvas prints and house nameplates. Ready to hang, delivered across India and worldwide."
       />
       <HeroVideo />
       <VideoShowcase />

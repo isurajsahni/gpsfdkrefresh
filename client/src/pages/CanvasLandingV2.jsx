@@ -82,8 +82,8 @@ export default function CanvasLandingV2() {
     // show the body's cream behind the gap above the footer.
     <main className="overflow-x-clip bg-white pb-20 pt-[60px] lg:pb-[100px]">
       <SEO
-        title="Canvas Wall Art | Premium Canvas Prints Online | GPSFDK"
-        description="Premium canvas wall art from GPSFDK. Browse curated collections or turn your photo into a custom canvas: framed, ready to hang, delivered across India."
+        title="Canvas Wall Art Online: Abstract, Floral & Modern | GPSFDK"
+        description="Buy canvas wall art online: abstract art, floral art, modern and statement canvases in curated collections, or a custom canvas from your photo. Ready to hang."
         schema={BREADCRUMB_SCHEMA}
       />
       <CanvasHero />

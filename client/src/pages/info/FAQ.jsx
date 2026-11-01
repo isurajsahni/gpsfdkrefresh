@@ -22,6 +22,22 @@ const FAQ = () => {
       answer: 'Canvases come in sizes from 12x18 to 36x60 inches (square designs from 12x12 to 48x48 inches), rolled or stretched. Posters come in A4 and A3, on soft board. Each product page lists its exact sizes and prices.'
     },
     {
+      question: 'What styles of canvas wall art do you offer?',
+      answer: 'Our canvas wall art comes in curated collections: abstract art (Tethered Horizons, Ink & Interval), floral art (The Botanical Muse, The Gilded Bloom), cosmic art, cityscapes, pop-art portraits, motivational art, supercar art and more. You can browse every style on our Canvas page.'
+    },
+    {
+      question: 'Can I get a custom canvas made from my own photo?',
+      answer: 'Yes. On our Customize page, upload your photo, choose a size and finish, and add any instructions, for example combining people from different photos, a painterly style, or a name and date. We design and print the canvas around your idea.'
+    },
+    {
+      question: 'Is a canvas better than a photo frame?',
+      answer: 'For wall display, usually yes. A canvas has no glass, so there is no glare or risk of breakage, it is lighter at large sizes, and it looks like a painting. A small glass photo frame is still handy for desks and shelves.'
+    },
+    {
+      question: 'Will my canvas fade?',
+      answer: 'Our eco-solvent inks keep their colour for years indoors. Like any print, a canvas lasts longest when it is kept out of strong direct sunlight and away from damp walls.'
+    },
+    {
       question: 'How long does shipping take?',
       answer: 'Standard shipping usually takes 5-7 business days within India. Custom nameplates might require an additional 2-3 days for crafting.'
     },
@@ -71,8 +87,8 @@ const FAQ = () => {
   return (
     <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
-        title="Frequently Asked Questions | GPSFDK Support"
-        description="Find answers to common questions about our premium canvases, custom nameplates, shipping, and returns."
+        title="FAQ: Canvas Wall Art, Custom Canvas & Delivery | GPSFDK"
+        description="Answers about our canvas wall art and custom canvas prints: materials, sizes, photo quality, styles, shipping, payment and returns, plus custom nameplates."
         schema={faqSchema}
       />
 

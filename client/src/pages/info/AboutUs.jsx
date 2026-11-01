@@ -40,8 +40,8 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-kind-paper text-kind-ink pt-[80px] sm:pt-[90px] pb-16 sm:pb-24">
       <SEO
-        title="About GPSFDK | Premium Canvas Prints & House Nameplates India"
-        description="GPSFDK crafts premium wall canvas prints and custom house nameplates in India. Discover our story, craftsmanship, and commitment to luxury home décor."
+        title="About GPSFDK | Canvas Wall Art & House Nameplates India"
+        description="GPSFDK makes canvas wall art, custom photo canvas prints and house nameplates in India. Discover our story, our craft and how every piece is made."
       />
 
       {/* ─── Hero ─── */}

@@ -13,7 +13,7 @@ import NotFoundPage from './NotFoundPage';
 import LoadErrorNotice from '../components/common/LoadErrorNotice';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../utils/imageOptimizer';
-import { COLLECTIONS as SUBCATEGORIES, collectionSlug as generateSlug, LISTING_PAGE_SIZE as PAGE_SIZE } from '../utils/collections';
+import { COLLECTIONS as SUBCATEGORIES, COLLECTION_DESCRIPTIONS, collectionSlug as generateSlug, LISTING_PAGE_SIZE as PAGE_SIZE } from '../utils/collections';
 import { usePrerenderData } from '../prerender/PrerenderData';
 import { CANVAS_PATH } from '../utils/categoryPath';
 import { SectionHeading } from '../components/canvas-v2/Layout';
@@ -164,12 +164,13 @@ const CategoryPage = () => {
 
   // Generate dynamic SEO based on category
   const dynamicTitle = exactSubcategory
-    ? `${exactSubcategory} | Premium Custom Designs India`
+    ? `${exactSubcategory} Canvas Wall Art | GPSFDK`
     : category?.name
-      ? `${category.name} | Shop Custom Designs in India`
+      ? `${category.name} Online in India | GPSFDK`
       : 'Explore Premium Products | GPSFDK';
 
-  const dynamicDescription = category?.description || "Browse our exclusive collection of premium canvas prints and house nameplates in India. Fast delivery and high-quality materials.";
+  const collectionDescription = exactSubcategory ? COLLECTION_DESCRIPTIONS[exactSubcategory] : null;
+  const dynamicDescription = collectionDescription || category?.description || "Browse canvas wall art and custom house nameplates in India. Ready to hang, delivered across India.";
 
   // Home → category (→ collection), mirroring the visible navigation
   const breadcrumbSchema = category?.name ? {
@@ -262,7 +263,7 @@ const CategoryPage = () => {
               ) : (
                 <div className="h-12 w-64 max-w-full rounded-lg bg-white/10 animate-pulse" aria-hidden="true" />
               )}
-              <p className="text-white/60 mt-3 max-w-xl">{category?.description}</p>
+              <p className="text-white/60 mt-3 max-w-xl">{collectionDescription || category?.description}</p>
             </div>
           </div>
         </div>

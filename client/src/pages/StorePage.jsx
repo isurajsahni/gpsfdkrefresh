@@ -371,8 +371,8 @@ const StorePage = () => {
       {/* The Store is the homepage. It also renders at /store, which canonicalizes
           here so the two URLs don't compete as duplicates. */}
       <SEO
-        title="GPSFDK Store | Canvas Wall Art, Experiences & Personalized Creations"
-        description="Discover GPSFDK's curated store: museum-grade canvases, custom nameplates, workshops, retreats, and personalized gifts — all in one place."
+        title="Canvas Wall Art & Custom Canvas Prints Online India | GPSFDK"
+        description="Shop art canvas online: abstract, floral and modern canvas wall art, custom canvas prints from your photos, and house nameplates. Delivered across India."
         canonicalPath="/"
         schema={[ORGANIZATION_SCHEMA, WEBSITE_SCHEMA]}
       />

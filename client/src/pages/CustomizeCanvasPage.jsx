@@ -405,8 +405,8 @@ const CustomizeCanvasPage = () => {
   return (
     <div className="store-apple min-h-screen bg-white pb-24 pt-[100px] text-[#1D1D1F] lg:pb-20">
       <SEO
-        title="Customize Your Canvas | Turn Photos Into Art"
-        description="Upload your photo and customize your own museum-grade canvas portrait."
+        title="Custom Canvas Prints: Turn Your Photo into Art | GPSFDK"
+        description="Create a custom canvas from your photo: portraits, wedding and family photos or your own art design. A glare-free alternative to a photo frame, ready to hang."
       />
 
       <div className="section-padding">

@@ -8,9 +8,9 @@ export const BLOG_URL = `${SITE_URL}/blog`;
 export const RSS_URL = `${SITE_URL}/rss.xml`;
 export const DEFAULT_AUTHOR = 'Suraj';
 
-export const BLOG_LIST_TITLE = 'Wall Art & Canvas Blog: Decor Guides for Indian Homes | GPSFDK';
+export const BLOG_LIST_TITLE = 'Canvas Wall Art Blog: Ideas, Guides & Trends | GPSFDK';
 export const BLOG_LIST_DESCRIPTION =
-  'Guides on choosing, sizing, hanging and caring for canvas prints, plus wall décor trends, Vaastu ideas and gifting inspiration for Indian homes.';
+  'Canvas wall art ideas and guides for Indian homes: abstract and floral art, custom photo canvas, sizes, hanging, care, Vastu paintings and gift ideas.';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -152,6 +152,21 @@ const breadcrumb = (items) => ({
 
 const authorOf = (post) => ({ '@type': 'Person', name: post.author || DEFAULT_AUTHOR });
 
+// The questions under a post's "## Frequently Asked Questions" heading: each
+// "### question" with the text up to the next heading as its answer.
+export const extractFaqs = (markdown = '') => {
+  const section = /^##\s+Frequently Asked Questions\s*$([\s\S]*?)(?=^##\s|(?![\s\S]))/m.exec(markdown);
+  if (!section) return [];
+  return section[1]
+    .split(/^###\s+/m)
+    .slice(1)
+    .map((block) => {
+      const [question, ...rest] = block.split('\n');
+      return { question: plainText(question), answer: plainText(rest.join(' ').replace(/\s+/g, ' ')) };
+    })
+    .filter((faq) => faq.question && faq.answer);
+};
+
 export const blogListSchema = (posts) => ({
   '@context': 'https://schema.org',
   '@graph': [
@@ -183,6 +198,7 @@ export const blogListSchema = (posts) => ({
 
 export const blogPostSchema = (post, markdown) => {
   const url = postUrl(post.slug);
+  const faqs = extractFaqs(markdown);
   return {
     '@context': 'https://schema.org',
     '@graph': [
@@ -209,6 +225,15 @@ export const blogPostSchema = (post, markdown) => {
         ['Blog', BLOG_URL],
         [post.title, url],
       ]),
+      ...(faqs.length ? [{
+        '@type': 'FAQPage',
+        '@id': `${url}#faq`,
+        mainEntity: faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question,
+          acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+        })),
+      }] : []),
     ],
   };
 };

@@ -1,109 +1,126 @@
-# How to Hang Large Canvas Prints Like a Professional
+# How to Hang Canvas Wall Art: A Step-by-Step Guide
 
-You've ordered a stunning large canvas print. It arrives at your door, perfectly wrapped and ready to hang. But now comes the part that makes many people nervous: actually getting it on the wall. Don't worry — with the right tools and technique, hanging a large canvas is surprisingly easy.
+You have chosen the perfect canvas. Now it needs to go on the wall, straight, at the right height and secure enough to stay there. This guide shows you how to hang canvas wall art on any Indian wall, including concrete, brick and plaster, whether it is one large canvas or a set.
 
-Here's a professional-grade guide to hanging your canvas perfectly every time.
+## What You Will Need
 
-## What You'll Need
-
-- Pencil
 - Measuring tape
-- Level (or a smartphone level app)
-- Hammer
-- Wall hooks or D-ring hangers (included with most canvas orders)
-- A helper (for canvases wider than 90cm)
+- Pencil
+- Spirit level (or a level app on your phone)
+- Drill with masonry bit (for concrete or brick)
+- Wall plugs (gitti) and screws, or picture hooks rated for the weight
+- Painter's tape or masking tape
+- A helper for canvases larger than 24x36 inches
 
 ## Step 1: Choose the Right Wall
 
-Before you grab the hammer, consider these factors:
-
 ### Wall Material
-- **Brick/Concrete walls** (common in Indian homes): Use wall plugs (rawl plugs) with screws.
-- **Plaster/Drywall:** Use appropriate wall anchors rated for the weight.
-- **Wooden panels:** Standard screws work perfectly.
 
-### Lighting
-Natural light from a nearby window brings out the colours in canvas art. Avoid walls that receive **direct afternoon sunlight** — even UV-resistant inks will fade faster under constant direct sun.
+- **Concrete and brick** (most Indian homes): need a drill, wall plugs and screws.
+- **Plaster or POP over brick:** drill through into the brick behind for a firm hold.
+- **Drywall or gypsum board:** use drywall anchors, or screw into a stud.
 
-### Visibility
-Choose a wall that's visible from your room's primary seating area. The canvas should be the first thing you notice when entering the room.
+### Light
 
-## Step 2: Determine the Perfect Height
+Avoid walls that get strong direct afternoon sun, which fades any print over time. Soft, indirect light shows canvas texture at its best.
 
-The golden rule of art hanging: **the center of the canvas should be at eye level**. For most people, this means:
+### Damp
 
-- **Center point:** 145-152cm from the floor
-- **Above a sofa:** Leave 15-20cm between the top of the sofa and the bottom of the canvas
-- **Above a bed headboard:** Leave 10-15cm between the headboard and the canvas
-- **Above a console/sideboard:** Leave 15-25cm of space
+Avoid walls shared with bathrooms or walls that show seepage in the monsoon. Moisture is the biggest enemy of canvas and wooden frames.
 
-For Indian homes with higher ceilings (10-12 feet), you can raise the canvas slightly — but never hang it so high that viewers have to crane their necks.
+## Step 2: Find the Right Height
 
-## Step 3: Mark and Measure
+The gallery standard is to hang art so its **centre is about 145 to 152 cm (57 to 60 inches) from the floor**, roughly average eye level.
 
-### For a Single Canvas:
-1. Measure the canvas width and height.
-2. Find the center point of your wall (or the center above your furniture).
-3. From that center point, measure half the canvas width to the left and right — mark these with light pencil dots.
-4. Measure the hanging hardware on the back of your canvas. Note how far the wire/D-ring sits from the **top** of the canvas.
-5. From your desired center height, add that measurement upward. This is where your hook goes.
+Exceptions:
 
-### For Multi-Panel (Split Canvas):
-1. Lay all panels on the floor in order.
-2. Decide on the gap between panels (typically **3-5cm**).
-3. Calculate the total width: sum of all panel widths + gaps.
-4. Center that total width on your wall and mark the position of each panel's hook individually.
+- **Above a sofa:** leave 20 to 25 cm between the top of the sofa back and the bottom of the canvas.
+- **Above a bed:** leave 25 to 30 cm above the headboard.
+- **Above a console or TV unit:** leave 15 to 20 cm above the top surface.
+- **Dining rooms:** hang slightly lower, because people view it while seated.
+
+## Step 3: Measure and Mark
+
+### For a Single Canvas
+
+1. Mark the point where the centre of the canvas should be.
+2. Measure from the top of the canvas to its hanging point (the wire or the top bar of the frame).
+3. Add half the canvas height to your centre mark, then subtract the distance from step 2. That is where your hook goes.
+4. For canvases wider than 24 inches, use two hooks, spaced about a third of the width in from each side.
+
+### For Two or More Canvases
+
+1. Work out the total width of the group, including the gaps (5 to 8 cm between canvases).
+2. Find the centre of the wall or furniture and centre the whole group on it.
+3. Mark each canvas position with painter's tape before drilling.
+
+Planning a multi-panel layout? See our guide to [multi-panel canvas displays](/blog/split-canvas-prints-multi-panel-display).
 
 ## Step 4: Install the Hardware
 
-### For Brick/Concrete Walls:
-1. Mark your hook position with a pencil.
-2. Use a masonry drill bit to drill a pilot hole.
-3. Insert a wall plug (rawl plug).
-4. Screw in a picture hook or heavy-duty wall screw, leaving 0.5cm protruding.
+### For Concrete or Brick Walls
 
-### For Drywall/Plaster:
-1. Use adhesive picture hanging strips for canvases under 3kg.
-2. For heavier canvases, use toggle bolts or expandable wall anchors.
+1. Drill a hole with a masonry bit sized to your wall plug.
+2. Tap the plug in until it is flush with the wall.
+3. Drive the screw in, leaving about 1 cm sticking out to hold the frame.
+
+### For Plaster or Drywall
+
+Use drywall anchors rated for at least twice the weight of the canvas, or find a stud. Stretched canvas is light, but a secure anchor stops it slipping over time.
 
 ## Step 5: Hang and Level
 
-1. Carefully lift the canvas and hook the wire/D-ring onto your wall hook.
-2. Place a spirit level on top of the canvas and adjust until perfectly horizontal.
-3. Step back to the room's primary seating position and evaluate. Does it look centered? Is the height comfortable?
+1. Lift the canvas onto the hook or hooks.
+2. Place the spirit level on top and adjust until it is straight.
+3. Stick small felt or rubber bumpers on the back corners to stop the canvas shifting and protect the wall.
 
-## Pro Tips from Interior Designers
+## Pro Tips
 
-### The Newspaper Trick
-Before drilling any holes, cut out newspaper pieces that match your canvas size. Tape them to the wall with painter's tape. Live with them for a day to confirm the placement feels right.
+### The Paper Template Trick
 
-### Group Hanging Made Easy
-When hanging a gallery wall with multiple canvases:
-- Start with the **largest piece** at the center.
-- Work outward, maintaining consistent gaps.
-- Use painter's tape on the floor to arrange your layout before committing to the wall.
+Cut newspaper or kraft paper to the exact size of each canvas, tape the templates to the wall, and live with them for a day. It is the easiest way to get size and placement right before you drill.
 
-### Use Two Hooks for Large Canvases
-For canvases wider than 90cm, use two hooks spaced 1/3 of the canvas width from each edge. This distributes weight evenly and prevents the canvas from shifting.
+### Two Hooks for Large Canvases
 
-### Felt Bumpers
-Stick small felt pads to the bottom back corners of your canvas. This prevents the canvas from scratching the wall and helps it hang flat.
+Anything 30x48 inches or larger should hang on two hooks. It stays level even when bumped.
+
+### Mind the Switches
+
+Check for electrical wiring before drilling, especially directly above or below switches and sockets.
 
 ## Common Mistakes to Avoid
 
-1. **Hanging too high:** The most common mistake. Remember eye level, not ceiling level.
-2. **Ignoring the furniture relationship:** A canvas should relate to the furniture below it, not float randomly on the wall.
-3. **Using inadequate hardware:** A canvas might look light, but a large stretched canvas can weigh 3-5kg. Use appropriate wall hardware.
-4. **Rushing the process:** Take your time measuring. A crooked canvas is worse than no canvas at all.
+- **Hanging too high.** The most common mistake. Art should relate to the furniture beneath it.
+- **Choosing art that is too small.** Follow the two-thirds rule from our [canvas size guide](/blog/wall-canvas-size-guide-living-room-layouts).
+- **Uneven gaps between pieces.** Measure every gap, do not eyeball it.
+- **Skipping wall plugs on concrete.** A screw straight into concrete will work loose.
 
-## Make a Statement with Large Format Art
+## Statement Pieces for Large Walls
 
-To test your new hanging skills, look at these incredible large-format statement pieces:
-- **[The Wolf of Wall Street Canvas](/product/the-wolf-of-wall-street)**: A massive, highly motivating cinematic statement piece that commands complete attention in any executive office or workspace.
-- **[Celestial Frontier Canvas](/wall-canvas/the-celestial-frontier)**: A breathtaking cosmic panorama that looks spectacular in oversized single or split-panel layouts.
+- **[The Wolf of Wall Street](/product/the-wolf-of-wall-street)**: a bold, cinematic canvas for offices and study rooms.
+- **[Ring of Saturn](/product/ring-of-saturn)**: a striking cosmic piece from [The Celestial Frontier](/wall-canvas/the-celestial-frontier).
+- **[Slate & Gold Cascade](/product/slate-and-gold-cascade)**: a large-scale abstract for living rooms.
+
+## Frequently Asked Questions
+
+### How high should I hang a canvas?
+
+Hang it so its centre is about 145 to 152 cm (57 to 60 inches) from the floor. Above furniture, leave 20 to 25 cm between the furniture and the bottom of the canvas.
+
+### Can I hang a canvas without drilling?
+
+Small, light canvases can hang on heavy-duty adhesive hooks or strips on smooth, painted walls. For large canvases, or textured and concrete walls, drilling with a wall plug is far safer.
+
+### Does a GPSFDK canvas come ready to hang?
+
+Yes, if you order it stretched. It arrives on a wooden frame, ready to go on a hook. Rolled canvases need to be stretched or framed first.
+
+### How far apart should canvases be in a group?
+
+Keep 5 to 8 cm between canvases so they read as one group.
 
 ## Conclusion
 
-Hanging a large canvas print is a 15-minute job that transforms your room for years to come. With the right measurements, appropriate hardware, and a bit of patience, you'll have a professionally hung masterpiece that makes your walls come alive.
+Hanging canvas wall art well comes down to three things: the right height, accurate measuring, and the right fixing for your wall. Take your time with the template, use two hooks for large pieces, and your canvas will look professionally installed.
 
-[Shop Large Canvas Prints →](/canvas)
+[Shop large canvas wall art →](/canvas)

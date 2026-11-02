@@ -1,130 +1,115 @@
-# The Secret to Cleaning and Maintaining Your Canvas Wall Decor
+# How to Clean and Care for Canvas Wall Art
 
-Your canvas wall art is an investment — both financially and emotionally. Whether it's a custom family portrait, a museum-quality landscape, or an abstract masterpiece, proper care ensures it stays vibrant and beautiful for decades.
+A good canvas print can keep its colour and shape for many years, but only if it is looked after. Dust, humidity, sunlight and the wrong cleaning products are what shorten its life, and in India, with monsoon damp and strong summer sun, they matter more than most places.
 
-Here's everything you need to know about cleaning, protecting, and maintaining your canvas prints.
+This guide covers simple routine cleaning, how to handle marks, what never to use, and how to protect your canvas wall art for the long term.
 
 ## Understanding Your Canvas
 
-Before diving into cleaning techniques, it helps to understand what you're working with:
+A GPSFDK canvas is printed on 350 GSM canvas with eco-solvent inks. A stretched canvas is then pulled over a wooden frame. That means you are caring for three things at once:
 
-- **Canvas material:** Usually cotton, polyester, or a cotton-poly blend — all woven fabrics with a textured surface.
-- **Ink type:** Modern canvas prints use either **pigment-based** or **dye-based** inks. Pigment inks are more durable and water-resistant; dye inks produce more vivid colours but are more sensitive.
-- **Coating:** Many high-quality canvases (including GPSFDK's) have a **UV-protective laminate** or varnish layer that shields the ink from fading and provides moisture resistance.
+- **The printed surface**, which should be cleaned gently and kept dry.
+- **The canvas fabric**, which should stay taut and away from damp.
+- **The wooden frame**, which should not be exposed to moisture or heat.
 
-## Routine Cleaning (Monthly)
+## Routine Cleaning (Every Few Weeks)
 
 ### Dusting
-Dust is your canvas's primary enemy. In India's dusty climate, canvas prints accumulate visible dust surprisingly fast — especially during summer and construction season.
 
-**How to dust properly:**
-1. Use a **soft, dry microfiber cloth** or a **feather duster**.
-2. Gently wipe the canvas surface using light, sweeping motions.
-3. Work from **top to bottom** so dust falls downward.
-4. Don't press hard — the canvas surface can indent if pushed against the stretcher bars.
+1. Use a clean, dry microfibre cloth, a soft paintbrush or a feather duster.
+2. Work gently from top to bottom.
+3. Do not press hard. You only want to lift dust, not rub the surface.
+4. Dust the top edge of the frame too, where dust collects most.
 
-**Frequency:** Once every 2-4 weeks, or more often if your home is near a road or construction site.
+### Using a Hair Dryer or Blower (Optional)
 
-### Compressed Air (Optional)
-For canvases with deep textures where dust settles into crevices:
-- Use a can of compressed air (available at electronics stores).
-- Hold the can 15-20cm from the canvas.
-- Spray in short bursts to dislodge trapped dust.
+For dust in the canvas texture, a hair dryer on the **cool** setting, held about 30 cm away, works well. Never use heat.
 
-## Deep Cleaning (As Needed)
+## Cleaning Marks and Light Stains
 
-### For Light Stains or Marks
-1. Dampen a **white** microfiber cloth with **distilled water** (tap water can leave mineral deposits).
-2. Gently dab (don't rub) the affected area.
-3. Immediately blot dry with a clean, dry cloth.
-4. Allow to air dry completely before re-hanging.
+### For Light Marks
+
+1. Slightly dampen a soft, white cloth with plain water and wring it out until it is almost dry.
+2. Dab the mark gently. Do not rub or scrub.
+3. Let the canvas air-dry completely before hanging it back up.
 
 ### For Stubborn Spots
-1. Mix a **tiny amount** of mild dish soap with distilled water.
-2. Dip a cotton swab or soft cloth into the solution.
-3. Test on an **inconspicuous corner** first (the edge or back).
-4. If safe, gently dab the stain.
-5. Wipe away soap residue with a clean damp cloth.
-6. Air dry completely.
 
-## What NEVER to Use on Canvas
+Mix a drop of mild, unscented soap into a cup of water, dampen a cloth, wring it out well and dab gently. Then dab again with a cloth dampened with plain water and let it dry fully. Test on a corner first.
 
-| Product | Why It's Dangerous |
-|---|---|
-| Window cleaner (Colin, Windex) | Contains ammonia which dissolves ink |
-| Bleach | Destroys canvas fibres and ink |
-| Alcohol-based cleaners | Can strip protective coating |
-| Abrasive sponges/scrubbers | Will tear the canvas surface |
-| Wet wipes | Often contain chemicals that damage prints |
-| Hair dryer (for drying) | Heat can warp the stretcher bar frame |
+## What Never to Use on Canvas
 
-## Protecting Your Canvas Long-Term
+- Glass cleaner, disinfectant sprays or anything with ammonia or alcohol
+- Wet wipes, which leave residue and too much moisture
+- Abrasive sponges or rough cloths
+- Spraying any liquid directly onto the canvas
+- Furniture polish or oils
 
-### Location Matters
+## Protecting Your Canvas Long Term
 
-**Avoid:**
-- Walls with direct afternoon sunlight (even UV-resistant inks fade over time)
-- Above stoves or cooking areas (grease and moisture)
-- Bathrooms (constant humidity exposure)
-- Near air conditioning vents (rapid temperature changes cause expansion/contraction)
+### Choose the Right Spot
 
-**Ideal locations:**
-- Walls with indirect natural light
-- Climate-controlled rooms
-- Living rooms, bedrooms, and hallways
+- **Avoid direct sun.** Even fade-resistant inks fade faster under hours of direct afternoon sun. Read more on [UV-resistant canvas prints](/blog/why-uv-resistant-canvas-prints-matter-india).
+- **Avoid kitchens and bathrooms.** Steam, smoke and oil settle on the surface.
+- **Keep it away from heaters, AC vents and lamps** that blow or radiate heat directly at it.
 
-### Humidity Control
+### Control Humidity
 
-India's monsoon season is particularly harsh on canvas prints. High humidity can cause:
-- **Canvas sagging** (the fabric absorbs moisture and stretches)
-- **Mould growth** on the back of the canvas
-- **Warping** of the wooden stretcher bars
+During the monsoon:
 
-**Prevention tips:**
-- Maintain indoor humidity between 40-60% (use a dehumidifier during monsoons).
-- Ensure the back of the canvas has **air circulation** — don't push items against it.
-- If you notice slight sagging after monsoons, the canvas typically tightens again when humidity drops.
+- Do not hang canvas on walls with seepage or shared with bathrooms.
+- Keep rooms ventilated, and use a dehumidifier or your AC's dry mode in very humid weather.
+- Leave a little air gap between the canvas and the wall; small bumpers on the back corners help.
 
-### UV Protection
+### If the Canvas Becomes Slightly Loose
 
-Even with UV-resistant inks, prolonged sun exposure causes gradual fading. Extra protection options:
-- **UV-filtering window film** on nearby windows.
-- **UV-protective spray varnish** (apply annually for maximum protection — use sprays specifically designed for canvas prints).
-- **LED picture lights** instead of halogen (LEDs produce virtually zero UV radiation).
+Large stretched canvases can relax a little over time in changing humidity. A professional framer can re-tension it. Do not try to iron or wet the canvas.
 
-## Handling and Moving Canvas Art
+## Moving and Storing Canvas Art
 
 ### When Moving House
-1. Remove the canvas from the wall.
-2. Wrap the front surface with **acid-free tissue paper** or clean cotton cloth.
-3. Place in a cardboard box slightly larger than the canvas.
-4. Fill gaps with bubble wrap or packing paper.
-5. Store and transport **vertically** (leaning against a surface, not flat).
-6. Never stack heavy items on top of a canvas.
 
-### Storing Canvas Art
-If you need to store a canvas temporarily:
-- Wrap it in acid-free materials.
-- Store in a **cool, dry, dark place**.
-- Store vertically, leaning against a wall.
-- Avoid attics (extreme heat) and basements (moisture/dampness).
+- Wrap the face of the canvas in clean paper or a soft cloth, then bubble wrap.
+- Protect the corners with cardboard.
+- Carry it by the frame, never by pressing on the canvas face.
+- Transport it standing upright, not flat with weight on top.
 
-## When to Seek Professional Help
+### Storing Canvas
 
-Some situations require a professional art conservator or restorer:
-- **Deep scratches** or punctures in the canvas surface.
-- **Water damage** from leaks or flooding.
-- **Mould growth** that has penetrated the canvas fibres.
-- **Significant fading** that you want corrected.
+- Store upright in a cool, dry room, not in a damp storeroom or on the floor.
+- Do not stack heavy items against the canvas face.
+- Rolled canvases should be stored rolled loosely with the print facing outward, inside a tube.
 
-## Our Most Durable UV-Protected Designs
+## When to Get Professional Help
 
-If you want worry-free maintenance, these museum-grade designs are pre-coated with our premium UV-resistant varnish:
-- **[Azure Gaze Canvas](/product/azure-gaze)**: Renowned for its stable ocean pigments that stand up to humid coastal climates without fading.
-- **[The Concrete Jungle Canvas](/product/the-concrete-jungle)**: Exceptionally robust ink layers wrapped around kiln-dried pine wood frame backing.
+See a framer or art restorer if the canvas is torn, has mould spots, is badly sagging, or has water damage. Do not try to repair these at home.
+
+## Durable Designs for Busy Rooms
+
+- **[Azure Gaze](/product/azure-gaze)**: a calm blue piece for living rooms and bedrooms.
+- **[The Concrete Jungle](/product/the-concrete-jungle)**: an urban design that suits high-traffic spaces.
+- **[Eclipse over Clay](/product/eclipse-over-clay)**: an earthy abstract that hides everyday dust well.
+
+## Frequently Asked Questions
+
+### How do I clean a canvas painting at home?
+
+Dust it gently with a dry microfibre cloth or soft brush. For marks, dab lightly with a cloth that is barely damp with plain water, then let it dry. Never spray liquid on the canvas.
+
+### Can I use water on a canvas print?
+
+Only a little, on a well-wrung cloth, dabbed gently on a small area. Never soak or spray the canvas.
+
+### How do I protect canvas art from humidity?
+
+Hang it on an inside wall away from bathrooms, kitchens and seepage, keep the room ventilated, and use a dehumidifier or AC dry mode during the monsoon.
+
+### Will my canvas fade?
+
+Kept out of direct sunlight, a quality canvas print keeps its colour for many years. Strong, direct sun every day will fade any print over time.
 
 ## Conclusion
 
-A little routine care goes a long way. With monthly dusting, smart placement, and basic precautions against India's humidity and sun, your canvas wall art will remain as vibrant as the day you hung it — for decades to come.
+Caring for canvas wall art is simple: dust it gently, keep it dry, keep it out of direct sun, and never use harsh cleaners. A few minutes every few weeks keeps your art looking new for years.
 
-[Browse Our Premium Canvas Collection →](/canvas)
+[Browse our canvas wall art collection →](/canvas)

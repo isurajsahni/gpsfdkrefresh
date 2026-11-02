@@ -125,8 +125,8 @@ const LocationPage = () => {
 
   const curatedProducts = getCuratedProducts();
   
-  const title = `Premium Canvas & Name Plates in ${cityName} | Custom Canvas Prints India`;
-  const description = `Looking for Custom Canvas Prints in ${cityName}? GPSFDK offers Gallery Wrapped Canvas, Aesthetic Wall Decor, and premium Photo to Canvas services across ${cityName}.`;
+  const title = `Canvas Wall Art & Custom Canvas in ${cityName} | GPSFDK`;
+  const description = `Buy canvas wall art in ${cityName}: abstract, floral and modern designs, or a custom canvas from your photo. Ready to hang and delivered to your door.`;
 
   if (!localData) return <NotFoundPage />;
   // One URL per city: /location/Delhi → /location/delhi

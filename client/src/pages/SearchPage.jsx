@@ -44,7 +44,7 @@ const SearchPage = () => {
     <div className="min-h-screen bg-gray-50 pt-[100px] pb-20">
       <SEO
         title={query ? `Search results for “${query}” | GPSFDK` : 'Search | GPSFDK'}
-        description="Search the GPSFDK catalogue of premium wall canvas prints and custom house nameplates."
+        description="Search GPSFDK canvas wall art by style, colour or room: abstract, floral, modern and more, plus custom house nameplates."
         noindex
       />
       <div className="max-w-[1400px] mx-auto px-[15px]">

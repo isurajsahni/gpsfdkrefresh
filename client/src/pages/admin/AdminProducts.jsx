@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload, HiOutlineSearch } from 'react-icons/hi';
+import { HiOutlinePlus, HiOutlinePencil, HiOutlineTrash, HiOutlineX, HiOutlineDocumentDuplicate, HiOutlineUpload, HiOutlineDownload, HiOutlineTable, HiOutlineSearch } from 'react-icons/hi';
 import API from '../../utils/api';
 import toast from 'react-hot-toast';
 import { optimizeImage } from '../../utils/imageOptimizer';
@@ -218,6 +218,32 @@ const AdminProducts = () => {
     e.target.value = '';
   };
 
+  // Google Sheets has no way to receive a file from a link without Google
+  // credentials, so that route downloads the same CSV and opens a blank sheet
+  // to import it into. The tab has to open during the click or it gets blocked.
+  const handleExport = async ({ toSheets = false } = {}) => {
+    if (toSheets) window.open('https://sheets.new', '_blank', 'noopener');
+
+    const toastId = toast.loading('Preparing product file...');
+    try {
+      const { data } = await API.get('/products/export', { responseType: 'blob', timeout: 120000 });
+      const filename = `gpsfdk-products-${new Date().toISOString().slice(0, 10)}.csv`;
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      if (toSheets) {
+        toast.success(`Downloaded. In the new sheet: File > Import > Upload, then choose ${filename}`, { id: toastId, duration: 12000 });
+      } else {
+        toast.success('Product file downloaded', { id: toastId });
+      }
+    } catch (err) {
+      toast.error(err.response?.status === 403 ? 'Only admins can export products' : 'Export failed', { id: toastId });
+    }
+  };
+
   const addVariation = () => {
     setForm({ ...form, variations: [...form.variations, { material: '', frame: '', size: '', color: '', price: 0, comparePrice: 0, costPrice: 0, stock: 100 }] });
   };
@@ -247,6 +273,12 @@ const AdminProducts = () => {
             <HiOutlineUpload className="w-4 h-4" /> Import CSV
             <input type="file" accept=".csv" onChange={handleCSVUpload} className="hidden" />
           </label>
+          <button onClick={() => handleExport()} className="btn-secondary text-sm flex items-center gap-2 border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+            <HiOutlineDownload className="w-4 h-4" /> Export CSV
+          </button>
+          <button onClick={() => handleExport({ toSheets: true })} title="Downloads the CSV and opens a blank Google Sheet to import it into" className="btn-secondary text-sm flex items-center gap-2 border px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors">
+            <HiOutlineTable className="w-4 h-4" /> Export to Google Sheets
+          </button>
           <button onClick={() => { setShowForm(true); setEditing(null); }} className="btn-primary text-sm flex items-center gap-2">
             <HiOutlinePlus className="w-4 h-4" /> Add Product
           </button>

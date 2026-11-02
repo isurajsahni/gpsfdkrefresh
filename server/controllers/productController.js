@@ -6,6 +6,7 @@ const slugify = require('slugify');
 const { cloudinary } = require('../middleware/upload');
 const { sanitizeRichText } = require('../utils/sanitizeHtml');
 const { createTtlCache } = require('../utils/ttlCache');
+const { buildRows, toCsv } = require('../utils/productExport');
 
 /* Public catalogue reads (listings, product pages, the hot-selling row) are
    cached for a few minutes: the same handful of queries are asked constantly
@@ -563,6 +564,26 @@ exports.bulkDeleteProducts = async (req, res, next) => {
     const result = await Product.deleteMany({ _id: { $in: ids } });
     clearCatalogueCache();
     res.json({ message: `${result.deletedCount} product(s) deleted`, deletedCount: result.deletedCount });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/products/export (admin) — every product, active or not, as a CSV
+exports.exportProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find({})
+      .select('-variations.costPrice')
+      .populate('category', 'name slug')
+      .sort({ name: 1 })
+      .lean();
+    const date = new Date().toISOString().slice(0, 10);
+    res.set({
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="gpsfdk-products-${date}.csv"`,
+      'Cache-Control': 'private, no-store',
+    });
+    res.send(toCsv(buildRows(products)));
   } catch (error) {
     next(error);
   }

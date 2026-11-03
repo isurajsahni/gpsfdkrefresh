@@ -228,6 +228,11 @@ const Navbar = () => {
                                 Admin Panel
                               </Link>
                             )}
+                            {user.role === 'exhibition_staff' && (
+                              <Link to="/exhibition-signup" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
+                                Exhibition Sign-up
+                              </Link>
+                            )}
                             {(user.role === 'marketing' || user.role === 'admin_marketing') && (
                               <Link to="/marketing" onClick={() => setUserMenu(false)} className="block px-5 py-2.5 text-sm text-gray-700 hover:bg-cream hover:text-secondary transition-colors">
                                 Marketing Dashboard

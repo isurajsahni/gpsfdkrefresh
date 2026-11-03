@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children, adminOnly = false, marketingOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, marketingOnly = false, exhibitionOnly = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -15,6 +15,7 @@ const ProtectedRoute = ({ children, adminOnly = false, marketingOnly = false }) 
   if (!user) return <Navigate to="/register" replace />;
   if (adminOnly && !['admin', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(user.role)) return <Navigate to="/" replace />;
   if (marketingOnly && !['admin', 'admin_marketing', 'marketing'].includes(user.role)) return <Navigate to="/" replace />;
+  if (exhibitionOnly && !['admin', 'admin_marketing', 'exhibition_staff'].includes(user.role)) return <Navigate to="/" replace />;
 
   return children;
 };

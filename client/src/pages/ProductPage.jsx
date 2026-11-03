@@ -15,6 +15,7 @@ import LoadErrorNotice from '../components/common/LoadErrorNotice';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 import { validators, formatters } from '../utils/validation';
+import { contactEmail } from '../utils/contactEmail';
 import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
 import { categoryPath } from '../utils/categoryPath';
 import { usePrerenderData } from '../prerender/PrerenderData';
@@ -98,7 +99,7 @@ const ProductPage = () => {
     if (!user) return;
     setQuoteForm(prev => ({
       name: prev.name || user.name || '',
-      email: prev.email || user.email || '',
+      email: prev.email || contactEmail(user.email),
       phone: prev.phone || formatters.phone(user.phone || ''),
     }));
   }, [user]);

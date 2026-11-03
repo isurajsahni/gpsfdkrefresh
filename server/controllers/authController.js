@@ -8,6 +8,7 @@ const { cloudinary } = require('../middleware/upload');
 const { createOtpStore } = require('../utils/otpSessionStore');
 const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
 const { getDemoLogin, isDemoIdentifier } = require('../utils/demoLogin');
+const { PLACEHOLDER_EMAIL_DOMAIN, placeholderEmail, normalizeSignupPhone, isWelcomeWhatsAppConfigured, sendWelcomeWhatsApp } = require('../utils/exhibitionSignup');
 
 // ─── OTP / verification session stores (Mongo-backed, TTL-purged) ─────────────
 // These used to be in-memory Maps. That made every OTP session non-recoverable
@@ -680,7 +681,7 @@ exports.updateUserRole = async (req, res, next) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     
     if (req.body.role) {
-      if (!['user', 'admin', 'marketing', 'admin_marketing', 'order_manager', 'coupon_manager'].includes(req.body.role)) {
+      if (!['user', 'admin', 'marketing', 'admin_marketing', 'order_manager', 'coupon_manager', 'exhibition_staff'].includes(req.body.role)) {
         return res.status(400).json({ message: 'Invalid role' });
       }
       user.role = req.body.role;
@@ -1102,6 +1103,113 @@ exports.completePasswordlessRegistration = async (req, res, next) => {
       avatar: user.avatar || '',
       addresses: user.addresses || [],
       token: generateToken(user._id),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const ALREADY_REGISTERED = 'This customer is already registered. They can log in with an OTP.';
+
+// POST /api/auth/exhibition-signup (exhibition staff, admin)
+// Staff create a customer's account at the booth without an OTP. This must never
+// give staff a way in: it returns no token or account details, and it never
+// touches an account that already exists.
+exports.createExhibitionSignup = async (req, res, next) => {
+  try {
+    const text = (value) => (typeof value === 'string' ? value.trim() : '');
+    const name = text(req.body.name);
+    const eventName = text(req.body.eventName);
+    const email = text(req.body.email).toLowerCase();
+    const rawPhone = text(req.body.phone);
+
+    if (name.length < 2 || name.length > 50) return res.status(400).json({ message: 'Enter the customer\'s name.' });
+    if (!eventName || eventName.length > 80) return res.status(400).json({ message: 'Enter the exhibition name.' });
+    if (!email && !rawPhone) return res.status(400).json({ message: 'Enter a WhatsApp number or an email.' });
+    if (req.body.consent !== true) return res.status(400).json({ message: 'The customer must agree before you create their account.' });
+    if (email && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.endsWith('.invalid'))) {
+      return res.status(400).json({ message: 'Check the email address.' });
+    }
+
+    const phone = rawPhone ? normalizeSignupPhone(rawPhone) : '';
+    if (phone === null) return res.status(400).json({ message: 'Check the WhatsApp number. Numbers outside India need a + and country code.' });
+
+    // Same end-anchored match as verifyPasswordlessOtp, so "already registered"
+    // here means exactly what the customer's OTP login would find.
+    const matches = [];
+    if (email) matches.push({ email });
+    if (phone) matches.push({ phone: { $regex: phone.replace(/\D/g, '').slice(-10) + '$' } });
+    if (await User.findOne({ $or: matches }).select('_id')) {
+      return res.status(409).json({ message: ALREADY_REGISTERED });
+    }
+
+    let user;
+    try {
+      user = await User.create({
+        name,
+        email: email || placeholderEmail(phone),
+        phone,
+        // Never used: these accounts authenticate via OTP, like passwordless ones.
+        password: crypto.randomBytes(18).toString('hex'),
+        role: 'user',
+        exhibitionSignup: { eventName, createdBy: req.user._id, consentAt: new Date() },
+      });
+    } catch (error) {
+      // Two devices submitting the same email at once
+      if (error.code === 11000) return res.status(409).json({ message: ALREADY_REGISTERED });
+      throw error;
+    }
+
+    const welcomedBy = [];
+    if (email) {
+      sendEmail({ email, subject: 'Welcome to GPSFDK! 🎨', html: welcomeEmail(user.name) }).catch(() => {});
+      welcomedBy.push('email');
+    }
+    if (phone && isWelcomeWhatsAppConfigured()) {
+      sendWelcomeWhatsApp(phone, user.name);
+      welcomedBy.push('WhatsApp');
+    }
+
+    res.status(201).json({ message: 'Account created', welcomedBy });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// GET /api/auth/exhibition-signups (admin) — sign-ups per event and per staff
+// member, plus the customers themselves for follow-up.
+exports.getExhibitionSignups = async (req, res, next) => {
+  try {
+    const signups = await User.find({ 'exhibitionSignup.createdBy': { $exists: true }, deletedAt: null })
+      .select('name email phone createdAt exhibitionSignup')
+      .populate('exhibitionSignup.createdBy', 'name')
+      .sort('-createdAt')
+      .limit(5000)
+      .lean();
+
+    const staffName = (signup) => signup.exhibitionSignup.createdBy?.name || 'Removed staff member';
+    const countBy = (labelOf) => {
+      const counts = new Map();
+      signups.forEach((signup) => {
+        const label = labelOf(signup);
+        counts.set(label, (counts.get(label) || 0) + 1);
+      });
+      return [...counts].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count);
+    };
+
+    res.json({
+      total: signups.length,
+      byEvent: countBy((signup) => signup.exhibitionSignup.eventName),
+      byStaff: countBy(staffName),
+      signups: signups.map((signup) => ({
+        _id: signup._id,
+        name: signup.name,
+        email: signup.email.endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`) ? '' : signup.email,
+        phone: signup.phone,
+        createdAt: signup.createdAt,
+        eventName: signup.exhibitionSignup.eventName,
+        staffName: staffName(signup),
+      })),
     });
   } catch (error) {
     next(error);

@@ -1,6 +1,6 @@
 const router = require('express').Router();
-const { register, login, getMe, updateProfile, deleteOwnAccount, getUsers, getUsersCount, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, completePasswordlessRegistration } = require('../controllers/authController');
-const { protect, admin } = require('../middleware/auth');
+const { register, login, getMe, updateProfile, deleteOwnAccount, getUsers, getUsersCount, deleteUser, updateUserRole, forgotPassword, verifyOtp, resetPassword, addAddress, deleteAddress, updateAddress, sendEmailUpdateOtp, verifyEmailUpdateOtp, uploadAvatar, sendRegistrationOtp, verifyRegistrationOtp, sendPasswordlessOtp, verifyPasswordlessOtp, completePasswordlessRegistration, createExhibitionSignup, getExhibitionSignups } = require('../controllers/authController');
+const { protect, admin, authorizeRoles } = require('../middleware/auth');
 const { avatarUpload } = require('../middleware/upload');
 const {
   registerValidation,
@@ -10,6 +10,7 @@ const {
   resetPasswordValidation,
   authLimiter,
   otpLimiter,
+  exhibitionSignupLimiter,
 } = require('../middleware/validators');
 
 router.post('/register', authLimiter, registerValidation, register);
@@ -45,5 +46,9 @@ router.post('/verify-email-update-otp', protect, verifyEmailUpdateOtp);
 router.post('/passwordless/send-otp', authLimiter, sendPasswordlessOtp);
 router.post('/passwordless/verify-otp', otpLimiter, verifyPasswordlessOtp);
 router.post('/passwordless/complete-registration', authLimiter, completePasswordlessRegistration);
+
+// Staff create a customer's account at an exhibition booth, without an OTP
+router.post('/exhibition-signup', protect, authorizeRoles('exhibition_staff'), exhibitionSignupLimiter, createExhibitionSignup);
+router.get('/exhibition-signups', protect, admin, getExhibitionSignups);
 
 module.exports = router;

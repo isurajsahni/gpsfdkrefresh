@@ -187,6 +187,8 @@ const PasswordlessAuth = ({ isRegister = false }) => {
         navigate('/admin');
       } else if (data.role === 'marketing') {
         navigate('/marketing');
+      } else if (data.role === 'exhibition_staff') {
+        navigate('/exhibition-signup');
       } else if (cartItems.length > 0) {
         navigate('/checkout');
       } else {

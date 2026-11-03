@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import API, { getMe } from '../utils/api';
 import toast from 'react-hot-toast';
+import { contactEmail } from '../utils/contactEmail';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
@@ -154,7 +155,8 @@ const CheckoutPage = () => {
   });
   // Guest checkout email. Required when no user is logged in so we can send
   // order confirmation + tracking. Auto-filled from user.email if available.
-  const [guestEmail, setGuestEmail] = useState(user?.email || '');
+  const userEmail = contactEmail(user?.email);
+  const [guestEmail, setGuestEmail] = useState(userEmail);
 
   // OTP verification gate. Logged-in users are already verified by their account;
   // guests must confirm phone+email with a code so we don't get fake orders.
@@ -315,7 +317,7 @@ const CheckoutPage = () => {
 
   // Abandoned Cart Tracker (Debounced)
   useEffect(() => {
-    const trackingEmail = user?.email || guestEmail?.trim();
+    const trackingEmail = userEmail || guestEmail?.trim();
     if (!trackingEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trackingEmail) || cartItems.length === 0) return;
 
     const contactPhone = getSelectedAddress()?.phone || address?.phone || user?.phone || '';
@@ -631,7 +633,7 @@ const CheckoutPage = () => {
         const endpoint = user ? '/orders' : '/orders/guest';
         const { data: zeroOrder } = await API.post(endpoint, orderData);
 
-        API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+        API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
         // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
         if (typeof window.fbq === 'function') {
           window.fbq('track', 'Purchase', {
@@ -703,7 +705,7 @@ const CheckoutPage = () => {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_signature: response.razorpay_signature,
-                  email: user?.email || shippingAddress?.email,
+                  email: userEmail || shippingAddress?.email,
                   total: payableTotal,
                   currency: orderCurrency,
                   at: new Date().toISOString(),
@@ -719,7 +721,7 @@ const CheckoutPage = () => {
                 });
                 // Verified successfully — drop the recovery marker.
                 try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) { /* ignore */ }
-                API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+                API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
                 // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
                 if (typeof window.fbq === 'function') {
                   window.fbq('track', 'Purchase', {
@@ -751,7 +753,7 @@ const CheckoutPage = () => {
                 setLoading(false);
               }
             },
-            prefill: { name: shippingAddress.fullName, email: user?.email || guestEmail, contact: shippingAddress.phone },
+            prefill: { name: shippingAddress.fullName, email: userEmail || guestEmail, contact: shippingAddress.phone },
             theme: { color: '#0B5D3B' },
             modal: {
               ondismiss: function() {
@@ -780,7 +782,7 @@ const CheckoutPage = () => {
         const endpoint = user ? '/orders' : '/orders/guest';
         const { data: codOrder } = await API.post(endpoint, orderData);
 
-        API.post('/abandoned-carts/recover', { email: user?.email }).catch(() => {});
+        API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
         // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
         if (typeof window.fbq === 'function') {
           window.fbq('track', 'Purchase', {

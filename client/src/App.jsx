@@ -86,6 +86,8 @@ const AdminWishlist = lazyPage(() => import('./pages/admin/AdminWishlist'));
 const AdminLeads = lazyPage(() => import('./pages/admin/AdminLeads'));
 const AdminAnalytics = lazyPage(() => import('./pages/admin/AdminAnalytics'));
 const AdminMarketingPerformance = lazyPage(() => import('./pages/admin/AdminMarketingPerformance'));
+const AdminExhibitionSignups = lazyPage(() => import('./pages/admin/AdminExhibitionSignups'));
+const ExhibitionSignup = lazyPage(() => import('./pages/ExhibitionSignup'));
 
 // Marketing Pages
 const MarketingLayout = lazyPage(() => import('./components/marketing/MarketingLayout'));
@@ -140,7 +142,7 @@ const captureUTM = () => {
 // Our analytics, Meta Pixel and GA count shoppers on the live site: not the
 // admin and marketing pages, and not local or preview copies of the site
 const LIVE_HOST = 'www.gpsfdk.com';
-const INTERNAL_PATH = /^\/(admin|marketing|invoice-preview)(\/|$)/;
+const INTERNAL_PATH = /^\/(admin|marketing|invoice-preview|exhibition-signup)(\/|$)/;
 
 const captureUTMOnce = () => {
   try {
@@ -311,6 +313,8 @@ const pageRoutes = (
     <Route path="/thank-you" element={<><ThankYouPage /><Footer /></>} />
     <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /><Footer /></ProtectedRoute>} />
 
+    <Route path="/exhibition-signup" element={<ProtectedRoute exhibitionOnly><ExhibitionSignup /></ProtectedRoute>} />
+
     {/* Admin */}
     <Route path="/admin" element={<ProtectedRoute adminOnly><AdminLayout /></ProtectedRoute>}>
       <Route index element={<AdminDashboard />} />
@@ -324,6 +328,7 @@ const pageRoutes = (
       <Route path="leads" element={<AdminLeads />} />
       <Route path="analytics" element={<AdminAnalytics />} />
       <Route path="marketing-performance" element={<AdminMarketingPerformance />} />
+      <Route path="exhibition-signups" element={<AdminExhibitionSignups />} />
     </Route>
 
     {/* Marketing Dashboard */}

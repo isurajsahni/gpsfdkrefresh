@@ -9,6 +9,8 @@ const razorpayCheckoutSchema = new mongoose.Schema({
   // The checkout's orderData as sent to /create-order
   orderData: { type: mongoose.Schema.Types.Mixed, required: true },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  // The admin ordering for `user`, when one is
+  placedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   // The shopper's request context (IP, user agent, Meta cookies) and page, for
   // Meta's Purchase event when the webhook creates the order
   clientContext: { type: mongoose.Schema.Types.Mixed, default: {} },

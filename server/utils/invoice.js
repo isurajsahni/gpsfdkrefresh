@@ -10,6 +10,7 @@
  * invoice — no GSTIN, HSN or tax breakdown.
  */
 const path = require('path');
+const { isPlaceholderEmail } = require('./exhibitionSignup');
 const PDFDocument = require('pdfkit');
 const Order = require('../models/Order');
 const Counter = require('../models/Counter');
@@ -207,7 +208,7 @@ const buildInvoiceData = (order, customer = {}) => {
     orderNumber: order.orderNumber,
     orderDate: fmtDate(order.createdAt || new Date()),
     placeOfSupply,
-    billTo: { name: billTo.fullName || customer.name || 'Customer', email: customer.email, lines: addressLines(billTo) },
+    billTo: { name: billTo.fullName || customer.name || 'Customer', email: isPlaceholderEmail(customer.email) ? '' : customer.email, lines: addressLines(billTo) },
     shipTo: { name: shipTo.fullName || customer.name || 'Customer', lines: addressLines(shipTo) },
     items,
     itemsTotal: round2(order.itemsPrice),

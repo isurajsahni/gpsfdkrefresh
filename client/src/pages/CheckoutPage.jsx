@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import API, { getMe } from '../utils/api';
 import toast from 'react-hot-toast';
 import { contactEmail } from '../utils/contactEmail';
+import OrderForCustomer from '../components/checkout/OrderForCustomer';
 import { validators, formatters, lookupPincode, INDIAN_STATES, validateAddress } from '../utils/validation';
 import { COUNTRIES, countryNameFromCode, isIndia } from '../utils/countries';
 import SmartPhoneInput from '../components/common/SmartPhoneInput';
@@ -155,7 +156,15 @@ const CheckoutPage = () => {
   });
   // Guest checkout email. Required when no user is logged in so we can send
   // order confirmation + tracking. Auto-filled from user.email if available.
-  const userEmail = contactEmail(user?.email);
+  // Admin ordering on a customer's account (null: ordering for themselves)
+  const canOrderForCustomer = ['admin', 'admin_marketing'].includes(user?.role);
+  const [orderingFor, setOrderingFor] = useState(null);
+  const userEmail = contactEmail(orderingFor ? orderingFor.email : user?.email);
+  const changeOrderingFor = (customer) => {
+    // The new-address form was prefilled for whoever was chosen before
+    if (!customer) setAddress({ fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India' });
+    setOrderingFor(customer);
+  };
   const [guestEmail, setGuestEmail] = useState(userEmail);
 
   // OTP verification gate. Logged-in users are already verified by their account;
@@ -294,9 +303,18 @@ const CheckoutPage = () => {
         if (!user.addresses?.length) setShowNewForm(true);
       }
     };
+    // The chosen customer's address book replaces the admin's own
+    if (orderingFor) {
+      setIsEditing(null);
+      setAddressErrors({});
+      setAddress({ fullName: orderingFor.name || '', phone: orderingFor.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India' });
+      setSelectedAddressId(null);
+      applyAddresses(orderingFor.addresses || []);
+      return;
+    }
     fetchAddresses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, orderingFor?._id]);
 
   // Auto-select the shipping country from the visitor's IP-detected location
   // (geo lookup lives in CurrencyContext). Only pre-fills a fresh new-address
@@ -317,6 +335,7 @@ const CheckoutPage = () => {
 
   // Abandoned Cart Tracker (Debounced)
   useEffect(() => {
+    if (orderingFor) return;
     const trackingEmail = userEmail || guestEmail?.trim();
     if (!trackingEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trackingEmail) || cartItems.length === 0) return;
 
@@ -343,7 +362,7 @@ const CheckoutPage = () => {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [cartItems, cartTotal, address, selectedAddressId, user, guestEmail, getSelectedAddress]);
+  }, [cartItems, cartTotal, address, selectedAddressId, user, orderingFor, guestEmail, getSelectedAddress]);
 
   const handleSaveNewAddress = async () => {
     // Validate all fields
@@ -372,7 +391,10 @@ const CheckoutPage = () => {
     setLoading(true);
     try {
       let updatedAddresses;
-      if (isEditing) {
+      if (orderingFor) {
+        const { data } = await API.post(`/auth/users/${orderingFor._id}/addresses`, payloadAddress);
+        updatedAddresses = data;
+      } else if (isEditing) {
         const { data } = await API.put(`/auth/addresses/${isEditing}`, payloadAddress);
         updatedAddresses = data;
       } else {
@@ -386,7 +408,8 @@ const CheckoutPage = () => {
       setShowNewForm(false);
       setIsEditing(null);
 
-      updateUser({ ...user, addresses: updatedAddresses });
+      if (orderingFor) setOrderingFor({ ...orderingFor, addresses: updatedAddresses });
+      else updateUser({ ...user, addresses: updatedAddresses });
       toast.success(isEditing ? 'Address updated!' : 'Address saved!');
       setLoading(false);
       return true;
@@ -626,6 +649,7 @@ const CheckoutPage = () => {
         fbc,
         // Guest contact details — server only reads these when no auth token is sent.
         ...(user ? {} : { guestEmail: guestEmail.trim(), guestPhone: shippingAddress.phone }),
+        ...(orderingFor ? { customerId: orderingFor._id } : {}),
       };
 
       // CASE 1: Zero-Value Order (Fully Paid by Coupon)
@@ -635,7 +659,7 @@ const CheckoutPage = () => {
 
         API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
         // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
-        if (typeof window.fbq === 'function') {
+        if (!orderingFor && typeof window.fbq === 'function') {
           window.fbq('track', 'Purchase', {
             content_type: 'product',
             content_ids: cartItems.map(item => item.productId),
@@ -723,7 +747,7 @@ const CheckoutPage = () => {
                 try { localStorage.removeItem('gpsfdk_last_payment'); } catch (_) { /* ignore */ }
                 API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
                 // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
-                if (typeof window.fbq === 'function') {
+                if (!orderingFor && typeof window.fbq === 'function') {
                   window.fbq('track', 'Purchase', {
                     content_type: 'product',
                     content_ids: cartItems.map(item => item.productId),
@@ -784,7 +808,7 @@ const CheckoutPage = () => {
 
         API.post('/abandoned-carts/recover', { email: userEmail }).catch(() => {});
         // Meta Pixel: Purchase conversion (event_id matches server CAPI for dedup)
-        if (typeof window.fbq === 'function') {
+        if (!orderingFor && typeof window.fbq === 'function') {
           window.fbq('track', 'Purchase', {
             content_type: 'product',
             content_ids: cartItems.map(item => item.productId),
@@ -841,6 +865,10 @@ const CheckoutPage = () => {
           ))}
         </nav>
 
+        {canOrderForCustomer && (
+          <OrderForCustomer customer={orderingFor} onChange={changeOrderingFor} locked={step !== 1} />
+        )}
+
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="glass-card p-5 sm:p-8">
           {/* Step 1: Shipping */}
           {step === 1 && (
@@ -881,7 +909,7 @@ const CheckoutPage = () => {
                             </p>
                           </div>
                         </label>
-                        <div className="flex flex-col items-end gap-1">
+                        {!orderingFor && <div className="flex flex-col items-end gap-1">
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleDeleteAddress(addr._id); }}
@@ -903,7 +931,7 @@ const CheckoutPage = () => {
                           >
                             Edit
                           </button>
-                        </div>
+                        </div>}
                       </div>
                       {addr.isDefault && (
                         <span className="absolute top-2 right-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium hidden sm:inline">Default</span>
@@ -916,7 +944,7 @@ const CheckoutPage = () => {
                     onClick={() => {
                       setIsEditing(null);
                       setShowNewForm(true);
-                      setAddress({ fullName: user?.name || '', phone: user?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India' });
+                      setAddress({ fullName: (orderingFor || user)?.name || '', phone: (orderingFor || user)?.phone || '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', country: 'India' });
                       setAddressErrors({});
                     }}
                     className="w-full p-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 hover:border-accent hover:text-accent transition-all text-sm font-medium flex items-center justify-center gap-2"

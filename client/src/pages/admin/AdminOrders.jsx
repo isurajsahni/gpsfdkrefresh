@@ -6,6 +6,7 @@ import {
   HiOutlineExclamationCircle, HiOutlineTruck, HiOutlineDocumentDownload
 } from 'react-icons/hi';
 import API from '../../utils/api';
+import { contactEmail } from '../../utils/contactEmail';
 import { useInvoicesEnabled, canDownloadInvoice, downloadInvoice } from '../../utils/invoice';
 import { useShiprocketEnabled } from '../../utils/shiprocket';
 import toast from 'react-hot-toast';
@@ -141,7 +142,7 @@ const AdminOrders = () => {
     if (order.user) {
       return {
         name: order.user.name || 'Unknown',
-        email: order.user.email || '',
+        email: contactEmail(order.user.email),
         phone: order.shippingAddress?.phone || '',
         isGuest: false,
       };
@@ -213,6 +214,7 @@ const AdminOrders = () => {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-heading font-semibold text-secondary">{order.orderNumber}</h3>
                         <SourceBadge source={order.source} />
+                        {order.placedBy && <span className="text-xs text-gray-500">Placed by {order.placedBy.name || 'admin'}</span>}
                         {customer.isGuest && (
                           <span className="text-[10px] font-bold bg-accent/10 text-accent px-2 py-0.5 rounded-full">GUEST</span>
                         )}

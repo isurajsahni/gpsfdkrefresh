@@ -8,7 +8,7 @@ const { cloudinary } = require('../middleware/upload');
 const { createOtpStore } = require('../utils/otpSessionStore');
 const { sendWhatsappOtpTemplate } = require('../utils/metaWhatsappOtp');
 const { getDemoLogin, isDemoIdentifier } = require('../utils/demoLogin');
-const { PLACEHOLDER_EMAIL_DOMAIN, placeholderEmail, normalizeSignupPhone, isWelcomeWhatsAppConfigured, sendWelcomeWhatsApp } = require('../utils/exhibitionSignup');
+const { placeholderEmail, isPlaceholderEmail, normalizeSignupPhone, isWelcomeWhatsAppConfigured, sendWelcomeWhatsApp } = require('../utils/exhibitionSignup');
 
 // ─── OTP / verification session stores (Mongo-backed, TTL-purged) ─────────────
 // These used to be in-memory Maps. That made every OTP session non-recoverable
@@ -835,9 +835,9 @@ exports.resetPassword = async (req, res, next) => {
 };
 
 // POST /api/auth/addresses — save a new address to user profile
-exports.addAddress = async (req, res, next) => {
+const addAddressToUser = async (userId, req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findOne({ _id: userId, deletedAt: null });
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     // Whitelist only allowed address fields — prevent mass assignment
@@ -855,6 +855,11 @@ exports.addAddress = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.addAddress = (req, res, next) => addAddressToUser(req.user._id, req, res, next);
+
+// POST /api/auth/users/:id/addresses (admin) — when ordering for a customer
+exports.addCustomerAddress = (req, res, next) => addAddressToUser(req.params.id, req, res, next);
 
 // DELETE /api/auth/addresses/:id — remove a saved address
 exports.deleteAddress = async (req, res, next) => {
@@ -1204,7 +1209,7 @@ exports.getExhibitionSignups = async (req, res, next) => {
       signups: signups.map((signup) => ({
         _id: signup._id,
         name: signup.name,
-        email: signup.email.endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`) ? '' : signup.email,
+        email: isPlaceholderEmail(signup.email) ? '' : signup.email,
         phone: signup.phone,
         createdAt: signup.createdAt,
         eventName: signup.exhibitionSignup.eventName,

@@ -10,6 +10,7 @@ const invoice = require('../utils/invoice');
 const shiprocket = require('../utils/shiprocket');
 const metaCapi = require('../utils/metaCapi');
 const erp = require('../utils/erpWebhook');
+const { resolveOrderCustomer } = require('../utils/orderCustomer');
 const { INTL_CURRENCY, USD_INR_RATE, intlUnitPrice, resolveOrderCurrency } = require('../utils/intlPricing');
 
 // Which client placed an order. Coerce any caller-supplied hint to a known value,
@@ -140,7 +141,7 @@ const triggerNewOrderNotifications = async (order) => {
       <div style="margin-bottom: 10px;">
         <img src="${item.image}" alt="${item.name}" width="50" height="50" style="border-radius: 4px; object-fit: cover; vertical-align: middle; margin-right: 10px;" />
         <span style="display: inline-block; vertical-align: middle;">
-          <strong><a href="${process.env.CLIENT_URL}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
+          <strong><a href="${process.env.CLIENT_URL || 'https://www.gpsfdk.com'}/product/${item.product?.slug || ''}">${item.name}</a></strong><br/>
           Qty: ${item.quantity} | Price: ₹${item.price}
         </span>
       </div>
@@ -580,9 +581,14 @@ exports.createOrder = async (req, res, next) => {
     const { items, shippingAddress, billingAddress, paymentMethod, couponCode, eventIdPurchase } = req.body;
     if (!items || items.length === 0) return res.status(400).json({ message: 'No order items' });
 
+    // An admin may be ordering for a customer: the order, its coupon limits and
+    // its emails then belong to the customer.
+    const customer = await resolveOrderCustomer(req, req.body.customerId);
+    const orderUserId = customer ? customer._id : req.user._id;
+
     // Server-side price calculation — never trust client prices
     const orderCurrency = await resolveOrderCurrency(req, shippingAddress?.country);
-    const prices = await calculateOrderPrices(items, couponCode, req.user._id, null, {
+    const prices = await calculateOrderPrices(items, couponCode, orderUserId, null, {
       currency: orderCurrency,
     });
 
@@ -600,7 +606,8 @@ exports.createOrder = async (req, res, next) => {
     const isPaid = prices.totalPrice === 0;
 
     const order = await Order.create({
-      user: req.user._id,
+      user: orderUserId,
+      placedBy: customer ? req.user._id : undefined,
       items: prices.verifiedItems,
       shippingAddress,
       billingAddress,
@@ -624,18 +631,18 @@ exports.createOrder = async (req, res, next) => {
     if (couponCode) {
       const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
       if (coupon) {
-        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === req.user._id.toString());
+        const userUsage = coupon.usageHistory.find(u => u.userId && u.userId.toString() === orderUserId.toString());
         if (userUsage) {
           userUsage.useCount += 1;
         } else {
-          coupon.usageHistory.push({ userId: req.user._id, useCount: 1 });
+          coupon.usageHistory.push({ userId: orderUserId, useCount: 1 });
         }
         await coupon.save();
 
         // Track usage for analytics and reporting
         CouponUsage.create({
           couponId: coupon._id,
-          customerId: req.user._id,
+          customerId: orderUserId,
           orderId: order.orderNumber,
           orderAmount: prices.itemsPrice,
           discountAmount: prices.discountPrice,
@@ -648,7 +655,8 @@ exports.createOrder = async (req, res, next) => {
     if (finalPaymentMethod === 'free' || finalPaymentMethod === 'cod') {
       await decrementStockForOrder(order);
       triggerNewOrderNotifications(order);
-      sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);
+      // Not a shopper's conversion, and req.user is the admin rather than the buyer
+      if (!customer) sendMetaPurchaseEvent(req, order, prices, eventIdPurchase);
     }
 
 
@@ -785,6 +793,7 @@ exports.getOrders = async (req, res, next) => {
       const [orders, total] = await Promise.all([
         Order.find(filter)
           .populate('user', 'name email')
+          .populate('placedBy', 'name')
           .populate('items.product', 'slug')
           .sort('-createdAt')
           .skip((page - 1) * limit)

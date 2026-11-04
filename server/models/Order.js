@@ -31,6 +31,8 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  // The admin who placed this order on the customer's account. Absent otherwise.
+  placedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   guestEmail: { type: String, default: '' },
   guestPhone: { type: String, default: '' },
   orderNumber: { type: String, unique: true },

@@ -8,6 +8,7 @@ const orderController = require('./orderController');
 const { detectCountry, applyPriceMultiplier } = require('../utils/geoPricing');
 const { resolveOrderCurrency, isIndiaDestination } = require('../utils/intlPricing');
 const metaCapi = require('../utils/metaCapi');
+const { resolveOrderCustomer } = require('../utils/orderCustomer');
 
 const PLACEHOLDER_PATTERNS = ['your_razorpay', 'placeholder', 'YOUR_'];
 
@@ -206,7 +207,10 @@ exports.createRazorpayOrder = async (req, res, next) => {
       return res.status(503).json({ message: 'Payment gateway is not configured. Contact support.' });
     }
 
-    const userId = req.user ? req.user._id : null;
+    // An admin may be ordering for a customer (see utils/orderCustomer)
+    const customer = await resolveOrderCustomer(req, orderData.customerId);
+    const shopper = customer || req.user;
+    const userId = shopper ? shopper._id : null;
     const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
     const { calculateOrderPrices } = require('./orderController');
 
@@ -297,6 +301,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
         razorpayOrderId: order.id,
         orderData,
         user: userId,
+        placedBy: customer ? req.user._id : null,
         clientContext: metaCapi.extractClientContext(req),
         sourceUrl: req.headers.referer || req.headers.referrer || '',
       });
@@ -310,7 +315,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
     // what keeps App Tracking Transparency off the App Store submission. No
     // order document exists yet, so this reads the same client hint that
     // verifyRazorpay persists as Order.source.
-    if (!orderController.isAppSource(orderData.source)) {
+    if (!customer && !orderController.isAppSource(orderData.source)) {
       try {
         const ctx = metaCapi.extractClientContext(req);
         const shipping = orderData.shippingAddress || {};
@@ -361,7 +366,7 @@ exports.createRazorpayOrder = async (req, res, next) => {
 // and creates the paid order. `user`, `clientContext` and `sourceUrl` are the
 // shopper's (from the browser's request, or saved with the checkout when the
 // webhook makes the order).
-const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, clientContext, sourceUrl }) => {
+const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, placedBy, clientContext, sourceUrl }) => {
   // 1. Verify exact price to prevent tampering
   const userId = user ? user._id : null;
   const guestIdentifier = !userId ? (orderData.guestEmail || orderData.guestPhone || orderData.shippingAddress?.phone || null) : null;
@@ -497,6 +502,7 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   // 2. Create the final Database Order securely
   const newOrder = await Order.create({
     user: userId,
+    placedBy: placedBy || undefined,
     guestEmail: orderData.guestEmail || '',
     guestPhone: orderData.guestPhone || orderData.shippingAddress?.phone || '',
     // Record the amounts actually CHARGED (base × multiplier), so the order,
@@ -566,7 +572,8 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
   // Skipped for app orders: the apps send Meta nothing at all, which is what
   // keeps App Tracking Transparency off the App Store submission.
   // newOrder.source was normalized by Order.create above.
-  if (!orderController.isAppSource(newOrder.source)) {
+  // Also skipped when an admin placed it: not a shopper's conversion.
+  if (!placedBy && !orderController.isAppSource(newOrder.source)) {
     try {
       const ctx = clientContext || {};
       const shipping = orderData.shippingAddress || {};
@@ -606,6 +613,7 @@ const createPaidOrder = async ({ razorpayOrderId, paymentId, orderData, user, cl
 const savedRequest = async (checkout) => ({
   orderData: checkout.orderData,
   user: checkout.user ? await User.findById(checkout.user).select('-password') : null,
+  placedBy: checkout.placedBy,
   clientContext: checkout.clientContext || {},
   sourceUrl: checkout.sourceUrl || '',
 });
@@ -688,6 +696,7 @@ exports.verifyRazorpay = async (req, res, next) => {
       return res.status(400).json({ message: 'Payment verification failed: Invalid signature', success: false });
     }
 
+    const customer = await resolveOrderCustomer(req, orderData.customerId);
     const result = await settleRazorpayPayment({
       razorpayOrderId: razorpay_order_id,
       paymentId: razorpay_payment_id,
@@ -696,7 +705,8 @@ exports.verifyRazorpay = async (req, res, next) => {
       waitMs: 20 * 1000,
       request: {
         orderData,
-        user: req.user || null,
+        user: customer || req.user || null,
+        placedBy: customer ? req.user._id : null,
         clientContext: metaCapi.extractClientContext(req),
         sourceUrl: req.headers.referer || req.headers.referrer || '',
       },

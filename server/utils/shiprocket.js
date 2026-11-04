@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { isPlaceholderEmail } = require('./exhibitionSignup');
 const { getWeightBySize, getDimensionsBySize } = require('./weightMapping');
 
 // OPT-IN: the store never talks to Shiprocket unless SHIPROCKET_ENABLED=true.
@@ -178,7 +179,7 @@ class ShiprocketService {
         try {
           const User = require('../models/User');
           const u = await User.findById(order.user).select('email');
-          customerEmail = u?.email || '';
+          customerEmail = isPlaceholderEmail(u?.email) ? '' : (u?.email || '');
         } catch (_) { /* fall back to placeholder below */ }
       }
 

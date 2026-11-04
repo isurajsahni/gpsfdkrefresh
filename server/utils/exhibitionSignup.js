@@ -8,6 +8,8 @@ const axios = require('axios');
 // hides this same domain: see utils/contactEmail.js.
 const PLACEHOLDER_EMAIL_DOMAIN = 'exhibition.invalid';
 
+const isPlaceholderEmail = (email) => String(email || '').endsWith(`@${PLACEHOLDER_EMAIL_DOMAIN}`);
+
 const placeholderEmail = (phone) => `whatsapp-${phone.replace(/\D/g, '')}@${PLACEHOLDER_EMAIL_DOMAIN}`;
 
 // Returns the number as +<country code><number>, or null if it isn't valid.
@@ -61,6 +63,7 @@ const sendWelcomeWhatsApp = async (phone, name) => {
 module.exports = {
   PLACEHOLDER_EMAIL_DOMAIN,
   placeholderEmail,
+  isPlaceholderEmail,
   normalizeSignupPhone,
   isWelcomeWhatsAppConfigured,
   sendWelcomeWhatsApp,

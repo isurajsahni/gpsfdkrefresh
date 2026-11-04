@@ -4,6 +4,10 @@ const { Resend } = require('resend');
 const getApiKey = () => (process.env.RESEND_API_KEY || process.env.EMAIL_PASS || '').trim();
 
 const sendEmail = async (options) => {
+  // `.invalid` addresses stand in on anonymised and WhatsApp-only accounts. They
+  // can never receive mail, and sending to them would only hurt our sender score.
+  if (/\.invalid$/i.test(String(options.email || '').trim())) return null;
+
   const apiKey = getApiKey();
   if (!apiKey) {
     // Previously this returned silently — callers like the OTP route would then

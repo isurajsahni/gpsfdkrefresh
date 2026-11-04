@@ -101,6 +101,16 @@ const otpLimiter = rateLimit({
   message: { message: 'Too many OTP attempts. Please wait 10 minutes.' },
 });
 
+// Per staff member, not per IP: a whole booth shares one connection. Runs after
+// `protect`. Caps the damage a stolen staff login can do at about one account
+// every 30 seconds, comfortably above a real booth's pace.
+const exhibitionSignupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 120,
+  keyGenerator: (req) => req.user._id.toString(),
+  message: { message: 'Too many sign-ups from this login. Please try again in an hour.' },
+});
+
 const guestOrderLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -162,6 +172,7 @@ module.exports = {
   leadValidation,
   authLimiter,
   otpLimiter,
+  exhibitionSignupLimiter,
   guestOrderLimiter,
   publicEndpointLimiter,
   orderTrackingLimiter,

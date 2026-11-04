@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, Outlet, useNavigate } from 'react-router-dom';
-import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineHeart, HiOutlineTrendingUp } from 'react-icons/hi';
+import { HiOutlineChartBar, HiOutlineCube, HiOutlineTag, HiOutlineClipboardList, HiOutlineUsers, HiOutlineMail, HiOutlineArrowLeft, HiOutlineMenu, HiOutlineChartPie, HiOutlineTicket, HiOutlineShoppingCart, HiOutlineHeart, HiOutlineTrendingUp, HiOutlineUserAdd } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 import SEO from '../seo/SEO';
 
@@ -16,6 +16,7 @@ const navItems = [
   { path: '/admin/leads', icon: HiOutlineMail, label: 'Leads' },
   { path: '/admin/analytics', icon: HiOutlineChartPie, label: 'Analytics' },
   { path: '/admin/marketing-performance', icon: HiOutlineTrendingUp, label: 'Marketing' },
+  { path: '/admin/exhibition-signups', icon: HiOutlineUserAdd, label: 'Exhibition Sign-ups' },
 ];
 
 const AdminLayout = () => {
@@ -39,7 +40,8 @@ const AdminLayout = () => {
             <h2 className="font-heading text-xl font-bold text-secondary">Admin Panel</h2>
             <p className="text-sm text-gray-400 mt-1">{user?.email}</p>
           </div>
-          <nav className="px-3 space-y-1">
+          {/* Scrolls on short screens so it never runs under "Back to Store" */}
+          <nav className="px-3 space-y-1 overflow-y-auto max-h-[calc(100vh-240px)]">
             {navItems.filter(item => {
               if (!user) return false;
               if (user.role === 'admin' || user.role === 'admin_marketing') return true;

@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, minlength: 8 },
-  role: { type: String, enum: ['user', 'admin', 'marketing', 'admin_marketing', 'order_manager', 'coupon_manager'], default: 'user' },
+  role: { type: String, enum: ['user', 'admin', 'marketing', 'admin_marketing', 'order_manager', 'coupon_manager', 'exhibition_staff'], default: 'user' },
   phone: { type: String, default: '' },
   addresses: [addressSchema],
   avatar: { type: String, default: '' },
@@ -40,6 +40,16 @@ const userSchema = new mongoose.Schema({
   // overwritten and this timestamp is set. A non-null deletedAt excludes the
   // account from login (via `protect`) and from admin user lists.
   deletedAt: { type: Date, default: null },
+  // Set only on accounts staff created at an exhibition: which event, which
+  // staff member, and when the customer agreed. Absent on every other account.
+  exhibitionSignup: {
+    type: new mongoose.Schema({
+      eventName: { type: String, trim: true, maxlength: 80 },
+      createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      consentAt: Date,
+    }, { _id: false }),
+    default: undefined,
+  },
 }, { timestamps: true });
 
 // Mongoose 7+ async hooks do NOT receive next() — just use async/await

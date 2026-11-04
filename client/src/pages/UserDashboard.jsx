@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../utils/api';
+import { contactEmail } from '../utils/contactEmail';
 import { useInvoicesEnabled, canDownloadInvoice, downloadInvoice } from '../utils/invoice';
 import toast from 'react-hot-toast';
 import OtpModal from '../components/OtpModal';
@@ -104,7 +105,7 @@ const UserDashboard = () => {
     setEditName(profile?.name || user?.name || '');
     setEditAvatar(profile?.avatar || user?.avatar || '');
     setNewPhone(profile?.phone || user?.phone || '');
-    setNewEmail(profile?.email || user?.email || '');
+    setNewEmail(contactEmail(profile?.email || user?.email));
     setPhoneVerifiedToken(null);
     setEmailVerifiedToken(null);
     setPhoneVerified(false);
@@ -323,7 +324,7 @@ const UserDashboard = () => {
                 )}
               </div>
               <h2 className="text-xl font-heading font-bold text-secondary">{profile?.name || user?.name}</h2>
-              <p className="text-sm text-gray-500">{profile?.email || user?.email}</p>
+              <p className="text-sm text-gray-500">{contactEmail(profile?.email || user?.email)}</p>
             </div>
 
             <div className="space-y-2">
@@ -512,7 +513,7 @@ const UserDashboard = () => {
                             className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none text-base font-semibold text-secondary bg-white transition-all"
                             placeholder="your@email.com"
                           />
-                          {newEmail.trim().toLowerCase() !== (profile?.email || '') && !emailVerified && (
+                          {newEmail.trim().toLowerCase() !== contactEmail(profile?.email) && !emailVerified && (
                             <button
                               onClick={() => setOtpModal({ open: true, type: 'email', value: newEmail.trim() })}
                               className="px-3 py-2.5 bg-orange-500 text-white rounded-xl text-xs font-bold whitespace-nowrap hover:bg-orange-600 transition-colors"
@@ -522,7 +523,7 @@ const UserDashboard = () => {
                           )}
                         </div>
                       ) : (
-                        <p className="text-lg font-semibold text-secondary">{profile?.email || user?.email}</p>
+                        <p className="text-lg font-semibold text-secondary">{contactEmail(profile?.email || user?.email) || 'Not added yet'}</p>
                       )}
                     </div>
 

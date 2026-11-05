@@ -88,7 +88,10 @@ export default function useArAvailability(slug, selectedVariation) {
       else if (urls) console.warn('[ar] manifest drift:', slug, selectedVariation?.size);
     }
 
-    setIsLaunching(true);
+    // Desktop opens a new tab and this page stays put, so there is nothing to
+    // wait for and nothing to reset the button. Only the handoffs that leave
+    // the page (Quick Look, the viewer on Android) get the pending state.
+    if (detectArPlatform() !== 'desktop') setIsLaunching(true);
     launchAr({ usdz, fallbackUrl: deepLink });
   }, [arTarget, deepLink, slug, selectedVariation?.material, selectedVariation?.size]);
 
@@ -99,7 +102,11 @@ export default function useArAvailability(slug, selectedVariation) {
     const done = () => setIsLaunching(false);
     window.addEventListener('pageshow', done);
     document.addEventListener('visibilitychange', done);
+    // If the handoff never happens — no ARCore, a declined prompt — don't
+    // leave the button stuck.
+    const giveUp = setTimeout(done, 10000);
     return () => {
+      clearTimeout(giveUp);
       window.removeEventListener('pageshow', done);
       document.removeEventListener('visibilitychange', done);
     };

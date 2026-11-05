@@ -19,14 +19,13 @@ import { contactEmail } from '../utils/contactEmail';
 import { CUSTOM_SIZE, isNameplateProduct, nameplateCustomText } from '../utils/nameplate';
 import { categoryPath } from '../utils/categoryPath';
 import { usePrerenderData } from '../prerender/PrerenderData';
+import useArAvailability from '../hooks/useArAvailability';
 import { dropStaticSnapshot } from '../prerender/snapshot';
 
 // The story sits below the fold, so its code (about two-thirds of this page's)
 // downloads alongside the product fetch rather than ahead of the buy box
 const loadProductStory = () => import('../components/product/story/ProductStory');
 const ProductStory = lazy(loadProductStory);
-// The camera viewer only downloads when someone opens it
-const WallView = lazy(() => import('../components/product/WallView'));
 
 // Canvases open on Stretched (ready to hang) rather than whichever variation
 // happens to be first, which is usually Rolled
@@ -65,8 +64,11 @@ const ProductPage = () => {
   const [zoomStyle, setZoomStyle] = useState({});
   const [isZooming, setIsZooming] = useState(false);
   const [isFullscreenZoom, setIsFullscreenZoom] = useState(false);
-  const [isWallView, setIsWallView] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true);
+  // Whether this piece can be stood on the buyer's own wall in AR, in the
+  // exact size and finish they have selected
+  const { arTarget, isLaunching: arLaunching, prefetch: arPrefetch, launch: arLaunch } =
+    useArAvailability(slug, selectedVariation);
   // The story below the fold sends buyers back up here (to name a nameplate,
   // or to request a custom-size price)
   const buyBoxRef = useRef(null);
@@ -657,13 +659,20 @@ const ProductPage = () => {
                   <HiOutlineShoppingCart className="w-6 h-6" /> Add to Cart
                 </button>
               )}
-              {/* The selected size on the buyer's own wall, through the camera */}
-              {!isCustomSize && product.images?.length > 0 && (
+              {/* The selected size, hung on the buyer's own wall in AR. Only
+                  shown when a model exists for this exact finish and size —
+                  the nearest match would be the wrong shape. */}
+              {arTarget && !isCustomSize && (
                 <button
-                  onClick={() => setIsWallView(true)}
-                  className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-secondary py-3 font-semibold text-secondary hover:bg-secondary hover:text-white transition-colors"
+                  onClick={arLaunch}
+                  onPointerDown={arPrefetch}
+                  disabled={arLaunching}
+                  aria-busy={arLaunching}
+                  aria-label="View on your wall in augmented reality"
+                  className="w-full flex items-center justify-center gap-2 rounded-full border-2 border-secondary py-3 font-semibold text-secondary hover:bg-secondary hover:text-white transition-colors disabled:opacity-60"
                 >
-                  <HiOutlineCamera className="w-5 h-5" /> View on your wall
+                  <HiOutlineCamera className="w-5 h-5" />
+                  {arLaunching ? 'Starting AR…' : 'View on your wall'}
                 </button>
               )}
               {/* Nameplates' shapes vary with the design, so their sizes come with a disclaimer */}
@@ -711,18 +720,6 @@ const ProductPage = () => {
             excludeId={product._id}
           />
         </div>
-      )}
-
-      {isWallView && (
-        <Suspense fallback={null}>
-          <WallView
-            product={product}
-            selectedVariation={selectedVariation}
-            sizes={sizes}
-            onPickSize={(size) => pickVariation({ size })}
-            onClose={() => setIsWallView(false)}
-          />
-        </Suspense>
       )}
 
       {/* Fullscreen HD Zoom Modal */}

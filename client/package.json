@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:ar-manifest": "node scripts/gen-ar-manifest.mjs"
   },
   "dependencies": {
     "@studio-freight/lenis": "^1.0.42",

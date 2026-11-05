@@ -56,7 +56,12 @@ export default function useArAvailability(slug, selectedVariation) {
     return label ? { format, label } : null;
   }, [manifest, slug, selectedVariation?.material, selectedVariation?.size]);
 
-  const deepLink = arTarget ? arViewerDeepLink(slug, arTarget.format, arTarget.label) : '';
+  // Two targets for the same selection: the browsable 3D viewer for desktop,
+  // and the same page told to open AR immediately for phones.
+  const viewerUrl = arTarget ? arViewerDeepLink(slug, arTarget.format, arTarget.label) : '';
+  const arUrl = arTarget
+    ? arViewerDeepLink(slug, arTarget.format, arTarget.label, { autoLaunch: true })
+    : '';
 
   /**
    * iOS only: start pulling the catalog as the finger goes down, so the click
@@ -92,8 +97,8 @@ export default function useArAvailability(slug, selectedVariation) {
     // wait for and nothing to reset the button. Only the handoffs that leave
     // the page (Quick Look, the viewer on Android) get the pending state.
     if (detectArPlatform() !== 'desktop') setIsLaunching(true);
-    launchAr({ usdz, fallbackUrl: deepLink });
-  }, [arTarget, deepLink, slug, selectedVariation?.material, selectedVariation?.size]);
+    launchAr({ usdz, viewerUrl, arUrl });
+  }, [arTarget, viewerUrl, arUrl, slug, selectedVariation?.material, selectedVariation?.size]);
 
   // Quick Look returns to this very page, so the button has to stop spinning
   // when the shopper comes back. Navigations away unmount it anyway.

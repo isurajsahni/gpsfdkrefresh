@@ -45,7 +45,7 @@ function openQuickLook(usdz) {
  * `usdz` may be absent (the catalog hasn't loaded yet); iOS then takes the
  * same viewer-page route as everyone else rather than doing nothing.
  */
-export function launchAr({ usdz, fallbackUrl }) {
+export function launchAr({ usdz, viewerUrl, arUrl }) {
   const platform = detectArPlatform();
 
   if (platform === 'ios' && usdz) {
@@ -54,12 +54,17 @@ export function launchAr({ usdz, fallbackUrl }) {
   }
 
   if (platform === 'desktop') {
-    const w = window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+    // No AR on a laptop, so this is the 3D viewer rather than a failed
+    // launch. New tab, because the shopper is coming back to buy.
+    const w = window.open(viewerUrl, '_blank', 'noopener,noreferrer');
     // A blocked popup returns null; don't leave the tap doing nothing.
-    if (!w) window.location.href = fallbackUrl;
+    if (!w) window.location.href = viewerUrl;
     return platform;
   }
 
-  window.location.href = fallbackUrl;
+  // Android, and iOS when the catalog hasn't arrived: straight into AR. The
+  // viewer opens its own AR session on load and sends them back to a 3D
+  // preview if the phone can't do it.
+  window.location.href = arUrl;
   return platform;
 }

@@ -46,11 +46,15 @@ export function detectArPlatform() {
  * and size. The viewer matches `art` with a case-sensitive `===` against the
  * catalog id, so the slug must be passed through untouched.
  */
-export function arViewerDeepLink(slug, format, sizeLabel) {
+export function arViewerDeepLink(slug, format, sizeLabel, { autoLaunch = false } = {}) {
   const q = [
     `art=${encodeURIComponent(slug)}`,
     format ? `format=${encodeURIComponent(format)}` : '',
     sizeLabel ? `size=${encodeURIComponent(sizeLabel)}` : '',
+    // ar=1 tells the viewer to hide its browsing UI and go straight into AR.
+    // Only ever sent to a phone: on a desktop it would strip the page down
+    // and then fail, because there is no AR to launch.
+    autoLaunch ? 'ar=1' : '',
   ].filter(Boolean).join('&');
   return `${AR_SITE_BASE}/?${q}`;
 }

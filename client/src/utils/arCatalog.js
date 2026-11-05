@@ -47,16 +47,19 @@ export function findArArtwork(catalog, slug) {
 }
 
 /**
- * Which format/size the viewer should open on, given the variation the shopper
- * selected on the product page.
+ * Which product/size the viewer should open on. `format` is an AR catalog
+ * product id — 'stretched', 'rolled' or 'poster' — already worked out from
+ * the shopper's material and frame, because the two canvas finishes are
+ * genuinely different objects: one is wrapped over a wooden frame, the other
+ * is the bare printed sheet.
  *
  * `exact` says whether the size really matched. Callers must check it: the
  * fallback index is 0, which is 12x18, so a near-miss would quietly hang a
  * small portrait canvas on the wall for someone buying a 48x48 square.
  */
-export function resolveArSelection(artwork, material, size) {
-  const fmt = norm(material);
-  const pi = artwork.products.findIndex((p) => norm(p.id) === fmt || norm(p.name) === fmt);
+export function resolveArSelection(artwork, format, size) {
+  const fmt = norm(format);
+  const pi = artwork.products.findIndex((p) => norm(p.id) === fmt);
   const productIndex = pi >= 0 ? pi : 0;
 
   const sizes = artwork.products[productIndex]?.sizes ?? [];
@@ -74,8 +77,8 @@ export function resolveArSelection(artwork, material, size) {
  * Absolute model URLs for the shopper's current selection — what the AR launch
  * hands to Quick Look (usdz) and the viewer (glb).
  */
-export function getArModelUrls(artwork, material, size) {
-  const { productIndex, sizeIndex, exact } = resolveArSelection(artwork, material, size);
+export function getArModelUrls(artwork, format, size) {
+  const { productIndex, sizeIndex, exact } = resolveArSelection(artwork, format, size);
   const prod = artwork.products[productIndex];
   const s = prod?.sizes?.[sizeIndex];
   if (!s) return null;

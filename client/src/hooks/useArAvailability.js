@@ -21,12 +21,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AR_ENABLED, arViewerDeepLink, detectArPlatform, norm } from '../utils/arLink';
 import { launchAr } from '../utils/arLaunch';
 
+/**
+ * The AR catalog product id for a variation.
+ *
+ * Material alone isn't enough: "Canvas" covers both finishes, and they are
+ * different objects in AR — stretched is wrapped over a wooden frame with the
+ * print folding around its edges, rolled is the bare sheet. The frame field is
+ * what separates them.
+ */
+function arFormat(material, frame) {
+  const m = norm(material);
+  if (m.includes('poster')) return 'poster';
+  if (!m.includes('canvas')) return null;
+  return norm(frame).includes('roll') ? 'rolled' : 'stretched';
+}
+
 export default function useArAvailability(slug, selectedVariation) {
   const [manifest, setManifest] = useState(null);
   const [isLaunching, setIsLaunching] = useState(false);
   // The catalog, once iOS has had reason to fetch it. A ref, not state,
   // because the click handler must read it without waiting for a render.
   const catalog = useRef(null);
+  // Read the three fields the AR target depends on, rather than the variation
+  // object: a new object identity every render would recompute constantly.
+  const material = selectedVariation?.material;
+  const frame = selectedVariation?.frame;
+  const size = selectedVariation?.size;
 
   useEffect(() => {
     if (!AR_ENABLED) return undefined;
@@ -45,16 +65,13 @@ export default function useArAvailability(slug, selectedVariation) {
     const family = manifest.FAMILIES[manifest.SLUGS[slug]];
     if (!family) return null;
 
-    const material = norm(selectedVariation?.material);
-    const format = material.includes('canvas') ? 'canvas'
-      : material.includes('poster') ? 'poster'
-        : null;
+    const format = arFormat(material, frame);
     if (!format) return null;
 
-    const wanted = norm(selectedVariation?.size);
+    const wanted = norm(size);
     const label = (family[format] || []).find((l) => norm(l) === wanted);
     return label ? { format, label } : null;
-  }, [manifest, slug, selectedVariation?.material, selectedVariation?.size]);
+  }, [manifest, slug, material, frame, size]);
 
   // Two targets for the same selection: the browsable 3D viewer for desktop,
   // and the same page told to open AR immediately for phones.
@@ -85,12 +102,12 @@ export default function useArAvailability(slug, selectedVariation) {
     if (ready) {
       const artwork = ready.cat.findArArtwork(ready.artworks, slug);
       const urls = artwork
-        ? ready.cat.getArModelUrls(artwork, selectedVariation?.material, selectedVariation?.size)
+        ? ready.cat.getArModelUrls(artwork, arTarget.format, size)
         : null;
       // A non-exact hit means the manifest has drifted from the catalog. Send
       // them to the viewer rather than show the wrong size.
       if (urls?.exact) usdz = urls.usdz;
-      else if (urls) console.warn('[ar] manifest drift:', slug, selectedVariation?.size);
+      else if (urls) console.warn('[ar] manifest drift:', slug, arTarget.format, size);
     }
 
     // Desktop opens a new tab and this page stays put, so there is nothing to
@@ -98,7 +115,7 @@ export default function useArAvailability(slug, selectedVariation) {
     // the page (Quick Look, the viewer on Android) get the pending state.
     if (detectArPlatform() !== 'desktop') setIsLaunching(true);
     launchAr({ usdz, viewerUrl, arUrl });
-  }, [arTarget, viewerUrl, arUrl, slug, selectedVariation?.material, selectedVariation?.size]);
+  }, [arTarget, viewerUrl, arUrl, slug, size]);
 
   // Quick Look returns to this very page, so the button has to stop spinning
   // when the shopper comes back. Navigations away unmount it anyway.
